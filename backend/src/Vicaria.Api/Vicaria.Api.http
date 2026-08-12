@@ -1,0 +1,6 @@
+@Vicaria.Api_HostAddress = http://localhost:5187
+
+GET {{Vicaria.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
