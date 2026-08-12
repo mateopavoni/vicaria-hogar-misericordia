@@ -1,0 +1,25 @@
+# ── .NET ──────────────────────────────────────────────
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.nupkg
+
+# ── Angular / Node ───────────────────────────────────
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# ── Secretos ─────────────────────────────────────────
+.env
+.env.*
+*.local.json
+appsettings.*.local.json
+
+# ── Editor / OS ──────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
