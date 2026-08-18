@@ -21,7 +21,7 @@ public class AuthServiceTests
     {
         using var db = CrearDbContext();
         var service = new AuthService(db);
-        var dto = new RegisterDto("Ana Perez", "ana@mail.com", "password123");
+        var dto = new RegisterDto("Ana", "Perez", "ana@mail.com", "password123");
 
         var result = await service.RegisterAsync(dto);
 
@@ -36,7 +36,7 @@ public class AuthServiceTests
     {
         using var db = CrearDbContext();
         var service = new AuthService(db);
-        var dto = new RegisterDto("Ana Perez", "ana@mail.com", "password123");
+        var dto = new RegisterDto("Ana", "Perez", "ana@mail.com", "password123");
 
         await service.RegisterAsync(dto);
 
@@ -48,10 +48,10 @@ public class AuthServiceTests
     public async Task RegisterAsync_ConEmailYaRegistrado_RetornaEmailDuplicado()
     {
         using var db = CrearDbContext();
-        db.Usuarios.Add(new Usuario { Id = Guid.NewGuid(), Nombre = "Ana", Email = "ana@mail.com", PasswordHash = "x", CreatedAt = DateTime.UtcNow });
+        db.Usuarios.Add(new Usuario { Id = Guid.NewGuid(), Nombre = "Ana", Apellido = "Perez", Email = "ana@mail.com", PasswordHash = "x", Estado = EstadoUsuario.Pending, CreatedAt = DateTime.UtcNow });
         await db.SaveChangesAsync();
         var service = new AuthService(db);
-        var dto = new RegisterDto("Otra Ana", "Ana@Mail.com", "password123");
+        var dto = new RegisterDto("Otra Ana", "Gomez", "Ana@Mail.com", "password123");
 
         var result = await service.RegisterAsync(dto);
 
@@ -64,11 +64,24 @@ public class AuthServiceTests
     {
         using var db = CrearDbContext();
         var service = new AuthService(db);
-        var dto = new RegisterDto("Ana Perez", "ANA@MAIL.COM", "password123");
+        var dto = new RegisterDto("Ana", "Perez", "ANA@MAIL.COM", "password123");
 
         await service.RegisterAsync(dto);
 
         var usuario = await db.Usuarios.SingleAsync();
         Assert.Equal("ana@mail.com", usuario.Email);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_CreaUsuarioConEstadoPending()
+    {
+        using var db = CrearDbContext();
+        var service = new AuthService(db);
+        var dto = new RegisterDto("Ana", "Perez", "ana@mail.com", "password123");
+
+        await service.RegisterAsync(dto);
+
+        var usuario = await db.Usuarios.SingleAsync();
+        Assert.Equal(EstadoUsuario.Pending, usuario.Estado);
     }
 }

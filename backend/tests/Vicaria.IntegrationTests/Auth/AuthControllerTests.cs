@@ -16,7 +16,7 @@ public class AuthControllerTests : IClassFixture<VicariaWebApplicationFactory>
     [Fact]
     public async Task Register_ConDatosValidos_Retorna201()
     {
-        var dto = new RegisterDto("Ana Perez", $"{Guid.NewGuid()}@mail.com", "password123");
+        var dto = new RegisterDto("Ana", "Perez", $"{Guid.NewGuid()}@mail.com", "password123");
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", dto);
 
@@ -26,7 +26,7 @@ public class AuthControllerTests : IClassFixture<VicariaWebApplicationFactory>
     [Fact]
     public async Task Register_ConEmailInvalido_Retorna400()
     {
-        var dto = new RegisterDto("Ana Perez", "no-es-un-email", "password123");
+        var dto = new RegisterDto("Ana", "Perez", "no-es-un-email", "password123");
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", dto);
 
@@ -36,7 +36,7 @@ public class AuthControllerTests : IClassFixture<VicariaWebApplicationFactory>
     [Fact]
     public async Task Register_ConPasswordCorta_Retorna400()
     {
-        var dto = new RegisterDto("Ana Perez", $"{Guid.NewGuid()}@mail.com", "123");
+        var dto = new RegisterDto("Ana", "Perez", $"{Guid.NewGuid()}@mail.com", "123");
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", dto);
 
@@ -47,7 +47,7 @@ public class AuthControllerTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task Register_ConEmailYaRegistrado_Retorna409()
     {
         var email = $"{Guid.NewGuid()}@mail.com";
-        var dto = new RegisterDto("Ana Perez", email, "password123");
+        var dto = new RegisterDto("Ana", "Perez", email, "password123");
         await _client.PostAsJsonAsync("/api/auth/register", dto);
 
         var response = await _client.PostAsJsonAsync("/api/auth/register", dto);

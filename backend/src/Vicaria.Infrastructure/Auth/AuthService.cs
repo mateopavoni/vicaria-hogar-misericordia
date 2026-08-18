@@ -28,8 +28,10 @@ public class AuthService : IAuthService
         {
             Id = Guid.NewGuid(),
             Nombre = dto.Nombre.Trim(),
+            Apellido = dto.Apellido.Trim(),
             Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            Estado = EstadoUsuario.Pending,
             CreatedAt = DateTime.UtcNow
         };
 

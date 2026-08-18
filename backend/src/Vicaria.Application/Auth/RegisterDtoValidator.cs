@@ -10,6 +10,10 @@ public class RegisterDtoValidator : AbstractValidator<RegisterDto>
             .NotEmpty().WithMessage("El nombre es requerido.")
             .MaximumLength(100);
 
+        RuleFor(x => x.Apellido)
+            .NotEmpty().WithMessage("El apellido es requerido.")
+            .MaximumLength(100);
+
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El email es requerido.")
             .EmailAddress().WithMessage("El email no tiene un formato válido.")

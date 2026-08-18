@@ -16,6 +16,15 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(u => u.Apellido)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(u => u.Estado)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(u => u.Email)
             .HasMaxLength(255)
             .IsRequired();
