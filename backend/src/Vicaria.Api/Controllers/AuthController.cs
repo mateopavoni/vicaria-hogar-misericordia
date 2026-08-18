@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Application.Auth;
 
@@ -37,5 +39,17 @@ public class AuthController : ControllerBase
         }
 
         return CreatedAtAction(nameof(Register), new { id = result.UsuarioId }, new { id = result.UsuarioId });
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public IActionResult Me()
+    {
+        return Ok(new
+        {
+            nombre = User.FindFirstValue(ClaimTypes.Name),
+            email = User.FindFirstValue(ClaimTypes.Email),
+            rol = User.FindFirstValue(ClaimTypes.Role)
+        });
     }
 }
