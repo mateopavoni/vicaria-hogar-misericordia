@@ -9,10 +9,11 @@ namespace Vicaria.IntegrationTests.Auth;
 // clave de test que VicariaWebApplicationFactory le da a la app
 public static class TestJwtFactory
 {
-    public static string CrearToken(string nombre, string email, string rol)
+    public static string CrearToken(string nombre, string email, string rol, Guid? usuarioId = null)
     {
         Claim[] claims =
         [
+            new Claim(ClaimTypes.NameIdentifier, (usuarioId ?? Guid.NewGuid()).ToString()),
             new Claim(ClaimTypes.Name, nombre),
             new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Role, rol)
