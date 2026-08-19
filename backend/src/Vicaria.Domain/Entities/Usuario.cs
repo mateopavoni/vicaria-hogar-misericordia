@@ -9,4 +9,6 @@ public class Usuario
     public string PasswordHash { get; set; } = string.Empty;
     public EstadoUsuario Estado { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Guid? RolId { get; set; }
+    public Rol? Rol { get; set; }
 }
