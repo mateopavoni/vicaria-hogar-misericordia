@@ -37,5 +37,10 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
 
         builder.HasIndex(u => u.Email)
             .IsUnique();
+
+        builder.HasOne(u => u.Rol)
+            .WithMany()
+            .HasForeignKey(u => u.RolId)
+            .IsRequired(false);
     }
 }
