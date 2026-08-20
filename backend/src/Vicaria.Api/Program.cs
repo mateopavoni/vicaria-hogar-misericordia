@@ -39,6 +39,8 @@ builder.Services.AddDbContext<VicariaDbContext>(options =>
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IValidator<RegisterDto>, RegisterDtoValidator>();
+builder.Services.AddScoped<IValidator<ApproveUserDto>, ApproveUserDtoValidator>();
+builder.Services.AddScoped<IValidator<RejectUserDto>, RejectUserDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
