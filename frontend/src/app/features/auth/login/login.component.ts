@@ -15,7 +15,6 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
 
-  // pantalla que reemplaza el formulario
   screen = signal<'form' | 'blocked' | 'pending'>('form');
   loading = signal(false);
   showPassword = signal(false);

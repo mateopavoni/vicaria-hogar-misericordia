@@ -20,7 +20,6 @@ export class AuthService {
     );
   }
 
-  // status code -> tipo de error
   mapError(error: HttpErrorResponse): LoginErrorType {
     if (error.status === 401) {
       return 'credentials';

@@ -206,19 +206,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   margin-bottom: 16px;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
 
   &--error {
     background: #fbeaec;
+    color: #c22e3a;
   }
 
   &--info {
     background: #edf2ff;
+    color: #3d5ac4;
   }
 }
 
-// mobile: el panel de la ilustración se oculta, solo queda el formulario
 @media (max-width: 640px) {
   .login-illustration {
     display: none;

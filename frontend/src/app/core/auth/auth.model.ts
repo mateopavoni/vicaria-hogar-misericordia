@@ -19,10 +19,8 @@ export interface LoginResponse {
   user: User;
 }
 
-// qué pantalla mostrar
 export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
 
-// body asumido, no confirmado
 export interface LoginErrorBody {
   estado?: 'Bloqueada' | 'Pending';
   message?: string;

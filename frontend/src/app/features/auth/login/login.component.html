@@ -67,7 +67,12 @@
 
       @if (screen() === 'blocked') {
         <div class="estado-final">
-          <div class="estado-icono estado-icono--error">🔒</div>
+          <div class="estado-icono estado-icono--error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
           <h2>Cuenta bloqueada</h2>
           <p>Superaste el máximo de intentos fallidos. Ya avisamos a los referentes de tu cuenta para que la revisen.</p>
           <button type="button" class="btn-secundario" (click)="goBackToStart()">Volver al inicio</button>
@@ -76,7 +81,12 @@
 
       @if (screen() === 'pending') {
         <div class="estado-final">
-          <div class="estado-icono estado-icono--info">⏳</div>
+          <div class="estado-icono estado-icono--info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
           <h2>Cuenta en espera de aprobación</h2>
           <p>Gracias por registrarte. Un referente revisará tu perfil pronto. Recibirás un correo una vez que seas aprobado.</p>
           <button type="button" class="btn-secundario" (click)="goBackToStart()">Volver al inicio</button>
