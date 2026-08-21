@@ -18,10 +18,10 @@ public class AuthService : IAuthService
     {
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var existe = await _dbContext.Usuarios.AnyAsync(u => u.Email == email, cancellationToken);
-        if (existe)
+        var exists = await _dbContext.Usuarios.AnyAsync(u => u.Email == email, cancellationToken);
+        if (exists)
         {
-            return RegisterResult.EmailDuplicado();
+            return RegisterResult.DuplicateEmail();
         }
 
         var usuario = new Usuario
@@ -54,18 +54,18 @@ public class AuthService : IAuthService
         var usuario = await _dbContext.Usuarios.FindAsync([usuarioId], cancellationToken);
         if (usuario is null)
         {
-            return ApproveUserResult.UsuarioNoEncontrado();
+            return ApproveUserResult.UserNotFound();
         }
 
         if (usuario.Estado != EstadoUsuario.Pending)
         {
-            return ApproveUserResult.EstadoInvalido();
+            return ApproveUserResult.InvalidState();
         }
 
-        var rolExiste = await _dbContext.Roles.AnyAsync(r => r.Id == dto.RolId, cancellationToken);
-        if (!rolExiste)
+        var roleExists = await _dbContext.Roles.AnyAsync(r => r.Id == dto.RolId, cancellationToken);
+        if (!roleExists)
         {
-            return ApproveUserResult.RolInvalido();
+            return ApproveUserResult.InvalidRole();
         }
 
         usuario.Estado = EstadoUsuario.Active;
@@ -90,18 +90,17 @@ public class AuthService : IAuthService
         var usuario = await _dbContext.Usuarios.FindAsync([usuarioId], cancellationToken);
         if (usuario is null)
         {
-            return RejectUserResult.UsuarioNoEncontrado();
+            return RejectUserResult.UserNotFound();
         }
 
         if (usuario.Estado != EstadoUsuario.Pending)
         {
-            return RejectUserResult.EstadoInvalido();
+            return RejectUserResult.InvalidState();
         }
 
         usuario.Estado = EstadoUsuario.Rejected;
 
-        // el motivo no tiene columna propia en el pedido (solo UsuarioId/Accion/EntidadAfectada/Fecha),
-        // se guarda dentro de Accion para no perder el contexto del rechazo
+        // Motivo no tiene columna propia, se guarda en Accion.
         _dbContext.AuditLogs.Add(new AuditLog
         {
             Id = Guid.NewGuid(),

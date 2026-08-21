@@ -2,12 +2,11 @@ namespace Vicaria.Application.Auth;
 
 public enum ApproveUserError
 {
-    UsuarioNoEncontrado,
-    EstadoInvalido,
-    RolInvalido
+    UserNotFound,
+    InvalidState,
+    InvalidRole
 }
 
-// resultado explícito en vez de excepción: son casos de negocio esperados
 public class ApproveUserResult
 {
     public bool Success { get; init; }
@@ -16,12 +15,12 @@ public class ApproveUserResult
 
     public static ApproveUserResult Ok() => new() { Success = true };
 
-    public static ApproveUserResult UsuarioNoEncontrado() =>
-        new() { Success = false, Error = ApproveUserError.UsuarioNoEncontrado, ErrorMessage = "El usuario no existe." };
+    public static ApproveUserResult UserNotFound() =>
+        new() { Success = false, Error = ApproveUserError.UserNotFound, ErrorMessage = "El usuario no existe." };
 
-    public static ApproveUserResult EstadoInvalido() =>
-        new() { Success = false, Error = ApproveUserError.EstadoInvalido, ErrorMessage = "El usuario no está pendiente de aprobación." };
+    public static ApproveUserResult InvalidState() =>
+        new() { Success = false, Error = ApproveUserError.InvalidState, ErrorMessage = "El usuario no está pendiente de aprobación." };
 
-    public static ApproveUserResult RolInvalido() =>
-        new() { Success = false, Error = ApproveUserError.RolInvalido, ErrorMessage = "El rol indicado no existe." };
+    public static ApproveUserResult InvalidRole() =>
+        new() { Success = false, Error = ApproveUserError.InvalidRole, ErrorMessage = "El rol indicado no existe." };
 }

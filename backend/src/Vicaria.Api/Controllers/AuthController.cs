@@ -28,7 +28,6 @@ public class AuthController : ControllerBase
         _rejectValidator = rejectValidator;
     }
 
-    // id del usuario autenticado, seteado en el JWT (ver TestJwtFactory / futuro login de SCRUM-83)
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpPost("register")]
@@ -92,8 +91,8 @@ public class AuthController : ControllerBase
         return result.Error switch
         {
             null => NoContent(),
-            ApproveUserError.UsuarioNoEncontrado => NotFound(new { message = result.ErrorMessage }),
-            ApproveUserError.RolInvalido => BadRequest(new { message = result.ErrorMessage }),
+            ApproveUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            ApproveUserError.InvalidRole => BadRequest(new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
@@ -116,7 +115,7 @@ public class AuthController : ControllerBase
         return result.Error switch
         {
             null => NoContent(),
-            RejectUserError.UsuarioNoEncontrado => NotFound(new { message = result.ErrorMessage }),
+            RejectUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
