@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 
-describe('AuthService.mapearError', () => {
+describe('AuthService.mapError', () => {
   let service: AuthService;
 
   beforeEach(() => {
@@ -10,23 +10,23 @@ describe('AuthService.mapearError', () => {
     service = TestBed.inject(AuthService);
   });
 
-  it('mapea 401 a credenciales', () => {
+  it('mapea 401 a credentials', () => {
     const error = new HttpErrorResponse({ status: 401 });
-    expect(service.mapearError(error)).toBe('credenciales');
+    expect(service.mapError(error)).toBe('credentials');
   });
 
-  it('mapea 403 con estado Bloqueada a bloqueada', () => {
+  it('mapea 403 con estado Bloqueada a blocked', () => {
     const error = new HttpErrorResponse({ status: 403, error: { estado: 'Bloqueada' } });
-    expect(service.mapearError(error)).toBe('bloqueada');
+    expect(service.mapError(error)).toBe('blocked');
   });
 
-  it('mapea 403 con estado Pending a pendiente', () => {
+  it('mapea 403 con estado Pending a pending', () => {
     const error = new HttpErrorResponse({ status: 403, error: { estado: 'Pending' } });
-    expect(service.mapearError(error)).toBe('pendiente');
+    expect(service.mapError(error)).toBe('pending');
   });
 
-  it('mapea cualquier otro caso a desconocido', () => {
+  it('mapea cualquier otro caso a unknown', () => {
     const error = new HttpErrorResponse({ status: 500 });
-    expect(service.mapearError(error)).toBe('desconocido');
+    expect(service.mapError(error)).toBe('unknown');
   });
 });

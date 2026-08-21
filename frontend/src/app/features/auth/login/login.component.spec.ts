@@ -27,9 +27,9 @@ describe('LoginComponent', () => {
     expect(component.form.valid).toBe(true);
   });
 
-  it('toggleMostrarPassword alterna el estado', () => {
-    expect(component.mostrarPassword()).toBe(false);
-    component.toggleMostrarPassword();
-    expect(component.mostrarPassword()).toBe(true);
+  it('togglePasswordVisibility alterna el estado', () => {
+    expect(component.showPassword()).toBe(false);
+    component.togglePasswordVisibility();
+    expect(component.showPassword()).toBe(true);
   });
 });

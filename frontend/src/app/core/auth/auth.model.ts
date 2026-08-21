@@ -1,13 +1,12 @@
-// TODO(SCRUM-83): POST /api/auth/login todavía no existe en el backend.
-// Contrato asumido en base a los claims que ya usa el JWT (id, nombre, email, rol).
-// Confirmar cuando se implemente el endpoint real.
+// TODO(SCRUM-83): endpoint no existe todavía, contrato asumido en base al JWT.
 
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface Usuario {
+// nombre/apellido/rol: claims del JWT, no traducir.
+export interface User {
   id: string;
   nombre: string;
   apellido: string;
@@ -17,13 +16,13 @@ export interface Usuario {
 
 export interface LoginResponse {
   token: string;
-  usuario: Usuario;
+  user: User;
 }
 
-// Estado que le indica al componente qué pantalla mostrar.
-export type LoginErrorTipo = 'credenciales' | 'bloqueada' | 'pendiente' | 'desconocido';
+// qué pantalla mostrar
+export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
 
-// Body asumido para los errores 401/403 (tampoco confirmado todavía).
+// body asumido, no confirmado
 export interface LoginErrorBody {
   estado?: 'Bloqueada' | 'Pending';
   message?: string;
