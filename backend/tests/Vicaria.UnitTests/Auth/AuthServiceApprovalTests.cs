@@ -95,7 +95,7 @@ public class AuthServiceApprovalTests
         var resultado = await service.ApproveUserAsync(Guid.NewGuid(), new ApproveUserDto(rolId), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(ApproveUserError.UsuarioNoEncontrado, resultado.Error);
+        Assert.Equal(ApproveUserError.UserNotFound, resultado.Error);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class AuthServiceApprovalTests
         var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(Guid.NewGuid()), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(ApproveUserError.RolInvalido, resultado.Error);
+        Assert.Equal(ApproveUserError.InvalidRole, resultado.Error);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class AuthServiceApprovalTests
         var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(ApproveUserError.EstadoInvalido, resultado.Error);
+        Assert.Equal(ApproveUserError.InvalidState, resultado.Error);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class AuthServiceApprovalTests
         var resultado = await service.RejectUserAsync(Guid.NewGuid(), new RejectUserDto("motivo"), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(RejectUserError.UsuarioNoEncontrado, resultado.Error);
+        Assert.Equal(RejectUserError.UserNotFound, resultado.Error);
     }
 
     [Fact]
@@ -176,6 +176,6 @@ public class AuthServiceApprovalTests
         var resultado = await service.RejectUserAsync(usuario.Id, new RejectUserDto("otro motivo"), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(RejectUserError.EstadoInvalido, resultado.Error);
+        Assert.Equal(RejectUserError.InvalidState, resultado.Error);
     }
 }

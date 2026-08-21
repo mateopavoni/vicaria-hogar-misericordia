@@ -2,8 +2,8 @@ namespace Vicaria.Application.Auth;
 
 public enum RejectUserError
 {
-    UsuarioNoEncontrado,
-    EstadoInvalido
+    UserNotFound,
+    InvalidState
 }
 
 public class RejectUserResult
@@ -14,9 +14,9 @@ public class RejectUserResult
 
     public static RejectUserResult Ok() => new() { Success = true };
 
-    public static RejectUserResult UsuarioNoEncontrado() =>
-        new() { Success = false, Error = RejectUserError.UsuarioNoEncontrado, ErrorMessage = "El usuario no existe." };
+    public static RejectUserResult UserNotFound() =>
+        new() { Success = false, Error = RejectUserError.UserNotFound, ErrorMessage = "El usuario no existe." };
 
-    public static RejectUserResult EstadoInvalido() =>
-        new() { Success = false, Error = RejectUserError.EstadoInvalido, ErrorMessage = "El usuario no está pendiente de aprobación." };
+    public static RejectUserResult InvalidState() =>
+        new() { Success = false, Error = RejectUserError.InvalidState, ErrorMessage = "El usuario no está pendiente de aprobación." };
 }
