@@ -100,7 +100,6 @@ public class AuthService : IAuthService
 
         usuario.Estado = EstadoUsuario.Rejected;
 
-        // Motivo no tiene columna propia, se guarda en Accion.
         _dbContext.AuditLogs.Add(new AuditLog
         {
             Id = Guid.NewGuid(),
@@ -114,4 +113,26 @@ public class AuthService : IAuthService
 
         return RejectUserResult.Ok();
     }
+    public async Task<LoginResult> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default)
+{
+    var email = dto.Email.Trim().ToLowerInvariant();
+
+    var usuario = await _dbContext.Usuarios
+        .Include(u => u.Rol)
+        .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
+    if (usuario is null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+    {
+        return LoginResult.InvalidCredentials();
+    }
+
+    if (usuario.Estado != EstadoUsuario.Active)
+    {
+        return LoginResult.AccountNotApproved();
+    }
+
+    var rolNombre = usuario.Rol?.Nombre ?? string.Empty;
+
+    return LoginResult.Ok(usuario.Id, $"{usuario.Nombre} {usuario.Apellido}".Trim(), usuario.Email, rolNombre);
+}
 }

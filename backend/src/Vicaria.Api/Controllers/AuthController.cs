@@ -15,17 +15,20 @@ public class AuthController : ControllerBase
     private readonly IValidator<RegisterDto> _validator;
     private readonly IValidator<ApproveUserDto> _approveValidator;
     private readonly IValidator<RejectUserDto> _rejectValidator;
+    private readonly IValidator<LoginDto> _loginValidator;
 
     public AuthController(
         IAuthService authService,
         IValidator<RegisterDto> validator,
         IValidator<ApproveUserDto> approveValidator,
-        IValidator<RejectUserDto> rejectValidator)
+        IValidator<RejectUserDto> rejectValidator,
+        IValidator<LoginDto> loginValidator)
     {
         _authService = authService;
         _validator = validator;
         _approveValidator = approveValidator;
         _rejectValidator = rejectValidator;
+        _loginValidator = loginValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -51,6 +54,34 @@ public class AuthController : ControllerBase
 
         return CreatedAtAction(nameof(Register), new { id = result.UsuarioId }, new { id = result.UsuarioId });
     }
+
+    [HttpPost("login")]
+public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
+{
+    var validationResult = await _loginValidator.ValidateAsync(dto, cancellationToken);
+    if (!validationResult.IsValid)
+    {
+        foreach (var error in validationResult.Errors)
+        {
+            ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+        }
+        return ValidationProblem(ModelState);
+    }
+
+    var result = await _authService.LoginAsync(dto, cancellationToken);
+    if (!result.Success)
+    {
+        return Unauthorized(new { message = result.ErrorMessage });
+    }
+
+    return Ok(new
+    {
+        id = result.UsuarioId,
+        nombre = result.Nombre,
+        email = result.Email,
+        rol = result.Rol
+    });
+}
 
     [HttpGet("me")]
     [Authorize]
