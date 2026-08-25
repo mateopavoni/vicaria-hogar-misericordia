@@ -22,7 +22,7 @@ export class AuthService {
   }
 
   // inicio de sesion
-  
+
   // login(data: LoginRequest): Observable<LoginResponse> {
   //   return this.http.post<LoginResponse>('/api/auth/login', data).pipe(
   //     tap((res) => {
@@ -57,7 +57,8 @@ export class AuthService {
     lastname: 'Pérez',
     email: 'test@ejemplo.com',
     role: 'Referente', // <-- Cambia este valor para probar roles
-  });
+  }
+);
 
   // 2. Método de login simulado que retorna un Observable matching con tu LoginResponse
   login(credentials: LoginRequest): Observable<LoginResponse> {

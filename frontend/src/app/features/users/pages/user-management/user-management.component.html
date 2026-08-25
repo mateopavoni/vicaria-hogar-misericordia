@@ -525,27 +525,6 @@
                     </button>
 
 
-                    <!-- ASIGNAR ROL -->
-
-                    <button
-                      type="button"
-                      (click)="openApproveModal(user)"
-                      class="rounded-md
-                             border
-                             border-[#D5DDF3]
-                             bg-white
-                             px-3 py-1.5
-                             text-[11px]
-                             font-semibold
-                             text-slate-600
-                             transition
-                             hover:bg-slate-50
-                             hover:border-[#6B8DF5]"
-                    >
-                      Asignar Rol
-                    </button>
-
-
                     <!-- RECHAZAR -->
 
                     <button
@@ -802,5 +781,26 @@
     </button>
 
   </div>
+
+    @if (showApproveModal()) {
+
+    <app-approve-user-modal
+      [user]="selectedUser()"
+      (close)="closeModals()"
+      (approve)="approveSelectedUser($event)"
+    />
+}
+     @if (showRejectModal()) {
+
+    <app-reject-user-modal
+      [user]="selectedUser()"
+      (close)="closeModals()"
+      (reject)="rejectSelectedUser($event)"
+    />
+
+
+
+}
+  
 
 </div>
