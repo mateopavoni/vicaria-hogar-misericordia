@@ -1,0 +1,98 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-illustration">
+      <img src="assets/virgen.png" alt="Ilustración Virgen de la Misericordia" />
+      <p>Nuestra señora de la Misericordia</p>
+    </div>
+
+    <div class="login-content">
+     <div class="login-inner">
+      @if (screen() === 'form') {
+        <h1>¡Bienvenido de nuevo!</h1>
+
+        @if (credentialsError()) {
+          <div class="alerta-error" role="alert">{{ credentialsError() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <label class="sr-only" for="email">Correo electrónico</label>
+          <div class="input-wrapper">
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="Correo electrónico"
+              [class.input-error]="form.controls.email.invalid && form.controls.email.touched"
+            />
+          </div>
+
+          <label class="sr-only" for="password">Contraseña</label>
+          <div class="input-wrapper">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Contraseña"
+              [class.input-error]="form.controls.password.invalid && form.controls.password.touched"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            >
+              @if (showPassword()) {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                  <line x1="3" y1="21" x2="21" y2="3" />
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
+            </button>
+          </div>
+
+          <button type="submit" class="btn-primario" [disabled]="loading()">
+            {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
+          </button>
+
+          <a href="#" class="link-olvide">Olvidé mi contraseña</a>
+          <a href="#" class="link-registro">¿No tenés cuenta? <span>Registrarse</span></a>
+        </form>
+      }
+
+      @if (screen() === 'blocked') {
+        <div class="estado-final">
+          <div class="estado-icono estado-icono--error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h2>Cuenta bloqueada</h2>
+          <p>Superaste el máximo de intentos fallidos. Ya avisamos a los referentes de tu cuenta para que la revisen.</p>
+          <button type="button" class="btn-secundario" (click)="goBackToStart()">Volver al inicio</button>
+        </div>
+      }
+
+      @if (screen() === 'pending') {
+        <div class="estado-final">
+          <div class="estado-icono estado-icono--info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <h2>Cuenta en espera de aprobación</h2>
+          <p>Gracias por registrarte. Un referente revisará tu perfil pronto. Recibirás un correo una vez que seas aprobado.</p>
+          <button type="button" class="btn-secundario" (click)="goBackToStart()">Volver al inicio</button>
+        </div>
+      }
+     </div>
+    </div>
+  </div>
+</div>
