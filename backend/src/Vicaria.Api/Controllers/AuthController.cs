@@ -56,32 +56,41 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
-{
-    var validationResult = await _loginValidator.ValidateAsync(dto, cancellationToken);
-    if (!validationResult.IsValid)
+    public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
     {
-        foreach (var error in validationResult.Errors)
+        var validationResult = await _loginValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
         }
-        return ValidationProblem(ModelState);
-    }
 
-    var result = await _authService.LoginAsync(dto, cancellationToken);
-    if (!result.Success)
-    {
-        return Unauthorized(new { message = result.ErrorMessage });
-    }
+        var result = await _authService.LoginAsync(dto, cancellationToken);
+        if (!result.Success)
+        {
+            if (result.Error == LoginError.AccountNotApproved)
+            {
+                return StatusCode(403, new { estado = result.Estado, message = result.ErrorMessage });
+            }
+            return Unauthorized(new { message = result.ErrorMessage });
+        }
 
-    return Ok(new
-    {
-        id = result.UsuarioId,
-        nombre = result.Nombre,
-        email = result.Email,
-        rol = result.Rol
-    });
-}
+        return Ok(new
+        {
+            token = result.Token,
+            user = new
+            {
+                id = result.UsuarioId,
+                nombre = result.Nombre,
+                apellido = result.Apellido,
+                email = result.Email,
+                rol = result.Rol
+            }
+        });
+    }
 
     [HttpGet("me")]
     [Authorize]

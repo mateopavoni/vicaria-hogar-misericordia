@@ -1,4 +1,9 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Vicaria.Application.Auth;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -8,10 +13,12 @@ namespace Vicaria.Infrastructure.Auth;
 public class AuthService : IAuthService
 {
     private readonly VicariaDbContext _dbContext;
+    private readonly IConfiguration? _configuration;
 
-    public AuthService(VicariaDbContext dbContext)
+    public AuthService(VicariaDbContext dbContext, IConfiguration? configuration = null)
     {
         _dbContext = dbContext;
+        _configuration = configuration;
     }
 
     public async Task<RegisterResult> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default)
@@ -113,26 +120,58 @@ public class AuthService : IAuthService
 
         return RejectUserResult.Ok();
     }
+
     public async Task<LoginResult> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default)
-{
-    var email = dto.Email.Trim().ToLowerInvariant();
-
-    var usuario = await _dbContext.Usuarios
-        .Include(u => u.Rol)
-        .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
-
-    if (usuario is null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
     {
-        return LoginResult.InvalidCredentials();
+        var email = dto.Email.Trim().ToLowerInvariant();
+
+        var usuario = await _dbContext.Usuarios
+            .Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
+        if (usuario is null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+        {
+            return LoginResult.InvalidCredentials();
+        }
+
+        if (usuario.Estado != EstadoUsuario.Active)
+        {
+            return LoginResult.AccountNotApproved(usuario.Estado.ToString());
+        }
+
+        var roleName = usuario.Rol?.Nombre ?? string.Empty;
+        var token = GenerateToken(usuario, roleName);
+
+        return LoginResult.Ok(usuario.Id, usuario.Nombre, usuario.Apellido, usuario.Email, roleName, token);
     }
 
-    if (usuario.Estado != EstadoUsuario.Active)
+    // arma el JWT con el mismo esquema que valida Program.cs
+    private string GenerateToken(Usuario user, string role)
     {
-        return LoginResult.AccountNotApproved();
+        if (_configuration is null)
+        {
+            throw new InvalidOperationException("AuthService necesita IConfiguration para emitir el JWT de login.");
+        }
+
+        Claim[] claims =
+        [
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, $"{user.Nombre} {user.Apellido}".Trim()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, role)
+        ];
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? string.Empty));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expirationMinutes = _configuration.GetValue("Jwt:ExpirationMinutes", 60);
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
-
-    var rolNombre = usuario.Rol?.Nombre ?? string.Empty;
-
-    return LoginResult.Ok(usuario.Id, $"{usuario.Nombre} {usuario.Apellido}".Trim(), usuario.Email, rolNombre);
-}
 }
