@@ -178,6 +178,46 @@ public class AuthService : IAuthService
 
         return LoginResult.Ok(usuario.Id, usuario.Nombre, usuario.Apellido, usuario.Email, roleName, token);
     }
+    public async Task<(bool Success, string ErrorMessage)> DeactivateUserAsync(Guid id, Guid actorId, CancellationToken cancellationToken)
+{
+    var user = await _dbContext.Usuarios.FindAsync(new object[] { id }, cancellationToken);
+    if (user == null)
+    {
+        return (false, "Usuario no encontrado.");
+    }
+
+    if (user.Estado == EstadoUsuario.Inactive)
+    {
+        return (false, "El usuario ya se encuentra inactivo.");
+    }
+
+    user.Estado = EstadoUsuario.Inactive;
+    
+    await _dbContext.SaveChangesAsync(cancellationToken);
+    return (true, string.Empty);
+}
+
+public async Task<(bool Success, string ErrorMessage)> ReactivateUserAsync(Guid id, Guid actorId, CancellationToken cancellationToken)
+{
+    var user = await _dbContext.Usuarios.FindAsync(new object[] { id }, cancellationToken);
+    if (user == null)
+    {
+        return (false, "Usuario no encontrado.");
+    }
+
+    if (user.Estado == EstadoUsuario.Active)
+    {
+        return (false, "El usuario ya se encuentra activo.");
+    }
+
+    user.Estado = EstadoUsuario.Active;
+
+    user.FailedLoginAttempts = 0;
+    user.LockoutEnd = null;
+
+    await _dbContext.SaveChangesAsync(cancellationToken);
+    return (true, string.Empty);
+}
 
     // arma el JWT con el mismo esquema que valida Program.cs
     private string GenerateToken(Usuario user, string role)

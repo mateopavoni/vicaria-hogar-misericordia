@@ -163,4 +163,35 @@ public class AuthController : ControllerBase
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
+    [HttpPatch("users/{id}/deactivate")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> DeactivateUser(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _authService.DeactivateUserAsync(id, ActorId, cancellationToken);
+        if (!result.Success)
+        {
+            if (result.ErrorMessage.Contains("no encontrado"))
+                return NotFound(new { message = result.ErrorMessage });
+            
+            return BadRequest(new { message = result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("users/{id}/reactivate")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> ReactivateUser(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _authService.ReactivateUserAsync(id, ActorId, cancellationToken);
+        if (!result.Success)
+        {
+            if (result.ErrorMessage.Contains("no encontrado"))
+                return NotFound(new { message = result.ErrorMessage });
+            
+            return BadRequest(new { message = result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
 }
