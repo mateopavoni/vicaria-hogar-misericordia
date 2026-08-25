@@ -6,4 +6,5 @@ public interface IAuthService
     Task<IReadOnlyList<PendingUserDto>> GetPendingUsersAsync(CancellationToken cancellationToken = default);
     Task<ApproveUserResult> ApproveUserAsync(Guid usuarioId, ApproveUserDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<RejectUserResult> RejectUserAsync(Guid usuarioId, RejectUserDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    Task<LoginResult> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default);
 }
