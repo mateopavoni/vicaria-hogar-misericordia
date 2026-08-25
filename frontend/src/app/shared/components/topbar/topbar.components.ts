@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-topbar',
@@ -6,4 +7,6 @@ import { Component } from '@angular/core';
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.css',
 })
-export class TopbarComponent {}
+export class TopbarComponent {
+  public authService = inject(AuthService);
+}

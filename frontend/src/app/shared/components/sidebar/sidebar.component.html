@@ -197,8 +197,10 @@
     </a>
 
     <!-- Usuarios -->
+     @if (isReferente()) {
+
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/users"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
@@ -224,13 +226,14 @@
 
       <span>Usuarios</span>
     </a>
-
+  }
   </nav>
 
   <!-- Cerrar sesión -->
   <div class="px-4 pb-5">
     <button
       type="button"
+      (click)="onLogout()";
       class="flex h-[42px] w-full items-center gap-4 rounded-lg
              px-6 text-sm font-semibold text-slate-700
              transition-colors hover:bg-slate-50"
