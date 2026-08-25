@@ -1,0 +1,40 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Vicaria.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddRefreshTokenToUsuario : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<string>(
+                name: "RefreshToken",
+                table: "usuario",
+                type: "nvarchar(200)",
+                maxLength: 200,
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "RefreshTokenExpiry",
+                table: "usuario",
+                type: "datetime2",
+                nullable: true);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "RefreshToken",
+                table: "usuario");
+
+            migrationBuilder.DropColumn(
+                name: "RefreshTokenExpiry",
+                table: "usuario");
+        }
+    }
+}

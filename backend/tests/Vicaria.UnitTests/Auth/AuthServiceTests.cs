@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Vicaria.Application.Auth;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Auth;
@@ -16,11 +17,22 @@ public class AuthServiceTests
         return new VicariaDbContext(options);
     }
 
+    private static IConfiguration CrearConfiguration() => new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Jwt:Key"] = "test-signing-key-not-for-production-use-only-in-tests-1234567890",
+            ["Jwt:Issuer"] = "VicariaApi.Tests",
+            ["Jwt:Audience"] = "VicariaApi.Tests",
+            ["Jwt:ExpirationMinutes"] = "1440",
+            ["Jwt:RefreshTokenExpirationDays"] = "7"
+        })
+        .Build();
+
     [Fact]
     public async Task RegisterAsync_ConEmailNuevo_CreaUsuarioYRetornaSuccess()
     {
         using var db = CrearDbContext();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         var dto = new RegisterDto("Ana", "Perez", "ana@mail.com", "password123");
 
         var result = await service.RegisterAsync(dto);
@@ -35,7 +47,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_ConPasswordValido_GuardaHashVerificableConBCrypt()
     {
         using var db = CrearDbContext();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         var dto = new RegisterDto("Ana", "Perez", "ana@mail.com", "password123");
 
         await service.RegisterAsync(dto);
@@ -50,7 +62,7 @@ public class AuthServiceTests
         using var db = CrearDbContext();
         db.Usuarios.Add(new Usuario { Id = Guid.NewGuid(), Nombre = "Ana", Apellido = "Perez", Email = "ana@mail.com", PasswordHash = "x", Estado = EstadoUsuario.Pending, CreatedAt = DateTime.UtcNow });
         await db.SaveChangesAsync();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         var dto = new RegisterDto("Otra Ana", "Gomez", "Ana@Mail.com", "password123");
 
         var result = await service.RegisterAsync(dto);
@@ -63,7 +75,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_NormalizaEmailAMinusculas()
     {
         using var db = CrearDbContext();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         var dto = new RegisterDto("Ana", "Perez", "ANA@MAIL.COM", "password123");
 
         await service.RegisterAsync(dto);
@@ -76,7 +88,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_CreaUsuarioConEstadoPending()
     {
         using var db = CrearDbContext();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         var dto = new RegisterDto("Ana", "Perez", "ana@mail.com", "password123");
 
         await service.RegisterAsync(dto);

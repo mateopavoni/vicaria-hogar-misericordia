@@ -11,4 +11,6 @@ public class Usuario
     public DateTime CreatedAt { get; set; }
     public Guid? RolId { get; set; }
     public Rol? Rol { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiry { get; set; }
 }

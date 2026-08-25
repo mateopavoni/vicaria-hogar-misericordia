@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Vicaria.Application.Auth;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Auth;
@@ -18,6 +19,17 @@ public class AuthServiceApprovalTests
         db.Database.EnsureCreated(); // necesario para que se apliquen los roles sembrados con HasData
         return db;
     }
+
+    private static IConfiguration CrearConfiguration() => new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Jwt:Key"] = "test-signing-key-not-for-production-use-only-in-tests-1234567890",
+            ["Jwt:Issuer"] = "VicariaApi.Tests",
+            ["Jwt:Audience"] = "VicariaApi.Tests",
+            ["Jwt:ExpirationMinutes"] = "1440",
+            ["Jwt:RefreshTokenExpirationDays"] = "7"
+        })
+        .Build();
 
     private static Usuario CrearUsuarioPendiente(VicariaDbContext db)
     {
@@ -45,7 +57,7 @@ public class AuthServiceApprovalTests
         activo.Estado = EstadoUsuario.Active;
         db.SaveChanges();
 
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         var resultado = await service.GetPendingUsersAsync();
 
         var unico = Assert.Single(resultado);
@@ -59,7 +71,7 @@ public class AuthServiceApprovalTests
         var usuario = CrearUsuarioPendiente(db);
         var rolId = db.Roles.First().Id;
         var actorId = Guid.NewGuid();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), actorId);
 
@@ -76,7 +88,7 @@ public class AuthServiceApprovalTests
         var usuario = CrearUsuarioPendiente(db);
         var rolId = db.Roles.First().Id;
         var actorId = Guid.NewGuid();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), actorId);
 
@@ -90,7 +102,7 @@ public class AuthServiceApprovalTests
     {
         using var db = CrearDbContext();
         var rolId = db.Roles.First().Id;
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         var resultado = await service.ApproveUserAsync(Guid.NewGuid(), new ApproveUserDto(rolId), Guid.NewGuid());
 
@@ -103,7 +115,7 @@ public class AuthServiceApprovalTests
     {
         using var db = CrearDbContext();
         var usuario = CrearUsuarioPendiente(db);
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(Guid.NewGuid()), Guid.NewGuid());
 
@@ -117,7 +129,7 @@ public class AuthServiceApprovalTests
         using var db = CrearDbContext();
         var usuario = CrearUsuarioPendiente(db);
         var rolId = db.Roles.First().Id;
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), Guid.NewGuid());
 
         var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), Guid.NewGuid());
@@ -131,7 +143,7 @@ public class AuthServiceApprovalTests
     {
         using var db = CrearDbContext();
         var usuario = CrearUsuarioPendiente(db);
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         var resultado = await service.RejectUserAsync(usuario.Id, new RejectUserDto("no cumple los requisitos"), Guid.NewGuid());
 
@@ -145,7 +157,7 @@ public class AuthServiceApprovalTests
     {
         using var db = CrearDbContext();
         var usuario = CrearUsuarioPendiente(db);
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         await service.RejectUserAsync(usuario.Id, new RejectUserDto("no cumple los requisitos"), Guid.NewGuid());
 
@@ -157,7 +169,7 @@ public class AuthServiceApprovalTests
     public async Task RejectUserAsync_UsuarioNoExiste_RetornaUsuarioNoEncontrado()
     {
         using var db = CrearDbContext();
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
 
         var resultado = await service.RejectUserAsync(Guid.NewGuid(), new RejectUserDto("motivo"), Guid.NewGuid());
 
@@ -170,7 +182,7 @@ public class AuthServiceApprovalTests
     {
         using var db = CrearDbContext();
         var usuario = CrearUsuarioPendiente(db);
-        var service = new AuthService(db);
+        var service = new AuthService(db, CrearConfiguration());
         await service.RejectUserAsync(usuario.Id, new RejectUserDto("motivo"), Guid.NewGuid());
 
         var resultado = await service.RejectUserAsync(usuario.Id, new RejectUserDto("otro motivo"), Guid.NewGuid());

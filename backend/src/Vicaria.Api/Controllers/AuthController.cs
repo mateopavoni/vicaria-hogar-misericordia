@@ -15,17 +15,23 @@ public class AuthController : ControllerBase
     private readonly IValidator<RegisterDto> _validator;
     private readonly IValidator<ApproveUserDto> _approveValidator;
     private readonly IValidator<RejectUserDto> _rejectValidator;
+    private readonly IValidator<LoginDto> _loginValidator;
+    private readonly IValidator<RefreshTokenDto> _refreshValidator;
 
     public AuthController(
         IAuthService authService,
         IValidator<RegisterDto> validator,
         IValidator<ApproveUserDto> approveValidator,
-        IValidator<RejectUserDto> rejectValidator)
+        IValidator<RejectUserDto> rejectValidator,
+        IValidator<LoginDto> loginValidator,
+        IValidator<RefreshTokenDto> refreshValidator)
     {
         _authService = authService;
         _validator = validator;
         _approveValidator = approveValidator;
         _rejectValidator = rejectValidator;
+        _loginValidator = loginValidator;
+        _refreshValidator = refreshValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -50,6 +56,65 @@ public class AuthController : ControllerBase
         }
 
         return CreatedAtAction(nameof(Register), new { id = result.UsuarioId }, new { id = result.UsuarioId });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _loginValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _authService.LoginAsync(dto, cancellationToken);
+        return result.Error switch
+        {
+            null => Ok(new { accessToken = result.AccessToken, refreshToken = result.RefreshToken }),
+            LoginError.UserNotFound => Unauthorized(new { message = result.ErrorMessage }),
+            LoginError.InvalidCredentials => Unauthorized(new { message = result.ErrorMessage }),
+            LoginError.InvalidState => StatusCode(403, new { message = result.ErrorMessage }),
+            _ => StatusCode(500, new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _refreshValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _authService.RefreshTokenAsync(dto, cancellationToken);
+        return result.Error switch
+        {
+            null => Ok(new { accessToken = result.AccessToken, refreshToken = result.RefreshToken }),
+            RefreshTokenError.InvalidRefreshToken => Unauthorized(new { message = result.ErrorMessage }),
+            RefreshTokenError.RefreshTokenExpired => Unauthorized(new { message = result.ErrorMessage }),
+            _ => StatusCode(500, new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var result = await _authService.LogoutAsync(ActorId, cancellationToken);
+        if (!result.Success)
+        {
+            return Conflict(new { message = result.ErrorMessage });
+        }
+        return NoContent();
     }
 
     [HttpGet("me")]

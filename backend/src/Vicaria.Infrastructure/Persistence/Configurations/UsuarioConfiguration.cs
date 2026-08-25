@@ -38,6 +38,11 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.HasIndex(u => u.Email)
             .IsUnique();
 
+        builder.Property(u => u.RefreshToken)
+            .HasMaxLength(200);
+
+        builder.Property(u => u.RefreshTokenExpiry);
+
         builder.HasOne(u => u.Rol)
             .WithMany()
             .HasForeignKey(u => u.RolId)
