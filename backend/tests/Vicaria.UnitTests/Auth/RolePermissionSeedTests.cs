@@ -4,7 +4,7 @@ using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.UnitTests.Auth;
 
-public class RolPermissionSeedTests
+public class RolePermissionSeedTests
 {
     [Fact]
     public async Task DirectoraDeCasona_TienePermisosDeFichasYAgenda()
@@ -16,14 +16,14 @@ public class RolPermissionSeedTests
         db.Database.EnsureCreated();
 
         var directora = await db.Roles.SingleAsync(r => r.Nombre == RolNombres.DirectoraDeCasona);
-        var codigos = await db.RolPermissions
+        var codes = await db.RolePermissions
             .Where(rp => rp.RolId == directora.Id)
-            .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Codigo)
+            .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Code)
             .ToListAsync();
 
-        Assert.Equal(3, codigos.Count);
-        Assert.Contains(PermissionNombres.VerFichasResidentesCasaConvivencia, codigos);
-        Assert.Contains(PermissionNombres.CargarObservacionesResidentes, codigos);
-        Assert.Contains(PermissionNombres.VerAgendaMedicamentos, codigos);
+        Assert.Equal(3, codes.Count);
+        Assert.Contains(PermissionNames.ViewCasaConvivenciaResidentRecords, codes);
+        Assert.Contains(PermissionNames.LoadResidentObservations, codes);
+        Assert.Contains(PermissionNames.ViewMedicationSchedule, codes);
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Vicaria.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddPermissionsAndRolPermissions : Migration
+    public partial class AddPermissionsAndRolePermissions : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,7 @@ namespace Vicaria.Infrastructure.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Codigo = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                    Code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,7 +39,7 @@ namespace Vicaria.Infrastructure.Persistence.Migrations
 
             migrationBuilder.InsertData(
                 table: "permission",
-                columns: new[] { "Id", "Codigo" },
+                columns: new[] { "Id", "Code" },
                 values: new object[,]
                 {
                     { new Guid("44444444-4444-4444-4444-444444444444"), "VerFichasResidentesCasaConvivencia" },
@@ -58,9 +58,9 @@ namespace Vicaria.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_permission_Codigo",
+                name: "IX_permission_Code",
                 table: "permission",
-                column: "Codigo",
+                column: "Code",
                 unique: true);
         }
 

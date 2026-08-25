@@ -12,8 +12,8 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    [Migration("20260825154026_AddPermissionsAndRolPermissions")]
-    partial class AddPermissionsAndRolPermissions
+    [Migration("20260825161022_AddPermissionsAndRolePermissions")]
+    partial class AddPermissionsAndRolePermissions
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,14 +58,14 @@ namespace Vicaria.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Codigo")
+                    b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Codigo")
+                    b.HasIndex("Code")
                         .IsUnique();
 
                     b.ToTable("permission", (string)null);
@@ -74,17 +74,17 @@ namespace Vicaria.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            Codigo = "VerFichasResidentesCasaConvivencia"
+                            Code = "VerFichasResidentesCasaConvivencia"
                         },
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            Codigo = "CargarObservacionesResidentes"
+                            Code = "CargarObservacionesResidentes"
                         },
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666666666666"),
-                            Codigo = "VerAgendaMedicamentos"
+                            Code = "VerAgendaMedicamentos"
                         });
                 });
 
@@ -124,7 +124,7 @@ namespace Vicaria.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Vicaria.Domain.Entities.RolPermission", b =>
+            modelBuilder.Entity("Vicaria.Domain.Entities.RolePermission", b =>
                 {
                     b.Property<Guid>("RolId")
                         .HasColumnType("uuid");

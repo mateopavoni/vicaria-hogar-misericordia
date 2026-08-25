@@ -13,7 +13,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Permission> Permissions => Set<Permission>();
-    public DbSet<RolPermission> RolPermissions => Set<RolPermission>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
