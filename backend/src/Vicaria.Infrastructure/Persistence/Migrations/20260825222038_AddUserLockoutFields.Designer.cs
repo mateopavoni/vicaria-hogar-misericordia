@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vicaria.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    partial class VicariaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825222038_AddUserLockoutFields")]
+    partial class AddUserLockoutFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

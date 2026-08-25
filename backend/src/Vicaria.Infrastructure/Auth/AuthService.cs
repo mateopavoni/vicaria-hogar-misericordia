@@ -129,14 +129,48 @@ public class AuthService : IAuthService
             .Include(u => u.Rol)
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
-        if (usuario is null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+        if (usuario is null)
         {
+            return LoginResult.InvalidCredentials();
+        }
+
+        if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
+        {
+            return LoginResult.AccountLocked(usuario.LockoutEnd.Value);
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+        {
+            usuario.FailedLoginAttempts++;
+
+            if (usuario.FailedLoginAttempts >= 5)
+            {
+                usuario.LockoutEnd = DateTime.UtcNow.AddMinutes(30);
+
+                _dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UsuarioId = usuario.Id,
+                    Accion = "Cuenta bloqueada: 5 intentos fallidos",
+                    EntidadAfectada = $"Usuario:{usuario.Id}",
+                    Fecha = DateTime.UtcNow
+                });
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return LoginResult.InvalidCredentials();
         }
 
         if (usuario.Estado != EstadoUsuario.Active)
         {
             return LoginResult.AccountNotApproved(usuario.Estado.ToString());
+        }
+
+        if (usuario.FailedLoginAttempts > 0 || usuario.LockoutEnd.HasValue)
+        {
+            usuario.FailedLoginAttempts = 0;
+            usuario.LockoutEnd = null;
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         var roleName = usuario.Rol?.Nombre ?? string.Empty;

@@ -11,4 +11,6 @@ public class Usuario
     public DateTime CreatedAt { get; set; }
     public Guid? RolId { get; set; }
     public Rol? Rol { get; set; }
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
 }

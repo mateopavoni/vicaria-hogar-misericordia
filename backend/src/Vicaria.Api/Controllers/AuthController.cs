@@ -75,6 +75,10 @@ public class AuthController : ControllerBase
             {
                 return StatusCode(403, new { estado = result.Estado, message = result.ErrorMessage });
             }
+            if (result.Error == LoginError.AccountLocked)
+            {
+                return StatusCode(403, new { message = result.ErrorMessage, lockoutEnd = result.LockoutEnd });
+            }
             return Unauthorized(new { message = result.ErrorMessage });
         }
 
