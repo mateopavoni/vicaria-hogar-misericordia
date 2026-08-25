@@ -18,7 +18,7 @@ export class UserManagementComponent {
   private usersService = inject(UsersService);
 
 
-  users = signal<ManagedUser[]>([]);
+  // users = signal<ManagedUser[]>([]);
 
   loading = signal(false);
 
@@ -41,12 +41,24 @@ export class UserManagementComponent {
 
   showRejectModal = signal(false);
 
+// VAMOS A MOSTRAR UN DATO MOCKEADO HASTA QUE SE HAGA EL BACKEND, PARA PODER MOSTRAR LA TABLA DE USUARIOS
+  // ngOnInit(): void {
 
-  ngOnInit(): void {
+  //   this.loadUsers();
 
-    this.loadUsers();
-
+  // }
+  users = signal<ManagedUser[]>([
+  {
+    id: '1',
+    name: 'Antonio',
+    lastname: 'Sanchez',
+    email: 'anr.sanch@gmail.com',
+    requestType: 'Voluntario',
+    requestDate: '2026-05-17',
+    status: 'Pending',
+    role: null
   }
+]);
 
 
   loadUsers(): void {

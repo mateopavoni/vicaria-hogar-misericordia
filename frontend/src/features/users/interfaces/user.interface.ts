@@ -12,7 +12,8 @@ export interface ManagedUser {
 export type UserStatus =
   | 'Pending'
   | 'Approved'
-  | 'Suspended';
+  | 'Suspended'
+  | 'Blocked';
 
 export type UserRole =
   | 'Referente'

@@ -8,7 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { LoginErrorType } from '../../../../core/auth/auth.interfaces';
+import { LoginErrorType, LoginRequest } from '../../../../core/auth/auth.interfaces';
 import { AuthLayoutComponent } from '../../auth-layout/auth-layout.component';
 
 @Component({
@@ -94,77 +94,89 @@ export class LoginComponent {
   }
 
 
-    private handleError(
-      type: LoginErrorType
-    ): void {
+    private handleError(type: LoginErrorType): void {
+  switch (type) {
+    case 'blocked':
+      this.router.navigate(['/auth/blocked']);
+      break;
 
-      switch (type) {
+    case 'pending':
+      
+      this.router.navigate(['/auth/pending-approval']);
+      break;
 
-        case 'blocked':
+    case 'credentials':
+      this.credentialsError.set(
+        'Correo o contraseña incorrectos.'
+      );
+      break;
 
-          this.router.navigate([
-            '/auth/blocked'
-          ]);
+    default:
+      this.credentialsError.set(
+        'No pudimos iniciar sesión. Probá de nuevo en unos minutos.'
+      );
+      break;
+  }
+}
 
-          break;
-
-
-        case 'pending':
-
-          this.router.navigate([
-            '/auth/pending-approval'
-          ]);
-
-          break;
-
-
-        case 'credentials':
-
-          this.credentialsError.set(
-            'Correo o contraseña incorrectos.'
-          );
-
-          break;
-
-
-        default:
-
-          this.credentialsError.set(
-            'No pudimos iniciar sesión. Probá de nuevo en unos minutos.'
-          );
-
-          break;
-
-      }
-
-    }
-
-
-  private redirectByRole(
-    role: string | null
-  ): void {
+  private redirectByRole(role: string | null): void {
 
     switch (role) {
 
-      case 'admin':
+      case 'Referente':
 
         this.router.navigate([
-          'auth/dashboard'
+          '/dashboard/users'
+        ]);
+        break;
+
+      case 'Directora de Casona':
+
+        this.router.navigate([
+          '/dashboard'
         ]);
 
+        break;
+
+      case 'Escucha':
+
+        this.router.navigate([
+          '/dashboard'
+        ]);
+        
         break;
 
 
       default:
 
         this.router.navigate([
-          'auth/dashboard'
+          '/dashboard'
         ]);
 
         break;
 
     }
 
+  }
+;
+
+  // Método para simular el inicio de sesión según el rol seleccionado
+  testLogin(role: string) {
+    const credentials: LoginRequest = {
+      email: 'test@ejemplo.com',
+      password: 'password123'
+    };
+
+    // Actualizamos temporalmente el rol en la prueba
+    this.authService.setMockRole(role);
+
+    this.authService.login(credentials).subscribe({
+      next: () => {
+        // Redirige al dashboard tras el login simulado
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => console.error('Error en login simulado:', err)
+    });
   }
 
 }

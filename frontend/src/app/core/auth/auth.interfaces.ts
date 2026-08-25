@@ -27,7 +27,7 @@ export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
 
 
 export interface LoginErrorBody {
-  estado?: 'Bloqueada' | 'Pending';
+  estado?: 'Blocked' | 'Pending';
   message?: string;
 }
 

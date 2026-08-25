@@ -10,11 +10,11 @@ export const referenteGuard: CanActivateFn = () => {
   const user = authService.user();
 
   if (!user) {
-    return router.createUrlTree(['/auth/login']);
+    return router.createUrlTree(['auth/login']);
   }
 
   if (user.role !== 'Referente') {
-    return router.createUrlTree(['/dashboard']);
+    return router.createUrlTree(['dashboard']);
   }
 
   return true;
