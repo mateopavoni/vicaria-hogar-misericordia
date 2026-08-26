@@ -107,22 +107,22 @@ Organizadas por épica/sprint según la planificación del proyecto:
 ---
 ## Estado actual
 
-**Último relevamiento del código real (rama `dev-backend`):**
+**Último relevamiento del código real (rama `dev`, 2026-08-26):**
 
-✅ **Completo:**
-- RF-01 (registro y aprobación de cuenta): registro, listado de pendientes, aprobar, rechazar, con auditoría.
-- RF-03 (roles diferenciados): 3 roles definidos y autorización por rol probada con tests.
-- Entidades base: `Usuario`, `Rol`, `AuditLog`.
+✅ **Completo, backend y frontend conectados de punta a punta (no mockeado):**
+- RF-01 (registro y aprobación de cuenta): registro, listado de pendientes, aprobar, rechazar, con auditoría y notificación a referentes.
+- RF-02 (login/JWT): `LoginAsync`, `POST /api/auth/login`, `refresh`, `logout`. Bloqueo de cuenta tras 5 intentos fallidos con notificación a referentes. Expiración de sesión resuelta con refresh token configurable (`Jwt:RefreshTokenExpirationDays`).
+- RF-03 (roles diferenciados): 4 roles (Referente, DirectoraDeCasona, Escucha, CoordinadorDeCasaConvivencia), tabla de permisos (`Permission`/`RolePermission`), reasignación de rol desde el panel.
+- RF-04 (desactivación de cuentas): activar/desactivar con auditoría, listado real de usuarios activos/inactivos en el panel.
+- RF-19 (notificaciones internas): cuenta pendiente y cuenta bloqueada, panel de notificaciones en el front con marcado individual y masivo como leídas.
+- CORS configurado (`Cors:AllowedOrigins` por ambiente).
+- Migración de motor de BD: Postgres → SQL Server, completa.
+- Frontend: login, registro, pending-approval y gestión de usuarios (pendientes/activos/suspendidos) conectados al backend real, con interceptor de auth y persistencia de sesión.
 
 ❌ **Pendiente:**
-
-- **RF-02 — Login/JWT: no existe.** No hay `LoginAsync`, ni DTO de login, ni endpoint `POST /api/auth/login`. Solo está configurada la validación del JWT (middleware), no la emisión.
-- **RF-02 — Bloqueo tras 5 intentos fallidos:** faltan los campos `IntentosFallidos` y `BloqueadoHasta` en la entidad `Usuario` (sí están en el diagrama de clases original).
-- **RF-02 — Expiración de sesión por inactividad:** no resuelto, requiere decisión de diseño (refresh token vs. tracking de actividad).
-- **RF-04 — Desactivación de cuentas:** el estado `Inactive` existe en el enum pero no hay endpoint ni lógica para pasarlo.
-- **RF-19 — Notificaciones internas:** no iniciado.
-- **CORS:** no configurado — bloqueante para integrar con el frontend Angular cuando llegue el momento.
-- **Migración de motor de BD:** Postgres → SQL Server pendiente de ejecutar (ver sección Stack).
+- Filtrado de fichas por tipo de persona (SCRUM-88) — bloqueado, la entidad `Ficha` todavía no existe (otro épica).
+- Listado general de usuarios con paginación y filtro por fecha (hoy el listado de pendientes/activos/inactivos no pagina).
+- Tests automatizados de frontend.
 
 *(Actualizar a medida que avanze el proyecto y los sprints)*
 

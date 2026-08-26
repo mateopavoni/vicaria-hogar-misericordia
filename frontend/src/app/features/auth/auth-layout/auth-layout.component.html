@@ -1,0 +1,30 @@
+<div class="flex min-h-screen bg-white">
+
+  <!-- PANEL IZQUIERDO -->
+  <section
+    class="hidden w-1/2 flex-col items-center justify-center bg-[#EEF2FF] lg:flex"
+  >
+    <img
+      src="assets/Logo-NuestraSeniora.png"
+      alt="Nuestra Señora de la Misericordia"
+      class="h-[550px] w-auto object-contain"
+    />
+
+    <h1
+      class="-mt-16 text-center text-[27px] font-semibold leading-tight text-[#4F73E8]"
+    >
+      Nuestra Señora<br />
+      de la Misericordia
+    </h1>
+  </section>
+
+  <!-- PANEL DERECHO -->
+  <main
+    class="flex min-h-screen w-full items-center justify-center px-6 lg:w-1/2"
+  >
+    <div class="w-full max-w-[390px]">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+</div>
