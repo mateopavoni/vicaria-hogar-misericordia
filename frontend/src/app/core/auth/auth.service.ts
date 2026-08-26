@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { delay, Observable, of, tap } from 'rxjs';
 import { LoginErrorBody, LoginErrorType, LoginRequest, LoginResponse, RegisterRequest, User } from './auth.interfaces';
 import { Router } from '@angular/router';
+import { UserRole } from './userRole';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -101,7 +102,7 @@ export class AuthService {
 }
 
   // 4. Helper opcional para cambiar de rol rápidamente desde el código de pruebas
-  setMockRole(role: string | null): void {
+  setMockRole(role: UserRole | null): void {
     this.user.update((currentUser) =>
       currentUser ? { ...currentUser, role } : null
     );

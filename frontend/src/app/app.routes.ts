@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { permissionGuard } from './core/guards/permission.guard';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
 
@@ -20,7 +22,7 @@ export const routes: Routes = [
   // SISTEMA PRINCIPAL
   {
     path: 'dashboard',
-    // canActivate: [authGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./shared/layout/layout.component')
         .then(m => m.LayoutComponent),
@@ -28,20 +30,30 @@ export const routes: Routes = [
     children: [
       {
         path: 'users',
-        // canActivate: [referenteGuard],
+
         loadComponent: () =>
-          import(
-            './features/users/pages/user-management/user-management.component'
-          ).then(m => m.UserManagementComponent)
+          import('./features/users/pages/user-management/user-management.component')
+            .then(m => m.UserManagementComponent),
+
+        canActivate: [
+          permissionGuard('users.view')
+        ]
       },
     ],
   },
 
-  // CUALQUIER RUTA DESCONOCIDA (Redirige al login de auth)
   {
-    path: '**',
-    redirectTo: 'auth/login',
-  },
+  path: 'access-denied',
+
+  loadComponent: () =>
+    import('./shared/components/access-denied/access-denied.component')
+      .then(m => m.AccessDeniedComponent),
+   },
+  // CUALQUIER RUTA DESCONOCIDA (Redirige al login de auth)
+  // {
+  //   path: '**',
+  //   redirectTo: 'auth/login',
+  // },
 
 ];
 

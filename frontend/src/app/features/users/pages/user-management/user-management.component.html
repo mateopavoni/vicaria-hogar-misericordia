@@ -205,6 +205,8 @@
           <input
             id="dateFrom"
             type="date"
+            [value]="dateFrom()"
+            (change)="setDateFrom($any($event.target).value)"
             class="h-[34px]
                    rounded-md
                    border border-[#D5DDF3]
@@ -238,6 +240,8 @@
           <input
             id="dateTo"
             type="date"
+            [value]="dateTo()"
+            (change)="setDateTo($any($event.target).value)"           
             class="h-[34px]
                    rounded-md
                    border border-[#D5DDF3]
@@ -258,6 +262,7 @@
 
         <button
           type="button"
+          (click)="applyFilters()"
           class="h-[34px]
                  rounded-md
                  bg-[#6B8DF5]
@@ -276,6 +281,7 @@
 
         <button
           type="button"
+        (click)="clearFilters()"
           class="h-[34px]
                  rounded-md
                  border border-[#D5DDF3]
@@ -342,7 +348,7 @@
                      font-bold
                      text-slate-700"
             >
-              Usuario
+              Nombre y Apellido
             </th>
 
             <th
@@ -352,7 +358,7 @@
                      font-bold
                      text-slate-700"
             >
-              Solicitud
+              Email
             </th>
 
             <th
@@ -367,10 +373,11 @@
 
             <th
               class="px-6 py-3
-                     text-right
+                     text-center
                      text-[11px]
                      font-bold
                      text-slate-700"
+                    
             >
               Acciones
             </th>
@@ -458,27 +465,19 @@
                       {{ user.lastname }}
                     </p>
 
-                    <p
-                      class="mt-1
-                             text-[9px]
-                             text-slate-400"
-                    >
-                      {{ user.email }}
-                    </p>
-
                   </div>
 
                 </td>
 
 
-                <!-- SOLICITUD -->
+                <!-- Email -->
 
                 <td
                   class="px-6 py-3
                          text-[11px]
                          text-slate-600"
                 >
-                  {{ user.requestType }}
+                  {{ user.email }}
                 </td>
 
 
@@ -501,7 +500,7 @@
 
                   <div
                     class="flex
-                           justify-end
+                           justify-center
                            gap-2"
                   >
 

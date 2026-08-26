@@ -1,19 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-import {
-  ManagedUser,
-  UserStatus,
-  ApproveUserRequest,
-  RejectUserRequest
-} from '../interfaces/user.interface';
+import {ManagedUser, UserStatus,ApproveUserRequest, RejectUserRequest} from '../interfaces/user.interface';
+import { UsersFilters } from '../interfaces/UsersFilters.interface';
 
 export interface UsersResponse {
   items: ManagedUser[];
   total: number;
   totalPages: number;
 }
+
 
 @Injectable({
   providedIn: 'root'
@@ -25,26 +21,31 @@ export class UsersService {
   private readonly apiUrl = '/api/users';
 
 
-  getUsers(
-    status: UserStatus,
-    page: number
-  ): Observable<UsersResponse> {
+  getUsers(status: UserStatus,page: number,filters?: UsersFilters): Observable<UsersResponse> {
 
-    let params = new HttpParams()
-      .set('status', status)
-      .set('page', page);
+  let params = new HttpParams()
+    .set('status', status)
+    .set('page', page);
 
-    return this.http.get<UsersResponse>(
-      this.apiUrl,
-      { params }
-    );
+  if (filters?.dateFrom) {
+    params = params.set('dateFrom', filters.dateFrom);
   }
 
+  if (filters?.dateTo) {
+    params = params.set('dateTo', filters.dateTo);
+  }
 
-  approveUser(
-    userId: string,
-    data: ApproveUserRequest
-  ): Observable<void> {
+  return this.http.get<UsersResponse>(
+    this.apiUrl,
+    { params }
+  );
+  
+}
+
+
+
+
+  approveUser(userId: string,data: ApproveUserRequest): Observable<void> {
 
     return this.http.patch<void>(
       `${this.apiUrl}/${userId}/approve`,
@@ -53,10 +54,7 @@ export class UsersService {
   }
 
 
-  rejectUser(
-    userId: string,
-    data: RejectUserRequest
-  ): Observable<void> {
+  rejectUser(userId: string, data: RejectUserRequest): Observable<void> {
 
     return this.http.patch<void>(
       `${this.apiUrl}/${userId}/reject`,

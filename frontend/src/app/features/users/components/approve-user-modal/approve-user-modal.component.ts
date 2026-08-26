@@ -1,15 +1,6 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  signal
-} from '@angular/core';
-
-import {
-  ManagedUser,
-  UserRole
-} from '../../interfaces/user.interface';
+import {Component,EventEmitter,Input,Output,signal} from '@angular/core';
+import {ManagedUser} from '../../interfaces/user.interface';
+import {UserRole} from './../../../../core/auth/userRole';
 
 @Component({
   selector: 'app-approve-user-modal',
@@ -30,7 +21,7 @@ export class ApproveUserModalComponent {
 
   roles: UserRole[] = [
     'Referente',
-    'Directora de Casona',
+    'DirectoradeCasona',
     'Escucha'
   ];
 

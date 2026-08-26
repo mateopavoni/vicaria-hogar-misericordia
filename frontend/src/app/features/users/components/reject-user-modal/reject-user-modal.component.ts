@@ -1,10 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  signal
-} from '@angular/core';
+import {Component,EventEmitter,Input,Output,signal} from '@angular/core';
 
 import { ManagedUser } from '../../interfaces/user.interface';
 

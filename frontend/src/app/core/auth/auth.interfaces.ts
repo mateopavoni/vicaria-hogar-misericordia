@@ -1,3 +1,4 @@
+import { UserRole } from "../../core/auth/userRole";
 
 export interface LoginRequest {
   email: string;
@@ -15,7 +16,7 @@ export interface User {
   name: string;
   lastname: string;
   email: string;
-  role: string | null;
+  role: UserRole | null;
 }
 
 export interface LoginResponse {
