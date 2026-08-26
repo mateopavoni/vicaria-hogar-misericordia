@@ -11,4 +11,9 @@ public class Usuario
     public DateTime CreatedAt { get; set; }
     public Guid? RolId { get; set; }
     public Rol? Rol { get; set; }
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEnd { get; set; }
+    // hasheado igual que la password, nunca se guarda en texto plano
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiry { get; set; }
 }

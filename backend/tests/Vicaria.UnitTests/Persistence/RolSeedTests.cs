@@ -18,15 +18,16 @@ public class RolSeedTests
     }
 
     [Fact]
-    public void SeedTieneLosTresRolesEsperados()
+    public void SeedTieneLosCuatroRolesEsperados()
     {
         using var db = CrearDbContext();
 
         var nombres = db.Roles.Select(r => r.Nombre).ToList();
 
-        Assert.Equal(3, nombres.Count);
+        Assert.Equal(4, nombres.Count);
         Assert.Contains(RolNombres.Referente, nombres);
         Assert.Contains(RolNombres.DirectoraDeCasona, nombres);
         Assert.Contains(RolNombres.Escucha, nombres);
+        Assert.Contains(RolNombres.CoordinadorDeCasaConvivencia, nombres);
     }
 }

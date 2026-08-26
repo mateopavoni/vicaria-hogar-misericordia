@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Vicaria.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    partial class VicariaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826040708_AddRefreshTokenToUsuario")]
+    partial class AddRefreshTokenToUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,43 +50,6 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("audit_logs", (string)null);
-                });
-
-            modelBuilder.Entity("Vicaria.Domain.Entities.Notification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LinkUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("TargetRole")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TargetRole", "IsRead");
-
-                    b.ToTable("notifications", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Permission", b =>
@@ -155,11 +121,6 @@ namespace Vicaria.Infrastructure.Migrations
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
                             Nombre = "Escucha"
-                        },
-                        new
-                        {
-                            Id = new Guid("77777777-7777-7777-7777-777777777777"),
-                            Nombre = "CoordinadorDeCasaConvivencia"
                         });
                 });
 
@@ -189,21 +150,6 @@ namespace Vicaria.Infrastructure.Migrations
                         new
                         {
                             RolId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            PermissionId = new Guid("66666666-6666-6666-6666-666666666666")
-                        },
-                        new
-                        {
-                            RolId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            PermissionId = new Guid("44444444-4444-4444-4444-444444444444")
-                        },
-                        new
-                        {
-                            RolId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            PermissionId = new Guid("55555555-5555-5555-5555-555555555555")
-                        },
-                        new
-                        {
-                            RolId = new Guid("77777777-7777-7777-7777-777777777777"),
                             PermissionId = new Guid("66666666-6666-6666-6666-666666666666")
                         });
                 });
