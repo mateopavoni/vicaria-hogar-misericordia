@@ -70,8 +70,56 @@ public class AuthService : IAuthService
     {
         return await _dbContext.Usuarios
             .Where(u => u.Estado == EstadoUsuario.Pending)
-            .Select(u => new PendingUserDto(u.Id, u.Email, u.CreatedAt))
+            .Select(u => new PendingUserDto(u.Id, u.Nombre, u.Apellido, u.Email, u.CreatedAt))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ManagedUserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
+    {
+        return await GetUsersByEstadoAsync(EstadoUsuario.Active, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ManagedUserDto>> GetInactiveUsersAsync(CancellationToken cancellationToken = default)
+    {
+        return await GetUsersByEstadoAsync(EstadoUsuario.Inactive, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<ManagedUserDto>> GetUsersByEstadoAsync(EstadoUsuario estado, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Usuarios
+            .Include(u => u.Rol)
+            .Where(u => u.Estado == estado)
+            .Select(u => new ManagedUserDto(u.Id, u.Nombre, u.Apellido, u.Email, u.Rol != null ? u.Rol.Nombre : null))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<UserStatusResult> UpdateUserRoleAsync(Guid usuarioId, Guid rolId, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var usuario = await _dbContext.Usuarios.FindAsync([usuarioId], cancellationToken);
+        if (usuario is null)
+        {
+            return UserStatusResult.UserNotFound();
+        }
+
+        var roleExists = await _dbContext.Roles.AnyAsync(r => r.Id == rolId, cancellationToken);
+        if (!roleExists)
+        {
+            return UserStatusResult.UserNotFound();
+        }
+
+        usuario.RolId = rolId;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UsuarioId = actorId,
+            Accion = "Rol reasignado",
+            EntidadAfectada = $"Usuario:{usuario.Id}",
+            Fecha = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return UserStatusResult.Ok();
     }
 
     public async Task<ApproveUserResult> ApproveUserAsync(Guid usuarioId, ApproveUserDto dto, Guid actorId, CancellationToken cancellationToken = default)

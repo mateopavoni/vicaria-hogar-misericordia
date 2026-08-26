@@ -43,4 +43,18 @@ public class NotificationController : ControllerBase
         }
         return NoContent();
     }
+
+    [HttpPatch("read-all")]
+    [Authorize]
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
+    {
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (string.IsNullOrEmpty(role))
+        {
+            return Forbid();
+        }
+
+        await _notificationService.MarkAllAsReadAsync(role, cancellationToken);
+        return NoContent();
+    }
 }
