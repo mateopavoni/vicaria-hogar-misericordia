@@ -32,7 +32,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDbContext<VicariaDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("VicariaDb")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("VicariaDb")));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IValidator<RegisterDto>, RegisterDtoValidator>();
