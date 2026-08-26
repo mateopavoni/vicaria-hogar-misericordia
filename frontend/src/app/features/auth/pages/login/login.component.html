@@ -1,0 +1,293 @@
+<div class="rounded-2xl border border-[#E3E8F5] bg-white p-8 shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+
+  <div class="mb-8 text-center">
+    <h2 class="text-[25px] font-bold text-slate-950">
+      ¡Bienvenido de nuevo!
+    </h2>
+  </div>
+  @if (credentialsError()) {
+  <div
+    class="mb-4 rounded-md bg-red-50 px-4 py-3
+           text-[13px] font-semibold text-red-600"
+    role="alert"
+  >
+    {{ credentialsError() }}
+  </div>
+  }
+      <!-- FORMULARIO -->
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        class="space-y-4"
+      > 
+
+
+        <!-- EMAIL -->
+        <label
+          for="email"
+          class="mb-2 block text-[14px] font-semibold
+                 text-slate-700"
+        >
+          Correo electrónico
+        </label>
+        <div class="relative">
+        <svg
+          class="absolute left-3 top-1/2 h-5 w-5
+                -translate-y-1/2 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+
+          <path
+            d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"
+          ></path>
+        </svg>
+
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Correo electrónico"
+          class="h-[42px] w-full rounded-md
+                border bg-white
+                pl-12 pr-4
+                text-[14px]
+                text-slate-700
+                outline-none
+                placeholder:text-slate-400
+                focus:border-[#6B8DF5]
+                focus:ring-1 focus:ring-[#6B8DF5]"
+          [class.border-red-500]="
+            form.controls.email.invalid &&
+            form.controls.email.touched
+          "
+          [class.border-[#D5DDF3]]="
+            form.controls.email.valid ||
+            !form.controls.email.touched
+          "
+        />
+      </div>
+
+      @if (submitted() && form.controls.email.hasError('required')) {
+        <p class="mt-1 text-[12px] text-red-500">
+          El correo electrónico es obligatorio.
+        </p>
+      }
+
+      @if (submitted() && form.controls.email.hasError('email')) {
+        <p class="mt-1 text-[12px] text-red-500">
+          Ingresá un correo electrónico válido.
+        </p>
+      }
+
+
+        <!-- CONTRASEÑA -->
+         <label
+            for="password"
+            class="mb-2 block text-[14px]
+                   font-semibold text-slate-700"
+          >
+            Contraseña
+          </label>
+          <div class="relative">
+
+          <svg
+            class="absolute left-4 top-1/2 h-5 w-5
+                  -translate-y-1/2 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <rect
+              width="12"
+              height="10"
+              x="6"
+              y="10"
+              rx="2"
+            ></rect>
+
+            <path
+              d="M8 10V7a4 4 0 0 1 8 0v3"
+            ></path>
+          </svg>
+
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Contraseña"
+            class="h-[42px] w-full rounded-md
+                  border bg-white
+                  pl-12 pr-12
+                  text-[14px]
+                  text-slate-700
+                  outline-none
+                  placeholder:text-slate-400
+                  focus:border-[#6B8DF5]
+                  focus:ring-1 focus:ring-[#6B8DF5]"
+            [class.border-red-500]="
+              form.controls.password.invalid &&
+              form.controls.password.touched
+            "
+            [class.border-[#D5DDF3]]="
+              form.controls.password.valid ||
+              !form.controls.password.touched
+            "
+          />
+
+          <button
+            type="button"
+            (click)="togglePasswordVisibility()"
+            class="absolute right-3 top-1/2
+                  -translate-y-1/2
+                  text-slate-400
+                  hover:text-slate-600"
+            [attr.aria-label]="
+              showPassword()
+                ? 'Ocultar contraseña'
+                : 'Mostrar contraseña'
+            "
+          >
+
+            @if (showPassword()) {
+
+            <!-- Ojo -->
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M2 12s3.5-6 10-6
+                    10 6 10 6-3.5 6-10 6
+                    S2 12 2 12Z"
+                ></path>
+
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                ></circle>
+              </svg>
+
+            } @else {
+
+              
+              <!-- Ojo tachado -->
+              <svg
+                class="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M2 12s3.5-6 10-6
+                    10 6 10 6-3.5 6-10 6
+                    S2 12 2 12Z"
+                ></path>
+
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                ></circle>
+
+                <line
+                  x1="3"
+                  y1="21"
+                  x2="21"
+                  y2="3"
+                ></line>
+              </svg>
+            }
+
+          </button>
+
+        </div>
+
+      @if (submitted() && form.controls.password.hasError('required')) {
+        <p class="mt-1 text-[12px] text-red-500">
+          La contraseña es obligatoria.
+        </p>
+      }
+
+      @if (submitted() && form.controls.password.hasError('pattern')) {
+        <p class="mt-1 text-[12px] text-red-500">
+          Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.
+        </p>
+      }
+
+        <!-- RECORDAR USUARIO + OLVIDÉ CONTRASEÑA (fila estándar arriba del botón) -->
+        <div class="flex items-center justify-between pt-1">
+
+          <div class="flex items-center gap-1.5">
+            <input
+              id="remember"
+              type="checkbox"
+              formControlName="remember"
+              class="h-[15px] w-[15px]
+                    rounded border-slate-300
+                    accent-[#4167D9]
+                    focus:ring-[#4167D9]"
+            />
+
+            <label
+              for="remember"
+              class="text-[12px] font-semibold text-slate-700"
+            >
+              Recordar mi usuario
+            </label>
+          </div>
+
+          <a
+            routerLink="/auth/forgot-password"
+            class="text-[13px] font-medium text-[#4167D9] hover:text-[#3155C5]"
+          >
+            ¿Olvidaste tu contraseña?
+          </a>
+
+        </div>
+
+        <!-- BOTÓN LOGIN -->
+      
+           <button
+            type="submit"
+            class="h-[42px] w-full rounded-md
+                  bg-[#6B8DF5]
+                  text-[15px]
+                  font-semibold
+                  text-white
+                  shadow-sm
+                  transition
+                  hover:bg-[#587BE8]
+                  active:bg-[#4F70D8]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
+          </button>
+
+          <!-- REGISTRARSE -->
+          <div class="pt-2 text-center text-[13px] text-slate-600">
+            ¿No tenés cuenta?
+            <a
+              routerLink="/auth/register"
+              class="font-semibold text-[#4167D9] hover:text-[#3155C5]"
+            >
+              Registrate
+            </a>
+          </div>
+
+        </form>
+
+      </div>
+    
+
