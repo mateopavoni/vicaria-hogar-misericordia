@@ -21,14 +21,24 @@ export interface User {
 
 export interface LoginResponse {
   token: string;
+  refreshToken: string;
   user: User;
+}
+
+// forma cruda que devuelve el backend (campos en español, así serializa el JWT/DB)
+export interface BackendUser {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  rol: UserRole | null;
 }
 
 export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
 
 
 export interface LoginErrorBody {
-  estado?: 'Blocked' | 'Pending';
+  estado?: 'Bloqueada' | 'Pending' | 'Inactive';
   message?: string;
 }
 

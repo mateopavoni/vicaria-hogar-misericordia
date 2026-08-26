@@ -54,7 +54,7 @@
           class="h-[42px] w-full rounded-md
                 border bg-white
                 pl-12 pr-4
-                text-center text-[14px]
+                text-[14px]
                 text-slate-700
                 outline-none
                 placeholder:text-slate-400
@@ -71,40 +71,17 @@
         />
       </div>
 
-      @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+      @if (submitted() && form.controls.email.hasError('required')) {
         <p class="mt-1 text-[12px] text-red-500">
           El correo electrónico es obligatorio.
         </p>
       }
 
-      @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+      @if (submitted() && form.controls.email.hasError('email')) {
         <p class="mt-1 text-[12px] text-red-500">
           Ingresá un correo electrónico válido.
         </p>
       }
-
-
-        <!-- RECORDAR USUARIO -->
-        <div class="flex items-center gap-1.5">
-
-          <input
-          id="remember"
-          type="checkbox"
-          formControlName="remember"
-          class="h-[15px] w-[15px]
-          rounded border-slate-300
-          text-[#6B8DF5]
-          focus:ring-[#6B8DF5]"
-        />
-
-          <label
-            for="remember"
-            class="text-[12px] font-semibold text-slate-700"
-          >
-            Recordar mi usuario
-          </label>
-
-        </div>
 
 
         <!-- CONTRASEÑA -->
@@ -146,7 +123,7 @@
             class="h-[42px] w-full rounded-md
                   border bg-white
                   pl-12 pr-12
-                  text-center text-[14px]
+                  text-[14px]
                   text-slate-700
                   outline-none
                   placeholder:text-slate-400
@@ -235,17 +212,48 @@
 
         </div>
 
-      @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+      @if (submitted() && form.controls.password.hasError('required')) {
         <p class="mt-1 text-[12px] text-red-500">
           La contraseña es obligatoria.
         </p>
       }
 
-      @if (form.controls.password.touched && form.controls.password.hasError('pattern')) {
+      @if (submitted() && form.controls.password.hasError('pattern')) {
         <p class="mt-1 text-[12px] text-red-500">
           Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.
         </p>
       }
+
+        <!-- RECORDAR USUARIO + OLVIDÉ CONTRASEÑA (fila estándar arriba del botón) -->
+        <div class="flex items-center justify-between pt-1">
+
+          <div class="flex items-center gap-1.5">
+            <input
+              id="remember"
+              type="checkbox"
+              formControlName="remember"
+              class="h-[15px] w-[15px]
+                    rounded border-slate-300
+                    accent-[#4167D9]
+                    focus:ring-[#4167D9]"
+            />
+
+            <label
+              for="remember"
+              class="text-[12px] font-semibold text-slate-700"
+            >
+              Recordar mi usuario
+            </label>
+          </div>
+
+          <a
+            routerLink="/auth/forgot-password"
+            class="text-[13px] font-medium text-[#4167D9] hover:text-[#3155C5]"
+          >
+            ¿Olvidaste tu contraseña?
+          </a>
+
+        </div>
 
         <!-- BOTÓN LOGIN -->
       
@@ -267,37 +275,15 @@
             {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }}
           </button>
 
-        <!-- OLVIDÉ CONTRASEÑA -->
-        <div class="pt-2 text-center">
-
-          <a
-            routerLink="/auth/forgot-password"
-            class="text-[13px]
-                   font-medium
-                   text-[#4167D9]
-                   underline
-                   underline-offset-2
-                   hover:text-[#3155C5]"
-          >
-            Olvidé mi contraseña
-          </a>
-
-          </div>
-
-
           <!-- REGISTRARSE -->
-          <div class="pt-2 text-center">
-
+          <div class="pt-2 text-center text-[13px] text-slate-600">
+            ¿No tenés cuenta?
             <a
               routerLink="/auth/register"
-              class="text-[13px]
-                    font-medium
-                    text-slate-900
-                    hover:text-[#4167D9]"
+              class="font-semibold text-[#4167D9] hover:text-[#3155C5]"
             >
-              Registrarse
+              Registrate
             </a>
-
           </div>
 
         </form>

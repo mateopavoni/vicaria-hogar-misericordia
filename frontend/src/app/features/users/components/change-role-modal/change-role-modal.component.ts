@@ -14,8 +14,19 @@ export class ChangeRoleModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() changeRole = new EventEmitter<UserRole>();
 
-  availableRoles: UserRole[] = ['Referente', 'DirectoradeCasona', 'Escucha'];
+  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasona', 'Escucha'];
   selectedRole = signal<UserRole>('Escucha');
+
+  // nombres lindos para mostrar en el select
+  private roleLabels: Record<UserRole, string> = {
+    Referente: 'Referente',
+    DirectoraDeCasona: 'Directora de Casona',
+    Escucha: 'Escucha',
+  };
+
+  roleLabel(role: UserRole): string {
+    return this.roleLabels[role];
+  }
 
   ngOnInit(): void {
     if (this.user?.role) {
