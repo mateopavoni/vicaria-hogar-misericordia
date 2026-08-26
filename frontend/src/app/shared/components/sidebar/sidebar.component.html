@@ -168,6 +168,7 @@
     </a>
 
     <!-- Informes -->
+    @if (permissionService.hasPermission('fichas.view')) {
     <a
       routerLink="/inicio"
       routerLinkActive="bg-indigo-100 text-indigo-500"
@@ -195,7 +196,8 @@
 
       <span>Informes</span>
     </a>
-
+    }
+    
     <!-- Usuarios -->
      @if (isReferente()) {
 
