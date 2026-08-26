@@ -44,7 +44,7 @@
                 <div class="flex-1">
                   <p class="text-xs font-bold text-gray-800 mb-0.5">{{ notification.title }}</p>
                   <p class="text-xs text-gray-600 leading-snug">{{ notification.message }}</p>
-                  <span class="text-[10px] text-gray-400 mt-1 block">{{ notification.createdAt }}</span>
+                  <span class="text-[10px] text-gray-400 mt-1 block">{{ timeAgo(notification.createdAt) }}</span>
                 </div>
 
                 @if (!notification.isRead) {
