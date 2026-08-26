@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Testcontainers.PostgreSql;
+using Testcontainers.MsSql;
 using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.IntegrationTests.Auth;
 
-// levanta un Postgres real en Docker para los tests, igual que en producción
+// levanta un SQL Server real en Docker para los tests, igual que en producción
 public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     // valores fijos de test para firmar/validar JWT sin depender de secrets locales
@@ -18,13 +18,13 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
     public const string JwtIssuer = "VicariaApi.Tests";
     public const string JwtAudience = "VicariaApi.Tests";
 
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly MsSqlContainer _sqlServer = new MsSqlBuilder()
+        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
         .Build();
 
-    async Task IAsyncLifetime.InitializeAsync() => await _postgres.StartAsync();
+    async Task IAsyncLifetime.InitializeAsync() => await _sqlServer.StartAsync();
 
-    async Task IAsyncLifetime.DisposeAsync() => await _postgres.StopAsync();
+    async Task IAsyncLifetime.DisposeAsync() => await _sqlServer.StopAsync();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -44,7 +44,7 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
             // también esto, no solo las options, o quedan dos providers registrados
             services.RemoveAll<DbContextOptions<VicariaDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<VicariaDbContext>>();
-            services.AddDbContext<VicariaDbContext>(options => options.UseNpgsql(_postgres.GetConnectionString()));
+            services.AddDbContext<VicariaDbContext>(options => options.UseSqlServer(_sqlServer.GetConnectionString()));
 
             using var scope = services.BuildServiceProvider().CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
