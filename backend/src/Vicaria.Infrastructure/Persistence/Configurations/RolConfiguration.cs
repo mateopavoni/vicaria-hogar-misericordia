@@ -8,7 +8,8 @@ public class RolConfiguration : IEntityTypeConfiguration<Rol>
 {
     // ids fijos para que el seed sea determinístico entre entornos
     private static readonly Guid ReferenteId = new("11111111-1111-1111-1111-111111111111");
-    private static readonly Guid DirectoraDeCasonaId = new("22222222-2222-2222-2222-222222222222");
+    // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos de Directora
+    internal static readonly Guid DirectoraDeCasonaId = new("22222222-2222-2222-2222-222222222222");
     private static readonly Guid EscuchaId = new("33333333-3333-3333-3333-333333333333");
 
     public void Configure(EntityTypeBuilder<Rol> builder)
