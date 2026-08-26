@@ -118,13 +118,6 @@ namespace Vicaria.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RefreshToken")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("RefreshTokenExpiry")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid?>("RolId")
                         .HasColumnType("uniqueidentifier");
 
