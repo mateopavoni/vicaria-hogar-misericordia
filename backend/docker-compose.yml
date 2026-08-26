@@ -1,0 +1,19 @@
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vicaria-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserverdata:/var/opt/mssql
+volumes:
+  sqlserverdata:
+# Comandos parar levantar y eliminar contenedor:
+# Levatnar el contenedor en segundo plano
+# docker compose -f backend/docker-compose.yml up -d
+# Eliminar el contenedor (no borra volumenes)
+# docker-compose down
