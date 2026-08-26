@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
+using Vicaria.Application.Notifications;
 using Vicaria.Infrastructure.Auth;
+using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +42,8 @@ builder.Services.AddScoped<IValidator<ApproveUserDto>, ApproveUserDtoValidator>(
 builder.Services.AddScoped<IValidator<RejectUserDto>, RejectUserDtoValidator>();
 builder.Services.AddScoped<IValidator<LoginDto>, LoginDtoValidator>();
 builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenDtoValidator>();
+
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

@@ -44,6 +44,36 @@ public class AuthService : IAuthService
 
         _dbContext.Usuarios.Add(usuario);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var referentes = await _dbContext.Usuarios
+            .Where(u => u.Rol != null && u.Rol.Nombre == RolNombres.Referente)
+            .ToListAsync(cancellationToken);
+
+        if (referentes.Count > 0)
+        {
+            _dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                Description = $"Nuevo usuario registrado: {email} ({dto.Nombre} {dto.Apellido})",
+                EventType = "NewUserPendingApproval",
+                LinkUrl = $"/usuarios/{usuario.Id}",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                TargetRole = RolNombres.Referente
+            });
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UsuarioId = usuario.Id,
+                Accion = "CrearNotificacion",
+                EntidadAfectada = $"Notificacion:NuevoPendiente:{usuario.Id}",
+                Fecha = DateTime.UtcNow
+            });
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return RegisterResult.Ok(usuario.Id);
     }
 
