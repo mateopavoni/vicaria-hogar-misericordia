@@ -1,0 +1,347 @@
+<div class="min-h-full bg-[#F5F7FB] p-8">
+
+  <!-- ENCABEZADO -->
+  <div class="mb-5">
+    <h1 class="text-[20px] font-bold text-slate-900">
+      Gestión de Usuarios
+    </h1>
+    <p class="mt-1 text-[12px] text-slate-500">
+      Administra los accesos y roles de los miembros de la organización.
+    </p>
+  </div>
+
+  <!-- CARD PRINCIPAL -->
+  <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+
+    <!-- TABS -->
+    <div class="flex border-b border-slate-200 px-4">
+
+      <!-- PENDIENTES -->
+      <button
+        type="button"
+        (click)="changeTab('Pending')"
+        class="relative px-5 py-4 text-[12px] font-semibold transition-colors"
+        [class.text-[#4167D9]]="activeTab() === 'Pending'"
+        [class.text-slate-600]="activeTab() !== 'Pending'"
+      >
+        Pendientes
+        <span class="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-500">
+          12
+        </span>
+        @if (activeTab() === 'Pending') {
+          <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#4167D9]"></span>
+        }
+      </button>
+
+      <!-- ACTIVOS -->
+      <button
+        type="button"
+        (click)="changeTab('Approved')"
+        class="relative px-5 py-4 text-[12px] font-semibold transition-colors"
+        [class.text-[#4167D9]]="activeTab() === 'Approved'"
+        [class.text-slate-600]="activeTab() !== 'Approved'"
+      >
+        Activos
+        <span class="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+          15
+        </span>
+        @if (activeTab() === 'Approved') {
+          <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#4167D9]"></span>
+        }
+      </button>
+
+      <!-- SUSPENDIDOS / INACTIVOS -->
+      <button
+        type="button"
+        (click)="changeTab('Suspended')"
+        class="relative px-5 py-4 text-[12px] font-semibold transition-colors"
+        [class.text-[#4167D9]]="activeTab() === 'Suspended'"
+        [class.text-slate-600]="activeTab() !== 'Suspended'"
+      >
+        Inactivos / Suspendidos
+        <span class="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+          3
+        </span>
+        @if (activeTab() === 'Suspended') {
+          <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#4167D9]"></span>
+        }
+      </button>
+
+    </div>
+
+    <!-- FILTROS DE FECHA -->
+    @if (activeTab() === 'Pending') {
+      <div class="flex flex-wrap items-end gap-4 border-b border-slate-100 bg-[#FAFBFE] px-6 py-4">
+        <div>
+          <label for="dateFrom" class="mb-1 block text-[11px] font-semibold text-slate-600">
+            Desde
+          </label>
+          <input
+            id="dateFrom"
+            type="date"
+            [value]="dateFrom()"
+            (change)="setDateFrom($any($event.target).value)"
+            class="h-[34px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[11px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="dateTo" class="mb-1 block text-[11px] font-semibold text-slate-600">
+            Hasta
+          </label>
+          <input
+            id="dateTo"
+            type="date"
+            [value]="dateTo()"
+            (change)="setDateTo($any($event.target).value)"
+            class="h-[34px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[11px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <button
+          type="button"
+          (click)="applyFilters()"
+          class="h-[34px] rounded-md bg-[#6B8DF5] px-4 text-[11px] font-semibold text-white transition hover:bg-[#587BE8]"
+        >
+          Filtrar
+        </button>
+
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="h-[34px] rounded-md border border-[#D5DDF3] bg-white px-4 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
+        >
+          Limpiar
+        </button>
+      </div>
+    }
+
+    <!-- ERROR -->
+    @if (error()) {
+      <div class="mx-6 mt-4 rounded-md bg-red-50 px-4 py-3 text-[12px] font-semibold text-red-600" role="alert">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- TABLA -->
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[700px]">
+
+        <!-- CABECERA -->
+        <thead class="border-b border-slate-200 bg-[#FAFAFB]">
+          <tr>
+            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-700">
+              Nombre y Apellido
+            </th>
+            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-700">
+              Email
+            </th>
+            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-700">
+              Fecha 
+            </th>
+            <th class="px-6 py-3 text-center text-[11px] font-bold text-slate-700">
+              Acciones
+            </th>
+          </tr>
+        </thead>
+
+        <!-- CUERPO -->
+        <tbody class="divide-y divide-slate-100">
+
+          <!-- LOADING -->
+          @if (loading()) {
+            <tr>
+              <td colspan="4" class="px-6 py-12 text-center">
+                <div class="inline-flex items-center gap-2 text-[12px] text-slate-400">
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
+                  Cargando usuarios...
+                </div>
+              </td>
+            </tr>
+          }
+
+          <!-- USUARIOS -->
+          @if (!loading()) {
+            @for (user of users(); track user.id) {
+              <tr class="transition hover:bg-slate-50">
+
+                <!-- USUARIO -->
+                <td class="px-6 py-3">
+                  <p class="text-[11px] font-semibold text-slate-700">
+                    {{ user.name }} {{ user.lastname }}
+                  </p>
+                </td>
+
+                <!-- EMAIL -->
+                <td class="px-6 py-3 text-[11px] text-slate-600">
+                  {{ user.email }}
+                </td>
+
+                <!-- FECHA / ROL -->
+                <td class="px-6 py-3 text-[11px] text-slate-600">
+                  @if (user.role) {
+                    <span class="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                      {{ user.role }}
+                    </span>
+                  } @else {
+                    {{ user.requestDate | date:'dd/MM/yy' }}
+                  }
+                </td>
+
+                <!-- ACCIONES SEGÚN LA PESTAÑA -->
+                <td class="px-6 py-3">
+                  <div class="flex justify-center gap-2">
+
+                    <!-- PENDIENTES -->
+                    @if (activeTab() === 'Pending') {
+                      <button
+                        type="button"
+                        (click)="openApproveModal(user)"
+                        class="rounded-md bg-green-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-green-600 active:bg-green-700"
+                      >
+                        Aprobar
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="openRejectModal(user)"
+                        class="flex h-[30px] w-[30px] items-center justify-center rounded-md text-slate-500 transition hover:bg-red-50 hover:text-red-500"
+                        aria-label="Rechazar solicitud"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path d="M3 6h18"/>
+                          <path d="M8 6V4h8v2"/>
+                          <path d="M19 6l-1 14H6L5 6"/>
+                          <path d="M10 11v5"/>
+                          <path d="M14 11v5"/>
+                        </svg>
+                      </button>
+                    }
+
+                    <!-- ACTIVOS -->
+                    @if (activeTab() === 'Approved') {
+                      
+                      <button
+                        type="button"
+                        (click)="openChangeRoleModal(user)"
+                        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        Reasignar Rol
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="deactivateUser(user)"
+                        class="rounded-md bg-amber-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-amber-600 active:bg-amber-700"
+                      >
+                        Inactivar
+                      </button>
+                      @if (showChangeRoleModal()) {
+                       <app-change-role-modal/>
+                        [user]="selectedUser()"
+                        (close)="closeModals()"
+                        (changeRole)="updateUserRole($event)"
+                      />
+                      }
+                    }
+
+                    <!-- SUSPENDIDOS / INACTIVOS -->
+                    @if (activeTab() === 'Suspended') {
+                      <button
+                        type="button"
+                        (click)="reactivateUser(user)"
+                        class="rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800"
+                      >
+                        Activar
+                      </button>
+                    }
+
+                  </div>
+                </td>
+
+              </tr>
+            }
+          }
+
+          <!-- SIN RESULTADOS -->
+          @if (!loading() && users().length === 0) {
+            <tr>
+              <td colspan="4" class="px-6 py-16 text-center">
+                <div class="flex flex-col items-center justify-center">
+                  <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#EDF2FF] text-[#6B8DF5]">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M19 8v6" />
+                      <path d="M22 11h-6" />
+                    </svg>
+                  </div>
+                  <p class="text-[12px] font-semibold text-slate-600">
+                    No hay usuarios en este estado.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          }
+
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <div class="mt-6 flex items-center justify-center gap-3 text-[11px]">
+    <button
+      type="button"
+      (click)="goToPage(currentPage() - 1)"
+      [disabled]="currentPage() === 1"
+      class="px-2 py-1 text-slate-400 transition hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      &lt; Anterior
+    </button>
+
+    @for (page of [1, 2, 3]; track page) {
+      <button
+        type="button"
+        (click)="goToPage(page)"
+        class="flex h-7 w-7 items-center justify-center rounded-md font-semibold transition"
+        [class.bg-[#6B8DF5]]="currentPage() === page"
+        [class.text-white]="currentPage() === page"
+        [class.text-slate-600]="currentPage() !== page"
+        [class.hover:bg-slate-100]="currentPage() !== page"
+      >
+        {{ page }}
+      </button>
+    }
+
+    <span class="px-1 text-slate-400">...</span>
+
+    <button
+      type="button"
+      (click)="goToPage(currentPage() + 1)"
+      [disabled]="currentPage() === totalPages()"
+      class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      Siguiente &gt;
+    </button>
+  </div>
+
+  <!-- MODALES EXISTENTES -->
+  @if (showApproveModal()) {
+    <app-approve-user-modal
+      [user]="selectedUser()"
+      (close)="closeModals()"
+      (approve)="approveSelectedUser($event)"
+    />
+  }
+
+  @if (showRejectModal()) {
+    <app-reject-user-modal
+      [user]="selectedUser()"
+      (close)="closeModals()"
+      (reject)="rejectSelectedUser($event)"
+    />
+  }
+
+</div>
