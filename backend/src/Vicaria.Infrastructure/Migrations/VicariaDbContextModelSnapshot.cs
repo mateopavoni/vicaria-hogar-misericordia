@@ -49,6 +49,79 @@ namespace Vicaria.Infrastructure.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("TargetRole")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetRole", "IsRead");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("permission", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("44444444-4444-4444-4444-444444444444"),
+                            Code = "VerFichasResidentesCasaConvivencia"
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555555"),
+                            Code = "CargarObservacionesResidentes"
+                        },
+                        new
+                        {
+                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+                            Code = "VerAgendaMedicamentos"
+                        });
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.Rol", b =>
                 {
                     b.Property<Guid>("Id")
@@ -85,6 +158,36 @@ namespace Vicaria.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.RolePermission", b =>
+                {
+                    b.Property<Guid>("RolId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RolId", "PermissionId");
+
+                    b.ToTable("rol_permission", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            RolId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            PermissionId = new Guid("44444444-4444-4444-4444-444444444444")
+                        },
+                        new
+                        {
+                            RolId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            PermissionId = new Guid("55555555-5555-5555-5555-555555555555")
+                        },
+                        new
+                        {
+                            RolId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            PermissionId = new Guid("66666666-6666-6666-6666-666666666666")
+                        });
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -109,6 +212,12 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -117,6 +226,12 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid?>("RolId")
                         .HasColumnType("uniqueidentifier");
