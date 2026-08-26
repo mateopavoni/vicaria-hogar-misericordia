@@ -45,10 +45,8 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
             services.RemoveAll<DbContextOptions<VicariaDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<VicariaDbContext>>();
             services.AddDbContext<VicariaDbContext>(options => options.UseSqlServer(_sqlServer.GetConnectionString()));
-
-            using var scope = services.BuildServiceProvider().CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
-            db.Database.EnsureCreated();
+            // el propio Program.cs corre Database.Migrate() al armar el host (igual que en la VPS),
+            // así que no hace falta EnsureCreated acá aparte
         });
     }
 }
