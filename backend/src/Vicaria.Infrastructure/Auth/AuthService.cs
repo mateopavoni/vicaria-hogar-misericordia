@@ -175,6 +175,22 @@ public class AuthService : IAuthService
                     EntidadAfectada = $"Usuario:{usuario.Id}",
                     Fecha = DateTime.UtcNow
                 });
+
+                // avisamos a los referentes que esta cuenta quedó bloqueada (SCRUM-95)
+                var hayReferentes = await _dbContext.Usuarios.AnyAsync(u => u.Rol != null && u.Rol.Nombre == RolNombres.Referente, cancellationToken);
+                if (hayReferentes)
+                {
+                    _dbContext.Notifications.Add(new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        Description = $"La cuenta de {usuario.Nombre} {usuario.Apellido} quedó bloqueada por 5 intentos fallidos de login.",
+                        EventType = "CuentaBloqueada",
+                        LinkUrl = "/usuarios",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow,
+                        TargetRole = RolNombres.Referente
+                    });
+                }
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);

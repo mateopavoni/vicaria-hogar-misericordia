@@ -121,6 +121,32 @@ public class AuthServiceLoginTests
     }
 
     [Fact]
+    public async Task LoginAsync_Con5PasswordsIncorrectos_NotificaALosReferentes()
+    {
+        using var db = CrearDbContext();
+
+        // creamos un referente para que exista alguien a quien notificar
+        var rolReferente = new Rol { Id = Guid.NewGuid(), Nombre = RolNombres.Referente };
+        db.Roles.Add(rolReferente);
+        var referente = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "otraPassword123");
+        referente.RolId = rolReferente.Id;
+        await db.SaveChangesAsync();
+
+        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var service = new AuthService(db, CrearConfiguracionJwt());
+
+        for (var i = 0; i < 5; i++)
+        {
+            await service.LoginAsync(new LoginDto(usuario.Email, "otra-password"));
+        }
+
+        var notificacion = await db.Notifications.SingleOrDefaultAsync(n => n.EventType == "CuentaBloqueada");
+
+        Assert.NotNull(notificacion);
+        Assert.Equal(RolNombres.Referente, notificacion!.TargetRole);
+    }
+
+    [Fact]
     public async Task LoginAsync_ConLoginCorrecto_ReseteaIntentosFallidosPrevios()
     {
         using var db = CrearDbContext();
