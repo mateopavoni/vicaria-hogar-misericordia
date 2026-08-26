@@ -2,9 +2,35 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Notification } from './notification.interface';
 
+// título corto según el tipo de evento que manda el backend
+const EVENT_TITLES: Record<string, string> = {
+  NuevoUsuarioPendiente: 'Nueva solicitud de cuenta',
+  CuentaBloqueada: 'Cuenta bloqueada',
+};
+
+// forma cruda que devuelve GET /api/notifications
+interface BackendNotification {
+  id: string;
+  description: string;
+  eventType: string;
+  linkUrl: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private http = inject(HttpClient);
+
+  private mapNotification(n: BackendNotification): Notification {
+    return {
+      id: n.id,
+      title: EVENT_TITLES[n.eventType] ?? n.eventType,
+      message: n.description,
+      isRead: n.isRead,
+      createdAt: n.createdAt,
+    };
+  }
 
   // Signal con la lista de notificaciones
   private notificationsSignal = signal<Notification[]>([]);
@@ -18,8 +44,8 @@ export class NotificationService {
 
   // Carga inicial de notificaciones
   loadNotifications() {
-    this.http.get<Notification[]>('/api/notifications').subscribe({
-      next: (data) => this.notificationsSignal.set(data),
+    this.http.get<BackendNotification[]>('/api/notifications').subscribe({
+      next: (data) => this.notificationsSignal.set(data.map((n) => this.mapNotification(n))),
       error: (err) => console.error('Error cargando notificaciones', err)
     });
   }

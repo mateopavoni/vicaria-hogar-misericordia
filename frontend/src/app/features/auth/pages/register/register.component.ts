@@ -26,6 +26,10 @@ export class RegisterComponent {
   loading = signal(false);
   showPassword = signal(false);
   errorMessage = signal<string | null>(null);
+  // solo mostramos errores de validación después de intentar enviar el formulario
+  submitted = signal(false);
+  // guarda el timer para poder cancelarlo si aparece otro error antes de tiempo
+  private errorMessageTimeout?: ReturnType<typeof setTimeout>;
 
   private passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
@@ -50,6 +54,8 @@ export class RegisterComponent {
       return;
     }
 
+    this.submitted.set(true);
+
     // Validación del formulario.
     if (this.registerForm.invalid) {
 
@@ -60,6 +66,7 @@ export class RegisterComponent {
     }
 
     // Limpiamos errores anteriores.
+    clearTimeout(this.errorMessageTimeout);
     this.errorMessage.set(null);
 
     // SI EL FORMULARIO ES VÁLIDO:
@@ -75,11 +82,22 @@ export class RegisterComponent {
 
        error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Ocurrió un error al procesar el registro.');
+        this.setErrorMessage(err?.error?.message || 'Ocurrió un error al procesar el registro.');
       }
 
       });
 
+  }
+
+  // muestra el error y lo borra solo a los 5 segundos, para que no quede pegado para siempre
+  private setErrorMessage(message: string): void {
+    clearTimeout(this.errorMessageTimeout);
+
+    this.errorMessage.set(message);
+
+    this.errorMessageTimeout = setTimeout(() => {
+      this.errorMessage.set(null);
+    }, 5000);
   }
 
      

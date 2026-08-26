@@ -31,8 +31,12 @@ import { UserRole } from '../../../../core/auth/userRole';
     loading = signal(false);
     showPassword = signal(false);
     credentialsError = signal<string | null>(null);
+    // solo mostramos errores de validación después de intentar enviar el formulario
+    submitted = signal(false);
 
     private passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    // guarda el timer para poder cancelarlo si se muestra otro error antes de que pase el tiempo
+    private credentialsErrorTimeout?: ReturnType<typeof setTimeout>;
 
     form = this.fb.nonNullable.group({
 
@@ -40,6 +44,14 @@ import { UserRole } from '../../../../core/auth/userRole';
       password: ['',[  Validators.required, Validators.minLength(6), Validators.pattern(this.passwordPattern)]],
       remember: [false]
     });
+
+    constructor() {
+      // si la vez pasada tildó "recordar usuario", precargamos el email guardado
+      const savedEmail = localStorage.getItem('rememberedEmail');
+      if (savedEmail) {
+        this.form.patchValue({ email: savedEmail, remember: true });
+      }
+    }
 
 
     togglePasswordVisibility(): void {
@@ -58,6 +70,8 @@ import { UserRole } from '../../../../core/auth/userRole';
         return;
       }
 
+      this.submitted.set(true);
+
       // Validación del formulario.
       if (this.form.invalid) {
 
@@ -67,15 +81,24 @@ import { UserRole } from '../../../../core/auth/userRole';
       }
 
       // Limpiamos errores anteriores.
+      clearTimeout(this.credentialsErrorTimeout);
       this.credentialsError.set(null);
 
       this.loading.set(true);
 
-      const { email, password} = this.form.getRawValue();
+      const { email, password, remember} = this.form.getRawValue();
 
       this.authService.login({ email, password }).subscribe({
         next: (response) => {
           this.loading.set(false);
+
+          // guardamos o borramos el email recordado según el checkbox
+          if (remember) {
+            localStorage.setItem('rememberedEmail', email);
+          } else {
+            localStorage.removeItem('rememberedEmail');
+          }
+
           this.redirectByRole(
           response.user.role
             );
@@ -87,6 +110,15 @@ import { UserRole } from '../../../../core/auth/userRole';
             const errorType =
               this.authService.mapError(err);
               this.handleError(errorType);
+
+            // credenciales incorrectas: limpiamos la password (y el email si no se pidió recordar)
+            if (errorType === 'credentials') {
+              this.form.patchValue({ password: '' });
+              if (!remember) {
+                this.form.patchValue({ email: '' });
+              }
+              this.submitted.set(false);
+            }
 
           }
 
@@ -107,17 +139,24 @@ import { UserRole } from '../../../../core/auth/userRole';
         break;
 
       case 'credentials':
-        this.credentialsError.set(
-          'Correo o contraseña incorrectos.'
-        );
+        this.setCredentialsError('Correo o contraseña incorrectos.');
         break;
 
       default:
-        this.credentialsError.set(
-          'No pudimos iniciar sesión. Probá de nuevo en unos minutos.'
-        );
+        this.setCredentialsError('No pudimos iniciar sesión. Probá de nuevo en unos minutos.');
         break;
     }
+  }
+
+  // muestra el error y lo borra solo a los 5 segundos, para que no quede pegado para siempre
+  private setCredentialsError(message: string): void {
+    clearTimeout(this.credentialsErrorTimeout);
+
+    this.credentialsError.set(message);
+
+    this.credentialsErrorTimeout = setTimeout(() => {
+      this.credentialsError.set(null);
+    }, 5000);
   }
 
     private redirectByRole(role: UserRole | null): void {
@@ -131,7 +170,7 @@ import { UserRole } from '../../../../core/auth/userRole';
           ]);
           break;
 
-        case 'DirectoradeCasona':
+        case 'DirectoraDeCasona':
 
           this.router.navigate([
             '/dashboard'

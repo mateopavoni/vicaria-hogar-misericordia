@@ -1,4 +1,4 @@
 export type UserRole =
   | 'Referente'
-  | 'DirectoradeCasona'
+  | 'DirectoraDeCasona'
   | 'Escucha';

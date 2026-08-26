@@ -13,27 +13,15 @@
   stroke-width="1.8"
   viewBox="0 0 24 24"
 >
-  <!-- Usuario -->
+  <!-- Reloj, centrado en el viewBox -->
   <circle
-    cx="9"
-    cy="8"
-    r="3"
+    cx="12"
+    cy="12"
+    r="9"
   ></circle>
 
   <path
-    d="M3.5 19c.7-3.1 2.5-4.5 5.5-4.5"
-    stroke-linecap="round"
-  ></path>
-
-  <!-- Reloj -->
-  <circle
-    cx="16.5"
-    cy="16.5"
-    r="4"
-  ></circle>
-
-  <path
-    d="M16.5 14.5v2.2l1.5 1"
+    d="M12 7v5l3.5 2"
     stroke-linecap="round"
     stroke-linejoin="round"
   ></path>
@@ -59,25 +47,16 @@
     tu solicitud antes de que puedas ingresar.
   </p>
 
-  
-  <div class="mt-4 flex min-h-[48px] items-center gap-3 rounded-md bg-[#DCE4FF] px-4 py-2">
-      <svg class="h-6 w-6 shrink-0 text-[#6689F5]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="9"></circle>
-        <path d="M12 7v6" stroke-linecap="round"></path>
-        <circle cx="12" cy="16.5" r="0.8" fill="currentColor" stroke="none"></circle>
-      </svg>
-      <p class="text-[12px] leading-[15px] text-slate-700">
-        Te notificaremos cuando tu cuenta haya sido aprobada.
-      </p>
-    </div>
-
 
   <a
     routerLink="/auth/login"
-    class="mt-6 inline-block text-[14px]
-           font-medium text-[#4167D9]
-           hover:underline"
+    class="mt-6 inline-flex items-center gap-1.5 text-[14px]
+           font-semibold text-[#4167D9]
+           hover:text-[#3155C5]"
   >
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
     Volver al inicio de sesión
   </a>
 
