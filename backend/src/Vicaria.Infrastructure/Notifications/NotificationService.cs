@@ -36,10 +36,10 @@ public class NotificationService : INotificationService
         _dbContext.AuditLogs.Add(new AuditLog
         {
             Id = Guid.NewGuid(),
-            UsuarioId = actorId,
-            Accion = "MarcarNotificacionLeida",
-            EntidadAfectada = $"Notificacion:{id}",
-            Fecha = DateTime.UtcNow
+            UserId = actorId,
+            Action = "MarcarNotificacionLeida",
+            AffectedEntity = $"Notificacion:{id}",
+            Date = DateTime.UtcNow
         });
 
         await _dbContext.SaveChangesAsync(cancellationToken);

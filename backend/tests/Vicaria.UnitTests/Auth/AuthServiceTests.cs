@@ -26,9 +26,9 @@ public class AuthServiceTests
         var result = await service.RegisterAsync(dto);
 
         Assert.True(result.Success);
-        Assert.NotNull(result.UsuarioId);
-        var usuario = await db.Usuarios.SingleAsync();
-        Assert.Equal("ana@mail.com", usuario.Email);
+        Assert.NotNull(result.UserId);
+        var user = await db.Users.SingleAsync();
+        Assert.Equal("ana@mail.com", user.Email);
     }
 
     [Fact]
@@ -40,15 +40,15 @@ public class AuthServiceTests
 
         await service.RegisterAsync(dto);
 
-        var usuario = await db.Usuarios.SingleAsync();
-        Assert.True(BCrypt.Net.BCrypt.Verify("password123", usuario.PasswordHash));
+        var user = await db.Users.SingleAsync();
+        Assert.True(BCrypt.Net.BCrypt.Verify("password123", user.PasswordHash));
     }
 
     [Fact]
     public async Task RegisterAsync_ConEmailYaRegistrado_RetornaEmailDuplicado()
     {
         using var db = CrearDbContext();
-        db.Usuarios.Add(new Usuario { Id = Guid.NewGuid(), Nombre = "Ana", Apellido = "Perez", Email = "ana@mail.com", PasswordHash = "x", Estado = EstadoUsuario.Pending, CreatedAt = DateTime.UtcNow });
+        db.Users.Add(new User { Id = Guid.NewGuid(), FirstName = "Ana", LastName = "Perez", Email = "ana@mail.com", PasswordHash = "x", Status = UserStatus.Pending, CreatedAt = DateTime.UtcNow });
         await db.SaveChangesAsync();
         var service = new AuthService(db);
         var dto = new RegisterDto("Otra Ana", "Gomez", "Ana@Mail.com", "password123");
@@ -56,7 +56,7 @@ public class AuthServiceTests
         var result = await service.RegisterAsync(dto);
 
         Assert.False(result.Success);
-        Assert.Equal(1, await db.Usuarios.CountAsync());
+        Assert.Equal(1, await db.Users.CountAsync());
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public class AuthServiceTests
 
         await service.RegisterAsync(dto);
 
-        var usuario = await db.Usuarios.SingleAsync();
-        Assert.Equal("ana@mail.com", usuario.Email);
+        var user = await db.Users.SingleAsync();
+        Assert.Equal("ana@mail.com", user.Email);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class AuthServiceTests
 
         await service.RegisterAsync(dto);
 
-        var usuario = await db.Usuarios.SingleAsync();
-        Assert.Equal(EstadoUsuario.Pending, usuario.Estado);
+        var user = await db.Users.SingleAsync();
+        Assert.Equal(UserStatus.Pending, user.Status);
     }
 }

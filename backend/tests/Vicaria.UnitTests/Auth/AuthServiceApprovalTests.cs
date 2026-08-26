@@ -19,21 +19,21 @@ public class AuthServiceApprovalTests
         return db;
     }
 
-    private static Usuario CrearUsuarioPendiente(VicariaDbContext db)
+    private static User CrearUsuarioPendiente(VicariaDbContext db)
     {
-        var usuario = new Usuario
+        var user = new User
         {
             Id = Guid.NewGuid(),
-            Nombre = "Ana",
-            Apellido = "Perez",
+            FirstName = "Ana",
+            LastName = "Perez",
             Email = $"{Guid.NewGuid()}@mail.com",
             PasswordHash = "hash",
-            Estado = EstadoUsuario.Pending,
+            Status = UserStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
-        db.Usuarios.Add(usuario);
+        db.Users.Add(user);
         db.SaveChanges();
-        return usuario;
+        return user;
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class AuthServiceApprovalTests
         using var db = CrearDbContext();
         var pendiente = CrearUsuarioPendiente(db);
         var activo = CrearUsuarioPendiente(db);
-        activo.Estado = EstadoUsuario.Active;
+        activo.Status = UserStatus.Active;
         db.SaveChanges();
 
         var service = new AuthService(db);
@@ -56,43 +56,43 @@ public class AuthServiceApprovalTests
     public async Task ApproveUserAsync_ConDatosValidos_AsignaRolYCambiaEstado()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
-        var rolId = db.Roles.First().Id;
+        var user = CrearUsuarioPendiente(db);
+        var roleId = db.Roles.First().Id;
         var actorId = Guid.NewGuid();
         var service = new AuthService(db);
 
-        var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), actorId);
+        var resultado = await service.ApproveUserAsync(user.Id, new ApproveUserDto(roleId), actorId);
 
         Assert.True(resultado.Success);
-        var actualizado = await db.Usuarios.FindAsync(usuario.Id);
-        Assert.Equal(EstadoUsuario.Active, actualizado!.Estado);
-        Assert.Equal(rolId, actualizado.RolId);
+        var actualizado = await db.Users.FindAsync(user.Id);
+        Assert.Equal(UserStatus.Active, actualizado!.Status);
+        Assert.Equal(roleId, actualizado.RoleId);
     }
 
     [Fact]
     public async Task ApproveUserAsync_RegistraAuditLog()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
-        var rolId = db.Roles.First().Id;
+        var user = CrearUsuarioPendiente(db);
+        var roleId = db.Roles.First().Id;
         var actorId = Guid.NewGuid();
         var service = new AuthService(db);
 
-        await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), actorId);
+        await service.ApproveUserAsync(user.Id, new ApproveUserDto(roleId), actorId);
 
         var log = Assert.Single(db.AuditLogs);
-        Assert.Equal(actorId, log.UsuarioId);
-        Assert.Contains(usuario.Id.ToString(), log.EntidadAfectada);
+        Assert.Equal(actorId, log.UserId);
+        Assert.Contains(user.Id.ToString(), log.AffectedEntity);
     }
 
     [Fact]
     public async Task ApproveUserAsync_UsuarioNoExiste_RetornaUsuarioNoEncontrado()
     {
         using var db = CrearDbContext();
-        var rolId = db.Roles.First().Id;
+        var roleId = db.Roles.First().Id;
         var service = new AuthService(db);
 
-        var resultado = await service.ApproveUserAsync(Guid.NewGuid(), new ApproveUserDto(rolId), Guid.NewGuid());
+        var resultado = await service.ApproveUserAsync(Guid.NewGuid(), new ApproveUserDto(roleId), Guid.NewGuid());
 
         Assert.False(resultado.Success);
         Assert.Equal(ApproveUserError.UserNotFound, resultado.Error);
@@ -102,10 +102,10 @@ public class AuthServiceApprovalTests
     public async Task ApproveUserAsync_RolNoExiste_RetornaRolInvalido()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
+        var user = CrearUsuarioPendiente(db);
         var service = new AuthService(db);
 
-        var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(Guid.NewGuid()), Guid.NewGuid());
+        var resultado = await service.ApproveUserAsync(user.Id, new ApproveUserDto(Guid.NewGuid()), Guid.NewGuid());
 
         Assert.False(resultado.Success);
         Assert.Equal(ApproveUserError.InvalidRole, resultado.Error);
@@ -115,12 +115,12 @@ public class AuthServiceApprovalTests
     public async Task ApproveUserAsync_UsuarioYaAprobado_RetornaEstadoInvalido()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
-        var rolId = db.Roles.First().Id;
+        var user = CrearUsuarioPendiente(db);
+        var roleId = db.Roles.First().Id;
         var service = new AuthService(db);
-        await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), Guid.NewGuid());
+        await service.ApproveUserAsync(user.Id, new ApproveUserDto(roleId), Guid.NewGuid());
 
-        var resultado = await service.ApproveUserAsync(usuario.Id, new ApproveUserDto(rolId), Guid.NewGuid());
+        var resultado = await service.ApproveUserAsync(user.Id, new ApproveUserDto(roleId), Guid.NewGuid());
 
         Assert.False(resultado.Success);
         Assert.Equal(ApproveUserError.InvalidState, resultado.Error);
@@ -130,27 +130,27 @@ public class AuthServiceApprovalTests
     public async Task RejectUserAsync_ConMotivo_CambiaEstadoARechazado()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
+        var user = CrearUsuarioPendiente(db);
         var service = new AuthService(db);
 
-        var resultado = await service.RejectUserAsync(usuario.Id, new RejectUserDto("no cumple los requisitos"), Guid.NewGuid());
+        var resultado = await service.RejectUserAsync(user.Id, new RejectUserDto("no cumple los requisitos"), Guid.NewGuid());
 
         Assert.True(resultado.Success);
-        var actualizado = await db.Usuarios.FindAsync(usuario.Id);
-        Assert.Equal(EstadoUsuario.Rejected, actualizado!.Estado);
+        var actualizado = await db.Users.FindAsync(user.Id);
+        Assert.Equal(UserStatus.Rejected, actualizado!.Status);
     }
 
     [Fact]
     public async Task RejectUserAsync_RegistraAuditLogConMotivo()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
+        var user = CrearUsuarioPendiente(db);
         var service = new AuthService(db);
 
-        await service.RejectUserAsync(usuario.Id, new RejectUserDto("no cumple los requisitos"), Guid.NewGuid());
+        await service.RejectUserAsync(user.Id, new RejectUserDto("no cumple los requisitos"), Guid.NewGuid());
 
         var log = Assert.Single(db.AuditLogs);
-        Assert.Contains("no cumple los requisitos", log.Accion);
+        Assert.Contains("no cumple los requisitos", log.Action);
     }
 
     [Fact]
@@ -169,11 +169,11 @@ public class AuthServiceApprovalTests
     public async Task RejectUserAsync_UsuarioYaRechazado_RetornaEstadoInvalido()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioPendiente(db);
+        var user = CrearUsuarioPendiente(db);
         var service = new AuthService(db);
-        await service.RejectUserAsync(usuario.Id, new RejectUserDto("motivo"), Guid.NewGuid());
+        await service.RejectUserAsync(user.Id, new RejectUserDto("motivo"), Guid.NewGuid());
 
-        var resultado = await service.RejectUserAsync(usuario.Id, new RejectUserDto("otro motivo"), Guid.NewGuid());
+        var resultado = await service.RejectUserAsync(user.Id, new RejectUserDto("otro motivo"), Guid.NewGuid());
 
         Assert.False(resultado.Success);
         Assert.Equal(RejectUserError.InvalidState, resultado.Error);

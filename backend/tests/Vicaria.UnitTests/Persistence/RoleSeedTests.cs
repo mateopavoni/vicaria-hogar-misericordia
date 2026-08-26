@@ -4,7 +4,7 @@ using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.UnitTests.Persistence;
 
-public class RolSeedTests
+public class RoleSeedTests
 {
     private static VicariaDbContext CrearDbContext()
     {
@@ -22,12 +22,12 @@ public class RolSeedTests
     {
         using var db = CrearDbContext();
 
-        var nombres = db.Roles.Select(r => r.Nombre).ToList();
+        var names = db.Roles.Select(r => r.Name).ToList();
 
-        Assert.Equal(4, nombres.Count);
-        Assert.Contains(RolNombres.Referente, nombres);
-        Assert.Contains(RolNombres.DirectoraDeCasona, nombres);
-        Assert.Contains(RolNombres.Escucha, nombres);
-        Assert.Contains(RolNombres.CoordinadorDeCasaConvivencia, nombres);
+        Assert.Equal(4, names.Count);
+        Assert.Contains(RoleNames.Referente, names);
+        Assert.Contains(RoleNames.DirectoraDeCasona, names);
+        Assert.Contains(RoleNames.Escucha, names);
+        Assert.Contains(RoleNames.CoordinadorDeCasaConvivencia, names);
     }
 }

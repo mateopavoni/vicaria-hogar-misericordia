@@ -6,11 +6,11 @@ public class RegisterDtoValidator : AbstractValidator<RegisterDto>
 {
     public RegisterDtoValidator()
     {
-        RuleFor(x => x.Nombre)
+        RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("El nombre es requerido.")
             .MaximumLength(100);
 
-        RuleFor(x => x.Apellido)
+        RuleFor(x => x.LastName)
             .NotEmpty().WithMessage("El apellido es requerido.")
             .MaximumLength(100);
 

@@ -53,21 +53,20 @@ export class AuthService {
     }
   }
 
-  // pasa el usuario del backend (campos en español) al shape que usa el resto del front
   private mapUser(backendUser: BackendUser): User {
     return {
       id: backendUser.id,
-      name: backendUser.nombre,
-      lastname: backendUser.apellido,
+      name: backendUser.firstName,
+      lastname: backendUser.lastName,
       email: backendUser.email,
-      role: backendUser.rol,
+      role: backendUser.role,
     };
   }
 
   register(data: RegisterRequest): Observable<{ message: string }> {
     const body = {
-      nombre: data.name,
-      apellido: data.lastname,
+      firstName: data.name,
+      lastName: data.lastname,
       email: data.email,
       password: data.password,
     };
@@ -103,10 +102,10 @@ export class AuthService {
     }
     const body = error.error as LoginErrorBody | undefined;
     // el backend manda "Bloqueada" (bloqueo por intentos fallidos), no "Blocked"
-    if (error.status === 403 && body?.estado === 'Bloqueada') {
+    if (error.status === 403 && body?.status === 'Bloqueada') {
       return 'blocked';
     }
-    if (error.status === 403 && body?.estado === 'Pending') {
+    if (error.status === 403 && body?.status === 'Pending') {
       return 'pending';
     }
     return 'unknown';

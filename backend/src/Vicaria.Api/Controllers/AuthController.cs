@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
             return Conflict(new { message = result.ErrorMessage });
         }
 
-        return CreatedAtAction(nameof(Register), new { id = result.UsuarioId }, new { id = result.UsuarioId });
+        return CreatedAtAction(nameof(Register), new { id = result.UserId }, new { id = result.UserId });
     }
 
     [HttpPost("login")]
@@ -76,12 +76,12 @@ public class AuthController : ControllerBase
         {
             if (result.Error == LoginError.AccountNotApproved)
             {
-                return StatusCode(403, new { estado = result.Estado, message = result.ErrorMessage });
+                return StatusCode(403, new { status = result.Status, message = result.ErrorMessage });
             }
-            // mismo shape que AccountNotApproved (estado = "Bloqueada") para que el frontend lo reconozca igual
+            // mismo shape que AccountNotApproved (status = "Bloqueada") para que el frontend lo reconozca igual
             if (result.Error == LoginError.AccountLocked)
             {
-                return StatusCode(403, new { estado = result.Estado, message = result.ErrorMessage, lockoutEnd = result.LockoutEnd });
+                return StatusCode(403, new { status = result.Status, message = result.ErrorMessage, lockoutEnd = result.LockoutEnd });
             }
             return Unauthorized(new { message = result.ErrorMessage });
         }
@@ -92,11 +92,11 @@ public class AuthController : ControllerBase
             refreshToken = result.RefreshToken,
             user = new
             {
-                id = result.UsuarioId,
-                nombre = result.Nombre,
-                apellido = result.Apellido,
+                id = result.UserId,
+                firstName = result.FirstName,
+                lastName = result.LastName,
                 email = result.Email,
-                rol = result.Rol
+                role = result.Role
             }
         });
     }
@@ -138,41 +138,41 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             id = User.FindFirstValue(ClaimTypes.NameIdentifier),
-            nombre = User.FindFirstValue(ClaimTypes.Name),
+            name = User.FindFirstValue(ClaimTypes.Name),
             email = User.FindFirstValue(ClaimTypes.Email),
-            rol = User.FindFirstValue(ClaimTypes.Role)
+            role = User.FindFirstValue(ClaimTypes.Role)
         });
     }
 
     [HttpGet("users/pending")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> GetPendingUsers(CancellationToken cancellationToken)
     {
-        var usuarios = await _authService.GetPendingUsersAsync(cancellationToken);
-        return Ok(usuarios);
+        var users = await _authService.GetPendingUsersAsync(cancellationToken);
+        return Ok(users);
     }
 
     [HttpGet("users/active")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> GetActiveUsers(CancellationToken cancellationToken)
     {
-        var usuarios = await _authService.GetActiveUsersAsync(cancellationToken);
-        return Ok(usuarios);
+        var users = await _authService.GetActiveUsersAsync(cancellationToken);
+        return Ok(users);
     }
 
     [HttpGet("users/inactive")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> GetInactiveUsers(CancellationToken cancellationToken)
     {
-        var usuarios = await _authService.GetInactiveUsersAsync(cancellationToken);
-        return Ok(usuarios);
+        var users = await _authService.GetInactiveUsersAsync(cancellationToken);
+        return Ok(users);
     }
 
     [HttpPatch("users/{id}/role")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateRoleDto dto, CancellationToken cancellationToken)
     {
-        var result = await _authService.UpdateUserRoleAsync(id, dto.RolId, ActorId, cancellationToken);
+        var result = await _authService.UpdateUserRoleAsync(id, dto.RoleId, ActorId, cancellationToken);
         return result.Error switch
         {
             null => NoContent(),
@@ -182,7 +182,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("users/{id}/approve")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> ApproveUser(Guid id, [FromBody] ApproveUserDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _approveValidator.ValidateAsync(dto, cancellationToken);
@@ -206,7 +206,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("users/{id}/reject")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> RejectUser(Guid id, [FromBody] RejectUserDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _rejectValidator.ValidateAsync(dto, cancellationToken);
@@ -229,7 +229,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPatch("users/{id}/deactivate")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> DeactivateUser(Guid id, CancellationToken cancellationToken)
     {
         var result = await _authService.DeactivateUserAsync(id, ActorId, cancellationToken);
@@ -242,7 +242,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPatch("users/{id}/reactivate")]
-    [Authorize(Roles = RolNombres.Referente)]
+    [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> ReactivateUser(Guid id, CancellationToken cancellationToken)
     {
         var result = await _authService.ReactivateUserAsync(id, ActorId, cancellationToken);
