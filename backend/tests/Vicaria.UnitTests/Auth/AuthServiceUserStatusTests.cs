@@ -19,35 +19,35 @@ public class AuthServiceUserStatusTests
         return db;
     }
 
-    private static Usuario CrearUsuarioConEstado(VicariaDbContext db, EstadoUsuario estado)
+    private static User CrearUsuarioConEstado(VicariaDbContext db, UserStatus estado)
     {
-        var usuario = new Usuario
+        var user = new User
         {
             Id = Guid.NewGuid(),
-            Nombre = "Ana",
-            Apellido = "Perez",
+            FirstName = "Ana",
+            LastName = "Perez",
             Email = $"{Guid.NewGuid()}@mail.com",
             PasswordHash = "hash",
-            Estado = estado,
+            Status = estado,
             CreatedAt = DateTime.UtcNow
         };
-        db.Usuarios.Add(usuario);
+        db.Users.Add(user);
         db.SaveChanges();
-        return usuario;
+        return user;
     }
 
     [Fact]
     public async Task DeactivateUserAsync_ConUsuarioActivo_LoDejaInactivo()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioConEstado(db, EstadoUsuario.Active);
+        var user = CrearUsuarioConEstado(db, UserStatus.Active);
         var service = new AuthService(db);
 
-        var result = await service.DeactivateUserAsync(usuario.Id, Guid.NewGuid());
+        var result = await service.DeactivateUserAsync(user.Id, Guid.NewGuid());
 
         Assert.True(result.Success);
-        var usuarioActualizado = await db.Usuarios.FindAsync(usuario.Id);
-        Assert.Equal(EstadoUsuario.Inactive, usuarioActualizado!.Estado);
+        var usuarioActualizado = await db.Users.FindAsync(user.Id);
+        Assert.Equal(UserStatus.Inactive, usuarioActualizado!.Status);
     }
 
     [Fact]
@@ -66,17 +66,17 @@ public class AuthServiceUserStatusTests
     public async Task ReactivateUserAsync_ConUsuarioInactivo_LoDejaActivoYLimpiaElBloqueo()
     {
         using var db = CrearDbContext();
-        var usuario = CrearUsuarioConEstado(db, EstadoUsuario.Inactive);
-        usuario.FailedLoginAttempts = 5;
-        usuario.LockoutEnd = DateTime.UtcNow.AddMinutes(30);
+        var user = CrearUsuarioConEstado(db, UserStatus.Inactive);
+        user.FailedLoginAttempts = 5;
+        user.LockoutEnd = DateTime.UtcNow.AddMinutes(30);
         db.SaveChanges();
         var service = new AuthService(db);
 
-        var result = await service.ReactivateUserAsync(usuario.Id, Guid.NewGuid());
+        var result = await service.ReactivateUserAsync(user.Id, Guid.NewGuid());
 
         Assert.True(result.Success);
-        var usuarioActualizado = await db.Usuarios.FindAsync(usuario.Id);
-        Assert.Equal(EstadoUsuario.Active, usuarioActualizado!.Estado);
+        var usuarioActualizado = await db.Users.FindAsync(user.Id);
+        Assert.Equal(UserStatus.Active, usuarioActualizado!.Status);
         Assert.Equal(0, usuarioActualizado.FailedLoginAttempts);
         Assert.Null(usuarioActualizado.LockoutEnd);
     }

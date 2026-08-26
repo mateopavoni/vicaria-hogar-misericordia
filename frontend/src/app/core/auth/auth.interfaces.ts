@@ -10,7 +10,6 @@ export interface RegisterRequest {
   email: string;
   password: string;
 }
-// nombre/apellido/rol: claims del JWT, no traducir.
 export interface User {
   id: string;
   name: string;
@@ -25,20 +24,20 @@ export interface LoginResponse {
   user: User;
 }
 
-// forma cruda que devuelve el backend (campos en español, así serializa el JWT/DB)
+// forma cruda que devuelve el backend
 export interface BackendUser {
   id: string;
-  nombre: string;
-  apellido: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  rol: UserRole | null;
+  role: UserRole | null;
 }
 
 export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
 
 
 export interface LoginErrorBody {
-  estado?: 'Bloqueada' | 'Pending' | 'Inactive';
+  status?: 'Bloqueada' | 'Pending' | 'Inactive';
   message?: string;
 }
 

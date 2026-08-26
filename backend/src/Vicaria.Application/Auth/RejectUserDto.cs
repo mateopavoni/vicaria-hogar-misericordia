@@ -1,3 +1,3 @@
 namespace Vicaria.Application.Auth;
 
-public record RejectUserDto(string Motivo);
+public record RejectUserDto(string Reason);

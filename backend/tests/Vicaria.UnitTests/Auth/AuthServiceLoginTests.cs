@@ -29,46 +29,46 @@ public class AuthServiceLoginTests
         return new ConfigurationBuilder().AddInMemoryCollection(valores).Build();
     }
 
-    private static async Task<Usuario> CrearUsuarioConEstado(VicariaDbContext db, EstadoUsuario estado, string password)
+    private static async Task<User> CrearUsuarioConEstado(VicariaDbContext db, UserStatus estado, string password)
     {
-        var usuario = new Usuario
+        var user = new User
         {
             Id = Guid.NewGuid(),
-            Nombre = "Ana",
-            Apellido = "Perez",
+            FirstName = "Ana",
+            LastName = "Perez",
             Email = $"{Guid.NewGuid()}@mail.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-            Estado = estado,
+            Status = estado,
             CreatedAt = DateTime.UtcNow
         };
-        db.Usuarios.Add(usuario);
+        db.Users.Add(user);
         await db.SaveChangesAsync();
-        return usuario;
+        return user;
     }
 
     [Fact]
     public async Task LoginAsync_ConCredencialesValidas_DevuelveTokenYUsuario()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
-        var result = await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        var result = await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
         Assert.True(result.Success);
         Assert.False(string.IsNullOrEmpty(result.Token));
-        Assert.Equal(usuario.Id, result.UsuarioId);
-        Assert.Equal(usuario.Apellido, result.Apellido);
+        Assert.Equal(user.Id, result.UserId);
+        Assert.Equal(user.LastName, result.LastName);
     }
 
     [Fact]
     public async Task LoginAsync_ConPasswordIncorrecto_DevuelveCredencialesInvalidas()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
-        var result = await service.LoginAsync(new LoginDto(usuario.Email, "otra-password"));
+        var result = await service.LoginAsync(new LoginDto(user.Email, "otra-password"));
 
         Assert.False(result.Success);
         Assert.Equal(LoginError.InvalidCredentials, result.Error);
@@ -91,29 +91,29 @@ public class AuthServiceLoginTests
     public async Task LoginAsync_ConUsuarioPendiente_DevuelveAccountNotApprovedConEstadoPending()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Pending, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Pending, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
-        var result = await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        var result = await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
         Assert.False(result.Success);
         Assert.Equal(LoginError.AccountNotApproved, result.Error);
-        Assert.Equal("Pending", result.Estado);
+        Assert.Equal("Pending", result.Status);
     }
 
     [Fact]
     public async Task LoginAsync_Con5PasswordsIncorrectos_BloqueaLaCuenta()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
         for (var i = 0; i < 5; i++)
         {
-            await service.LoginAsync(new LoginDto(usuario.Email, "otra-password"));
+            await service.LoginAsync(new LoginDto(user.Email, "otra-password"));
         }
 
-        var result = await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        var result = await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
         Assert.False(result.Success);
         Assert.Equal(LoginError.AccountLocked, result.Error);
@@ -126,38 +126,38 @@ public class AuthServiceLoginTests
         using var db = CrearDbContext();
 
         // creamos un referente para que exista alguien a quien notificar
-        var rolReferente = new Rol { Id = Guid.NewGuid(), Nombre = RolNombres.Referente };
+        var rolReferente = new Role { Id = Guid.NewGuid(), Name = RoleNames.Referente };
         db.Roles.Add(rolReferente);
-        var referente = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "otraPassword123");
-        referente.RolId = rolReferente.Id;
+        var referente = await CrearUsuarioConEstado(db, UserStatus.Active, "otraPassword123");
+        referente.RoleId = rolReferente.Id;
         await db.SaveChangesAsync();
 
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
         for (var i = 0; i < 5; i++)
         {
-            await service.LoginAsync(new LoginDto(usuario.Email, "otra-password"));
+            await service.LoginAsync(new LoginDto(user.Email, "otra-password"));
         }
 
         var notificacion = await db.Notifications.SingleOrDefaultAsync(n => n.EventType == "CuentaBloqueada");
 
         Assert.NotNull(notificacion);
-        Assert.Equal(RolNombres.Referente, notificacion!.TargetRole);
+        Assert.Equal(RoleNames.Referente, notificacion!.TargetRole);
     }
 
     [Fact]
     public async Task LoginAsync_ConLoginCorrecto_ReseteaIntentosFallidosPrevios()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
-        await service.LoginAsync(new LoginDto(usuario.Email, "otra-password"));
-        var result = await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        await service.LoginAsync(new LoginDto(user.Email, "otra-password"));
+        var result = await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
         Assert.True(result.Success);
-        var usuarioActualizado = await db.Usuarios.FindAsync(usuario.Id);
+        var usuarioActualizado = await db.Users.FindAsync(user.Id);
         Assert.Equal(0, usuarioActualizado!.FailedLoginAttempts);
     }
 
@@ -165,10 +165,10 @@ public class AuthServiceLoginTests
     public async Task LoginAsync_ConCredencialesValidas_DevuelveRefreshToken()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
 
-        var result = await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        var result = await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
         Assert.False(string.IsNullOrEmpty(result.RefreshToken));
     }
@@ -177,9 +177,9 @@ public class AuthServiceLoginTests
     public async Task RefreshTokenAsync_ConTokenValido_DevuelveTokensNuevos()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
-        var login = await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        var login = await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
         var result = await service.RefreshTokenAsync(new RefreshTokenDto(login.RefreshToken!));
 
@@ -204,13 +204,13 @@ public class AuthServiceLoginTests
     public async Task LogoutAsync_BorraElRefreshTokenDelUsuario()
     {
         using var db = CrearDbContext();
-        var usuario = await CrearUsuarioConEstado(db, EstadoUsuario.Active, "password123");
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
         var service = new AuthService(db, CrearConfiguracionJwt());
-        await service.LoginAsync(new LoginDto(usuario.Email, "password123"));
+        await service.LoginAsync(new LoginDto(user.Email, "password123"));
 
-        await service.LogoutAsync(usuario.Id);
+        await service.LogoutAsync(user.Id);
 
-        var usuarioActualizado = await db.Usuarios.FindAsync(usuario.Id);
+        var usuarioActualizado = await db.Users.FindAsync(user.Id);
         Assert.Null(usuarioActualizado!.RefreshToken);
     }
 }

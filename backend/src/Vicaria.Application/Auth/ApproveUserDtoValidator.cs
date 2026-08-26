@@ -6,7 +6,7 @@ public class ApproveUserDtoValidator : AbstractValidator<ApproveUserDto>
 {
     public ApproveUserDtoValidator()
     {
-        RuleFor(x => x.RolId)
+        RuleFor(x => x.RoleId)
             .NotEmpty().WithMessage("El rol a asignar es requerido.");
     }
 }

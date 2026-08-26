@@ -12,25 +12,25 @@ public class LoginResult
     public bool Success { get; private init; }
     public string? ErrorMessage { get; private init; }
     public LoginError? Error { get; private init; }
-    public string? Estado { get; private init; }
-    public Guid? UsuarioId { get; private init; }
-    public string? Nombre { get; private init; }
-    public string? Apellido { get; private init; }
+    public string? Status { get; private init; }
+    public Guid? UserId { get; private init; }
+    public string? FirstName { get; private init; }
+    public string? LastName { get; private init; }
     public string? Email { get; private init; }
-    public string? Rol { get; private init; }
+    public string? Role { get; private init; }
     public string? Token { get; private init; }
     public string? RefreshToken { get; private init; }
     public DateTime? LockoutEnd { get; private init; }
 
-    public static LoginResult Ok(Guid usuarioId, string nombre, string apellido, string email, string rol, string token, string refreshToken) =>
+    public static LoginResult Ok(Guid userId, string firstName, string lastName, string email, string role, string token, string refreshToken) =>
         new()
         {
             Success = true,
-            UsuarioId = usuarioId,
-            Nombre = nombre,
-            Apellido = apellido,
+            UserId = userId,
+            FirstName = firstName,
+            LastName = lastName,
             Email = email,
-            Rol = rol,
+            Role = role,
             Token = token,
             RefreshToken = refreshToken
         };
@@ -43,22 +43,22 @@ public class LoginResult
             ErrorMessage = "Credenciales inválidas."
         };
 
-    public static LoginResult AccountNotApproved(string estado) =>
+    public static LoginResult AccountNotApproved(string status) =>
         new()
         {
             Success = false,
             Error = LoginError.AccountNotApproved,
-            Estado = estado,
+            Status = status,
             ErrorMessage = "La cuenta no se encuentra aprobada."
         };
 
-    // el frontend usa "estado" para decidir el mensaje de bloqueo, igual que en AccountNotApproved
+    // el frontend usa "status" para decidir el mensaje de bloqueo, igual que en AccountNotApproved
     public static LoginResult AccountLocked(DateTime lockoutEnd) =>
         new()
         {
             Success = false,
             Error = LoginError.AccountLocked,
-            Estado = "Bloqueada",
+            Status = "Bloqueada",
             LockoutEnd = lockoutEnd,
             ErrorMessage = "Cuenta bloqueada temporalmente por exceso de intentos fallidos. Intente más tarde."
         };
