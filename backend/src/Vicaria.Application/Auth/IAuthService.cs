@@ -7,4 +7,8 @@ public interface IAuthService
     Task<ApproveUserResult> ApproveUserAsync(Guid usuarioId, ApproveUserDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<RejectUserResult> RejectUserAsync(Guid usuarioId, RejectUserDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<LoginResult> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default);
+    Task<UserStatusResult> DeactivateUserAsync(Guid usuarioId, Guid actorId, CancellationToken cancellationToken = default);
+    Task<UserStatusResult> ReactivateUserAsync(Guid usuarioId, Guid actorId, CancellationToken cancellationToken = default);
+    Task<RefreshTokenResult> RefreshTokenAsync(RefreshTokenDto dto, CancellationToken cancellationToken = default);
+    Task<UserStatusResult> LogoutAsync(Guid usuarioId, CancellationToken cancellationToken = default);
 }

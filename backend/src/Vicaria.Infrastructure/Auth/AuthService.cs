@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,6 +44,23 @@ public class AuthService : IAuthService
         };
 
         _dbContext.Usuarios.Add(usuario);
+
+        // avisamos a los referentes que hay una cuenta nueva esperando aprobación
+        var hayReferentes = await _dbContext.Usuarios.AnyAsync(u => u.Rol != null && u.Rol.Nombre == RolNombres.Referente, cancellationToken);
+        if (hayReferentes)
+        {
+            _dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                Description = $"{usuario.Nombre} {usuario.Apellido} se registró y espera aprobación.",
+                EventType = "NuevoUsuarioPendiente",
+                LinkUrl = "/usuarios/pendientes",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                TargetRole = RolNombres.Referente
+            });
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return RegisterResult.Ok(usuario.Id);
@@ -129,8 +147,37 @@ public class AuthService : IAuthService
             .Include(u => u.Rol)
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
-        if (usuario is null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+        if (usuario is null)
         {
+            return LoginResult.InvalidCredentials();
+        }
+
+        // cuenta bloqueada por intentos fallidos: no dejamos ni intentar la contraseña
+        if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
+        {
+            return LoginResult.AccountLocked(usuario.LockoutEnd.Value);
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+        {
+            usuario.FailedLoginAttempts++;
+
+            // al 5to intento fallido, bloqueamos la cuenta 30 minutos
+            if (usuario.FailedLoginAttempts >= 5)
+            {
+                usuario.LockoutEnd = DateTime.UtcNow.AddMinutes(30);
+
+                _dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UsuarioId = usuario.Id,
+                    Accion = "Cuenta bloqueada por 5 intentos fallidos de login",
+                    EntidadAfectada = $"Usuario:{usuario.Id}",
+                    Fecha = DateTime.UtcNow
+                });
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return LoginResult.InvalidCredentials();
         }
 
@@ -139,10 +186,78 @@ public class AuthService : IAuthService
             return LoginResult.AccountNotApproved(usuario.Estado.ToString());
         }
 
+        // login correcto: reseteamos el contador de intentos fallidos
+        if (usuario.FailedLoginAttempts > 0 || usuario.LockoutEnd.HasValue)
+        {
+            usuario.FailedLoginAttempts = 0;
+            usuario.LockoutEnd = null;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         var roleName = usuario.Rol?.Nombre ?? string.Empty;
         var token = GenerateToken(usuario, roleName);
+        var refreshToken = GenerateRefreshToken();
 
-        return LoginResult.Ok(usuario.Id, usuario.Nombre, usuario.Apellido, usuario.Email, roleName, token);
+        // guardamos el refresh token hasheado, igual que la password, nunca en texto plano
+        usuario.RefreshToken = BCrypt.Net.BCrypt.HashPassword(refreshToken);
+        usuario.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_configuration?.GetValue("Jwt:RefreshTokenExpirationDays", 7) ?? 7);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return LoginResult.Ok(usuario.Id, usuario.Nombre, usuario.Apellido, usuario.Email, roleName, token, refreshToken);
+    }
+
+    public async Task<RefreshTokenResult> RefreshTokenAsync(RefreshTokenDto dto, CancellationToken cancellationToken = default)
+    {
+        // no hay forma de buscar por el token hasheado con un WHERE, así que traemos
+        // los usuarios con refresh token activo y comparamos uno por uno con BCrypt
+        var usuarios = await _dbContext.Usuarios
+            .Include(u => u.Rol)
+            .Where(u => u.RefreshToken != null)
+            .ToListAsync(cancellationToken);
+
+        var usuario = usuarios.FirstOrDefault(u => BCrypt.Net.BCrypt.Verify(dto.RefreshToken, u.RefreshToken!));
+        if (usuario is null)
+        {
+            return RefreshTokenResult.InvalidRefreshToken();
+        }
+
+        if (usuario.RefreshTokenExpiry is null || usuario.RefreshTokenExpiry < DateTime.UtcNow)
+        {
+            return RefreshTokenResult.RefreshTokenExpired();
+        }
+
+        var roleName = usuario.Rol?.Nombre ?? string.Empty;
+        var newToken = GenerateToken(usuario, roleName);
+        var newRefreshToken = GenerateRefreshToken();
+
+        usuario.RefreshToken = BCrypt.Net.BCrypt.HashPassword(newRefreshToken);
+        usuario.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_configuration?.GetValue("Jwt:RefreshTokenExpirationDays", 7) ?? 7);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return RefreshTokenResult.Ok(newToken, newRefreshToken);
+    }
+
+    public async Task<UserStatusResult> LogoutAsync(Guid usuarioId, CancellationToken cancellationToken = default)
+    {
+        var usuario = await _dbContext.Usuarios.FindAsync([usuarioId], cancellationToken);
+        if (usuario is null)
+        {
+            return UserStatusResult.UserNotFound();
+        }
+
+        usuario.RefreshToken = null;
+        usuario.RefreshTokenExpiry = null;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UserStatusResult.Ok();
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        return Convert.ToBase64String(randomBytes);
     }
 
     // arma el JWT con el mismo esquema que valida Program.cs
@@ -173,5 +288,64 @@ public class AuthService : IAuthService
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task<UserStatusResult> DeactivateUserAsync(Guid usuarioId, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var usuario = await _dbContext.Usuarios.FindAsync([usuarioId], cancellationToken);
+        if (usuario is null)
+        {
+            return UserStatusResult.UserNotFound();
+        }
+
+        if (usuario.Estado == EstadoUsuario.Inactive)
+        {
+            return UserStatusResult.AlreadyInThatState("El usuario ya se encuentra inactivo.");
+        }
+
+        usuario.Estado = EstadoUsuario.Inactive;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UsuarioId = actorId,
+            Accion = "Usuario desactivado",
+            EntidadAfectada = $"Usuario:{usuario.Id}",
+            Fecha = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return UserStatusResult.Ok();
+    }
+
+    public async Task<UserStatusResult> ReactivateUserAsync(Guid usuarioId, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var usuario = await _dbContext.Usuarios.FindAsync([usuarioId], cancellationToken);
+        if (usuario is null)
+        {
+            return UserStatusResult.UserNotFound();
+        }
+
+        if (usuario.Estado == EstadoUsuario.Active)
+        {
+            return UserStatusResult.AlreadyInThatState("El usuario ya se encuentra activo.");
+        }
+
+        usuario.Estado = EstadoUsuario.Active;
+        // reactivar también le da al usuario un login limpio, sin arrastrar un bloqueo viejo
+        usuario.FailedLoginAttempts = 0;
+        usuario.LockoutEnd = null;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UsuarioId = actorId,
+            Accion = "Usuario reactivado",
+            EntidadAfectada = $"Usuario:{usuario.Id}",
+            Fecha = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return UserStatusResult.Ok();
     }
 }

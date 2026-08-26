@@ -16,19 +16,22 @@ public class AuthController : ControllerBase
     private readonly IValidator<ApproveUserDto> _approveValidator;
     private readonly IValidator<RejectUserDto> _rejectValidator;
     private readonly IValidator<LoginDto> _loginValidator;
+    private readonly IValidator<RefreshTokenDto> _refreshValidator;
 
     public AuthController(
         IAuthService authService,
         IValidator<RegisterDto> validator,
         IValidator<ApproveUserDto> approveValidator,
         IValidator<RejectUserDto> rejectValidator,
-        IValidator<LoginDto> loginValidator)
+        IValidator<LoginDto> loginValidator,
+        IValidator<RefreshTokenDto> refreshValidator)
     {
         _authService = authService;
         _validator = validator;
         _approveValidator = approveValidator;
         _rejectValidator = rejectValidator;
         _loginValidator = loginValidator;
+        _refreshValidator = refreshValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -75,12 +78,18 @@ public class AuthController : ControllerBase
             {
                 return StatusCode(403, new { estado = result.Estado, message = result.ErrorMessage });
             }
+            // mismo shape que AccountNotApproved (estado = "Bloqueada") para que el frontend lo reconozca igual
+            if (result.Error == LoginError.AccountLocked)
+            {
+                return StatusCode(403, new { estado = result.Estado, message = result.ErrorMessage, lockoutEnd = result.LockoutEnd });
+            }
             return Unauthorized(new { message = result.ErrorMessage });
         }
 
         return Ok(new
         {
             token = result.Token,
+            refreshToken = result.RefreshToken,
             user = new
             {
                 id = result.UsuarioId,
@@ -90,6 +99,36 @@ public class AuthController : ControllerBase
                 rol = result.Rol
             }
         });
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _refreshValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _authService.RefreshTokenAsync(dto, cancellationToken);
+        if (!result.Success)
+        {
+            return Unauthorized(new { message = result.ErrorMessage });
+        }
+
+        return Ok(new { token = result.Token, refreshToken = result.RefreshToken });
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        await _authService.LogoutAsync(ActorId, cancellationToken);
+        return NoContent();
     }
 
     [HttpGet("me")]
@@ -156,6 +195,32 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             RejectUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => Conflict(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPatch("users/{id}/deactivate")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> DeactivateUser(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _authService.DeactivateUserAsync(id, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => Conflict(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPatch("users/{id}/reactivate")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> ReactivateUser(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _authService.ReactivateUserAsync(id, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }

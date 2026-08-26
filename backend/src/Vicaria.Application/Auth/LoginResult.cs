@@ -3,7 +3,8 @@ namespace Vicaria.Application.Auth;
 public enum LoginError
 {
     InvalidCredentials,
-    AccountNotApproved
+    AccountNotApproved,
+    AccountLocked
 }
 
 public class LoginResult
@@ -18,8 +19,10 @@ public class LoginResult
     public string? Email { get; private init; }
     public string? Rol { get; private init; }
     public string? Token { get; private init; }
+    public string? RefreshToken { get; private init; }
+    public DateTime? LockoutEnd { get; private init; }
 
-    public static LoginResult Ok(Guid usuarioId, string nombre, string apellido, string email, string rol, string token) =>
+    public static LoginResult Ok(Guid usuarioId, string nombre, string apellido, string email, string rol, string token, string refreshToken) =>
         new()
         {
             Success = true,
@@ -28,7 +31,8 @@ public class LoginResult
             Apellido = apellido,
             Email = email,
             Rol = rol,
-            Token = token
+            Token = token,
+            RefreshToken = refreshToken
         };
 
     public static LoginResult InvalidCredentials() =>
@@ -46,5 +50,16 @@ public class LoginResult
             Error = LoginError.AccountNotApproved,
             Estado = estado,
             ErrorMessage = "La cuenta no se encuentra aprobada."
+        };
+
+    // el frontend usa "estado" para decidir el mensaje de bloqueo, igual que en AccountNotApproved
+    public static LoginResult AccountLocked(DateTime lockoutEnd) =>
+        new()
+        {
+            Success = false,
+            Error = LoginError.AccountLocked,
+            Estado = "Bloqueada",
+            LockoutEnd = lockoutEnd,
+            ErrorMessage = "Cuenta bloqueada temporalmente por exceso de intentos fallidos. Intente más tarde."
         };
 }
