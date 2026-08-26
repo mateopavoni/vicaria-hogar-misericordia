@@ -45,4 +45,18 @@ public class NotificationService : INotificationService
         await _dbContext.SaveChangesAsync(cancellationToken);
         return MarkAsReadResult.Ok();
     }
+
+    public async Task MarkAllAsReadAsync(string role, CancellationToken cancellationToken = default)
+    {
+        var notifications = await _dbContext.Notifications
+            .Where(n => n.TargetRole == role && !n.IsRead)
+            .ToListAsync(cancellationToken);
+
+        foreach (var notification in notifications)
+        {
+            notification.IsRead = true;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

@@ -152,6 +152,35 @@ public class AuthController : ControllerBase
         return Ok(usuarios);
     }
 
+    [HttpGet("users/active")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> GetActiveUsers(CancellationToken cancellationToken)
+    {
+        var usuarios = await _authService.GetActiveUsersAsync(cancellationToken);
+        return Ok(usuarios);
+    }
+
+    [HttpGet("users/inactive")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> GetInactiveUsers(CancellationToken cancellationToken)
+    {
+        var usuarios = await _authService.GetInactiveUsersAsync(cancellationToken);
+        return Ok(usuarios);
+    }
+
+    [HttpPatch("users/{id}/role")]
+    [Authorize(Roles = RolNombres.Referente)]
+    public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateRoleDto dto, CancellationToken cancellationToken)
+    {
+        var result = await _authService.UpdateUserRoleAsync(id, dto.RolId, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => Conflict(new { message = result.ErrorMessage })
+        };
+    }
+
     [HttpPost("users/{id}/approve")]
     [Authorize(Roles = RolNombres.Referente)]
     public async Task<IActionResult> ApproveUser(Guid id, [FromBody] ApproveUserDto dto, CancellationToken cancellationToken)
