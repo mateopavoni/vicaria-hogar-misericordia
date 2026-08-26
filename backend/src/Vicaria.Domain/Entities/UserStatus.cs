@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-public enum EstadoUsuario
+public enum UserStatus
 {
     Pending,
     Active,

@@ -11,7 +11,7 @@ export interface UsersResponse {
   totalPages: number;
 }
 
-// id fijo de cada rol en la base (seed determinístico, ver RolConfiguration en el backend)
+// id fijo de cada rol en la base (seed determinístico, ver RoleConfiguration en el backend)
 const ROLE_IDS: Record<UserRole, string> = {
   Referente: '11111111-1111-1111-1111-111111111111',
   DirectoraDeCasona: '22222222-2222-2222-2222-222222222222',
@@ -21,19 +21,19 @@ const ROLE_IDS: Record<UserRole, string> = {
 // forma cruda que devuelve GET /api/auth/users/pending
 interface BackendPendingUser {
   id: string;
-  nombre: string;
-  apellido: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  fechaSolicitud: string;
+  requestDate: string;
 }
 
 // forma cruda que devuelven GET /api/auth/users/active y /users/inactive
 interface BackendManagedUser {
   id: string;
-  nombre: string;
-  apellido: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  rol: UserRole | null;
+  role: UserRole | null;
 }
 
 @Injectable({
@@ -52,10 +52,10 @@ export class UsersService {
         map((users) => {
           const items: ManagedUser[] = users.map((u) => ({
             id: u.id,
-            name: u.nombre,
-            lastname: u.apellido,
+            name: u.firstName,
+            lastname: u.lastName,
             email: u.email,
-            requestDate: u.fechaSolicitud,
+            requestDate: u.requestDate,
             status: 'Pending',
             role: null,
           }));
@@ -71,12 +71,12 @@ export class UsersService {
       map((users) => {
         const items: ManagedUser[] = users.map((u) => ({
           id: u.id,
-          name: u.nombre,
-          lastname: u.apellido,
+          name: u.firstName,
+          lastname: u.lastName,
           email: u.email,
           requestDate: '',
           status,
-          role: u.rol,
+          role: u.role,
         }));
         return { items, total: items.length, totalPages: 1 };
       })
@@ -86,14 +86,14 @@ export class UsersService {
   approveUser(userId: string, data: ApproveUserRequest): Observable<void> {
     return this.http.post<void>(
       `${this.apiUrl}/users/${userId}/approve`,
-      { rolId: ROLE_IDS[data.role] }
+      { roleId: ROLE_IDS[data.role] }
     );
   }
 
   rejectUser(userId: string, data: RejectUserRequest): Observable<void> {
     return this.http.post<void>(
       `${this.apiUrl}/users/${userId}/reject`,
-      { motivo: data.reason }
+      { reason: data.reason }
     );
   }
 
@@ -106,7 +106,7 @@ export class UsersService {
   }
 
   updateRole(userId: string, role: UserRole): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/users/${userId}/role`, { rolId: ROLE_IDS[role] });
+    return this.http.patch<void>(`${this.apiUrl}/users/${userId}/role`, { roleId: ROLE_IDS[role] });
   }
 
 }

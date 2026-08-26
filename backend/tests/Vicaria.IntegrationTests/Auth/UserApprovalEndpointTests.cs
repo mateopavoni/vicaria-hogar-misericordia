@@ -41,7 +41,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     [Fact]
     public async Task Pending_SinRolReferente_Retorna403()
     {
-        UsarToken(_client, RolNombres.Escucha);
+        UsarToken(_client, RoleNames.Escucha);
 
         var response = await _client.GetAsync("/api/auth/users/pending");
 
@@ -52,7 +52,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Pending_ConRolReferente_IncluyeElUsuarioRecienRegistrado()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RolNombres.Referente);
+        UsarToken(_client, RoleNames.Referente);
 
         var response = await _client.GetAsync("/api/auth/users/pending");
 
@@ -64,7 +64,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     [Fact]
     public async Task Approve_UsuarioNoExiste_Retorna404()
     {
-        UsarToken(_client, RolNombres.Referente);
+        UsarToken(_client, RoleNames.Referente);
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{Guid.NewGuid()}/approve", new ApproveUserDto(rolId));
@@ -76,7 +76,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_SinRolReferente_Retorna403()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RolNombres.DirectoraDeCasona);
+        UsarToken(_client, RoleNames.DirectoraDeCasona);
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
@@ -88,7 +88,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_ConRolReferenteYRolValido_Retorna204()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RolNombres.Referente);
+        UsarToken(_client, RoleNames.Referente);
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
@@ -100,7 +100,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_UsuarioYaAprobado_Retorna409()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RolNombres.Referente);
+        UsarToken(_client, RoleNames.Referente);
         var rolId = ObtenerRolIdSembrado();
         await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
 
@@ -113,7 +113,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Reject_ConMotivo_Retorna204()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RolNombres.Referente);
+        UsarToken(_client, RoleNames.Referente);
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/reject", new RejectUserDto("no cumple los requisitos"));
 
@@ -124,7 +124,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Reject_SinMotivo_Retorna400()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RolNombres.Referente);
+        UsarToken(_client, RoleNames.Referente);
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/reject", new RejectUserDto(""));
 

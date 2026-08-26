@@ -15,9 +15,9 @@ public class RolePermissionSeedTests
         using var db = new VicariaDbContext(options);
         db.Database.EnsureCreated();
 
-        var directora = await db.Roles.SingleAsync(r => r.Nombre == RolNombres.DirectoraDeCasona);
+        var directora = await db.Roles.SingleAsync(r => r.Name == RoleNames.DirectoraDeCasona);
         var codes = await db.RolePermissions
-            .Where(rp => rp.RolId == directora.Id)
+            .Where(rp => rp.RoleId == directora.Id)
             .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Code)
             .ToListAsync();
 
@@ -36,9 +36,9 @@ public class RolePermissionSeedTests
         using var db = new VicariaDbContext(options);
         db.Database.EnsureCreated();
 
-        var coordinador = await db.Roles.SingleAsync(r => r.Nombre == RolNombres.CoordinadorDeCasaConvivencia);
+        var coordinador = await db.Roles.SingleAsync(r => r.Name == RoleNames.CoordinadorDeCasaConvivencia);
         var codes = await db.RolePermissions
-            .Where(rp => rp.RolId == coordinador.Id)
+            .Where(rp => rp.RoleId == coordinador.Id)
             .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Code)
             .ToListAsync();
 
