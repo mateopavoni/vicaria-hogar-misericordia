@@ -5,11 +5,12 @@ import { UserRole } from '../../../../core/auth/userRole';
 import { UsersService } from '../../services/users.service';
 import { ApproveUserModalComponent } from '../../components/approve-user-modal/approve-user-modal.component';
 import {  RejectUserModalComponent } from '../../components/reject-user-modal/reject-user-modal.component';
+import { ChangeRoleModalComponent } from "../../components/change-role-modal/change-role-modal.component";
 
 
 @Component({
   selector: 'app-user-management',
-  imports: [ DatePipe, ApproveUserModalComponent, RejectUserModalComponent ],
+  imports: [DatePipe, ApproveUserModalComponent, RejectUserModalComponent, ChangeRoleModalComponent],
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.css',
 })
@@ -36,6 +37,8 @@ export class UserManagementComponent{
       showApproveModal = signal(false);
 
       showRejectModal = signal(false);
+
+      showChangeRoleModal = signal(false);
       
       dateFrom = signal('');
       
@@ -217,4 +220,39 @@ export class UserManagementComponent{
         });
     }
 
+      // INACTIVAR, ACTIVAR Y REASIGNAR ROL
+    
+      deactivateUser(user: ManagedUser): void {
+        if (confirm(`¿Estás seguro de que deseas inhabilitar/desactivar la cuenta de ${user.name} ${user.lastname}?`)) {
+          // Llama a tu endpoint en el servicio para desactivar
+          this.usersService.deactivateUser(user.id).subscribe({
+            next: () => {
+              this.loadUsers();
+            },
+            error: () => {
+              this.error.set('No se pudo desactivar el usuario.');
+            }
+          });
+        }
+      }
+
+      reactivateUser(user: ManagedUser): void {
+        if (confirm(`¿Deseas reactivar la cuenta de ${user.name} ${user.lastname}?`)) {
+          // Llama a tu endpoint en el servicio para reactivar con efecto inmediato
+          this.usersService.reactivateUser(user.id).subscribe({
+            next: () => {
+              this.loadUsers();
+            },
+            error: () => {
+              this.error.set('No se pudo reactivar el usuario.');
+            }
+          });
+        }
+      }
+
+      openChangeRoleModal(user: ManagedUser): void {
+        // Aquí puedes desplegar un modal o menú para reasignar el rol
+        this.selectedUser.set(user);
+        this.showChangeRoleModal.set(true);
+      }
 }

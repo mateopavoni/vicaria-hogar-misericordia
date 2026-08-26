@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {ManagedUser, UserStatus,ApproveUserRequest, RejectUserRequest} from '../interfaces/user.interface';
 import { UsersFilters } from '../interfaces/UsersFilters.interface';
+import { UserRole } from '../../../core/auth/userRole';
 
 export interface UsersResponse {
   items: ManagedUser[];
@@ -60,6 +61,19 @@ export class UsersService {
       `${this.apiUrl}/${userId}/reject`,
       data
     );
+  }
+
+
+  deactivateUser(userId: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${userId}/deactivate`, {});
+  }
+
+  reactivateUser(userId: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${userId}/reactivate`, {});
+  }
+  
+  updateRole(userId: string, role: UserRole): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${userId}/role`, { role });
   }
 
 }
