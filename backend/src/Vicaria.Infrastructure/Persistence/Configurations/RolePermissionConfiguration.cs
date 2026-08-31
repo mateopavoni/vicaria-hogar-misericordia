@@ -10,18 +10,18 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
     {
         builder.ToTable("rol_permission");
 
-        builder.HasKey(rp => new { rp.RolId, rp.PermissionId });
+        builder.HasKey(rp => new { rp.RoleId, rp.PermissionId });
 
         // permisos de Directora de Casa de Convivencia (SCRUM-88)
         // permisos de Coordinador de Casa de Convivencia (SCRUM-102): mismos 3 permisos que Directora,
         // según los criterios de aceptación de SCRUM-73 (ver fichas, cargar observaciones, ver agenda)
         builder.HasData(
-            new RolePermission { RolId = RolConfiguration.DirectoraDeCasonaId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
-            new RolePermission { RolId = RolConfiguration.DirectoraDeCasonaId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
-            new RolePermission { RolId = RolConfiguration.DirectoraDeCasonaId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId },
-            new RolePermission { RolId = RolConfiguration.CoordinadorDeCasaConvivenciaId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
-            new RolePermission { RolId = RolConfiguration.CoordinadorDeCasaConvivenciaId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
-            new RolePermission { RolId = RolConfiguration.CoordinadorDeCasaConvivenciaId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId }
+            new RolePermission { RoleId = RoleConfiguration.DirectoraDeCasonaId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
+            new RolePermission { RoleId = RoleConfiguration.DirectoraDeCasonaId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
+            new RolePermission { RoleId = RoleConfiguration.DirectoraDeCasonaId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId },
+            new RolePermission { RoleId = RoleConfiguration.CoordinadorDeCasaConvivenciaId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
+            new RolePermission { RoleId = RoleConfiguration.CoordinadorDeCasaConvivenciaId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
+            new RolePermission { RoleId = RoleConfiguration.CoordinadorDeCasaConvivenciaId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId }
         );
     }
 }

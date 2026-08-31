@@ -1,6 +1,7 @@
 namespace Vicaria.Domain.Entities;
 
-public static class RolNombres
+// los valores quedan en español, son términos del negocio (ver AGENTS.md)
+public static class RoleNames
 {
     public const string Referente = "Referente";
     public const string DirectoraDeCasona = "DirectoraDeCasona";

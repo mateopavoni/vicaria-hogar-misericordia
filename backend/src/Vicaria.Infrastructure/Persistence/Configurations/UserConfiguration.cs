@@ -4,23 +4,23 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Infrastructure.Persistence.Configurations;
 
-public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
+public class UserConfiguration : IEntityTypeConfiguration<User>
 {
-    public void Configure(EntityTypeBuilder<Usuario> builder)
+    public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("usuario");
 
         builder.HasKey(u => u.Id);
 
-        builder.Property(u => u.Nombre)
+        builder.Property(u => u.FirstName)
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(u => u.Apellido)
+        builder.Property(u => u.LastName)
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(u => u.Estado)
+        builder.Property(u => u.Status)
             .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
@@ -38,9 +38,9 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.HasIndex(u => u.Email)
             .IsUnique();
 
-        builder.HasOne(u => u.Rol)
+        builder.HasOne(u => u.Role)
             .WithMany()
-            .HasForeignKey(u => u.RolId)
+            .HasForeignKey(u => u.RoleId)
             .IsRequired(false);
     }
 }
