@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.IntegrationTests.Auth;
 
@@ -53,6 +54,28 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     public async Task Create_SinToken_Devuelve401()
     {
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Search_ComoEscucha_Devuelve200()
+    {
+        UsarToken(RoleNames.Referente);
+        await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ramón", lastName = "Gómez" });
+        UsarToken(RoleNames.Escucha);
+
+        var response = await _client.GetAsync("/api/social-records?q=gomez");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var resultados = await response.Content.ReadFromJsonAsync<List<SocialRecordSearchResultDto>>();
+        Assert.Single(resultados!);
+    }
+
+    [Fact]
+    public async Task Search_SinToken_Devuelve401()
+    {
+        var response = await _client.GetAsync("/api/social-records?q=ana");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

@@ -77,4 +77,55 @@ public class SocialRecordServiceTests
         Assert.NotNull(log);
         Assert.Equal(actorId, log!.UserId);
     }
+
+    [Fact]
+    public async Task SearchAsync_ConTextoParcial_EncuentraLaFicha()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ramón", "Gómez", null, null, null, null, null, null, null, null, false, null, null);
+        await service.CreateAsync(dto, Guid.NewGuid());
+
+        var resultados = await service.SearchAsync("gom");
+
+        Assert.Single(resultados);
+        Assert.Equal("Ramón Gómez", resultados[0].FullName);
+    }
+
+    [Fact]
+    public async Task SearchAsync_IgnoraTildesYMayusculas()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ramón", "Gómez", null, null, null, null, null, null, null, null, false, null, null);
+        await service.CreateAsync(dto, Guid.NewGuid());
+
+        var resultados = await service.SearchAsync("RAMON");
+
+        Assert.Single(resultados);
+    }
+
+    [Fact]
+    public async Task SearchAsync_SinCoincidencias_DevuelveListaVacia()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+        await service.CreateAsync(dto, Guid.NewGuid());
+
+        var resultados = await service.SearchAsync("noexiste");
+
+        Assert.Empty(resultados);
+    }
+
+    [Fact]
+    public async Task SearchAsync_ConQueryVacio_DevuelveListaVacia()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+
+        var resultados = await service.SearchAsync("");
+
+        Assert.Empty(resultados);
+    }
 }
