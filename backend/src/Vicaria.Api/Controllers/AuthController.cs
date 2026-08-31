@@ -146,25 +146,25 @@ public class AuthController : ControllerBase
 
     [HttpGet("users/pending")]
     [Authorize(Roles = RoleNames.Referente)]
-    public async Task<IActionResult> GetPendingUsers(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPendingUsers([FromQuery] int page, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, CancellationToken cancellationToken)
     {
-        var users = await _authService.GetPendingUsersAsync(cancellationToken);
+        var users = await _authService.GetPendingUsersAsync(page < 1 ? 1 : page, dateFrom, dateTo, cancellationToken);
         return Ok(users);
     }
 
     [HttpGet("users/active")]
     [Authorize(Roles = RoleNames.Referente)]
-    public async Task<IActionResult> GetActiveUsers(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetActiveUsers([FromQuery] int page, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, CancellationToken cancellationToken)
     {
-        var users = await _authService.GetActiveUsersAsync(cancellationToken);
+        var users = await _authService.GetActiveUsersAsync(page < 1 ? 1 : page, dateFrom, dateTo, cancellationToken);
         return Ok(users);
     }
 
     [HttpGet("users/inactive")]
     [Authorize(Roles = RoleNames.Referente)]
-    public async Task<IActionResult> GetInactiveUsers(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetInactiveUsers([FromQuery] int page, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, CancellationToken cancellationToken)
     {
-        var users = await _authService.GetInactiveUsersAsync(cancellationToken);
+        var users = await _authService.GetInactiveUsersAsync(page < 1 ? 1 : page, dateFrom, dateTo, cancellationToken);
         return Ok(users);
     }
 

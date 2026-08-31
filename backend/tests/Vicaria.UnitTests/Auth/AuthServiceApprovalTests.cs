@@ -48,8 +48,42 @@ public class AuthServiceApprovalTests
         var service = new AuthService(db);
         var resultado = await service.GetPendingUsersAsync();
 
-        var unico = Assert.Single(resultado);
+        var unico = Assert.Single(resultado.Items);
         Assert.Equal(pendiente.Id, unico.Id);
+    }
+
+    [Fact]
+    public async Task GetActiveUsersAsync_Pagina()
+    {
+        using var db = CrearDbContext();
+        for (var i = 0; i < 12; i++)
+        {
+            CrearUsuarioPendiente(db).Status = UserStatus.Active;
+        }
+        db.SaveChanges();
+
+        var service = new AuthService(db);
+        var pagina2 = await service.GetActiveUsersAsync(page: 2);
+
+        Assert.Equal(12, pagina2.Total);
+        Assert.Equal(2, pagina2.TotalPages);
+        Assert.Equal(2, pagina2.Items.Count);
+    }
+
+    [Fact]
+    public async Task GetPendingUsersAsync_FiltraPorRangoDeFecha()
+    {
+        using var db = CrearDbContext();
+        var viejo = CrearUsuarioPendiente(db);
+        viejo.CreatedAt = DateTime.UtcNow.AddDays(-10);
+        var reciente = CrearUsuarioPendiente(db);
+        db.SaveChanges();
+
+        var service = new AuthService(db);
+        var resultado = await service.GetPendingUsersAsync(dateFrom: DateTime.UtcNow.AddDays(-1));
+
+        var unico = Assert.Single(resultado.Items);
+        Assert.Equal(reciente.Id, unico.Id);
     }
 
     [Fact]

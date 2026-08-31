@@ -1,11 +1,13 @@
+using Vicaria.Application.Common;
+
 namespace Vicaria.Application.Auth;
 
 public interface IAuthService
 {
     Task<RegisterResult> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<PendingUserDto>> GetPendingUsersAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<ManagedUserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<ManagedUserDto>> GetInactiveUsersAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<PendingUserDto>> GetPendingUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default);
+    Task<PagedResult<ManagedUserDto>> GetActiveUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default);
+    Task<PagedResult<ManagedUserDto>> GetInactiveUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default);
     Task<UserStatusResult> UpdateUserRoleAsync(Guid userId, Guid roleId, Guid actorId, CancellationToken cancellationToken = default);
     Task<ApproveUserResult> ApproveUserAsync(Guid userId, ApproveUserDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<RejectUserResult> RejectUserAsync(Guid userId, RejectUserDto dto, Guid actorId, CancellationToken cancellationToken = default);
