@@ -1,0 +1,80 @@
+using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.SocialRecords;
+using Vicaria.Domain.Entities;
+using Vicaria.Infrastructure.Persistence;
+using Vicaria.Infrastructure.SocialRecords;
+
+namespace Vicaria.UnitTests.SocialRecords;
+
+public class SocialRecordServiceTests
+{
+    private static VicariaDbContext CrearDbContext()
+    {
+        var options = new DbContextOptionsBuilder<VicariaDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        var db = new VicariaDbContext(options);
+        db.Database.EnsureCreated();
+        return db;
+    }
+
+    [Fact]
+    public async Task CreateAsync_ConSoloElNombre_CreaPersonaYFichaActiva()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+
+        var resultado = await service.CreateAsync(dto, Guid.NewGuid());
+
+        Assert.True(resultado.Success);
+        var persona = await db.People.FindAsync(resultado.PersonId);
+        Assert.Equal("Ana", persona!.FirstName);
+        var ficha = await db.SocialRecords.FindAsync(resultado.SocialRecordId);
+        Assert.Equal(SocialRecordStatus.Active, ficha!.Status);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ConContacto_LoVinculaALaFicha()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var contacto = new ContactDto("Juan", "Perez", "1234", "Calle Falsa 123");
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, contacto);
+
+        var resultado = await service.CreateAsync(dto, Guid.NewGuid());
+
+        var contactoGuardado = await db.Contacts.FirstOrDefaultAsync(c => c.SocialRecordId == resultado.SocialRecordId);
+        Assert.NotNull(contactoGuardado);
+        Assert.Equal("Juan", contactoGuardado!.FirstName);
+    }
+
+    [Fact]
+    public async Task CreateAsync_SinContacto_NoCreaContacto()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+
+        var resultado = await service.CreateAsync(dto, Guid.NewGuid());
+
+        var hayContacto = await db.Contacts.AnyAsync(c => c.SocialRecordId == resultado.SocialRecordId);
+        Assert.False(hayContacto);
+    }
+
+    [Fact]
+    public async Task CreateAsync_RegistraAuditLogConElActor()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+
+        var resultado = await service.CreateAsync(dto, actorId);
+
+        var log = await db.AuditLogs.FirstOrDefaultAsync(a => a.AffectedEntity == $"SocialRecord:{resultado.SocialRecordId}");
+        Assert.NotNull(log);
+        Assert.Equal(actorId, log!.UserId);
+    }
+}
