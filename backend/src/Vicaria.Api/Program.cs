@@ -6,9 +6,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
 using Vicaria.Application.Notifications;
+using Vicaria.Application.SocialRecords;
 using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
+using Vicaria.Infrastructure.SocialRecords;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,11 +40,13 @@ builder.Services.AddDbContext<VicariaDbContext>(options =>
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ISocialRecordService, SocialRecordService>();
 builder.Services.AddScoped<IValidator<RegisterDto>, RegisterDtoValidator>();
 builder.Services.AddScoped<IValidator<ApproveUserDto>, ApproveUserDtoValidator>();
 builder.Services.AddScoped<IValidator<RejectUserDto>, RejectUserDtoValidator>();
 builder.Services.AddScoped<IValidator<LoginDto>, LoginDtoValidator>();
 builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecordDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
