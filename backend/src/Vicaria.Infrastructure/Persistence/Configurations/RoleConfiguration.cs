@@ -4,7 +4,7 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Infrastructure.Persistence.Configurations;
 
-public class RolConfiguration : IEntityTypeConfiguration<Rol>
+public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
     // ids fijos para que el seed sea determinístico entre entornos
     private static readonly Guid ReferenteId = new("11111111-1111-1111-1111-111111111111");
@@ -14,24 +14,24 @@ public class RolConfiguration : IEntityTypeConfiguration<Rol>
     // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos del Coordinador (SCRUM-102)
     internal static readonly Guid CoordinadorDeCasaConvivenciaId = new("77777777-7777-7777-7777-777777777777");
 
-    public void Configure(EntityTypeBuilder<Rol> builder)
+    public void Configure(EntityTypeBuilder<Role> builder)
     {
         builder.ToTable("rol");
 
         builder.HasKey(r => r.Id);
 
-        builder.Property(r => r.Nombre)
+        builder.Property(r => r.Name)
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.HasIndex(r => r.Nombre)
+        builder.HasIndex(r => r.Name)
             .IsUnique();
 
         builder.HasData(
-            new Rol { Id = ReferenteId, Nombre = RolNombres.Referente },
-            new Rol { Id = DirectoraDeCasonaId, Nombre = RolNombres.DirectoraDeCasona },
-            new Rol { Id = EscuchaId, Nombre = RolNombres.Escucha },
-            new Rol { Id = CoordinadorDeCasaConvivenciaId, Nombre = RolNombres.CoordinadorDeCasaConvivencia }
+            new Role { Id = ReferenteId, Name = RoleNames.Referente },
+            new Role { Id = DirectoraDeCasonaId, Name = RoleNames.DirectoraDeCasona },
+            new Role { Id = EscuchaId, Name = RoleNames.Escucha },
+            new Role { Id = CoordinadorDeCasaConvivenciaId, Name = RoleNames.CoordinadorDeCasaConvivencia }
         );
     }
 }

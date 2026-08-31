@@ -12,15 +12,15 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 
         builder.HasKey(a => a.Id);
 
-        builder.Property(a => a.Accion)
+        builder.Property(a => a.Action)
             .HasMaxLength(500)
             .IsRequired();
 
-        builder.Property(a => a.EntidadAfectada)
+        builder.Property(a => a.AffectedEntity)
             .HasMaxLength(200)
             .IsRequired();
 
-        builder.Property(a => a.Fecha)
+        builder.Property(a => a.Date)
             .IsRequired();
     }
 }
