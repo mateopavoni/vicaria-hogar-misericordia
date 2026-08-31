@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Vicaria.Application.Auth;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
@@ -66,31 +67,54 @@ public class AuthService : IAuthService
         return RegisterResult.Ok(user.Id);
     }
 
-    public async Task<IReadOnlyList<PendingUserDto>> GetPendingUsersAsync(CancellationToken cancellationToken = default)
+    // ponytail: page size fijo, no lo pide el frontend; si hace falta configurable, exponerlo como query param
+    private const int UsersPageSize = 10;
+
+    public async Task<PagedResult<PendingUserDto>> GetPendingUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Users
+        var query = _dbContext.Users
             .Where(u => u.Status == UserStatus.Pending)
+            .Where(u => dateFrom == null || u.CreatedAt >= dateFrom)
+            .Where(u => dateTo == null || u.CreatedAt <= dateTo)
+            .OrderByDescending(u => u.CreatedAt);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * UsersPageSize)
+            .Take(UsersPageSize)
             .Select(u => new PendingUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.CreatedAt))
             .ToListAsync(cancellationToken);
+
+        return new PagedResult<PendingUserDto>(items, total, (int)Math.Ceiling(total / (double)UsersPageSize));
     }
 
-    public async Task<IReadOnlyList<ManagedUserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<ManagedUserDto>> GetActiveUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default)
     {
-        return await GetUsersByStatusAsync(UserStatus.Active, cancellationToken);
+        return await GetUsersByStatusAsync(UserStatus.Active, page, dateFrom, dateTo, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<ManagedUserDto>> GetInactiveUsersAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<ManagedUserDto>> GetInactiveUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default)
     {
-        return await GetUsersByStatusAsync(UserStatus.Inactive, cancellationToken);
+        return await GetUsersByStatusAsync(UserStatus.Inactive, page, dateFrom, dateTo, cancellationToken);
     }
 
-    private async Task<IReadOnlyList<ManagedUserDto>> GetUsersByStatusAsync(UserStatus status, CancellationToken cancellationToken)
+    private async Task<PagedResult<ManagedUserDto>> GetUsersByStatusAsync(UserStatus status, int page, DateTime? dateFrom, DateTime? dateTo, CancellationToken cancellationToken)
     {
-        return await _dbContext.Users
+        var query = _dbContext.Users
             .Include(u => u.Role)
             .Where(u => u.Status == status)
+            .Where(u => dateFrom == null || u.CreatedAt >= dateFrom)
+            .Where(u => dateTo == null || u.CreatedAt <= dateTo)
+            .OrderByDescending(u => u.CreatedAt);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * UsersPageSize)
+            .Take(UsersPageSize)
             .Select(u => new ManagedUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.Role != null ? u.Role.Name : null))
             .ToListAsync(cancellationToken);
+
+        return new PagedResult<ManagedUserDto>(items, total, (int)Math.Ceiling(total / (double)UsersPageSize));
     }
 
     public async Task<UserStatusResult> UpdateUserRoleAsync(Guid userId, Guid roleId, Guid actorId, CancellationToken cancellationToken = default)

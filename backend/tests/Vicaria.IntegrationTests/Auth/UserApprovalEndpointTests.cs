@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Application.Auth;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
@@ -57,8 +58,8 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
         var response = await _client.GetAsync("/api/auth/users/pending");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var pendientes = await response.Content.ReadFromJsonAsync<List<PendingUserDto>>();
-        Assert.Contains(pendientes!, u => u.Id == usuarioId);
+        var pendientes = await response.Content.ReadFromJsonAsync<PagedResult<PendingUserDto>>();
+        Assert.Contains(pendientes!.Items, u => u.Id == usuarioId);
     }
 
     [Fact]
