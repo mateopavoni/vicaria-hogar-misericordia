@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -69,5 +72,45 @@ public class SocialRecordService : ISocialRecordService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return CreateSocialRecordResult.Ok(person.Id, socialRecord.Id);
+    }
+
+    public async Task<List<SocialRecordSearchResultDto>> SearchAsync(string? query, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        // ponytail: filtra en memoria (no traduce a SQL), suficiente para el volumen de un centro barrial
+        var records = await _dbContext.SocialRecords
+            .Include(r => r.Person)
+            .ToListAsync(cancellationToken);
+
+        var normalizedQuery = Normalize(query);
+
+        return records
+            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery))
+            .Select(r => new SocialRecordSearchResultDto(
+                r.Id,
+                r.PersonId,
+                $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
+                r.Person.Dni,
+                r.CreatedAt)) // ponytail: todavía no hay edición (SCRUM-7), CreatedAt = última modificación
+            .ToList();
+    }
+
+    private static bool MatchesQuery(Person person, string normalizedQuery)
+    {
+        return Normalize(person.FirstName).Contains(normalizedQuery)
+            || Normalize(person.LastName ?? "").Contains(normalizedQuery)
+            || Normalize(person.Dni ?? "").Contains(normalizedQuery);
+    }
+
+    // saca tildes y pasa a minúsculas para que la búsqueda las ignore
+    private static string Normalize(string value)
+    {
+        var withoutAccents = value.Normalize(NormalizationForm.FormD)
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+        return new string(withoutAccents.ToArray()).ToLowerInvariant();
     }
 }
