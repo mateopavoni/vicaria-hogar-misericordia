@@ -43,7 +43,8 @@ public class SocialRecordService : ISocialRecordService
             HasDocumentation = dto.HasDocumentation,
             GeneralNotes = dto.GeneralNotes?.Trim(),
             CreatedByUserId = actorId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
         _dbContext.SocialRecords.Add(socialRecord);
 
@@ -95,8 +96,48 @@ public class SocialRecordService : ISocialRecordService
                 r.PersonId,
                 $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
                 r.Person.Dni,
-                r.CreatedAt)) // ponytail: todavía no hay edición (SCRUM-7), CreatedAt = última modificación
+                r.UpdatedAt))
             .ToList();
+    }
+
+    public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var socialRecord = await _dbContext.SocialRecords
+            .Include(r => r.Person)
+            .FirstOrDefaultAsync(r => r.Id == socialRecordId, cancellationToken);
+
+        if (socialRecord is null || socialRecord.Person is null)
+        {
+            return UpdateSocialRecordResult.NotFound();
+        }
+
+        socialRecord.Person.FirstName = dto.FirstName.Trim();
+        socialRecord.Person.LastName = dto.LastName?.Trim();
+        socialRecord.Person.Dni = dto.Dni?.Trim();
+        socialRecord.Person.DateOfBirth = dto.DateOfBirth;
+
+        socialRecord.PersonType = dto.PersonType;
+        socialRecord.ReasonForEntry = dto.ReasonForEntry?.Trim();
+        socialRecord.EntryDate = dto.EntryDate;
+        socialRecord.HousingSituation = dto.HousingSituation?.Trim();
+        socialRecord.OvernightLocation = dto.OvernightLocation?.Trim();
+        socialRecord.Occupation = dto.Occupation?.Trim();
+        socialRecord.HasDocumentation = dto.HasDocumentation;
+        socialRecord.GeneralNotes = dto.GeneralNotes?.Trim();
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Ficha social editada",
+            AffectedEntity = $"SocialRecord:{socialRecord.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdateSocialRecordResult.Ok();
     }
 
     private static bool MatchesQuery(Person person, string normalizedQuery)
