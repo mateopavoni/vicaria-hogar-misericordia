@@ -28,6 +28,7 @@ public class SocialRecordConfiguration : IEntityTypeConfiguration<SocialRecord>
         builder.Property(r => r.GeneralNotes).HasMaxLength(2000);
 
         builder.Property(r => r.CreatedAt).IsRequired();
+        builder.Property(r => r.UpdatedAt).IsRequired();
 
         builder.HasOne(r => r.Person)
             .WithMany()

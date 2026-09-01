@@ -47,6 +47,7 @@ builder.Services.AddScoped<IValidator<RejectUserDto>, RejectUserDtoValidator>();
 builder.Services.AddScoped<IValidator<LoginDto>, LoginDtoValidator>();
 builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecordDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateSocialRecordDto>, UpdateSocialRecordDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

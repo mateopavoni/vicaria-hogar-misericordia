@@ -18,4 +18,5 @@ public class SocialRecord
     public string? GeneralNotes { get; set; }
     public Guid CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
