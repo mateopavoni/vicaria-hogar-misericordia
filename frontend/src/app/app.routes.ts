@@ -39,6 +39,18 @@ export const routes: Routes = [
           permissionGuard('users.view')
         ]
       },
+      {
+        // SCRUM-6 (listado) todavía no existe, "Fichas" apunta directo a crear
+        path: 'fichas',
+
+        loadComponent: () =>
+          import('./features/social-records/pages/new-social-record/new-social-record.component')
+            .then(m => m.NewSocialRecordComponent),
+
+        canActivate: [
+          permissionGuard('fichas.create')
+        ]
+      },
     ],
   },
 
