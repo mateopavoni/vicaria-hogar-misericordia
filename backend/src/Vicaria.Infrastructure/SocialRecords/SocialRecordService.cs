@@ -82,7 +82,7 @@ public class SocialRecordService : ISocialRecordService
             return [];
         }
 
-        // ponytail: filtra en memoria (no traduce a SQL), suficiente para el volumen de un centro barrial
+        // filtra en memoria (no traduce a SQL), suficiente para el volumen de un centro barrial
         var records = await _dbContext.SocialRecords
             .Include(r => r.Person)
             .ToListAsync(cancellationToken);
