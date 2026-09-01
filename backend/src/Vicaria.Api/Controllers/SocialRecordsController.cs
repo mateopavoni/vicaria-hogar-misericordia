@@ -14,11 +14,16 @@ public class SocialRecordsController : ControllerBase
 {
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<CreateSocialRecordDto> _createValidator;
+    private readonly IValidator<UpdateSocialRecordDto> _updateValidator;
 
-    public SocialRecordsController(ISocialRecordService socialRecordService, IValidator<CreateSocialRecordDto> createValidator)
+    public SocialRecordsController(
+        ISocialRecordService socialRecordService,
+        IValidator<CreateSocialRecordDto> createValidator,
+        IValidator<UpdateSocialRecordDto> updateValidator)
     {
         _socialRecordService = socialRecordService;
         _createValidator = createValidator;
+        _updateValidator = updateValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -48,5 +53,24 @@ public class SocialRecordsController : ControllerBase
     {
         var results = await _socialRecordService.SearchAsync(q, cancellationToken);
         return Ok(results);
+    }
+
+    // solo Referente y Directora pueden editar (SCRUM-7)
+    [HttpPut("{id}")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSocialRecordDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _socialRecordService.UpdateAsync(id, dto, ActorId, cancellationToken);
+        return result.Success ? NoContent() : NotFound(new { message = result.ErrorMessage });
     }
 }
