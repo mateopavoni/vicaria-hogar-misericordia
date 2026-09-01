@@ -128,4 +128,48 @@ public class SocialRecordServiceTests
 
         Assert.Empty(resultados);
     }
+
+    [Fact]
+    public async Task UpdateAsync_ConFichaExistente_ActualizaLosDatos()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var dto = new UpdateSocialRecordDto("Ana", "Torres", "30111222", null, null, "Nuevo motivo", null, null, null, null, true, null);
+
+        var resultado = await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        Assert.True(resultado.Success);
+        var persona = await db.People.FindAsync(creada.PersonId);
+        Assert.Equal("Torres", persona!.LastName);
+        var ficha = await db.SocialRecords.FindAsync(creada.SocialRecordId);
+        Assert.Equal("Nuevo motivo", ficha!.ReasonForEntry);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ConFichaInexistente_DevuelveNotFound()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null);
+
+        var resultado = await service.UpdateAsync(Guid.NewGuid(), dto, Guid.NewGuid());
+
+        Assert.False(resultado.Success);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RegistraAuditLogConElActor()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var actorId = Guid.NewGuid();
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null);
+
+        await service.UpdateAsync(creada.SocialRecordId, dto, actorId);
+
+        var log = await db.AuditLogs.FirstOrDefaultAsync(a => a.AffectedEntity == $"SocialRecord:{creada.SocialRecordId}" && a.UserId == actorId);
+        Assert.NotNull(log);
+    }
 }

@@ -79,4 +79,67 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Update_ComoReferente_Devuelve204()
+    {
+        UsarToken(RoleNames.Referente);
+        var creada = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
+        var id = (await creada.Content.ReadFromJsonAsync<Dictionary<string, Guid>>())!["id"];
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{id}", new { firstName = "Ana", lastName = "Torres", hasDocumentation = false });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_ComoEscucha_Devuelve403()
+    {
+        UsarToken(RoleNames.Escucha);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_ComoCoordinador_Devuelve403()
+    {
+        // SCRUM-117: solo Referente y Directora pueden editar, a diferencia de crear
+        UsarToken(RoleNames.CoordinadorDeCasaConvivencia);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_ConFichaInexistente_Devuelve404()
+    {
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_SinNombre_Devuelve400()
+    {
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "", hasDocumentation = false });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_SinToken_Devuelve401()
+    {
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    private record CreatedResponse(Guid PersonId, Guid Id);
 }
