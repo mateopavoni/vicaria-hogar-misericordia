@@ -67,7 +67,7 @@ public class AuthService : IAuthService
         return RegisterResult.Ok(user.Id);
     }
 
-    // ponytail: page size fijo, no lo pide el frontend; si hace falta configurable, exponerlo como query param
+    // page size fijo, no lo pide el frontend; si hace falta configurable, exponerlo como query param
     private const int UsersPageSize = 10;
 
     public async Task<PagedResult<PendingUserDto>> GetPendingUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default)
