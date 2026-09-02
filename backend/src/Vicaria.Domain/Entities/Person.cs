@@ -9,5 +9,6 @@ public class Person
     public string? LastName { get; set; }
     public string? Dni { get; set; }
     public DateTime? DateOfBirth { get; set; }
+    public string? Phone { get; set; }
     public DateTime CreatedAt { get; set; }
 }

@@ -25,6 +25,7 @@ public class SocialRecordService : ISocialRecordService
             LastName = dto.LastName?.Trim(),
             Dni = dto.Dni?.Trim(),
             DateOfBirth = dto.DateOfBirth,
+            Phone = dto.Phone?.Trim(),
             CreatedAt = DateTime.UtcNow
         };
         _dbContext.People.Add(person);
@@ -115,6 +116,7 @@ public class SocialRecordService : ISocialRecordService
         socialRecord.Person.LastName = dto.LastName?.Trim();
         socialRecord.Person.Dni = dto.Dni?.Trim();
         socialRecord.Person.DateOfBirth = dto.DateOfBirth;
+        socialRecord.Person.Phone = dto.Phone?.Trim();
 
         socialRecord.PersonType = dto.PersonType;
         socialRecord.ReasonForEntry = dto.ReasonForEntry?.Trim();

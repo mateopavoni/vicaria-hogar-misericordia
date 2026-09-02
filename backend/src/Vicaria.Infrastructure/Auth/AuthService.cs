@@ -75,7 +75,7 @@ public class AuthService : IAuthService
         var query = _dbContext.Users
             .Where(u => u.Status == UserStatus.Pending)
             .Where(u => dateFrom == null || u.CreatedAt >= dateFrom)
-            .Where(u => dateTo == null || u.CreatedAt <= dateTo)
+            .Where(u => dateTo == null || u.CreatedAt < dateTo.Value.AddDays(1))
             .OrderByDescending(u => u.CreatedAt);
 
         var total = await query.CountAsync(cancellationToken);
@@ -104,7 +104,7 @@ public class AuthService : IAuthService
             .Include(u => u.Role)
             .Where(u => u.Status == status)
             .Where(u => dateFrom == null || u.CreatedAt >= dateFrom)
-            .Where(u => dateTo == null || u.CreatedAt <= dateTo)
+            .Where(u => dateTo == null || u.CreatedAt < dateTo.Value.AddDays(1))
             .OrderByDescending(u => u.CreatedAt);
 
         var total = await query.CountAsync(cancellationToken);

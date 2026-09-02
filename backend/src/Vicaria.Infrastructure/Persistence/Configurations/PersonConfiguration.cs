@@ -22,6 +22,9 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
         builder.Property(p => p.Dni)
             .HasMaxLength(20);
 
+        builder.Property(p => p.Phone)
+            .HasMaxLength(30);
+
         builder.Property(p => p.CreatedAt)
             .IsRequired();
     }

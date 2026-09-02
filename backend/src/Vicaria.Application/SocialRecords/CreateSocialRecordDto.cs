@@ -8,6 +8,7 @@ public record CreateSocialRecordDto(
     string? LastName,
     string? Dni,
     DateTime? DateOfBirth,
+    string? Phone,
     PersonType? PersonType,
     string? ReasonForEntry,
     DateTime? EntryDate,
