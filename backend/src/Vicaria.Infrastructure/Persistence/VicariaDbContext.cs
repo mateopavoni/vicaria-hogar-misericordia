@@ -18,6 +18,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Person> People => Set<Person>();
     public DbSet<SocialRecord> SocialRecords => Set<SocialRecord>();
     public DbSet<Contact> Contacts => Set<Contact>();
+    public DbSet<CasonaStay> CasonaStays => Set<CasonaStay>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
