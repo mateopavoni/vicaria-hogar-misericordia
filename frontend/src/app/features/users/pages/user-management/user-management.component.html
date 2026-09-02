@@ -235,13 +235,6 @@
                       >
                         Inactivar
                       </button>
-                      @if (showChangeRoleModal()) {
-                        <app-change-role-modal
-                          [user]="selectedUser()"
-                          (close)="closeModals()"
-                          (changeRole)="updateUserRole($event)"
-                        />
-                      }
                     }
 
                     <!-- SUSPENDIDOS / INACTIVOS -->
@@ -295,7 +288,7 @@
       type="button"
       (click)="goToPage(currentPage() - 1)"
       [disabled]="currentPage() === 1"
-      class="px-2 py-1 text-slate-400 transition hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+      class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:text-slate-400 disabled:opacity-40"
     >
       &lt; Anterior
     </button>
@@ -340,6 +333,14 @@
       [user]="selectedUser()"
       (close)="closeModals()"
       (reject)="rejectSelectedUser($event)"
+    />
+  }
+
+  @if (showChangeRoleModal()) {
+    <app-change-role-modal
+      [user]="selectedUser()"
+      (close)="closeModals()"
+      (changeRole)="updateUserRole($event)"
     />
   }
 

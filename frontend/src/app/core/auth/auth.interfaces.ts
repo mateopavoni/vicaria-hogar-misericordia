@@ -25,13 +25,13 @@ export interface LoginResponse {
   user: User;
 }
 
-// forma cruda que devuelve el backend (campos en español, así serializa el JWT/DB)
+// forma cruda que devuelve el backend en /api/auth/login (campos en inglés, así los serializa el controller)
 export interface BackendUser {
   id: string;
-  nombre: string;
-  apellido: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  rol: UserRole | null;
+  role: UserRole | null;
 }
 
 export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
