@@ -1,1 +1,446 @@
-<p>social-record-list.component works!</p>,
+<div class="min-h-full bg-[#F5F7FB] px-10 py-7">
+
+  <!-- ENCABEZADO -->
+  <div class="mb-6 flex items-start justify-between">
+
+    <div>
+
+      <div class="flex items-center gap-3">
+
+        <!-- Icono ficha -->
+        <svg
+          class="h-7 w-7 text-[#4167D9]"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <rect
+            x="3"
+            y="3"
+            width="18"
+            height="18"
+            rx="2"
+          />
+
+          <circle
+            cx="9"
+            cy="9"
+            r="2"
+          />
+
+          <path
+            d="M15 8h3"
+          />
+
+          <path
+            d="M15 12h3"
+          />
+
+          <path
+            d="M7 16h10"
+          />
+        </svg>
+
+        <h1 class="text-[22px] font-bold text-slate-800">
+          Fichas de Personas
+        </h1>
+
+      </div>
+
+      <p class="mt-1 ml-10 text-[13px] text-slate-500">
+        Gestioná y consultá el registro histórico de las personas atendidas.
+      </p>
+
+    </div>
+
+
+    <!-- NUEVA FICHA -->
+    <a
+      routerLink="/fichas/nueva"
+      class="flex h-[42px] items-center gap-2 rounded-md
+             bg-[#6B8DF5] px-5
+             text-[14px] font-semibold text-white
+             shadow-sm transition
+             hover:bg-[#587BE8]"
+    >
+
+      <span class="text-lg">
+        +
+      </span>
+
+      Nueva ficha
+
+    </a>
+
+  </div>
+
+
+  <!-- ERROR -->
+  @if (errorMessage()) {
+
+    <div
+      class="mb-4 rounded-md bg-red-50 px-4 py-3
+             text-[13px] font-semibold text-red-600"
+      role="alert"
+    >
+      {{ errorMessage() }}
+    </div>
+
+  }
+
+
+  <!-- CONTENEDOR TABLA -->
+  <div
+    class="overflow-hidden rounded-xl
+           border border-[#E3E8F5]
+           bg-white
+           shadow-[0_4px_20px_rgba(79,115,232,0.05)]"
+  >
+
+    <!-- TABLA -->
+    <table class="w-full border-collapse">
+
+      <thead>
+
+        <tr
+          class="border-b border-[#E5E7EB]
+                 bg-[#F8F9FC]"
+        >
+
+          <th
+            class="px-6 py-3 text-left
+                   text-[12px] font-semibold
+                   text-slate-600"
+          >
+            Nombre Y Apellido
+          </th>
+
+          <th
+            class="px-6 py-3 text-left
+                   text-[12px] font-semibold
+                   text-slate-600"
+          >
+            DNI
+          </th>
+
+            <th
+              class="px-6 py-3 text-left
+                     text-[12px] font-semibold
+                     text-slate-600"
+            >
+              Fecha de nacimiento
+            </th>
+          <th
+            class="px-6 py-3 text-left
+                   text-[12px] font-semibold
+                   text-slate-600"
+          >
+            Tipo
+          </th>
+
+          <th
+            class="px-6 py-3 text-left
+                   text-[12px] font-semibold
+                   text-slate-600"
+          >
+            Estado
+          </th>
+
+          <th
+            class="px-6 py-3 text-left
+                   text-[12px] font-semibold
+                   text-slate-600"
+          >
+            Última modificación
+          </th>
+
+          <th
+            class="px-6 py-3 text-center
+                   text-[12px] font-semibold
+                   text-slate-600"
+          >
+            Acciones
+          </th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+
+        <!-- CARGANDO -->
+        @if (loading()) {
+
+          <tr>
+
+            <td
+              colspan="6"
+              class="px-6 py-10 text-center
+                     text-[13px] text-slate-500"
+            >
+              Cargando fichas...
+            </td>
+
+          </tr>
+
+        }
+
+
+        <!-- LISTADO -->
+        @if (!loading() && records().length > 0) {
+
+          @for (record of records(); track record.id) {
+
+            <tr
+              class="border-b border-slate-100
+                     last:border-0
+                     hover:bg-slate-50"
+            >
+
+              <!-- NOMBRE Y APELLIDO -->
+              <td class="px-6 py-4">
+
+                <div class="text-[13px] font-semibold text-slate-700">
+                  {{ record.firstName }} {{ record.lastName }}
+                </div>
+
+              </td>
+
+
+              <!-- DNI -->
+              <td
+                class="px-6 py-4
+                       text-[13px] text-slate-600"
+              >
+                {{ record.dni || '—' }}
+              </td>
+
+              
+                <!-- FECHA NACIMIENTO -->
+                  <td
+                    class="px-6 py-4
+                           text-[13px] text-slate-600"
+                  >
+              
+                     @if (record.dateOfBirth) {
+              
+                      {{ record.dateOfBirth | date:'dd/MM/yyyy' }}
+              
+                       } @else {
+              
+                        —
+              
+                       }
+              
+                      </td>
+
+              <!-- TIPO -->
+              <td class="px-6 py-4">
+
+                @if (record.personType === 0) {
+
+                  <span
+                    class="rounded-full
+                           bg-[#E8EDFF]
+                           px-3 py-1
+                           text-[11px] font-semibold
+                           text-[#4167D9]"
+                  >
+                    Ambulatorio
+                  </span>
+
+                } @else if (record.personType === 1) {
+
+                  <span
+                    class="rounded-full
+                           bg-[#E8EDFF]
+                           px-3 py-1
+                           text-[11px] font-semibold
+                           text-[#4167D9]"
+                  >
+                    Residente
+                  </span>
+
+                } @else {
+
+                  <span class="text-[12px] text-slate-400">
+                    —
+                  </span>
+
+                }
+
+              </td>
+
+
+
+              <!-- ÚLTIMA MODIFICACIÓN -->
+              <td
+                class="px-6 py-4
+                       text-[13px] text-slate-600"
+              >
+
+                {{ record.lastModifiedAt | date:'dd/MM/yyyy' }}
+
+              </td>
+
+
+              <!-- ACCIONES -->
+              <td class="px-6 py-4">
+
+                <div class="flex justify-center gap-3">
+
+                  <!-- Ver -->
+                  <button
+                    type="button"
+                    class="text-slate-500
+                           hover:text-[#4167D9]"
+                    aria-label="Ver ficha"
+                  >
+
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"
+                      />
+
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                      />
+                    </svg>
+
+                  </button>
+
+
+                  <!-- Editar -->
+                  <button
+                    type="button"
+                    class="text-slate-500
+                           hover:text-[#4167D9]"
+                    aria-label="Editar ficha"
+                  >
+
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 20h9"
+                      />
+
+                      <path
+                        d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                      />
+                    </svg>
+
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+        }
+
+
+        <!-- SIN RESULTADOS -->
+        @if (!loading() && records().length === 0) {
+
+          <tr>
+
+            <td
+              colspan="6"
+              class="px-6 py-12 text-center"
+            >
+
+              <p
+                class="text-[14px] font-semibold
+                       text-slate-600"
+              >
+                No hay fichas para mostrar.
+              </p>
+
+            </td>
+
+          </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+
+
+    <!-- PAGINACIÓN -->
+    @if (totalPages() > 1) {
+
+      <div
+        class="flex items-center justify-end
+               gap-2 border-t border-slate-100
+               px-6 py-4"
+      >
+
+        <button
+          type="button"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+          class="rounded-md px-3 py-1.5
+                 text-[12px] text-slate-500
+                 disabled:opacity-40"
+        >
+          &lt; Anterior
+        </button>
+
+
+        @for (
+          page of [].constructor(totalPages());
+          track $index
+        ) {
+
+          <button
+            type="button"
+            (click)="goToPage($index + 1)"
+            class="h-8 min-w-8 rounded-md
+                   text-[12px]"
+            [class.bg-[#4167D9]]="currentPage() === $index + 1"
+            [class.text-white]="currentPage() === $index + 1"
+            [class.text-slate-600]="currentPage() !== $index + 1"
+          >
+            {{ $index + 1 }}
+          </button>
+
+        }
+
+
+        <button
+          type="button"
+          [disabled]="currentPage() === totalPages()"
+          (click)="goToPage(currentPage() + 1)"
+          class="rounded-md px-3 py-1.5
+                 text-[12px] text-[#4167D9]
+                 disabled:opacity-40"
+        >
+          Siguiente &gt;
+        </button>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>
