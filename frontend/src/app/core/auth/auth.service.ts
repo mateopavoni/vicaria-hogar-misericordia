@@ -57,17 +57,17 @@ export class AuthService {
   private mapUser(backendUser: BackendUser): User {
     return {
       id: backendUser.id,
-      name: backendUser.nombre,
-      lastname: backendUser.apellido,
+      name: backendUser.firstName,
+      lastname: backendUser.lastName,
       email: backendUser.email,
-      role: backendUser.rol,
+      role: backendUser.role,
     };
   }
 
   register(data: RegisterRequest): Observable<{ message: string }> {
     const body = {
-      nombre: data.name,
-      apellido: data.lastname,
+      firstName: data.name,
+      lastName: data.lastname,
       email: data.email,
       password: data.password,
     };

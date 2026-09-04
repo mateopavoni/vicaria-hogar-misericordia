@@ -104,6 +104,7 @@ export class UserManagementComponent implements OnInit {
 
 
       applyFilters(): void {
+        if (!this.dateFrom() && !this.dateTo()) return; // nada cargado en los calendarios, no hay nada que filtrar
 
         this.currentPage.set(1);
         this.loadUsers();
@@ -111,6 +112,7 @@ export class UserManagementComponent implements OnInit {
         }
 
       clearFilters(): void {
+        if (!this.dateFrom() && !this.dateTo()) return; // ya estaba limpio, no hay nada que limpiar
 
         this.dateFrom.set('');
         this.dateTo.set('');
@@ -150,6 +152,7 @@ export class UserManagementComponent implements OnInit {
 
 
       openApproveModal( user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
 
         this.selectedUser.set(user);
 
@@ -159,6 +162,7 @@ export class UserManagementComponent implements OnInit {
 
 
       openRejectModal(user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
 
         this.selectedUser.set(user);
 
@@ -172,6 +176,8 @@ export class UserManagementComponent implements OnInit {
         this.showApproveModal.set(false);
 
         this.showRejectModal.set(false);
+
+        this.showChangeRoleModal.set(false);
 
         this.selectedUser.set(null);
 
@@ -255,6 +261,7 @@ export class UserManagementComponent implements OnInit {
       }
 
       openChangeRoleModal(user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
         this.selectedUser.set(user);
         this.showChangeRoleModal.set(true);
       }

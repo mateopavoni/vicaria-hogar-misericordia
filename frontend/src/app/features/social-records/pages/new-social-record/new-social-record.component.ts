@@ -21,17 +21,21 @@ export class NewSocialRecordComponent {
   submitted = signal(false);
   // el contacto de referencia es un sub-formulario opcional y colapsable (SCRUM-109)
   showContact = signal(false);
-
-  personTypes = [
-    { value: PersonType.Ambulatory, label: 'Ambulatorio' },
-    { value: PersonType.Resident, label: 'Residente' },
-  ];
+  // información personal extra, opcional y colapsable, mismo patrón que el contacto
+  showMoreInfo = signal(false);
 
   form = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.minLength(2)]],
     lastName: [''],
     dni: [''],
-    personType: this.fb.control<PersonType | null>(null),
+    dateOfBirth: [''],
+    phone: [''],
+    reasonForEntry: [''],
+    entryDate: [''],
+    housingSituation: [''],
+    overnightLocation: [''],
+    occupation: [''],
+    hasDocumentation: [false],
     generalNotes: [''],
     contact: this.fb.nonNullable.group({
       firstName: [''],
@@ -43,6 +47,10 @@ export class NewSocialRecordComponent {
 
   toggleContact(): void {
     this.showContact.update(value => !value);
+  }
+
+  toggleMoreInfo(): void {
+    this.showMoreInfo.update(value => !value);
   }
 
   submit(): void {
@@ -57,7 +65,11 @@ export class NewSocialRecordComponent {
       return;
     }
 
-    const { firstName, lastName, dni, personType, generalNotes, contact } = this.form.getRawValue();
+    const {
+      firstName, lastName, dni, generalNotes, contact,
+      dateOfBirth, phone, reasonForEntry, entryDate,
+      housingSituation, overnightLocation, occupation, hasDocumentation,
+    } = this.form.getRawValue();
 
     // el contacto es opcional, pero si se completa algún dato requiere nombre (igual que el backend)
     const contactHasData = !!(contact.lastName || contact.phone || contact.address);
@@ -74,9 +86,16 @@ export class NewSocialRecordComponent {
       firstName,
       lastName: lastName || null,
       dni: dni || null,
-      personType,
+      dateOfBirth: dateOfBirth || null,
+      phone: phone || null,
+      personType: PersonType.Ambulatory, // toda ficha nace ambulatoria; pasar a Residente es otra acción (no es una eleccion al crear)
+      reasonForEntry: reasonForEntry || null,
+      entryDate: entryDate || null,
+      housingSituation: housingSituation || null,
+      overnightLocation: overnightLocation || null,
+      occupation: occupation || null,
       generalNotes: generalNotes || null,
-      hasDocumentation: false,
+      hasDocumentation,
       contact: contact.firstName ? {
         firstName: contact.firstName,
         lastName: contact.lastName || null,
