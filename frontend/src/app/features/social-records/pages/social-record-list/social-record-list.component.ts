@@ -11,167 +11,104 @@ import { OnDestroy } from '@angular/core';
   templateUrl: './social-record-list.component.html',
   styleUrl: './social-record-list.component.css'
 })
-export class SocialRecordListComponent
-  implements OnInit, OnDestroy {
-
-  private socialRecordsService =
-    inject(SocialRecordsService);
-
-
+export class SocialRecordListComponent implements OnInit, OnDestroy {
+  private socialRecordsService = inject(SocialRecordsService);
   private destroy$ = new Subject<void>();
 
-
   records = signal<SocialRecordListItem[]>([]);
-
   loading = signal(false);
-
-  searchTerm = signal('');
-
   errorMessage = signal<string | null>(null);
 
   currentPage = signal(1);
-
   totalPages = signal(1);
+  searchTerm = signal(''); // Guarda el término de búsqueda activo
 
-
-  // Texto que envía el buscador
-  private searchSubject =
-    new Subject<string>();
-
+  private searchSubject = new Subject<string>();
 
   ngOnInit(): void {
-
+    // 1. Carga inicial
     this.loadRecords();
 
-
-    this.searchSubject.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
+    // 2. Escucha la escritura continua en el input
+    this.searchSubject
+      .pipe(
+        debounceTime(300), // Espera 300ms a que el usuario deje de tipear
+        distinctUntilChanged(), // Solo busca si el texto cambió respecto a la última búsqueda
         takeUntil(this.destroy$)
       )
-      .subscribe(search => {
-
-      this.searchTerm.set(search);
-
-      this.currentPage.set(1);
-
-      this.loadRecords(search);
-
-    });
-
+      .subscribe((search) => {
+        this.executeSearch(search);
+      });
   }
 
-
-  
-  //  Carga el listado
-  
-  loadRecords(search: string = ''): void {
-
+  /**
+   * Carga los registros usando la página y el término de búsqueda almacenados
+   */
+  loadRecords(): void {
     this.loading.set(true);
-
     this.errorMessage.set(null);
 
-
-    this.socialRecordsService.getAll( this.currentPage(), search ).subscribe({
-
+    this.socialRecordsService
+      .getAll(this.currentPage(), this.searchTerm())
+      .subscribe({
         next: (response) => {
+          const sortedRecords = [...response.items].sort((a, b) => {
+            const nameA = `${a.lastName ?? ''} ${a.firstName}`.trim();
+            const nameB = `${b.lastName ?? ''} ${b.firstName}`.trim();
+            return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+          });
 
-          const sortedRecords =
-            [...response.items].sort(
-              (a, b) => {
-
-                const nameA =
-                  `${a.lastName ?? ''} ${a.firstName}`.trim();
-
-                const nameB =
-                  `${b.lastName ?? ''} ${b.firstName}`.trim();
-
-                return nameA.localeCompare(
-                  nameB,
-                  'es',
-                  {
-                    sensitivity: 'base'
-                  }
-                );
-
-              }
-            );
-
-
-          this.records.set(
-            sortedRecords
-          );
-
-          this.totalPages.set(
-            response.totalPages
-          );
-
+          this.records.set(sortedRecords);
+          this.totalPages.set(response.totalPages);
           this.loading.set(false);
-
         },
-
         error: () => {
-
           this.loading.set(false);
-
-          this.errorMessage.set(
-            'No se pudieron cargar las fichas.'
-          );
-
+          this.errorMessage.set('No se pudieron cargar las fichas.');
         }
-
       });
-
   }
 
-
- 
-  // Se ejecuta mientras escribimos
-  
+  /**
+   * Se ejecuta en el HTML en el evento (input)="onSearch(searchInput.value)"
+   */
   onSearch(value: string): void {
-
-  this.searchSubject.next(
-    value.trim()
-  );
-
-}
-    // Búsqueda al presionar Enter
-  searchNow(value: string): void {
-
-  const search = value.trim();
-
-  this.searchTerm.set(search);
-
-  this.currentPage.set(1);
-
-  this.loadRecords(search);
-
-}
-
-
-  goToPage(page: number): void {
-
-  if (
-    page < 1 ||
-    page > this.totalPages()
-  ) {
-    return;
+    this.searchSubject.next(value);
   }
 
-  this.currentPage.set(page);
+  /**
+   * Se ejecuta al presionar Enter o hacer clic en el botón Buscar
+   */
+  searchNow(value: string): void {
+    // Si el término es distinto al guardado actualmente, ejecuta la búsqueda de inmediato
+    if (value !== this.searchTerm()) {
+      this.executeSearch(value);
+    }
+  }
 
-  this.loadRecords(
-    this.searchTerm()
-  );
+  /**
+   * Aplica el término de búsqueda, resetea a la página 1 y carga datos
+   */
+  private executeSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.currentPage.set(1);
+    this.loadRecords();
+  }
 
-}
+  /**
+   * Cambia de página preservando el término de búsqueda actual
+   */
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) {
+      return;
+    }
 
+    this.currentPage.set(page);
+    this.loadRecords();
+  }
 
   ngOnDestroy(): void {
-
     this.destroy$.next();
     this.destroy$.complete();
-
   }
-
 }

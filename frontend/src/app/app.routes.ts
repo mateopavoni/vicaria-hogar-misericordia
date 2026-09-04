@@ -58,7 +58,7 @@ export const routes: Routes = [
       
       {
        
-        path: 'fichas-new',
+        path: 'ficha-nueva',
 
         loadComponent: () =>
           import('./features/social-records/pages/new-social-record/new-social-record.component')

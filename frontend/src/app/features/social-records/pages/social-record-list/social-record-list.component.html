@@ -57,7 +57,7 @@
 
     <!-- NUEVA FICHA -->
     <a
-      routerLink="/fichas/nueva"
+      routerLink="/dashboard/ficha-nueva"
       class="flex h-[42px] items-center gap-2 rounded-md
              bg-[#6B8DF5] px-5
              text-[14px] font-semibold text-white
@@ -159,7 +159,90 @@
     </div>
 
   }
+  @if (!loading() && !errorMessage() && records().length === 0) {
 
+  <div
+    class="flex min-h-[260px]
+           flex-col items-center
+           justify-center
+           rounded-lg
+           border border-[#E3E8F5]
+           bg-white
+           px-6 text-center"
+  >
+
+    <!-- Icono -->
+    <div
+      class="mb-4 flex h-14 w-14
+             items-center justify-center
+             rounded-full
+             bg-[#EEF2FF]"
+    >
+
+      <svg
+        class="h-7 w-7 text-[#6B8DF5]"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+
+        <circle
+          cx="11"
+          cy="11"
+          r="7"
+        />
+
+        <path
+          d="m20 20-4-4"
+        />
+
+      </svg>
+
+    </div>
+
+
+    <h3
+      class="mb-2 text-[16px]
+             font-semibold
+             text-slate-800"
+    >
+      No encontramos fichas
+    </h3>
+
+
+    <p
+      class="mb-5 max-w-md
+             text-[13px]
+             text-slate-500"
+    >
+      No hay personas que coincidan con tu búsqueda.
+      Probá con otro nombre, apellido, DNI o fecha de nacimiento.
+    </p>
+
+
+    <a
+      routerLink="/dashboard/ficha-nueva"
+      class="inline-flex h-[40px]
+             items-center justify-center
+             rounded-md
+             bg-[#6B8DF5]
+             px-5
+             text-[13px]
+             font-semibold
+             text-white
+             shadow-sm
+             transition
+             hover:bg-[#587BE8]"
+    >
+
+      + Crear nueva ficha
+
+    </a>
+
+  </div>
+
+}
 
   <!-- CONTENEDOR TABLA -->
   <div
@@ -428,28 +511,6 @@
         }
 
 
-        <!-- SIN RESULTADOS -->
-        @if (!loading() && records().length === 0) {
-
-          <tr>
-
-            <td
-              colspan="6"
-              class="px-6 py-12 text-center"
-            >
-
-              <p
-                class="text-[14px] font-semibold
-                       text-slate-600"
-              >
-                No hay fichas para mostrar.
-              </p>
-
-            </td>
-
-          </tr>
-
-        }
 
       </tbody>
 
