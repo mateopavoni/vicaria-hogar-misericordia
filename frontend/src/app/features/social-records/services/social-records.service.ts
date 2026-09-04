@@ -19,12 +19,16 @@ export class SocialRecordsService {
     return this.http.post<CreateSocialRecordResponse>(this.apiUrl, dto);
   }
 
-   getAll(page: number = 1): Observable<SocialRecordsResponse> {
-  return this.http.get<SocialRecordsResponse>(
-    `${this.apiUrl}?page=${page}`
-  );
-  }
+   getAll( page: number = 1,search: string = ''): Observable<SocialRecordsResponse> {
 
+    let params = new HttpParams() .set('page', page);
+    if (search.trim()) 
+      {params = params.set( 'search', search.trim() );}
+    return this.http.get<SocialRecordsResponse>(
+      this.apiUrl,
+      { params }
+    );
+  }
   // search(query: string): Observable<SocialRecordSearchResult[]> {
   // return this.http.get<SocialRecordSearchResult[]>(`${this.apiUrl}/search`, { params: {  q: query } } );}
 

@@ -75,6 +75,77 @@
 
   </div>
 
+  <!-- BUSCADOR -->
+
+  <div class="mb-5 flex items-center gap-3">
+
+  <div class="relative flex-1">
+
+    <!-- Icono búsqueda -->
+    <svg
+      class="absolute left-4 top-1/2
+             h-5 w-5
+             -translate-y-1/2
+             text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+
+      <circle
+        cx="11"
+        cy="11"
+        r="7"
+      />
+
+      <path
+        d="m20 20-4-4"
+      />
+
+    </svg>
+
+
+    <input
+      #searchInput
+      type="search"
+      placeholder="Buscar por nombre, apellido, DNI o fecha de nacimiento"
+      class="h-[42px] w-full rounded-md
+             border border-[#D5DDF3]
+             bg-white
+             pl-12 pr-4
+             text-[13px]
+             text-slate-700
+             outline-none
+             placeholder:text-slate-400
+             focus:border-[#6B8DF5]
+             focus:ring-1
+             focus:ring-[#6B8DF5]"
+      (input)="onSearch(searchInput.value)"
+      (keydown.enter)="searchNow(searchInput.value)"
+    />
+
+  </div>
+
+
+  <button
+    type="button"
+    class="h-[42px] rounded-md
+           border border-[#D5DDF3]
+           bg-white
+           px-5
+           text-[13px]
+           font-semibold
+           text-slate-600
+           hover:bg-slate-50"
+    (click)="searchNow(searchInput.value)"
+  >
+
+    Buscar
+
+  </button>
+
+</div>
 
   <!-- ERROR -->
   @if (errorMessage()) {
