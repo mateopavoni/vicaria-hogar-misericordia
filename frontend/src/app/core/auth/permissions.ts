@@ -78,7 +78,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
 
-  'DirectoradeCasona': [
+  'DirectoraDeCasona': [
 
      // Fichas Casona
     'fichas.view',

@@ -1,0 +1,266 @@
+<div class="p-8">
+
+  <a routerLink="/dashboard" class="mb-4 inline-flex items-center gap-2 text-[13px] font-semibold text-[#4167D9] hover:text-[#3155C5]">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Volver a Fichas
+  </a>
+
+  <h1 class="mb-6 text-[25px] font-bold text-slate-950">Crear Nueva Ficha</h1>
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="mb-4 rounded-md bg-green-50 px-4 py-3 text-[13px] font-semibold text-green-700" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="max-w-3xl rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+
+    <div class="border-b border-[#E3E8F5] bg-slate-50 px-6 py-4">
+      <h2 class="text-[14px] font-semibold text-slate-700">Información Personal</h2>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 p-6">
+
+      <div>
+        <label for="firstName" class="mb-2 block text-[14px] font-semibold text-slate-700">Nombre *</label>
+        <input
+          id="firstName"
+          type="text"
+          formControlName="firstName"
+          placeholder="Nombre"
+          class="h-[42px] w-full rounded-md border bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          [class.border-red-500]="form.controls.firstName.invalid && form.controls.firstName.touched"
+          [class.border-[#D5DDF3]]="form.controls.firstName.valid || !form.controls.firstName.touched"
+        />
+        @if (submitted() && form.controls.firstName.hasError('required')) {
+          <p class="mt-1 text-[12px] text-red-500">El nombre es obligatorio.</p>
+        }
+      </div>
+
+      <div>
+        <label for="lastName" class="mb-2 block text-[14px] font-semibold text-slate-700">Apellido</label>
+        <input
+          id="lastName"
+          type="text"
+          formControlName="lastName"
+          placeholder="Apellido"
+          class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+        />
+      </div>
+
+      <div>
+        <label for="dni" class="mb-2 block text-[14px] font-semibold text-slate-700">DNI</label>
+        <input
+          id="dni"
+          type="text"
+          formControlName="dni"
+          placeholder="Sin puntos ni espacios"
+          class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+        />
+      </div>
+
+    </div>
+
+    <div class="border-y border-[#E3E8F5] bg-slate-50 px-6 py-4">
+      <button
+        type="button"
+        (click)="toggleMoreInfo()"
+        class="flex w-full items-center justify-between text-[14px] font-semibold text-slate-700"
+      >
+        Más información personal (opcional)
+        <span class="text-[12px] font-normal text-[#4167D9]">{{ showMoreInfo() ? 'Ocultar' : 'Mostrar' }}</span>
+      </button>
+    </div>
+
+    @if (showMoreInfo()) {
+      <div class="grid grid-cols-2 gap-4 p-6">
+
+        <div>
+          <label for="dateOfBirth" class="mb-2 block text-[14px] font-semibold text-slate-700">Fecha de nacimiento</label>
+          <input
+            id="dateOfBirth"
+            type="date"
+            formControlName="dateOfBirth"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="phone" class="mb-2 block text-[14px] font-semibold text-slate-700">Teléfono</label>
+          <input
+            id="phone"
+            type="text"
+            formControlName="phone"
+            placeholder="Teléfono"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="housingSituation" class="mb-2 block text-[14px] font-semibold text-slate-700">Situación habitacional</label>
+          <input
+            id="housingSituation"
+            type="text"
+            formControlName="housingSituation"
+            placeholder="Ej: vivienda precaria, situación de calle..."
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="overnightLocation" class="mb-2 block text-[14px] font-semibold text-slate-700">Lugar de pernoctación</label>
+          <input
+            id="overnightLocation"
+            type="text"
+            formControlName="overnightLocation"
+            placeholder="Dónde pasa la noche"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="occupation" class="mb-2 block text-[14px] font-semibold text-slate-700">Ocupación</label>
+          <input
+            id="occupation"
+            type="text"
+            formControlName="occupation"
+            placeholder="Ocupación"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="entryDate" class="mb-2 block text-[14px] font-semibold text-slate-700">Fecha de ingreso</label>
+          <input
+            id="entryDate"
+            type="date"
+            formControlName="entryDate"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div class="col-span-2">
+          <label for="reasonForEntry" class="mb-2 block text-[14px] font-semibold text-slate-700">Motivo de ingreso</label>
+          <input
+            id="reasonForEntry"
+            type="text"
+            formControlName="reasonForEntry"
+            placeholder="Motivo de ingreso"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div class="col-span-2 flex items-center gap-2">
+          <input
+            id="hasDocumentation"
+            type="checkbox"
+            formControlName="hasDocumentation"
+            class="h-4 w-4 rounded border-[#D5DDF3] text-[#4167D9] focus:ring-[#6B8DF5]"
+          />
+          <label for="hasDocumentation" class="text-[14px] text-slate-700">Tiene documentación</label>
+        </div>
+
+      </div>
+    }
+
+    <div class="border-y border-[#E3E8F5] bg-slate-50 px-6 py-4">
+      <h2 class="text-[14px] font-semibold text-slate-700">Observación Inicial</h2>
+    </div>
+
+    <div class="p-6">
+      <textarea
+        formControlName="generalNotes"
+        rows="3"
+        placeholder="Escriba aquí observaciones (opcional)..."
+        class="w-full rounded-md border border-[#D5DDF3] bg-white px-4 py-3 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+      ></textarea>
+    </div>
+
+    <div class="border-y border-[#E3E8F5] bg-slate-50 px-6 py-4">
+      <button
+        type="button"
+        (click)="toggleContact()"
+        class="flex w-full items-center justify-between text-[14px] font-semibold text-slate-700"
+      >
+        Contacto de referencia (opcional)
+        <span class="text-[12px] font-normal text-[#4167D9]">{{ showContact() ? 'Ocultar' : 'Mostrar' }}</span>
+      </button>
+    </div>
+
+    @if (showContact()) {
+      <div formGroupName="contact" class="grid grid-cols-2 gap-4 p-6">
+
+        <div>
+          <label for="contactFirstName" class="mb-2 block text-[14px] font-semibold text-slate-700">Nombre</label>
+          <input
+            id="contactFirstName"
+            type="text"
+            formControlName="firstName"
+            placeholder="Nombre del contacto"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="contactLastName" class="mb-2 block text-[14px] font-semibold text-slate-700">Apellido</label>
+          <input
+            id="contactLastName"
+            type="text"
+            formControlName="lastName"
+            placeholder="Apellido del contacto"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="contactPhone" class="mb-2 block text-[14px] font-semibold text-slate-700">Teléfono</label>
+          <input
+            id="contactPhone"
+            type="text"
+            formControlName="phone"
+            placeholder="Ej: 351 555 1234"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+        <div>
+          <label for="contactAddress" class="mb-2 block text-[14px] font-semibold text-slate-700">Domicilio</label>
+          <input
+            id="contactAddress"
+            type="text"
+            formControlName="address"
+            placeholder="Calle, número, barrio"
+            class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          />
+        </div>
+
+      </div>
+    }
+
+    <div class="flex justify-end gap-3 border-t border-[#E3E8F5] px-6 py-4">
+      <a
+        routerLink="/dashboard"
+        class="flex h-[42px] items-center rounded-md border border-[#D5DDF3] px-6 text-[14px] font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Cancelar
+      </a>
+      <button
+        type="submit"
+        class="h-[42px] rounded-md bg-[#6B8DF5] px-6 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#587BE8] active:bg-[#4F70D8] disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="loading()"
+      >
+        {{ loading() ? 'Guardando...' : 'Guardar Ficha' }}
+      </button>
+    </div>
+
+  </form>
+
+</div>

@@ -33,23 +33,36 @@
       >
         Nombre
       </label>
-      <input
-        id="name"
-        type="text"
-        formControlName="name"
-        placeholder="Nombre"
-        class="h-[42px] w-full rounded-md border bg-white px-4 text-center text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
-        [class.border-red-500]="
-          registerForm.controls.name.invalid &&
-          registerForm.controls.name.touched
-        "
-        [class.border-[#D5DDF3]]="
-          registerForm.controls.name.valid ||
-          !registerForm.controls.name.touched
-        "
-      />
+      <div class="relative">
+        <svg
+          class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="8" r="4"></circle>
+          <path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>
+        </svg>
 
-      @if (registerForm.controls.name.touched && registerForm.controls.name.hasError('required')) {
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          placeholder="Nombre"
+          class="h-[42px] w-full rounded-md border bg-white pl-12 pr-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          [class.border-red-500]="
+            registerForm.controls.name.invalid &&
+            registerForm.controls.name.touched
+          "
+          [class.border-[#D5DDF3]]="
+            registerForm.controls.name.valid ||
+            !registerForm.controls.name.touched
+          "
+        />
+      </div>
+
+      @if (submitted() && registerForm.controls.name.hasError('required')) {
         <p class="mt-1 text-[12px] text-red-500">
           El nombre es obligatorio.
         </p>
@@ -64,23 +77,37 @@
       >
         Apellido
       </label>
-      <input
-        id="lastname"
-        type="text"
-        formControlName="lastname"
-        placeholder="Apellido"
-        class="h-[42px] w-full rounded-md border bg-white px-4 text-center text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
-        [class.border-red-500]="
-          registerForm.controls.lastname.invalid &&
-          registerForm.controls.lastname.touched
-        "
-        [class.border-[#D5DDF3]]="
-          registerForm.controls.lastname.valid ||
-          !registerForm.controls.lastname.touched
-        "
-      />
+      <div class="relative">
+        <svg
+          class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <line x1="4" y1="7" x2="20" y2="7"></line>
+          <line x1="4" y1="12" x2="14" y2="12"></line>
+          <line x1="4" y1="17" x2="18" y2="17"></line>
+        </svg>
 
-      @if (registerForm.controls.lastname.touched && registerForm.controls.lastname.hasError('required')) {
+        <input
+          id="lastname"
+          type="text"
+          formControlName="lastname"
+          placeholder="Apellido"
+          class="h-[42px] w-full rounded-md border bg-white pl-12 pr-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          [class.border-red-500]="
+            registerForm.controls.lastname.invalid &&
+            registerForm.controls.lastname.touched
+          "
+          [class.border-[#D5DDF3]]="
+            registerForm.controls.lastname.valid ||
+            !registerForm.controls.lastname.touched
+          "
+        />
+      </div>
+
+      @if (submitted() && registerForm.controls.lastname.hasError('required')) {
         <p class="mt-1 text-[12px] text-red-500">
           El apellido es obligatorio.
         </p>
@@ -112,7 +139,7 @@
           type="email"
           formControlName="email"
           placeholder="Correo electrónico"
-          class="h-[42px] w-full rounded-md border bg-white pl-12 pr-4 text-center text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          class="h-[42px] w-full rounded-md border bg-white pl-12 pr-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
           [class.border-red-500]="
             registerForm.controls.email.invalid &&
             registerForm.controls.email.touched
@@ -124,13 +151,13 @@
         />
       </div>
 
-      @if (registerForm.controls.email.touched && registerForm.controls.email.hasError('required')) {
+      @if (submitted() && registerForm.controls.email.hasError('required')) {
         <p class="mt-1 text-[12px] text-red-500">
           El correo electrónico es obligatorio.
         </p>
       }
 
-      @if (registerForm.controls.email.touched && registerForm.controls.email.hasError('email')) {
+      @if (submitted() && registerForm.controls.email.hasError('email')) {
         <p class="mt-1 text-[12px] text-red-500">
           Ingresá un correo electrónico válido.
         </p>
@@ -162,7 +189,7 @@
           [type]="showPassword() ? 'text' : 'password'"
           formControlName="password"
           placeholder="Contraseña"
-          class="h-[42px] w-full rounded-md border bg-white pl-12 pr-12 text-center text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          class="h-[42px] w-full rounded-md border bg-white pl-12 pr-12 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
           [class.border-red-500]="
             registerForm.controls.password.invalid &&
             registerForm.controls.password.touched
@@ -211,10 +238,10 @@
           }
         </button>
     </div>
-      @if (registerForm.controls.password.touched && registerForm.controls.password.hasError('required')) {
+      @if (submitted() && registerForm.controls.password.hasError('required')) {
         <p class="mt-1 text-[12px] text-red-500">La contraseña es obligatoria.</p>
       }
-      @if (registerForm.controls.password.touched && registerForm.controls.password.hasError('pattern')) {
+      @if (submitted() && registerForm.controls.password.hasError('pattern')) {
         <p class="mt-1 text-[12px] text-red-500">Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 símbolo.</p>
       }
     </div>
@@ -242,8 +269,8 @@
 
     <!-- INICIAR SESIÓN -->
     <div class="pt-2 text-center">
-      <span class="text-[13px] text-slate-700">¿Ya tienes una cuenta? </span>
-      <a routerLink="/auth/login" class="text-[13px] font-medium text-[#4167D9] hover:text-[#3155C5]">
+      <span class="text-[13px] text-slate-600">¿Ya tienes una cuenta? </span>
+      <a routerLink="/auth/login" class="text-[13px] font-semibold text-[#4167D9] hover:text-[#3155C5]">
         Inicia sesión
       </a>
     </div>

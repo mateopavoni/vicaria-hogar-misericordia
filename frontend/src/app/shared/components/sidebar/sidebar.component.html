@@ -4,17 +4,11 @@
          border-r border-slate-100 bg-white"
 >
   <!-- Logo -->
-<div class="flex h-[110px] items-center px-7">
+<div class="flex h-[110px] items-center justify-center px-4">
   <div class="mt-4 flex items-center gap-3">
 
-    <img
-      src="assets/Logo-NuestraSeniora.png"
-      alt="Nuestra Señora de la Misericordia"
-      class="h-[92px] w-[52px] object-contain"
-    />
-
     <div
-      class="whitespace-nowrap font-serif text-[15px] leading-tight text-blue-600"
+      class="whitespace-nowrap text-center font-serif text-[18px] leading-tight text-blue-600"
     >
       <span class="block">Nuestra Señora de</span>
       <span class="block">la Misericordia</span>
@@ -54,8 +48,9 @@
     </a>
 
     <!-- Fichas -->
+    @if (permissionService.hasPermission('fichas.view')) {
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/fichas"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
@@ -81,6 +76,7 @@
 
       <span>Fichas</span>
     </a>
+    }
 
     <!-- Asistencia -->
     <a

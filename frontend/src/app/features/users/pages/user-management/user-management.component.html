@@ -1,11 +1,11 @@
-<div class="min-h-full bg-[#F5F7FB] p-8">
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
 
   <!-- ENCABEZADO -->
   <div class="mb-5">
-    <h1 class="text-[20px] font-bold text-slate-900">
+    <h1 class="text-[26px] font-bold text-slate-900">
       Gestión de Usuarios
     </h1>
-    <p class="mt-1 text-[12px] text-slate-500">
+    <p class="mt-1 text-[14px] text-slate-500">
       Administra los accesos y roles de los miembros de la organización.
     </p>
   </div>
@@ -20,14 +20,16 @@
       <button
         type="button"
         (click)="changeTab('Pending')"
-        class="relative px-5 py-4 text-[12px] font-semibold transition-colors"
+        class="relative px-5 py-4 text-[14px] font-semibold transition-colors"
         [class.text-[#4167D9]]="activeTab() === 'Pending'"
         [class.text-slate-600]="activeTab() !== 'Pending'"
       >
         Pendientes
-        <span class="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-500">
-          12
-        </span>
+        @if (pendingTotal() > 0) {
+          <span class="ml-1.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[13px] font-semibold text-red-500">
+            {{ pendingTotal() }}
+          </span>
+        }
         @if (activeTab() === 'Pending') {
           <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#4167D9]"></span>
         }
@@ -37,14 +39,16 @@
       <button
         type="button"
         (click)="changeTab('Approved')"
-        class="relative px-5 py-4 text-[12px] font-semibold transition-colors"
+        class="relative px-5 py-4 text-[14px] font-semibold transition-colors"
         [class.text-[#4167D9]]="activeTab() === 'Approved'"
         [class.text-slate-600]="activeTab() !== 'Approved'"
       >
         Activos
-        <span class="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-          15
-        </span>
+        @if (activeTotal() > 0) {
+          <span class="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[13px] font-semibold text-slate-600">
+            {{ activeTotal() }}
+          </span>
+        }
         @if (activeTab() === 'Approved') {
           <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#4167D9]"></span>
         }
@@ -54,14 +58,16 @@
       <button
         type="button"
         (click)="changeTab('Suspended')"
-        class="relative px-5 py-4 text-[12px] font-semibold transition-colors"
+        class="relative px-5 py-4 text-[14px] font-semibold transition-colors"
         [class.text-[#4167D9]]="activeTab() === 'Suspended'"
         [class.text-slate-600]="activeTab() !== 'Suspended'"
       >
         Inactivos / Suspendidos
-        <span class="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-          3
-        </span>
+        @if (suspendedTotal() > 0) {
+          <span class="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[13px] font-semibold text-slate-600">
+            {{ suspendedTotal() }}
+          </span>
+        }
         @if (activeTab() === 'Suspended') {
           <span class="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#4167D9]"></span>
         }
@@ -73,7 +79,7 @@
     @if (activeTab() === 'Pending') {
       <div class="flex flex-wrap items-end gap-4 border-b border-slate-100 bg-[#FAFBFE] px-6 py-4">
         <div>
-          <label for="dateFrom" class="mb-1 block text-[11px] font-semibold text-slate-600">
+          <label for="dateFrom" class="mb-1 block text-[13px] font-semibold text-slate-600">
             Desde
           </label>
           <input
@@ -81,12 +87,12 @@
             type="date"
             [value]="dateFrom()"
             (change)="setDateFrom($any($event.target).value)"
-            class="h-[34px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[11px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+            class="h-[40px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[13px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
           />
         </div>
 
         <div>
-          <label for="dateTo" class="mb-1 block text-[11px] font-semibold text-slate-600">
+          <label for="dateTo" class="mb-1 block text-[13px] font-semibold text-slate-600">
             Hasta
           </label>
           <input
@@ -94,14 +100,14 @@
             type="date"
             [value]="dateTo()"
             (change)="setDateTo($any($event.target).value)"
-            class="h-[34px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[11px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+            class="h-[40px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[13px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
           />
         </div>
 
         <button
           type="button"
           (click)="applyFilters()"
-          class="h-[34px] rounded-md bg-[#6B8DF5] px-4 text-[11px] font-semibold text-white transition hover:bg-[#587BE8]"
+          class="h-[40px] rounded-md bg-[#6B8DF5] px-4 text-[13px] font-semibold text-white transition hover:bg-[#587BE8]"
         >
           Filtrar
         </button>
@@ -109,7 +115,7 @@
         <button
           type="button"
           (click)="clearFilters()"
-          class="h-[34px] rounded-md border border-[#D5DDF3] bg-white px-4 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50"
+          class="h-[40px] rounded-md border border-[#D5DDF3] bg-white px-4 text-[13px] font-semibold text-slate-600 transition hover:bg-slate-50"
         >
           Limpiar
         </button>
@@ -118,7 +124,7 @@
 
     <!-- ERROR -->
     @if (error()) {
-      <div class="mx-6 mt-4 rounded-md bg-red-50 px-4 py-3 text-[12px] font-semibold text-red-600" role="alert">
+      <div class="mx-6 mt-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
         {{ error() }}
       </div>
     }
@@ -130,16 +136,16 @@
         <!-- CABECERA -->
         <thead class="border-b border-slate-200 bg-[#FAFAFB]">
           <tr>
-            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-700">
+            <th class="px-6 py-3 text-left text-[13px] font-bold text-slate-700">
               Nombre y Apellido
             </th>
-            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-700">
+            <th class="px-6 py-3 text-left text-[13px] font-bold text-slate-700">
               Email
             </th>
-            <th class="px-6 py-3 text-left text-[11px] font-bold text-slate-700">
+            <th class="px-6 py-3 text-left text-[13px] font-bold text-slate-700">
               Fecha 
             </th>
-            <th class="px-6 py-3 text-center text-[11px] font-bold text-slate-700">
+            <th class="px-6 py-3 text-center text-[13px] font-bold text-slate-700">
               Acciones
             </th>
           </tr>
@@ -152,7 +158,7 @@
           @if (loading()) {
             <tr>
               <td colspan="4" class="px-6 py-12 text-center">
-                <div class="inline-flex items-center gap-2 text-[12px] text-slate-400">
+                <div class="inline-flex items-center gap-2 text-[14px] text-slate-400">
                   <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
                   Cargando usuarios...
                 </div>
@@ -167,20 +173,20 @@
 
                 <!-- USUARIO -->
                 <td class="px-6 py-3">
-                  <p class="text-[11px] font-semibold text-slate-700">
+                  <p class="text-[13px] font-semibold text-slate-700">
                     {{ user.name }} {{ user.lastname }}
                   </p>
                 </td>
 
                 <!-- EMAIL -->
-                <td class="px-6 py-3 text-[11px] text-slate-600">
+                <td class="px-6 py-3 text-[13px] text-slate-600">
                   {{ user.email }}
                 </td>
 
                 <!-- FECHA / ROL -->
-                <td class="px-6 py-3 text-[11px] text-slate-600">
+                <td class="px-6 py-3 text-[13px] text-slate-600">
                   @if (user.role) {
-                    <span class="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                    <span class="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[13px] font-medium text-slate-700">
                       {{ user.role }}
                     </span>
                   } @else {
@@ -197,7 +203,7 @@
                       <button
                         type="button"
                         (click)="openApproveModal(user)"
-                        class="rounded-md bg-green-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-green-600 active:bg-green-700"
+                        class="rounded-md bg-green-500 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-green-600 active:bg-green-700"
                       >
                         Aprobar
                       </button>
@@ -205,16 +211,9 @@
                       <button
                         type="button"
                         (click)="openRejectModal(user)"
-                        class="flex h-[30px] w-[30px] items-center justify-center rounded-md text-slate-500 transition hover:bg-red-50 hover:text-red-500"
-                        aria-label="Rechazar solicitud"
+                        class="rounded-md bg-red-500 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-red-600 active:bg-red-700"
                       >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                          <path d="M3 6h18"/>
-                          <path d="M8 6V4h8v2"/>
-                          <path d="M19 6l-1 14H6L5 6"/>
-                          <path d="M10 11v5"/>
-                          <path d="M14 11v5"/>
-                        </svg>
+                        Denegar
                       </button>
                     }
 
@@ -224,7 +223,7 @@
                       <button
                         type="button"
                         (click)="openChangeRoleModal(user)"
-                        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50"
                       >
                         Reasignar Rol
                       </button>
@@ -232,17 +231,10 @@
                       <button
                         type="button"
                         (click)="deactivateUser(user)"
-                        class="rounded-md bg-amber-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-amber-600 active:bg-amber-700"
+                        class="rounded-md bg-amber-500 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-600 active:bg-amber-700"
                       >
                         Inactivar
                       </button>
-                      @if (showChangeRoleModal()) {
-                       <app-change-role-modal/>
-                        [user]="selectedUser()"
-                        (close)="closeModals()"
-                        (changeRole)="updateUserRole($event)"
-                      />
-                      }
                     }
 
                     <!-- SUSPENDIDOS / INACTIVOS -->
@@ -250,7 +242,7 @@
                       <button
                         type="button"
                         (click)="reactivateUser(user)"
-                        class="rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800"
+                        class="rounded-md bg-blue-600 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800"
                       >
                         Activar
                       </button>
@@ -276,7 +268,7 @@
                       <path d="M22 11h-6" />
                     </svg>
                   </div>
-                  <p class="text-[12px] font-semibold text-slate-600">
+                  <p class="text-[14px] font-semibold text-slate-600">
                     No hay usuarios en este estado.
                   </p>
                 </div>
@@ -291,12 +283,12 @@
   </div>
 
   <!-- PAGINACIÓN -->
-  <div class="mt-6 flex items-center justify-center gap-3 text-[11px]">
+  <div class="mt-6 flex items-center justify-center gap-3 text-[13px]">
     <button
       type="button"
       (click)="goToPage(currentPage() - 1)"
       [disabled]="currentPage() === 1"
-      class="px-2 py-1 text-slate-400 transition hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+      class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:text-slate-400 disabled:opacity-40"
     >
       &lt; Anterior
     </button>
@@ -305,7 +297,7 @@
       <button
         type="button"
         (click)="goToPage(page)"
-        class="flex h-7 w-7 items-center justify-center rounded-md font-semibold transition"
+        class="flex h-8 w-8 items-center justify-center rounded-md font-semibold transition"
         [class.bg-[#6B8DF5]]="currentPage() === page"
         [class.text-white]="currentPage() === page"
         [class.text-slate-600]="currentPage() !== page"
@@ -341,6 +333,14 @@
       [user]="selectedUser()"
       (close)="closeModals()"
       (reject)="rejectSelectedUser($event)"
+    />
+  }
+
+  @if (showChangeRoleModal()) {
+    <app-change-role-modal
+      [user]="selectedUser()"
+      (close)="closeModals()"
+      (changeRole)="updateUserRole($event)"
     />
   }
 

@@ -14,8 +14,7 @@ import { ChangeRoleModalComponent } from "../../components/change-role-modal/cha
   templateUrl: './user-management.component.html',
   styleUrl: './user-management.component.css',
 })
-// export class UserManagementComponent implements OnInit {
-export class UserManagementComponent{
+export class UserManagementComponent implements OnInit {
 
       private usersService = inject(UsersService);
 
@@ -41,26 +40,22 @@ export class UserManagementComponent{
       showChangeRoleModal = signal(false);
       
       dateFrom = signal('');
-      
+
       dateTo = signal('');
 
-    // VAMOS A MOSTRAR UN DATO MOCKEADO HASTA QUE SE HAGA EL BACKEND, PARA PODER MOSTRAR LA TABLA DE USUARIOS
-      //  ngOnInit(): void {
+      // cantidad real de cada tab, para mostrar en el contador
+      pendingTotal = signal(0);
+      activeTotal = signal(0);
+      suspendedTotal = signal(0);
 
-      //    this.loadUsers();
-
-      // }
-      users = signal<ManagedUser[]>([
-      {
-        id: '1',
-        name: 'Antonio',
-        lastname: 'Sanchez',
-        email: 'anr.sanch@gmail.com',
-        requestDate: '2026-05-17',
-        status: 'Pending',
-        role: null
+      ngOnInit(): void {
+        this.loadUsers();
+        // precargamos los otros dos conteos aunque no estemos parados en ese tab
+        this.usersService.getUsers('Approved', 1).subscribe((res) => this.activeTotal.set(res.total));
+        this.usersService.getUsers('Suspended', 1).subscribe((res) => this.suspendedTotal.set(res.total));
       }
-    ]);
+
+      users = signal<ManagedUser[]>([]);
 
 
         loadUsers(): void {this.loading.set(true);this.error.set(null);this.usersService.getUsers(this.activeTab(),this.currentPage(),
@@ -78,6 +73,15 @@ export class UserManagementComponent{
             this.totalPages.set(
               response.totalPages
             );
+
+            // actualizamos el contador del tab que se acaba de cargar
+            if (this.activeTab() === 'Pending') {
+              this.pendingTotal.set(response.total);
+            } else if (this.activeTab() === 'Approved') {
+              this.activeTotal.set(response.total);
+            } else if (this.activeTab() === 'Suspended') {
+              this.suspendedTotal.set(response.total);
+            }
 
             this.loading.set(false);
           },
@@ -100,6 +104,7 @@ export class UserManagementComponent{
 
 
       applyFilters(): void {
+        if (!this.dateFrom() && !this.dateTo()) return; // nada cargado en los calendarios, no hay nada que filtrar
 
         this.currentPage.set(1);
         this.loadUsers();
@@ -107,6 +112,7 @@ export class UserManagementComponent{
         }
 
       clearFilters(): void {
+        if (!this.dateFrom() && !this.dateTo()) return; // ya estaba limpio, no hay nada que limpiar
 
         this.dateFrom.set('');
         this.dateTo.set('');
@@ -146,6 +152,7 @@ export class UserManagementComponent{
 
 
       openApproveModal( user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
 
         this.selectedUser.set(user);
 
@@ -155,6 +162,7 @@ export class UserManagementComponent{
 
 
       openRejectModal(user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
 
         this.selectedUser.set(user);
 
@@ -168,6 +176,8 @@ export class UserManagementComponent{
         this.showApproveModal.set(false);
 
         this.showRejectModal.set(false);
+
+        this.showChangeRoleModal.set(false);
 
         this.selectedUser.set(null);
 
@@ -251,8 +261,21 @@ export class UserManagementComponent{
       }
 
       openChangeRoleModal(user: ManagedUser): void {
-        // Aquí puedes desplegar un modal o menú para reasignar el rol
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
         this.selectedUser.set(user);
         this.showChangeRoleModal.set(true);
+      }
+
+      updateUserRole(role: UserRole): void {
+        const user = this.selectedUser();
+        if (!user) return;
+
+        this.usersService.updateRole(user.id, role).subscribe({
+          next: () => {
+            this.closeModals();
+            this.loadUsers();
+          },
+          error: () => this.error.set('No se pudo cambiar el rol.'),
+        });
       }
 }

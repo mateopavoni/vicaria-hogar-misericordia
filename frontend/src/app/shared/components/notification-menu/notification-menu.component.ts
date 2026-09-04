@@ -22,6 +22,19 @@ export class NotificationMenuComponent {
     this.isOpen.update(value => !value);
   }
 
+  // convierte la fecha cruda del backend en algo legible, tipo "hace 5 min"
+  timeAgo(dateStr: string): string {
+    const date = new Date(dateStr);
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'hace un momento';
+    if (seconds < 3600) return `hace ${Math.floor(seconds / 60)} min`;
+    if (seconds < 86400) return `hace ${Math.floor(seconds / 3600)} h`;
+    if (seconds < 172800) return 'ayer';
+
+    return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+  }
+
   // Cerrar desplegable al hacer clic fuera del componente
   @HostListener('document:click', ['$event'])
   onClickOutside(event: Event) {
