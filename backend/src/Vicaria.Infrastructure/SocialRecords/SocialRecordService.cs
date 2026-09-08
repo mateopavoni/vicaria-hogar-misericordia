@@ -83,15 +83,41 @@ public class SocialRecordService : ISocialRecordService
             return [];
         }
 
-        // filtra en memoria (no traduce a SQL), suficiente para el volumen de un centro barrial
+        var normalizedQuery = Normalize(query);
+        var pattern = $"%{query.Trim().ToUpper()}%";
+
+        if (_dbContext.Database.IsRelational())
+        {
+            return await _dbContext.SocialRecords
+                .AsNoTracking()
+                .Include(r => r.Person)
+                .Where(r => r.Person != null && (
+                    EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
+                    (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
+                    (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern)) ||
+                    (r.Person.DateOfBirth != null && EF.Functions.Like(r.Person.DateOfBirth.ToString()!, pattern))
+                ))
+                .Select(r => new SocialRecordSearchResultDto(
+                    r.Id,
+                    r.PersonId,
+                    $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
+                    r.Person.Dni,
+                    r.UpdatedAt))
+                .ToListAsync(cancellationToken);
+        }
+
         var records = await _dbContext.SocialRecords
+            .AsNoTracking()
             .Include(r => r.Person)
             .ToListAsync(cancellationToken);
 
-        var normalizedQuery = Normalize(query);
-
         return records
-            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery))
+            .Where(r => r.Person != null && (
+                Normalize(r.Person.FirstName).Contains(normalizedQuery) ||
+                (r.Person.LastName != null && Normalize(r.Person.LastName).Contains(normalizedQuery)) ||
+                (r.Person.Dni != null && Normalize(r.Person.Dni).Contains(normalizedQuery)) ||
+                (r.Person.DateOfBirth != null && r.Person.DateOfBirth.Value.ToString("yyyy-MM-dd").Contains(normalizedQuery))
+            ))
             .Select(r => new SocialRecordSearchResultDto(
                 r.Id,
                 r.PersonId,
