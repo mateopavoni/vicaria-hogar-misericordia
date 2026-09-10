@@ -55,13 +55,43 @@ export interface SocialRecordsResponse {
 }
 
 
-//   export interface SocialRecordSearchResult {
-//     id: string;
-//     personId: string;
-//     firstName: string;
-//     lastName: string | null;
-//     dni: string | null;
-//     dateOfBirth: string | null;
-//     lastModifiedAt: string;
-//     personType: PersonType;
-// }
+  export interface SocialRecordSearchResult {
+    id: string;
+    personId: string;
+    firstName: string;
+    lastName: string | null;
+    dni: string | null;
+    dateOfBirth: string | null;
+    lastModifiedAt: string;
+    personType: PersonType;
+}
+
+export interface SocialRecordDetail {
+  id: string;
+  personId: string;
+
+  firstName: string;
+  lastName: string | null;
+
+  dni: string | null;
+  dateOfBirth: string | null;
+  phone: string | null;
+
+  personType: PersonType | null;
+
+  reasonForEntry: string | null;
+  entryDate: string | null;
+
+  housingSituation: string | null;
+  overnightLocation: string | null;
+  occupation: string | null;
+
+  generalNotes: string | null;
+
+  hasDocumentation: boolean;
+
+  contact: ContactRequest | null;
+
+  status?: string;
+  lastModifiedAt?: string | null;
+}

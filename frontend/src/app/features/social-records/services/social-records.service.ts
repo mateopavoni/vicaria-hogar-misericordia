@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateSocialRecordRequest, CreateSocialRecordResponse ,SocialRecordsResponse} from '../interfaces/social-record.interface';
+import { CreateSocialRecordRequest, CreateSocialRecordResponse ,SocialRecordDetail,SocialRecordsResponse} from '../interfaces/social-record.interface';
 
 
 @Injectable({
@@ -32,5 +32,10 @@ export class SocialRecordsService {
   // search(query: string): Observable<SocialRecordSearchResult[]> {
   // return this.http.get<SocialRecordSearchResult[]>(`${this.apiUrl}/search`, { params: {  q: query } } );}
 
+    getById(id: string): Observable<SocialRecordDetail> {
+    return this.http.get<SocialRecordDetail>(
+      `${this.apiUrl}/${id}`
+    );
+  }
 }
 

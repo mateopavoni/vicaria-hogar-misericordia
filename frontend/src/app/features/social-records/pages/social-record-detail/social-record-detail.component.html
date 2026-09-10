@@ -1,0 +1,988 @@
+
+<div class="min-h-full bg-[#F5F7FB] px-10 py-7">
+
+  <!-- LOADING -->
+  @if (loading()) {
+
+    <div
+      class="flex min-h-[400px]
+             items-center justify-center
+             rounded-xl bg-white"
+    >
+      <p class="text-[13px] text-slate-500">
+        Cargando ficha...
+      </p>
+    </div>
+
+  }
+
+  <!-- ERROR -->
+  @else if (errorMessage()) {
+
+    <div
+      class="rounded-lg bg-red-50
+             px-5 py-4
+             text-[13px] font-semibold
+             text-red-600"
+      role="alert"
+    >
+      {{ errorMessage() }}
+    </div>
+
+  }
+
+  <!-- CONTENIDO -->
+  @else if (record(); as person) {
+
+    <!-- VOLVER -->
+    <div class="mb-5">
+
+      <a
+        routerLink="/dashboard/fichas"
+        class="inline-flex items-center gap-2
+               text-[13px] font-medium
+               text-[#4167D9]
+               hover:text-[#3155C7]"
+      >
+
+        <span class="text-lg">
+          ←
+        </span>
+
+        Volver a Fichas
+
+      </a>
+
+    </div>
+
+
+    <!-- ENCABEZADO -->
+    <div
+      class="rounded-t-xl
+             bg-white
+             px-7 pt-4 pb-5"
+    >
+
+      <div class="flex items-start justify-between">
+
+        <!-- PERSONA -->
+        <div class="flex items-center gap-4">
+
+          <!-- AVATAR -->
+          <div
+            class="flex h-12 w-12
+                   items-center justify-center
+                   rounded-full
+                   bg-slate-200"
+          >
+
+            <svg
+              class="h-7 w-7 text-white"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 12a5 5 0 1 0 0-10
+                   5 5 0 0 0 0 10Zm0 2
+                   c-4.42 0-8 2.24-8 5v3h16v-3
+                   c0-2.76-3.58-5-8-5Z"
+              />
+            </svg>
+
+          </div>
+
+
+          <div>
+
+            <h1
+              class="text-[19px]
+                     font-bold
+                     text-slate-800"
+            >
+              {{ person.firstName }}
+              {{ person.lastName }}
+            </h1>
+
+
+            <div class="mt-2 flex items-center gap-2">
+
+              <!-- TIPO -->
+              <span
+                class="rounded-md
+                       bg-[#E8EDFF]
+                       px-3 py-1
+                       text-[11px]
+                       font-semibold
+                       text-[#4167D9]"
+              >
+                {{ getPersonTypeLabel(person.personType) }}
+              </span>
+
+
+              <!-- ESTADO -->
+              @if (person.status) {
+
+                <span
+                  class="rounded-md
+                         bg-green-100
+                         px-3 py-1
+                         text-[11px]
+                         font-semibold
+                         text-green-700"
+                >
+                  {{ person.status }}
+                </span>
+
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ACCIONES -->
+        <div class="flex items-center gap-3">
+
+          <button
+            type="button"
+            class="h-[34px]
+                   rounded-md
+                   border border-[#D5DDF3]
+                   bg-white
+                   px-4
+                   text-[12px]
+                   font-semibold
+                   text-slate-700
+                   hover:bg-slate-50"
+          >
+            Editar ficha
+          </button>
+
+
+          <button
+            type="button"
+            class="h-[34px]
+                   rounded-md
+                   bg-[#6B8DF5]
+                   px-4
+                   text-[12px]
+                   font-semibold
+                   text-white
+                   hover:bg-[#587BE8]"
+          >
+            Exportar Ficha
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- INFORMACIÓN PRINCIPAL -->
+      <div
+        class="mt-5
+               grid grid-cols-3
+               overflow-hidden
+               rounded-lg
+               border border-slate-200"
+      >
+
+        <!-- DNI -->
+        <div
+          class="border-r
+                 border-slate-200
+                 px-6 py-3
+                 text-center"
+        >
+
+          <p
+            class="text-[11px]
+                   font-semibold
+                   text-slate-700"
+          >
+            DNI
+          </p>
+
+          <p
+            class="mt-1
+                   text-[12px]
+                   text-slate-500"
+          >
+            {{ person.dni || 'Sin registro' }}
+          </p>
+
+        </div>
+
+
+        <!-- FECHA NACIMIENTO -->
+        <div
+          class="border-r
+                 border-slate-200
+                 px-6 py-3
+                 text-center"
+        >
+
+          <p
+            class="text-[11px]
+                   font-semibold
+                   text-slate-700"
+          >
+            Fecha de Nacimiento
+          </p>
+
+          <p
+            class="mt-1
+                   text-[12px]
+                   text-slate-500"
+          >
+
+            @if (person.dateOfBirth) {
+
+              {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+
+            } @else {
+
+              Sin registro
+
+            }
+
+          </p>
+
+        </div>
+
+
+        <!-- TELÉFONO -->
+        <div
+          class="px-6 py-3
+                 text-center"
+        >
+
+          <p
+            class="text-[11px]
+                   font-semibold
+                   text-slate-700"
+          >
+            Teléfono
+          </p>
+
+          <p
+            class="mt-1
+                   text-[12px]
+                   text-slate-500"
+          >
+            {{ person.phone || 'Sin registro' }}
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- TABS -->
+    <div
+      class="border-x
+             border-slate-200
+             bg-white
+             px-7"
+    >
+
+      <div
+        class="flex items-center
+               border-b border-slate-200"
+      >
+
+        <!-- DATOS -->
+        <button
+          type="button"
+          (click)="selectTab('datos')"
+          class="relative
+                 px-5 py-3
+                 text-[12px]
+                 font-semibold"
+          [class.text-[#4167D9]]="
+            activeTab() === 'datos'
+          "
+          [class.text-slate-500]="
+            activeTab() !== 'datos'
+          "
+        >
+          Datos
+
+          @if (activeTab() === 'datos') {
+
+            <span
+              class="absolute
+                     bottom-0 left-0
+                     h-[2px] w-full
+                     bg-[#4167D9]"
+            ></span>
+
+          }
+
+        </button>
+
+
+        <!-- OBSERVACIONES -->
+        <button
+          type="button"
+          (click)="selectTab('observaciones')"
+          class="px-5 py-3
+                 text-[12px]
+                 font-semibold
+                 text-slate-500
+                 hover:text-[#4167D9]"
+        >
+          Observaciones
+        </button>
+
+
+        <!-- HISTORIA -->
+        <button
+          type="button"
+          (click)="selectTab('historia')"
+          class="px-5 py-3
+                 text-[12px]
+                 font-semibold
+                 text-slate-500
+                 hover:text-[#4167D9]"
+        >
+          Historia de vida
+        </button>
+
+
+        <!-- ASISTENCIA -->
+        <button
+          type="button"
+          (click)="selectTab('asistencia')"
+          class="px-5 py-3
+                 text-[12px]
+                 font-semibold
+                 text-slate-500
+                 hover:text-[#4167D9]"
+        >
+          Historial<br>
+          Asistencia
+        </button>
+
+
+        <!-- MEDICACIÓN -->
+        <button
+          type="button"
+          (click)="selectTab('medicacion')"
+          class="px-5 py-3
+                 text-[12px]
+                 font-semibold
+                 text-slate-500
+                 hover:text-[#4167D9]"
+        >
+          Medicación
+        </button>
+
+
+        <!-- EVALUACIONES -->
+        <button
+          type="button"
+          (click)="selectTab('evaluaciones')"
+          class="px-5 py-3
+                 text-[12px]
+                 font-semibold
+                 text-slate-500
+                 hover:text-[#4167D9]"
+        >
+          Evaluaciones
+        </button>
+
+
+        <!-- DOCUMENTOS -->
+        <button
+          type="button"
+          (click)="selectTab('documentos')"
+          class="px-5 py-3
+                 text-[12px]
+                 font-semibold
+                 text-slate-500
+                 hover:text-[#4167D9]"
+        >
+          Documentos
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- CONTENIDO DE LA FICHA -->
+    <div
+      class="rounded-b-xl
+             border-x border-b
+             border-slate-200
+             bg-white
+             px-7 pb-7"
+    >
+
+      @if (activeTab() === 'datos') {
+
+        <!-- DATOS PERSONALES -->
+        <section
+          class="overflow-hidden
+                 rounded-lg
+                 border border-slate-200"
+        >
+
+          <div
+            class="flex items-center
+                   gap-2
+                   border-b border-slate-200
+                   px-4 py-3"
+          >
+
+            <svg
+              class="h-5 w-5 text-slate-700"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                cx="12"
+                cy="8"
+                r="3"
+              />
+
+              <path
+                d="M5 20c0-3.5
+                   3-6 7-6s7 2.5 7 6"
+              />
+            </svg>
+
+            <h2
+              class="text-[13px]
+                     font-semibold
+                     text-slate-800"
+            >
+              Datos Personales
+            </h2>
+
+          </div>
+
+
+          <div
+            class="grid grid-cols-2
+                   gap-x-16
+                   gap-y-5
+                   px-12 py-6"
+          >
+
+            <!-- NOMBRE -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Nombre
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.firstName }}
+              </p>
+
+            </div>
+
+
+            <!-- APELLIDO -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Apellido
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.lastName || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- DNI -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                DNI
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.dni || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- TELÉFONO -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Teléfono
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.phone || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- FECHA NACIMIENTO -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Fecha de nacimiento
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+
+                @if (person.dateOfBirth) {
+                  {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+                } @else {
+                  Sin registro
+                }
+
+              </p>
+
+            </div>
+
+
+            <!-- TIPO -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Tipo de persona
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ getPersonTypeLabel(person.personType) }}
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- INFORMACIÓN DE INGRESO -->
+        <section
+          class="mt-5
+                 overflow-hidden
+                 rounded-lg
+                 border border-slate-200"
+        >
+
+          <div
+            class="border-b border-slate-200
+                   px-4 py-3"
+          >
+
+            <h2
+              class="text-[13px]
+                     font-semibold
+                     text-slate-800"
+            >
+              Información de ingreso
+            </h2>
+
+          </div>
+
+
+          <div
+            class="grid grid-cols-2
+                   gap-x-16
+                   gap-y-5
+                   px-12 py-6"
+          >
+
+            <!-- MOTIVO -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Motivo de ingreso
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.reasonForEntry || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- FECHA INGRESO -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Fecha de ingreso
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+
+                @if (person.entryDate) {
+                  {{ person.entryDate | date:'dd/MM/yyyy' }}
+                } @else {
+                  Sin registro
+                }
+
+              </p>
+
+            </div>
+
+
+            <!-- SITUACIÓN HABITACIONAL -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Situación habitacional
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.housingSituation || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- LUGAR DONDE PERNOCTA -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Lugar donde pernocta
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.overnightLocation || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- OCUPACIÓN -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Ocupación
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.occupation || 'Sin registro' }}
+              </p>
+
+            </div>
+
+
+            <!-- DOCUMENTACIÓN -->
+            <div>
+
+              <p
+                class="text-[12px]
+                       font-semibold
+                       text-slate-700"
+              >
+                Documentación
+              </p>
+
+              <p
+                class="mt-1
+                       text-[12px]
+                       text-slate-500"
+              >
+                {{ person.hasDocumentation ? 'Sí' : 'No' }}
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- CONTACTO -->
+        <section
+          class="mt-5
+                 overflow-hidden
+                 rounded-lg
+                 border border-slate-200"
+        >
+
+          <div
+            class="border-b border-slate-200
+                   px-4 py-3"
+          >
+
+            <h2
+              class="text-[13px]
+                     font-semibold
+                     text-slate-800"
+            >
+              Contacto de referencia
+            </h2>
+
+          </div>
+
+
+          <div class="px-12 py-6">
+
+            @if (person.contact) {
+
+              <div
+                class="grid grid-cols-2
+                       gap-x-16 gap-y-5"
+              >
+
+                <div>
+
+                  <p
+                    class="text-[12px]
+                           font-semibold
+                           text-slate-700"
+                  >
+                    Nombre
+                  </p>
+
+                  <p
+                    class="mt-1
+                           text-[12px]
+                           text-slate-500"
+                  >
+                    {{ person.contact.firstName }}
+                    {{ person.contact.lastName || '' }}
+                  </p>
+
+                </div>
+
+
+                <div>
+
+                  <p
+                    class="text-[12px]
+                           font-semibold
+                           text-slate-700"
+                  >
+                    Teléfono
+                  </p>
+
+                  <p
+                    class="mt-1
+                           text-[12px]
+                           text-slate-500"
+                  >
+                    {{ person.contact.phone || 'Sin registro' }}
+                  </p>
+
+                </div>
+
+
+                <div class="col-span-2">
+
+                  <p
+                    class="text-[12px]
+                           font-semibold
+                           text-slate-700"
+                  >
+                    Dirección
+                  </p>
+
+                  <p
+                    class="mt-1
+                           text-[12px]
+                           text-slate-500"
+                  >
+                    {{ person.contact.address || 'Sin registro' }}
+                  </p>
+
+                </div>
+
+              </div>
+
+            } @else {
+
+              <p
+                class="text-[12px]
+                       text-slate-400"
+              >
+                No hay contacto registrado.
+              </p>
+
+            }
+
+          </div>
+
+        </section>
+
+
+        <!-- OBSERVACIONES GENERALES -->
+        <section
+          class="mt-5
+                 overflow-hidden
+                 rounded-lg
+                 border border-slate-200"
+        >
+
+          <div
+            class="border-b border-slate-200
+                   px-4 py-3"
+          >
+
+            <h2
+              class="text-[13px]
+                     font-semibold
+                     text-slate-800"
+            >
+              Observaciones generales
+            </h2>
+
+          </div>
+
+
+          <div class="px-12 py-6">
+
+            <p
+              class="whitespace-pre-line
+                     text-[12px]
+                     leading-6
+                     text-slate-500"
+            >
+              {{ person.generalNotes || 'Sin observaciones.' }}
+            </p>
+
+          </div>
+
+        </section>
+
+      }
+
+
+      <!-- OTROS TABS -->
+      @if (activeTab() !== 'datos') {
+
+        <div
+          class="flex min-h-[220px]
+                 items-center
+                 justify-center"
+        >
+
+          <div class="text-center">
+
+            <p
+              class="text-[14px]
+                     font-semibold
+                     text-slate-700"
+            >
+              {{ activeTab() | titlecase }}
+            </p>
+
+            <p
+              class="mt-2
+                     text-[12px]
+                     text-slate-400"
+            >
+              Esta sección se implementará próximamente.
+            </p>
+
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+  }
+
+</div>

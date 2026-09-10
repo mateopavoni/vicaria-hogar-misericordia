@@ -68,6 +68,16 @@ export const routes: Routes = [
         //   permissionGuard('fichas.create')
         // ]
       },
+
+      {
+
+      path: 'fichas/:id',
+      loadComponent: () =>
+        import('./features/social-records/pages/social-record-detail/social-record-detail.component')
+          .then(m => m.SocialRecordDetailComponent)
+
+    }
+
     ],
   },
 
