@@ -3,10 +3,11 @@ import {ActivatedRoute, RouterLink} from '@angular/router';
 import { DatePipe , TitleCasePipe} from '@angular/common';
 import { SocialRecordDetail, PersonType} from '../../interfaces/social-record.interface';
 import { SocialRecordsService} from '../../services/social-records.service';
+import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
 
 @Component({
   selector: 'app-social-record-detail.component',
-  imports: [ RouterLink,DatePipe,TitleCasePipe],
+  imports: [ RouterLink,DatePipe,TitleCasePipe, EmptyFieldBadgeComponent],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
 })
@@ -25,6 +26,7 @@ import { SocialRecordsService} from '../../services/social-records.service';
     errorMessage = signal<string | null>(null);
 
     activeTab = signal('datos');
+
 
     ngOnInit(): void {
 
@@ -65,6 +67,8 @@ import { SocialRecordsService} from '../../services/social-records.service';
 
         });
     }
+
+    
 
     selectTab(tab: string): void {
       this.activeTab.set(tab);

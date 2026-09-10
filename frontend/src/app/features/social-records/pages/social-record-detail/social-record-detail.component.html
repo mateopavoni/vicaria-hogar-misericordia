@@ -31,6 +31,8 @@
 
   }
 
+  
+  
   <!-- CONTENIDO -->
   @else if (record(); as person) {
 
@@ -143,41 +145,78 @@
 
 
         <!-- ACCIONES -->
-        <div class="flex items-center gap-3">
+        <div class="flex flex-col items-end">
 
-          <button
-            type="button"
-            class="h-[34px]
-                   rounded-md
-                   border border-[#D5DDF3]
-                   bg-white
-                   px-4
-                   text-[12px]
-                   font-semibold
-                   text-slate-700
-                   hover:bg-slate-50"
-          >
-            Editar ficha
-          </button>
+    <div class="flex items-center gap-3">
+
+        <button
+        type="button"
+        class="h-[34px]
+                rounded-md
+                border border-[#D5DDF3]
+                bg-white
+                px-4
+                text-[12px]
+                font-semibold
+                text-slate-700
+                hover:bg-slate-50"
+        >
+        Editar ficha
+        </button>
+
+        <button
+        type="button"
+        class="h-[34px]
+                rounded-md
+                bg-[#6B8DF5]
+                px-4
+                text-[12px]
+                font-semibold
+                text-white
+                hover:bg-[#587BE8]"
+        >
+        Exportar Ficha
+        </button>
+
+    </div>
 
 
-          <button
-            type="button"
-            class="h-[34px]
-                   rounded-md
-                   bg-[#6B8DF5]
-                   px-4
-                   text-[12px]
-                   font-semibold
-                   text-white
-                   hover:bg-[#587BE8]"
-          >
-            Exportar Ficha
-          </button>
+    <div class="mt-3 text-right">
 
-        </div>
+        <p
+        class="text-[12px]
+                font-semibold
+                text-slate-700"
+        >
+        Ficha #{{ person.id }}
+        </p>
 
-      </div>
+        @if (person.lastModifiedAt) {
+
+        <p
+            class="mt-1
+                text-[11px]
+                text-slate-500"
+        >
+            Última actualización:
+            {{ person.lastModifiedAt | date:'dd/MM/yyyy' }}
+        </p>
+
+        } @else {
+
+        <p
+            class="mt-1
+                text-[11px]
+                text-slate-400"
+        >
+            Última actualización: Sin registrar
+        </p>
+
+        }
+
+    </div>
+
+    </div>
 
 
       <!-- INFORMACIÓN PRINCIPAL -->
@@ -205,13 +244,17 @@
             DNI
           </p>
 
-          <p
-            class="mt-1
-                   text-[12px]
-                   text-slate-500"
-          >
-            {{ person.dni || 'Sin registro' }}
-          </p>
+          @if (person.dni) {
+
+            <p class="mt-1 text-[12px] text-slate-500">
+                {{ person.dni }}
+            </p>
+
+            } @else {
+
+            <app-empty-field-badge />
+
+        }
 
         </div>
 
@@ -238,13 +281,15 @@
                    text-slate-500"
           >
 
-            @if (person.dateOfBirth) {
+           @if (person.dateOfBirth) {
 
-              {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+            <p class="mt-1 text-[12px] text-slate-500">
+                {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+            </p>
 
             } @else {
 
-              Sin registro
+            <app-empty-field-badge />
 
             }
 
@@ -267,14 +312,17 @@
             Teléfono
           </p>
 
-          <p
-            class="mt-1
-                   text-[12px]
-                   text-slate-500"
-          >
-            {{ person.phone || 'Sin registro' }}
-          </p>
+          @if (person.phone) {
 
+            <p class="mt-1 text-[12px] text-slate-500">
+                {{ person.phone }}
+            </p>
+
+            } @else {
+
+            <app-empty-field-badge />
+
+            }
         </div>
 
       </div>
@@ -510,13 +558,17 @@
                 Apellido
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.lastName || 'Sin registro' }}
-              </p>
+              @if (person.lastName) {
+
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.lastName }}
+                </p>
+
+                } @else {
+
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -532,13 +584,17 @@
                 DNI
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.dni || 'Sin registro' }}
-              </p>
+               @if (person.dni) {
+
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.dni }}
+                </p>
+
+                } @else {
+
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -554,13 +610,17 @@
                 Teléfono
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.phone || 'Sin registro' }}
-              </p>
+             @if (person.phone) {
+
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.phone }}
+                </p>
+
+                } @else {
+
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -576,19 +636,17 @@
                 Fecha de nacimiento
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
+              @if (person.dateOfBirth) {
 
-                @if (person.dateOfBirth) {
-                  {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+                </p>
+
                 } @else {
-                  Sin registro
-                }
 
-              </p>
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -661,13 +719,17 @@
                 Motivo de ingreso
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.reasonForEntry || 'Sin registro' }}
-              </p>
+            @if (person.reasonForEntry) {
+
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.reasonForEntry }}
+                </p>
+
+                } @else {
+
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -683,19 +745,17 @@
                 Fecha de ingreso
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
+            @if (person.entryDate) {
 
-                @if (person.entryDate) {
-                  {{ person.entryDate | date:'dd/MM/yyyy' }}
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.entryDate | date:'dd/MM/yyyy' }}
+                </p>
+
                 } @else {
-                  Sin registro
-                }
 
-              </p>
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -711,13 +771,17 @@
                 Situación habitacional
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.housingSituation || 'Sin registro' }}
-              </p>
+              @if (person.housingSituation) {
+
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.housingSituation }}
+                </p>
+
+                } @else {
+
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -733,13 +797,17 @@
                 Lugar donde pernocta
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.overnightLocation || 'Sin registro' }}
-              </p>
+             @if (person.overnightLocation) {
+
+            <p class="mt-1 text-[12px] text-slate-500">
+                {{ person.overnightLocation }}
+            </p>
+
+            } @else {
+
+            <app-empty-field-badge />
+
+            }
 
             </div>
 
@@ -755,13 +823,17 @@
                 Ocupación
               </p>
 
-              <p
-                class="mt-1
-                       text-[12px]
-                       text-slate-500"
-              >
-                {{ person.occupation || 'Sin registro' }}
-              </p>
+              @if (person.occupation) {
+
+                <p class="mt-1 text-[12px] text-slate-500">
+                    {{ person.occupation }}
+                </p>
+
+                } @else {
+
+                <app-empty-field-badge />
+
+                }
 
             </div>
 
@@ -834,15 +906,19 @@
                   >
                     Nombre
                   </p>
+                
+                  @if (person.contact.firstName || person.contact.lastName) {
 
-                  <p
-                    class="mt-1
-                           text-[12px]
-                           text-slate-500"
-                  >
-                    {{ person.contact.firstName }}
-                    {{ person.contact.lastName || '' }}
-                  </p>
+                    <p class="mt-1 text-[12px] text-slate-500">
+                        {{ person.contact.firstName }} {{ person.contact.lastName }}
+                    </p>
+
+                    } @else {
+
+                    <app-empty-field-badge />
+
+                    }
+
 
                 </div>
 
@@ -856,14 +932,17 @@
                   >
                     Teléfono
                   </p>
+                  @if (person.contact.phone) {
 
-                  <p
-                    class="mt-1
-                           text-[12px]
-                           text-slate-500"
-                  >
-                    {{ person.contact.phone || 'Sin registro' }}
-                  </p>
+                    <p class="mt-1 text-[12px] text-slate-500">
+                        {{ person.contact.phone }}
+                    </p>
+
+                    } @else {
+
+                    <app-empty-field-badge />
+
+                    }
 
                 </div>
 
@@ -878,13 +957,17 @@
                     Dirección
                   </p>
 
-                  <p
-                    class="mt-1
-                           text-[12px]
-                           text-slate-500"
-                  >
-                    {{ person.contact.address || 'Sin registro' }}
-                  </p>
+                  @if (person.contact.address) {
+
+                    <p class="mt-1 text-[12px] text-slate-500">
+                        {{ person.contact.address }}
+                    </p>
+
+                    } @else {
+
+                    <app-empty-field-badge />
+
+                    }
 
                 </div>
 
@@ -892,12 +975,7 @@
 
             } @else {
 
-              <p
-                class="text-[12px]
-                       text-slate-400"
-              >
-                No hay contacto registrado.
-              </p>
+                <app-empty-field-badge />
 
             }
 
@@ -932,14 +1010,22 @@
 
           <div class="px-12 py-6">
 
+           @if (person.generalNotes) {
+
             <p
-              class="whitespace-pre-line
-                     text-[12px]
-                     leading-6
-                     text-slate-500"
+                class="whitespace-pre-line
+                    text-[12px]
+                    leading-6
+                    text-slate-500"
             >
-              {{ person.generalNotes || 'Sin observaciones.' }}
+                {{ person.generalNotes }}
             </p>
+
+            } @else {
+
+            <app-empty-field-badge />
+
+            }
 
           </div>
 
