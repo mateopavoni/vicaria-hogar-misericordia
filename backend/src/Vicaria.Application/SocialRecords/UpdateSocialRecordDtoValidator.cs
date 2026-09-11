@@ -12,6 +12,8 @@ public class UpdateSocialRecordDtoValidator : AbstractValidator<UpdateSocialReco
 
         RuleFor(x => x.LastName).MaximumLength(100).WithMessage("El apellido no puede superar los 100 caracteres.");
         RuleFor(x => x.Dni).MaximumLength(20).WithMessage("El DNI no puede superar los 20 caracteres.");
+        RuleFor(x => x.DateOfBirth).LessThanOrEqualTo(DateTime.Today).WithMessage("La fecha de nacimiento no puede ser futura.").When(x => x.DateOfBirth.HasValue);
+        RuleFor(x => x.EntryDate).LessThanOrEqualTo(DateTime.Today).WithMessage("La fecha de ingreso no puede ser futura.").When(x => x.EntryDate.HasValue);
         RuleFor(x => x.Phone).MaximumLength(30).WithMessage("El teléfono no puede superar los 30 caracteres.");
         RuleFor(x => x.ReasonForEntry).MaximumLength(500).WithMessage("El motivo de ingreso no puede superar los 500 caracteres.");
         RuleFor(x => x.HousingSituation).MaximumLength(200).WithMessage("La situación habitacional no puede superar los 200 caracteres.");

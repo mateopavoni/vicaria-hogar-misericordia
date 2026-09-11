@@ -16,4 +16,6 @@ public class User
     // hasheado igual que la password, nunca se guarda en texto plano
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
+    // se incrementa al cambiar rol o desactivar la cuenta, invalida los tokens ya emitidos
+    public int TokenVersion { get; set; } = 0;
 }
