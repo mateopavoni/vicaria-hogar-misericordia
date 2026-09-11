@@ -137,6 +137,7 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = roleId;
+        user.TokenVersion++;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -376,7 +377,8 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}".Trim()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, role)
+            new Claim(ClaimTypes.Role, role),
+            new Claim("token_version", user.TokenVersion.ToString())
         ];
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? string.Empty));
@@ -412,6 +414,7 @@ public class AuthService : IAuthService
         }
 
         user.Status = UserStatus.Inactive;
+        user.TokenVersion++;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {

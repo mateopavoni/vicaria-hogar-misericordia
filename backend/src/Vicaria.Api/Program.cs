@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -71,6 +72,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true
+        };
+
+        // si cambia el rol o se desactiva la cuenta, TokenVersion sube y el token viejo deja de servir
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userIdClaim = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var tokenVersionClaim = context.Principal?.FindFirstValue("token_version");
+                if (userIdClaim is null || tokenVersionClaim is null)
+                {
+                    context.Fail("Token inválido.");
+                    return;
+                }
+
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<VicariaDbContext>();
+                var user = await dbContext.Users.FindAsync(Guid.Parse(userIdClaim));
+                if (user is null || user.Status != UserStatus.Active || user.TokenVersion.ToString() != tokenVersionClaim)
+                {
+                    context.Fail("Token inválido.");
+                }
+            }
         };
     });
 

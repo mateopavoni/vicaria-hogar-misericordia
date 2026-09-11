@@ -24,6 +24,29 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, usuarioId));
 
+    // el token ahora se valida contra un usuario real en la base (chequeo de sesion activa)
+    private async Task<Guid> SembrarActorAsync(string rol)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var roleId = db.Roles.First(r => r.Name == rol).Id;
+
+        var actor = new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Actor",
+            LastName = "Test",
+            Email = $"{Guid.NewGuid()}@mail.com",
+            PasswordHash = "x",
+            Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(actor);
+        await db.SaveChangesAsync();
+        return actor.Id;
+    }
+
     private async Task<Guid> RegistrarUsuarioPendienteAsync()
     {
         var dto = new RegisterDto("Ana", "Perez", $"{Guid.NewGuid()}@mail.com", "password123");
@@ -42,7 +65,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     [Fact]
     public async Task Pending_SinRolReferente_Retorna403()
     {
-        UsarToken(_client, RoleNames.Escucha);
+        UsarToken(_client, RoleNames.Escucha, await SembrarActorAsync(RoleNames.Escucha));
 
         var response = await _client.GetAsync("/api/auth/users/pending");
 
@@ -53,7 +76,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Pending_ConRolReferente_IncluyeElUsuarioRecienRegistrado()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.Referente);
+        UsarToken(_client, RoleNames.Referente, await SembrarActorAsync(RoleNames.Referente));
 
         var response = await _client.GetAsync("/api/auth/users/pending");
 
@@ -65,7 +88,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     [Fact]
     public async Task Approve_UsuarioNoExiste_Retorna404()
     {
-        UsarToken(_client, RoleNames.Referente);
+        UsarToken(_client, RoleNames.Referente, await SembrarActorAsync(RoleNames.Referente));
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{Guid.NewGuid()}/approve", new ApproveUserDto(rolId));
@@ -77,7 +100,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_SinRolReferente_Retorna403()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.DirectoraDeCasona);
+        UsarToken(_client, RoleNames.DirectoraDeCasona, await SembrarActorAsync(RoleNames.DirectoraDeCasona));
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
@@ -89,7 +112,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_ConRolReferenteYRolValido_Retorna204()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.Referente);
+        UsarToken(_client, RoleNames.Referente, await SembrarActorAsync(RoleNames.Referente));
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
@@ -101,7 +124,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_UsuarioYaAprobado_Retorna409()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.Referente);
+        UsarToken(_client, RoleNames.Referente, await SembrarActorAsync(RoleNames.Referente));
         var rolId = ObtenerRolIdSembrado();
         await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
 
@@ -114,7 +137,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Reject_ConMotivo_Retorna204()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.Referente);
+        UsarToken(_client, RoleNames.Referente, await SembrarActorAsync(RoleNames.Referente));
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/reject", new RejectUserDto("no cumple los requisitos"));
 
@@ -125,7 +148,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Reject_SinMotivo_Retorna400()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.Referente);
+        UsarToken(_client, RoleNames.Referente, await SembrarActorAsync(RoleNames.Referente));
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/reject", new RejectUserDto(""));
 
