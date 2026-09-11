@@ -4,7 +4,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import {RouterLink} from '@angular/router';
+import { RouterLink } from '@angular/router';
 import {
   CreateSocialRecordRequest,
   SocialRecordDetail,
@@ -13,7 +13,7 @@ import {
 
 @Component({
   selector: 'app-social-record-form',
-  imports: [ReactiveFormsModule,RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './social-record-form.component.html',
   styleUrl: './social-record-form.component.css'
 })
@@ -28,10 +28,11 @@ export class SocialRecordFormComponent {
   // Datos que recibiremos cuando editemos una ficha
   initialData = input<SocialRecordDetail | null>(null);
 
+  // Notificación del componente padre cuando se guarda con éxito
+  submittedSuccess = input<boolean>(false);
+
   // El componente padre recibe los datos cuando se presiona Guardar
   submittedForm = output<CreateSocialRecordRequest>();
-
-  saving = signal(false);
 
   loading = input(false);
 
@@ -39,7 +40,6 @@ export class SocialRecordFormComponent {
   
   successMessage = signal<string | null>(null);
   
-
   submitted = signal(false);
 
   showContact = signal(false);
@@ -170,6 +170,16 @@ export class SocialRecordFormComponent {
 
     });
 
+    /*
+     * Resetea el formulario automáticamente cuando el padre
+     * notifica un guardado exitoso (submittedSuccess = true).
+     */
+    effect(() => {
+      if (this.submittedSuccess()) {
+        this.resetForm();
+      }
+    });
+
   }
 
 
@@ -180,6 +190,22 @@ export class SocialRecordFormComponent {
 
   toggleMoreInfo(): void {
     this.showMoreInfo.update(value => !value);
+  }
+
+
+  /*
+   * Limpia y reinicia todos los campos y estados locales del formulario.
+   */
+  resetForm(): void {
+    this.form.reset({
+      hasDocumentation: false
+    });
+    this.submitted.set(false);
+    this.showContact.set(false);
+    this.showMoreInfo.set(false);
+    this.errorMessage.set(null);
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
 

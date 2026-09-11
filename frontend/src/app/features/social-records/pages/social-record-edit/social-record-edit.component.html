@@ -1,14 +1,31 @@
-@if (loading()) {
+<div class="min-h-full bg-[#F5F7FB] px-10 py-7">
 
-  <p>Cargando ficha...</p>
+  @if (loading()) {
 
-} @else {
+    <div class="flex items-center justify-center py-20">
+      <p class="text-sm text-slate-500">
+        Cargando ficha...
+      </p>
+    </div>
 
-  <app-social-record-form
-    mode="edit"
- //   [initialData]="record()"
-    [loading]="saving()"
-//    (submittedForm)="updateRecord($event)"
-  />
+  } @else if (errorMessage()) {
 
-}
+    <div
+      class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600"
+      role="alert"
+    >
+      {{ errorMessage() }}
+    </div>
+
+  } @else if (record()) {
+
+    <app-social-record-form
+      mode="edit"
+      [initialData]="record()"
+      [loading]="saving()"
+      (submittedForm)="updateRecord($event)"
+    />
+
+  }
+
+</div>
