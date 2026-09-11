@@ -1,0 +1,14 @@
+@if (loading()) {
+
+  <p>Cargando ficha...</p>
+
+} @else {
+
+  <app-social-record-form
+    mode="edit"
+ //   [initialData]="record()"
+    [loading]="saving()"
+//    (submittedForm)="updateRecord($event)"
+  />
+
+}
