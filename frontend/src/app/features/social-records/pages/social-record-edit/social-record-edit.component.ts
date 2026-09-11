@@ -1,8 +1,9 @@
-import {Component, inject, OnInit,signal} from '@angular/core';
+import {Component, inject, OnInit,signal,viewChild} from '@angular/core';
 import { ActivatedRoute,  Router} from '@angular/router';
 import {  SocialRecordsService} from '../../services/social-records.service';
 import { SocialRecordDetail, CreateSocialRecordRequest} from '../../interfaces/social-record.interface';
 import { SocialRecordFormComponent} from '../../components/social-record-form/social-record-form.component';
+import { ComponentCanDeactivate } from '../../../../core/guards/pending-changes.guard';
 
 
 @Component({
@@ -12,7 +13,10 @@ import { SocialRecordFormComponent} from '../../components/social-record-form/so
   styleUrl: './social-record-edit.component.css'
 })
 export class SocialRecordEditComponent
-  implements OnInit {
+  implements OnInit, ComponentCanDeactivate {
+
+    // Obtenemos la referencia al componente hijo del formulario
+  formComponent = viewChild(SocialRecordFormComponent);
 
   private route = inject(ActivatedRoute);
 
@@ -63,6 +67,9 @@ export class SocialRecordEditComponent
 
   }
 
+  canDeactivate(): boolean {
+    return this.formComponent()?.canDeactivate() ?? true;
+  }
 
   private loadRecord(id: string): void {
 
@@ -103,21 +110,36 @@ export class SocialRecordEditComponent
 
   }
 
+  updateRecord(data: CreateSocialRecordRequest): void {
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.saving.set(true);
 
-  updateRecord(
-    data: CreateSocialRecordRequest
-  ): void {
+    this.socialRecordsService
+      .update(this.recordId, data)
+      .subscribe({
+        next: (updatedRecord) => {
+          this.saving.set(false);
+          this.successMessage.set('Ficha actualizada correctamente.');
+          
+          // Actualizamos la signal record para refrescar la instancia si fuera necesario
+          this.record.set(updatedRecord);
 
-    // Lo implementamos cuando
-    // tengamos confirmado el endpoint
-    // PUT/PATCH del backend.
-
-    console.log(
-      'Datos a actualizar:',
-      this.recordId,
-      data
-    );
-
+          // Opción A: Redirigir al detalle de la ficha pasados 1.5 segundos
+          setTimeout(() => {
+            this.router.navigate(['/dashboard/fichas', this.recordId]);
+          }, 1500);
+        },
+        error: (err) => {
+          console.error('Error al actualizar la ficha:', err);
+          this.saving.set(false);
+          this.errorMessage.set(
+            err?.error?.message || 'Ocurrió un error al actualizar la ficha.'
+          );
+        }
+      });
   }
+
+  
 
 }

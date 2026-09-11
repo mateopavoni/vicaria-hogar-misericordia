@@ -36,6 +36,12 @@ export class SocialRecordsService {
     return this.http.get<SocialRecordDetail>(
       `${this.apiUrl}/${id}`
     );
+   
   }
+
+  update(id: string, data: CreateSocialRecordRequest): Observable<SocialRecordDetail> {
+  // Ajustá la URL según el endpoint de tu backend (p. ej. PUT o PATCH)
+  return this.http.put<SocialRecordDetail>(`${this.apiUrl}/social-records/${id}`, data);
+}
 }
 

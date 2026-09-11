@@ -149,9 +149,11 @@
 
     <div class="flex items-center gap-3">
 
+       @if (record(); as recordData) {
         <button
-        type="button"
-        class="h-[34px]
+          type="button"
+          [routerLink]="['/dashboard/fichas', recordData.id, 'edit']"
+          class="h-[34px]
                 rounded-md
                 border border-[#D5DDF3]
                 bg-white
@@ -161,8 +163,9 @@
                 text-slate-700
                 hover:bg-slate-50"
         >
-        Editar ficha
+          Editar ficha
         </button>
+      }
 
         <button
         type="button"

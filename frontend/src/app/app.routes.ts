@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { permissionGuard } from './core/guards/permission.guard';
 import { authGuard } from './core/auth/auth.guard';
+import { pendingChangesGuard } from './core/guards/pending-changes.guard';
 
 export const routes: Routes = [
 
@@ -67,6 +68,7 @@ export const routes: Routes = [
         // canActivate: [
         //   permissionGuard('fichas.create')
         // ]
+        //canDeactivate: [pendingChangesGuard] 
       },
 
       {
@@ -76,6 +78,16 @@ export const routes: Routes = [
         import('./features/social-records/pages/social-record-detail/social-record-detail.component')
           .then(m => m.SocialRecordDetailComponent)
 
+    },
+    
+    // RUTA DE EDICIÓN
+
+    {
+      path: 'fichas/:id/edit',
+      loadComponent: () =>
+        import('./features/social-records/pages/social-record-edit/social-record-edit.component')
+          .then(m => m.SocialRecordEditComponent),
+          canDeactivate: [pendingChangesGuard] 
     }
 
     ],
