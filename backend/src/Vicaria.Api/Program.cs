@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
 using Vicaria.Application.Notifications;
 using Vicaria.Application.SocialRecords;
+using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
@@ -98,6 +99,12 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
     dbContext.Database.Migrate();
+
+    // usuarios de prueba con contraseña conocida, uno por rol, para QA manual local (docker-compose)
+    if (app.Environment.IsDevelopment())
+    {
+        SeedTestUsers(dbContext);
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -118,6 +125,39 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void SeedTestUsers(VicariaDbContext dbContext)
+{
+    var testUsers = new[]
+    {
+        (Email: "referente@test.com", RoleId: new Guid("11111111-1111-1111-1111-111111111111")),
+        (Email: "directora@test.com", RoleId: new Guid("22222222-2222-2222-2222-222222222222")),
+        (Email: "escucha@test.com", RoleId: new Guid("33333333-3333-3333-3333-333333333333")),
+        (Email: "coordinador@test.com", RoleId: new Guid("77777777-7777-7777-7777-777777777777")),
+    };
+
+    foreach (var (email, roleId) in testUsers)
+    {
+        if (dbContext.Users.Any(u => u.Email == email))
+        {
+            continue;
+        }
+
+        dbContext.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Test",
+            LastName = email.Split('@')[0],
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test1234!"),
+            Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    dbContext.SaveChanges();
+}
 
 // necesario para que WebApplicationFactory<Program> lo encuentre en los tests de integración
 public partial class Program { }
