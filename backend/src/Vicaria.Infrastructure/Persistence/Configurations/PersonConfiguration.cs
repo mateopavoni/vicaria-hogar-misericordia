@@ -14,10 +14,12 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
 
         builder.Property(p => p.FirstName)
             .HasMaxLength(100)
+            .UseCollation("Modern_Spanish_CI_AI")
             .IsRequired();
 
         builder.Property(p => p.LastName)
-            .HasMaxLength(100);
+            .HasMaxLength(100)
+            .UseCollation("Modern_Spanish_CI_AI");
 
         builder.Property(p => p.Dni)
             .HasMaxLength(20);
