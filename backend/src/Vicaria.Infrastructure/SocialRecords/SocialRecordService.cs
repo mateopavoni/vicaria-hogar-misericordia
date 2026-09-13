@@ -141,6 +141,62 @@ public class SocialRecordService : ISocialRecordService
 
         return UpdateSocialRecordResult.Ok();
     }
+    public async Task<int> CountByFilterAsync(FilterSocialRecordsDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.SocialRecords
+            .Include(r => r.Person)
+            .AsQueryable();
+
+        if (filter.EntryDateFrom.HasValue)
+        {
+            query = query.Where(r => r.EntryDate >= filter.EntryDateFrom.Value);
+        }
+
+        if (filter.EntryDateTo.HasValue)
+        {
+            query = query.Where(r => r.EntryDate <= filter.EntryDateTo.Value);
+        }
+
+        if (filter.DaysWithoutObservations.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-filter.DaysWithoutObservations.Value);
+            query = query.Where(r => r.UpdatedAt <= cutoff);
+        }
+
+        if (filter.HasDni.HasValue)
+        {
+            if (filter.HasDni.Value)
+            {
+                query = query.Where(r => r.Person != null && r.Person.Dni != null && r.Person.Dni != "");
+            }
+            else
+            {
+                query = query.Where(r => r.Person == null || r.Person.Dni == null || r.Person.Dni == "");
+            }
+        }
+
+        if (filter.HasAddress.HasValue)
+        {
+            var recordsWithContactAddress = _dbContext.Contacts
+                .Where(c => c.Address != null && c.Address != "")
+                .Select(c => c.SocialRecordId);
+
+            if (filter.HasAddress.Value)
+            {
+                query = query.Where(r => 
+                    (r.OvernightLocation != null && r.OvernightLocation != "") || 
+                    recordsWithContactAddress.Contains(r.Id));
+            }
+            else
+            {
+                query = query.Where(r => 
+                    (r.OvernightLocation == null || r.OvernightLocation == "") && 
+                    !recordsWithContactAddress.Contains(r.Id));
+            }
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
 
     private static bool MatchesQuery(Person person, string normalizedQuery)
     {
