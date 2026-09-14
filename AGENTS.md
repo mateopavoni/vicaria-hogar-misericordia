@@ -153,8 +153,9 @@ Estado del código real (rama `dev`). Antes de tocar un dominio, verificar si ya
 | **Auth** (registro, login/JWT, aprobación, roles, baja lógica) | Api `AuthController`, Application `Auth/`, Infrastructure `AuthService` | `api/auth/*` (13 endpoints) |
 | **Notificaciones internas** (pendiente, bloqueo, marcado leído) | Api `NotificationController`, Application `Notifications/`, Infrastructure `NotificationService` | `api/notifications` |
 | **Fichas de personas (Social Records)** | Api `SocialRecordsController`, Application `SocialRecords/`, Infrastructure `SocialRecordService` | `api/social-records` |
+| **Personas - tipo (SCRUM-134)** | Api `PersonsController`, Application `Persons/` + `SocialRecords/`, Infrastructure `SocialRecordService` | `api/persons/{id}/type` |
 
-Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`.
+Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`, `CasonaStay`, `PsychiatricEvaluation`.
 
 ---
 
