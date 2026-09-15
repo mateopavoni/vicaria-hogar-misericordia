@@ -244,6 +244,133 @@
 
 }
 
+    <app-social-record-filters
+      (filtersApplied)="applyFilters($event)"
+      (filtersCleared)="clearFilters()"
+    />
+
+  <!-- CHIP FILTROS ACTIVOS -->
+
+    @if (hasActiveFilters()) {
+
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+
+      <span class="text-[12px] font-semibold text-slate-500">
+        Filtros:
+      </span>
+
+
+      @if (filters().entryDateFrom) {
+
+        <span class="...">
+          Desde {{ filters().entryDateFrom }}
+
+          <button
+            type="button"
+            (click)="removeFilter('entryDateFrom')"
+          >
+            ×
+          </button>
+        </span>
+
+      }
+
+
+      @if (filters().entryDateTo) {
+
+        <span class="...">
+          Hasta {{ filters().entryDateTo }}
+
+          <button
+            type="button"
+            (click)="removeFilter('entryDateTo')"
+          >
+            ×
+          </button>
+        </span>
+
+      }
+
+
+      @if (filters().withoutObservationsDays) {
+
+        <span class="...">
+          Sin observaciones +{{
+            filters().withoutObservationsDays
+          }} días
+
+          <button
+            type="button"
+            (click)="removeFilter('withoutObservationsDays')"
+          >
+            ×
+          </button>
+        </span>
+
+      }
+
+
+      @if (filters().hasDni !== null) {
+
+        <span class="...">
+          {{
+            filters().hasDni
+              ? 'Con DNI'
+              : 'Sin DNI'
+          }}
+
+          <button
+            type="button"
+            (click)="removeFilter('hasDni')"
+          >
+            ×
+          </button>
+        </span>
+
+      }
+
+
+      @if (filters().hasAddress !== null) {
+
+        <span class="...">
+          {{
+            filters().hasAddress
+              ? 'Con domicilio'
+              : 'Sin domicilio'
+          }}
+
+          <button
+            type="button"
+            (click)="removeFilter('hasAddress')"
+          >
+            ×
+          </button>
+
+        </span>
+
+      }
+
+         <!-- <button
+          type="button"
+          (click)="clearFilters()"
+          class="text-[12px] font-semibold text-[#4167D9]"
+        >
+          Limpiar filtros
+        </button> -->
+   
+
+    </div>
+
+  }
+  <div class="mb-4 flex items-center justify-between">
+    <p class="text-sm text-slate-500">
+      <span class="font-semibold text-slate-700">
+        {{ totalRecords() }}
+      </span>
+      {{ totalRecords() === 1 ? 'persona encontrada' : 'personas encontradas' }}
+    </p>
+  </div>
+
   <!-- CONTENEDOR TABLA -->
   <div
     class="overflow-hidden rounded-xl

@@ -5,17 +5,24 @@ import { SocialRecordListItem} from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
 import {debounceTime,distinctUntilChanged,Subject,takeUntil} from 'rxjs';
 import { OnDestroy } from '@angular/core';
+import { SocialRecordFilters } from '../../interfaces/social-record-filters.interface';
+import { SocialRecordFiltersService } from '../../services/social-record-filters.service';
+import { SocialRecordFiltersComponent } from '../../components/social-record-filters/social-record-filters.component';
+
+
 @Component({
   selector: 'app-social-record-list',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, SocialRecordFiltersComponent],
   templateUrl: './social-record-list.component.html',
   styleUrl: './social-record-list.component.css'
 })
 export class SocialRecordListComponent implements OnInit, OnDestroy {
   private socialRecordsService = inject(SocialRecordsService);
   private destroy$ = new Subject<void>();
+  private filtersService = inject(SocialRecordFiltersService);
 
   records = signal<SocialRecordListItem[]>([]);
+  totalRecords = signal(0);
   loading = signal(false);
   errorMessage = signal<string | null>(null);
 
@@ -23,7 +30,66 @@ export class SocialRecordListComponent implements OnInit, OnDestroy {
   totalPages = signal(1);
   searchTerm = signal(''); // Guarda el término de búsqueda activo
 
+
+
   private searchSubject = new Subject<string>();
+
+
+    filters = signal<SocialRecordFilters>({
+      entryDateFrom: null,
+      entryDateTo: null,
+      withoutObservationsDays: null,
+      hasDni: null,
+      hasAddress: null
+    });
+
+    hasActiveFilters(): boolean {
+    const filters = this.filters();
+
+    return !!(
+      filters.entryDateFrom ||
+      filters.entryDateTo ||
+      filters.withoutObservationsDays !== null ||
+      filters.hasDni !== null ||
+      filters.hasAddress !== null
+    );
+  }
+
+  removeFilter(filter: keyof SocialRecordFilters): void {
+    const updatedFilters = {
+      ...this.filters(),
+      [filter]: null
+    };
+
+    this.filters.set(updatedFilters);
+    this.filtersService.setFilters(updatedFilters);
+
+    this.currentPage.set(1);
+    this.loadRecords();
+  }
+
+  clearFilters(): void {
+    this.filtersService.clear();
+
+    this.filters.set({
+      entryDateFrom: null,
+      entryDateTo: null,
+      withoutObservationsDays: null,
+      hasDni: null,
+      hasAddress: null
+    });
+
+    this.currentPage.set(1);
+    this.loadRecords();
+  }
+
+  applyFilters(filters: SocialRecordFilters): void {
+  this.filters.set(filters);
+  this.filtersService.setFilters(filters);
+
+  this.currentPage.set(1);
+  this.loadRecords();
+}
 
   ngOnInit(): void {
     // 1. Carga inicial
@@ -49,7 +115,7 @@ export class SocialRecordListComponent implements OnInit, OnDestroy {
     this.errorMessage.set(null);
 
     this.socialRecordsService
-      .getAll(this.currentPage(), this.searchTerm())
+      .getAll(this.currentPage(), this.searchTerm(),this.filters())
       .subscribe({
         next: (response) => {
           const sortedRecords = [...response.items].sort((a, b) => {
@@ -60,6 +126,7 @@ export class SocialRecordListComponent implements OnInit, OnDestroy {
 
           this.records.set(sortedRecords);
           this.totalPages.set(response.totalPages);
+          this.totalRecords.set(response.total);
           this.loading.set(false);
         },
         error: () => {
