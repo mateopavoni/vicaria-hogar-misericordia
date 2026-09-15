@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -140,6 +141,50 @@ public class SocialRecordService : ISocialRecordService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return UpdateSocialRecordResult.Ok();
+    }
+
+    public async Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
+        if (person is null)
+        {
+            return UpdatePersonTypeResult.PersonNotFound();
+        }
+
+        var socialRecord = await _dbContext.SocialRecords
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (socialRecord is null)
+        {
+            return UpdatePersonTypeResult.SocialRecordNotFound();
+        }
+
+        // SCRUM-134: pasar a Residente exige una evaluación psiquiátrica vigente
+        if (dto.PersonType == PersonType.Resident)
+        {
+            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
+                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+
+            if (!hasValidEvaluation)
+            {
+                return UpdatePersonTypeResult.MissingPsychiatricEvaluation();
+            }
+        }
+
+        socialRecord.PersonType = dto.PersonType;
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Tipo de persona actualizado",
+            AffectedEntity = $"Person:{personId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdatePersonTypeResult.Ok();
     }
 
     private static bool MatchesQuery(Person person, string normalizedQuery)

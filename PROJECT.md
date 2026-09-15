@@ -119,6 +119,7 @@ Organizadas por épica/sprint según la planificación del proyecto:
 - RF-04 (desactivación de cuentas): activar/desactivar con auditoría, listado real de usuarios activos/inactivos en el panel.
 - RF-19 (notificaciones internas): cuenta pendiente y cuenta bloqueada, panel de notificaciones en el front con marcado individual y masivo como leídas.
 - **Fichas de personas (Social Records, EP-01/EP-02 parcial)**: creación, búsqueda con paginación (`PagedResult<T>`) y actualización de fichas flexibles (solo el nombre es obligatorio), con contacto asociado y auditoría. Backend completo en `api/social-records`.
+- **Tipo de persona (SCRUM-134)**: `PUT /api/persons/{id}/type` cambia el tipo de persona. Asignar `Resident` exige una evaluación psiquiátrica vigente (`PsychiatricEvaluation` con `IsValid = true`); sin ella responde 400 con detalle. `Ambulatory` no exige nada. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia.
 - CORS configurado (`Cors:AllowedOrigins` por ambiente).
 - Migración de motor de BD: Postgres → SQL Server, completa.
 - Frontend: login, registro, pending-approval y gestión de usuarios (pendientes/activos/suspendidos) conectados al backend real, con interceptor de auth y persistencia de sesión.
@@ -183,9 +184,9 @@ Según el diagrama de clases original del proyecto (diseño lógico vigente, map
 | 9 | MedicationSchedule (EsquemaMedicacion) | Esquema de medicamentos por persona | ❌ Pendiente (EP-11) |
 | 10 | MedicationAgenda (AgendaMedicamentos) | Agenda diaria generada automáticamente | ❌ Pendiente (EP-11) |
 | 11 | MedicationCatalog (MedicamentoCatalogo) | Catálogo de medicamentos disponibles | ❌ Pendiente (EP-11) |
-| 12 | CasonaStay (EstadiasCasona) | Registro de estadías en la casona | ❌ Pendiente |
+| 12 | CasonaStay (EstadiasCasona) | Registro de estadías en la casona | ✅ Implementada (SCRUM-140, solo modelo/persistencia) |
 | 13 | CasonaVisit (VisitasCasona) | Registro de visitas de residentes | ❌ Pendiente |
-| 14 | PsychiatricEvaluation (EvaluacionesPsiquiatricas) | Evaluaciones psicológicas documentadas | ❌ Pendiente (EP-12) |
+| 14 | PsychiatricEvaluation (EvaluacionesPsiquiatricas) | Evaluaciones psicológicas documentadas | ✅ Modelo y persistencia (SCRUM-134); falta el CRUD (EP-12) |
 | 15 | CaritasReport (InformeCaritas) | Informes Cáritas (datos en JSONB en el diseño original) | ❌ Pendiente (EP-13) |
 | 16 | PersonalCalendarEvent (EventoCalendarioPersonal) | Eventos personales del usuario | ❌ Pendiente (EP-04) |
 | 17 | GeneralCalendarEvent (EventoCalendarioGeneral) | Eventos compartidos institucionales | ❌ Pendiente (EP-04) |
