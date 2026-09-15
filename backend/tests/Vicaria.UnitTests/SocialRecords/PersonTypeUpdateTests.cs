@@ -70,6 +70,67 @@ public class PersonTypeUpdateTests
     }
 
     [Fact]
+    public async Task SetResident_ConEvaluacionVigente_CreaEstadiaCasonaConEntryDateHoy()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true);
+        var antes = DateTime.UtcNow.AddMinutes(-1);
+
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+
+        var estadia = await db.CasonaStays.SingleOrDefaultAsync(s => s.PersonId == creada.PersonId);
+        var despues = DateTime.UtcNow.AddMinutes(1);
+        Assert.NotNull(estadia);
+        Assert.True(estadia!.EntryDate >= antes && estadia.EntryDate <= despues);
+        Assert.Null(estadia.ExitDate);
+    }
+
+    [Fact]
+    public async Task SetAmbulatory_NoCreaEstadiaCasona()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Ambulatory), Guid.NewGuid());
+
+        Assert.Empty(await db.CasonaStays.Where(s => s.PersonId == creada.PersonId).ToListAsync());
+    }
+
+    [Fact]
+    public async Task ReesetearResidente_NoDuplicaEstadiaCasona()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true);
+
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+
+        Assert.Single(await db.CasonaStays.Where(s => s.PersonId == creada.PersonId).ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreaEstadiaCasona_RegistraAuditLog()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true);
+        var actorId = Guid.NewGuid();
+
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), actorId);
+
+        var estadia = await db.CasonaStays.SingleAsync(s => s.PersonId == creada.PersonId);
+        var log = await db.AuditLogs.FirstOrDefaultAsync(a =>
+            a.AffectedEntity == $"CasonaStay:{estadia.Id}" && a.UserId == actorId);
+        Assert.NotNull(log);
+    }
+
+    [Fact]
     public async Task SetResident_ConEvaluacionNoVigente_DevuelveMissingPsychiatricEvaluation()
     {
         using var db = CrearDbContext();
