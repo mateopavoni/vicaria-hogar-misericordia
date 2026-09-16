@@ -262,7 +262,7 @@
 
       @if (filters().entryDateFrom) {
 
-        <span class="...">
+        <span class="text-[12px]  text-slate-500">
           Desde {{ filters().entryDateFrom }}
 
           <button
@@ -278,7 +278,7 @@
 
       @if (filters().entryDateTo) {
 
-        <span class="...">
+        <span class="text-[12px]  text-slate-500">
           Hasta {{ filters().entryDateTo }}
 
           <button
@@ -294,7 +294,7 @@
 
       @if (filters().withoutObservationsDays) {
 
-        <span class="...">
+        <span class="text-[12px] text-slate-500">
           Sin observaciones +{{
             filters().withoutObservationsDays
           }} días
@@ -312,7 +312,7 @@
 
       @if (filters().hasDni !== null) {
 
-        <span class="...">
+        <span class="text-[12px]  text-slate-500">
           {{
             filters().hasDni
               ? 'Con DNI'
@@ -332,7 +332,7 @@
 
       @if (filters().hasAddress !== null) {
 
-        <span class="...">
+        <span class="text-[12px] text-slate-500">
           {{
             filters().hasAddress
               ? 'Con domicilio'
@@ -350,14 +350,6 @@
 
       }
 
-         <!-- <button
-          type="button"
-          (click)="clearFilters()"
-          class="text-[12px] font-semibold text-[#4167D9]"
-        >
-          Limpiar filtros
-        </button> -->
-   
 
     </div>
 

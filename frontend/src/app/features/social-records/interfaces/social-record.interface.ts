@@ -66,32 +66,32 @@ export interface SocialRecordsResponse {
     personType: PersonType;
 }
 
-export interface SocialRecordDetail {
-  id: string;
-  personId: string;
+  export interface SocialRecordDetail {
+    id: string;
+    personId: string;
 
-  firstName: string;
-  lastName: string | null;
+    firstName: string;
+    lastName: string | null;
 
-  dni: string | null;
-  dateOfBirth: string | null;
-  phone: string | null;
+    dni: string | null;
+    dateOfBirth: string | null;
+    phone: string | null;
 
-  personType: PersonType | null;
+    personType: PersonType | null;
 
-  reasonForEntry: string | null;
-  entryDate: string | null;
+    reasonForEntry: string | null;
+    entryDate: string | null;
 
-  housingSituation: string | null;
-  overnightLocation: string | null;
-  occupation: string | null;
+    housingSituation: string | null;
+    overnightLocation: string | null;
+    occupation: string | null;
 
-  generalNotes: string | null;
+    generalNotes: string | null;
 
-  hasDocumentation: boolean;
+    hasDocumentation: boolean;
 
-  contact: ContactRequest | null;
+    contact: ContactRequest | null;
 
-  status?: string;
-  lastModifiedAt?: string | null;
-}
+    status?: string;
+    lastModifiedAt?: string | null;
+  }

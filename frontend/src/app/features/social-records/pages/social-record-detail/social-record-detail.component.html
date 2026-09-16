@@ -122,20 +122,23 @@
 
 
               <!-- ESTADO -->
-              @if (person.status) {
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Estado
+              </p>
 
-                <span
-                  class="rounded-md
-                         bg-green-100
-                         px-3 py-1
-                         text-[11px]
-                         font-semibold
-                         text-green-700"
-                >
-                  {{ person.status }}
+              @if (person.status === 'Active') {
+                <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  Activo
                 </span>
-
+              } @else {
+                <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                  <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                  Inactivo
+                </span>
               }
+            </div>
 
             </div>
 

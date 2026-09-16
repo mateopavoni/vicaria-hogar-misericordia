@@ -69,6 +69,58 @@
         />
       </div>
 
+      <div>
+      <label
+        for="personType"
+        class="mb-1.5 block text-sm font-medium text-slate-700"
+      >
+        Tipo de atención
+      </label>
+
+      <select
+        id="personType"
+        formControlName="personType"
+        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+      >
+        <option [ngValue]="0">
+          Ambulatorio — Centro Barrial
+        </option>
+
+        <option
+          [ngValue]="1"
+          [disabled]="!hasValidPsychiatricEvaluation()"
+        >
+          Residente — Casa de Convivencia
+        </option>
+      </select>
+
+     @if (!hasValidPsychiatricEvaluation()) {
+      <div class="mt-2 flex items-center gap-2 text-xs text-slate-500">
+        <span>
+          Residente requiere evaluación psiquiátrica vigente.
+        </span>
+
+        <span
+          class="group relative inline-flex cursor-help"
+        >
+          <span
+            class="flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 text-[10px] text-slate-500"
+          >
+            ?
+          </span>
+
+          <span
+            class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-64 -translate-x-1/2 rounded-lg bg-slate-800 px-3 py-2 text-xs font-normal text-white shadow-lg group-hover:block"
+          >
+            No se puede registrar como residente porque no existe una evaluación
+            psiquiátrica vigente.
+          </span>
+        </span>
+      </div>
+    } 
+      
+   </div>
+
     </div>
 
     <div class="border-y border-[#E3E8F5] bg-slate-50 px-6 py-4">

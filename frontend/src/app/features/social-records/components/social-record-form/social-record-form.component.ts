@@ -1,15 +1,7 @@
 import { Component, effect, inject, input, output, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators
-} from '@angular/forms';
+import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import {
-  CreateSocialRecordRequest,
-  SocialRecordDetail,
-  PersonType
-} from '../../interfaces/social-record.interface';
+import {  CreateSocialRecordRequest, SocialRecordDetail, PersonType, PersonStatus} from '../../interfaces/social-record.interface';
 
 @Component({
   selector: 'app-social-record-form',
@@ -20,6 +12,8 @@ import {
 export class SocialRecordFormComponent {
 
   private fb = inject(FormBuilder);
+
+  readonly PersonType = PersonType;
 
   // 'create' para Nueva Ficha
   // 'edit' para Editar Ficha
@@ -46,6 +40,10 @@ export class SocialRecordFormComponent {
 
   showMoreInfo = signal(false);
 
+  hasValidPsychiatricEvaluation = signal(false);
+
+  // this.hasValidPsychiatricEvaluation.set(response.hasValid);
+
 
   form = this.fb.nonNullable.group({
 
@@ -64,6 +62,13 @@ export class SocialRecordFormComponent {
     dateOfBirth: [''],
 
     phone: [''],
+
+    /*
+       * Toda ficha nace como Ambulatoria.
+       */
+    personType: [PersonType.Ambulatory],
+
+    personStatus: [PersonStatus.Active],
 
     reasonForEntry: [''],
 
@@ -121,6 +126,8 @@ export class SocialRecordFormComponent {
           : '',
 
         phone: data.phone ?? '',
+
+        personType: data.personType ?? PersonType.Ambulatory,
 
         reasonForEntry:
           data.reasonForEntry ?? '',
@@ -235,6 +242,7 @@ export class SocialRecordFormComponent {
       generalNotes,
       contact,
       dateOfBirth,
+      personType,
       phone,
       reasonForEntry,
       entryDate,
@@ -288,11 +296,8 @@ export class SocialRecordFormComponent {
       phone:
         phone || null,
 
-      /*
-       * Toda ficha nace como Ambulatoria.
-       */
-      personType:
-        PersonType.Ambulatory,
+      
+      personType: PersonType.Ambulatory,
 
       reasonForEntry:
         reasonForEntry || null,
