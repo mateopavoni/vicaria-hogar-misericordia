@@ -1,4 +1,3 @@
-
 <div class="min-h-full bg-[#F5F7FB] px-10 py-7">
 
   <!-- LOADING -->
@@ -31,8 +30,6 @@
 
   }
 
-  
-  
   <!-- CONTENIDO -->
   @else if (record(); as person) {
 
@@ -122,23 +119,23 @@
 
 
               <!-- ESTADO -->
-            <div>
-              <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                Estado
-              </p>
+              <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                  Estado
+                </p>
 
-              @if (person.status === 'Active') {
-                <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  Activo
-                </span>
-              } @else {
-                <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                  <span class="h-2 w-2 rounded-full bg-slate-400"></span>
-                  Inactivo
-                </span>
-              }
-            </div>
+                @if (person.status === 'Active') {
+                  <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Activo
+                  </span>
+                } @else {
+                  <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                    <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                    Inactivo
+                  </span>
+                }
+              </div>
 
             </div>
 
@@ -150,79 +147,79 @@
         <!-- ACCIONES -->
         <div class="flex flex-col items-end">
 
-    <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3">
 
-       @if (record(); as recordData) {
-        <button
-          type="button"
-          [routerLink]="['/dashboard/fichas', recordData.id, 'edit']"
-          class="h-[34px]
-                rounded-md
-                border border-[#D5DDF3]
-                bg-white
-                px-4
-                text-[12px]
-                font-semibold
-                text-slate-700
-                hover:bg-slate-50"
-        >
-          Editar ficha
-        </button>
-      }
+            <button
+              type="button"
+              [routerLink]="['/dashboard/fichas', person.id, 'edit']"
+              class="h-[34px]
+                     rounded-md
+                     border border-[#D5DDF3]
+                     bg-white
+                     px-4
+                     text-[12px]
+                     font-semibold
+                     text-slate-700
+                     hover:bg-slate-50"
+            >
+              Editar ficha
+            </button>
 
-        <button
-        type="button"
-        class="h-[34px]
-                rounded-md
-                bg-[#6B8DF5]
-                px-4
-                text-[12px]
-                font-semibold
-                text-white
-                hover:bg-[#587BE8]"
-        >
-        Exportar Ficha
-        </button>
+            <button
+              type="button"
+              class="h-[34px]
+                     rounded-md
+                     bg-[#6B8DF5]
+                     px-4
+                     text-[12px]
+                     font-semibold
+                     text-white
+                     hover:bg-[#587BE8]"
+            >
+              Exportar Ficha
+            </button>
 
-    </div>
+          </div>
 
 
-    <div class="mt-3 text-right">
+          <div class="mt-3 text-right">
 
-        <p
-        class="text-[12px]
-                font-semibold
-                text-slate-700"
-        >
-        Ficha #{{ person.id }}
-        </p>
+            <p
+              class="text-[12px]
+                     font-semibold
+                     text-slate-700"
+            >
+              Ficha #{{ person.id }}
+            </p>
 
-        @if (person.lastModifiedAt) {
+            @if (person.lastModifiedAt) {
 
-        <p
-            class="mt-1
-                text-[11px]
-                text-slate-500"
-        >
-            Última actualización:
-            {{ person.lastModifiedAt | date:'dd/MM/yyyy' }}
-        </p>
+              <p
+                class="mt-1
+                       text-[11px]
+                       text-slate-500"
+              >
+                Última actualización:
+                {{ person.lastModifiedAt | date:'dd/MM/yyyy' }}
+              </p>
 
-        } @else {
+            } @else {
 
-        <p
-            class="mt-1
-                text-[11px]
-                text-slate-400"
-        >
-            Última actualización: Sin registrar
-        </p>
+              <p
+                class="mt-1
+                       text-[11px]
+                       text-slate-400"
+              >
+                Última actualización: Sin registrar
+              </p>
 
-        }
+            }
 
-    </div>
+          </div>
 
-    </div>
+        </div>
+
+      </div>
 
 
       <!-- INFORMACIÓN PRINCIPAL -->
@@ -253,14 +250,14 @@
           @if (person.dni) {
 
             <p class="mt-1 text-[12px] text-slate-500">
-                {{ person.dni }}
+              {{ person.dni }}
             </p>
 
-            } @else {
+          } @else {
 
             <app-empty-field-badge />
 
-        }
+          }
 
         </div>
 
@@ -281,25 +278,25 @@
             Fecha de Nacimiento
           </p>
 
-          <p
+          <div
             class="mt-1
                    text-[12px]
                    text-slate-500"
           >
 
-           @if (person.dateOfBirth) {
+            @if (person.dateOfBirth) {
 
-            <p class="mt-1 text-[12px] text-slate-500">
+              <p class="mt-1 text-[12px] text-slate-500">
                 {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
-            </p>
+              </p>
 
             } @else {
 
-            <app-empty-field-badge />
+              <app-empty-field-badge />
 
             }
 
-          </p>
+          </div>
 
         </div>
 
@@ -321,14 +318,14 @@
           @if (person.phone) {
 
             <p class="mt-1 text-[12px] text-slate-500">
-                {{ person.phone }}
+              {{ person.phone }}
             </p>
 
-            } @else {
+          } @else {
 
             <app-empty-field-badge />
 
-            }
+          }
         </div>
 
       </div>
@@ -567,14 +564,14 @@
               @if (person.lastName) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.lastName }}
+                  {{ person.lastName }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -590,17 +587,17 @@
                 DNI
               </p>
 
-               @if (person.dni) {
+              @if (person.dni) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.dni }}
+                  {{ person.dni }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -616,17 +613,17 @@
                 Teléfono
               </p>
 
-             @if (person.phone) {
+              @if (person.phone) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.phone }}
+                  {{ person.phone }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -645,14 +642,14 @@
               @if (person.dateOfBirth) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
+                  {{ person.dateOfBirth | date:'dd/MM/yyyy' }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -725,17 +722,17 @@
                 Motivo de ingreso
               </p>
 
-            @if (person.reasonForEntry) {
+              @if (person.reasonForEntry) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.reasonForEntry }}
+                  {{ person.reasonForEntry }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -751,17 +748,17 @@
                 Fecha de ingreso
               </p>
 
-            @if (person.entryDate) {
+              @if (person.entryDate) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.entryDate | date:'dd/MM/yyyy' }}
+                  {{ person.entryDate | date:'dd/MM/yyyy' }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -780,14 +777,14 @@
               @if (person.housingSituation) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.housingSituation }}
+                  {{ person.housingSituation }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -803,17 +800,17 @@
                 Lugar donde pernocta
               </p>
 
-             @if (person.overnightLocation) {
+              @if (person.overnightLocation) {
 
-            <p class="mt-1 text-[12px] text-slate-500">
-                {{ person.overnightLocation }}
-            </p>
+                <p class="mt-1 text-[12px] text-slate-500">
+                  {{ person.overnightLocation }}
+                </p>
 
-            } @else {
+              } @else {
 
-            <app-empty-field-badge />
+                <app-empty-field-badge />
 
-            }
+              }
 
             </div>
 
@@ -832,14 +829,14 @@
               @if (person.occupation) {
 
                 <p class="mt-1 text-[12px] text-slate-500">
-                    {{ person.occupation }}
+                  {{ person.occupation }}
                 </p>
 
-                } @else {
+              } @else {
 
                 <app-empty-field-badge />
 
-                }
+              }
 
             </div>
 
@@ -912,19 +909,18 @@
                   >
                     Nombre
                   </p>
-                
+
                   @if (person.contact.firstName || person.contact.lastName) {
 
                     <p class="mt-1 text-[12px] text-slate-500">
-                        {{ person.contact.firstName }} {{ person.contact.lastName }}
+                      {{ person.contact.firstName }} {{ person.contact.lastName }}
                     </p>
 
-                    } @else {
+                  } @else {
 
                     <app-empty-field-badge />
 
-                    }
-
+                  }
 
                 </div>
 
@@ -938,17 +934,18 @@
                   >
                     Teléfono
                   </p>
+
                   @if (person.contact.phone) {
 
                     <p class="mt-1 text-[12px] text-slate-500">
-                        {{ person.contact.phone }}
+                      {{ person.contact.phone }}
                     </p>
 
-                    } @else {
+                  } @else {
 
                     <app-empty-field-badge />
 
-                    }
+                  }
 
                 </div>
 
@@ -966,14 +963,14 @@
                   @if (person.contact.address) {
 
                     <p class="mt-1 text-[12px] text-slate-500">
-                        {{ person.contact.address }}
+                      {{ person.contact.address }}
                     </p>
 
-                    } @else {
+                  } @else {
 
                     <app-empty-field-badge />
 
-                    }
+                  }
 
                 </div>
 
@@ -981,7 +978,7 @@
 
             } @else {
 
-                <app-empty-field-badge />
+              <app-empty-field-badge />
 
             }
 
@@ -1016,20 +1013,20 @@
 
           <div class="px-12 py-6">
 
-           @if (person.generalNotes) {
+            @if (person.generalNotes) {
 
-            <p
+              <p
                 class="whitespace-pre-line
-                    text-[12px]
-                    leading-6
-                    text-slate-500"
-            >
+                       text-[12px]
+                       leading-6
+                       text-slate-500"
+              >
                 {{ person.generalNotes }}
-            </p>
+              </p>
 
             } @else {
 
-            <app-empty-field-badge />
+              <app-empty-field-badge />
 
             }
 
@@ -1037,8 +1034,15 @@
 
         </section>
 
-      }
+        <!-- Historial de cambios (Sección inferior en pestaña datos) -->
+        <section class="mt-5">
+          <app-change-history
+            [title]="'Historial de Tipo de Persona'"
+            [items]="person.personTypeHistory ?? []" 
+          />
+        </section>
 
+      }
 
       <!-- OTROS TABS -->
       @if (activeTab() !== 'datos') {
@@ -1075,6 +1079,6 @@
 
     </div>
 
-</div>
+  }
 
-}
+</div>

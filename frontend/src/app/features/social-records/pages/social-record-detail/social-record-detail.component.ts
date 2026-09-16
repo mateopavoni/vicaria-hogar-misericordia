@@ -4,10 +4,12 @@ import { DatePipe , TitleCasePipe} from '@angular/common';
 import { SocialRecordDetail, PersonType} from '../../interfaces/social-record.interface';
 import { SocialRecordsService} from '../../services/social-records.service';
 import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
+import { ChangeHistoryItem } from '../../interfaces/change-history.interface';
+import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
 
 @Component({
   selector: 'app-social-record-detail.component',
-  imports: [ RouterLink,DatePipe,TitleCasePipe, EmptyFieldBadgeComponent],
+  imports: [ RouterLink,DatePipe,TitleCasePipe, EmptyFieldBadgeComponent, ChangeHistoryComponent],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
 })
