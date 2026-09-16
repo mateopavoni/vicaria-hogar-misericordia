@@ -55,23 +55,23 @@
     </div>
 
 
-    <!-- NUEVA FICHA -->
+    <!-- NUEVA FICHA  SOLO VISIBLE PARA REFERENTE-->
+    @if (permissionService.hasPermission('fichas.create')) {
     <a
       routerLink="/dashboard/ficha-nueva"
       class="flex h-[42px] items-center gap-2 rounded-md
-             bg-[#6B8DF5] px-5
-             text-[14px] font-semibold text-white
-             shadow-sm transition
-             hover:bg-[#587BE8]"
+            bg-[#6B8DF5] px-5
+            text-[14px] font-semibold text-white
+            shadow-sm transition
+            hover:bg-[#587BE8]"
     >
-
       <span class="text-lg">
         +
       </span>
 
       Nueva ficha
-
     </a>
+  }
 
   </div>
 

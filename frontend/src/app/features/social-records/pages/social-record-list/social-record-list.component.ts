@@ -8,6 +8,7 @@ import { OnDestroy } from '@angular/core';
 import { SocialRecordFilters } from '../../interfaces/social-record-filters.interface';
 import { SocialRecordFiltersService } from '../../services/social-record-filters.service';
 import { SocialRecordFiltersComponent } from '../../components/social-record-filters/social-record-filters.component';
+import { PermissionService } from '../../../../core/auth/permission.service';
 
 
 @Component({
@@ -20,6 +21,7 @@ export class SocialRecordListComponent implements OnInit, OnDestroy {
   private socialRecordsService = inject(SocialRecordsService);
   private destroy$ = new Subject<void>();
   private filtersService = inject(SocialRecordFiltersService);
+  public permissionService = inject(PermissionService);
 
   records = signal<SocialRecordListItem[]>([]);
   totalRecords = signal(0);
