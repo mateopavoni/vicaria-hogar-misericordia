@@ -120,6 +120,7 @@ Organizadas por épica/sprint según la planificación del proyecto:
 - RF-19 (notificaciones internas): cuenta pendiente y cuenta bloqueada, panel de notificaciones en el front con marcado individual y masivo como leídas.
 - **Fichas de personas (Social Records, EP-01/EP-02 parcial)**: creación, búsqueda con paginación (`PagedResult<T>`) y actualización de fichas flexibles (solo el nombre es obligatorio), con contacto asociado y auditoría. Backend completo en `api/social-records`.
 - **Tipo de persona (SCRUM-134)**: `PUT /api/persons/{id}/type` cambia el tipo de persona. Asignar `Resident` exige una evaluación psiquiátrica vigente (`PsychiatricEvaluation` con `IsValid = true`); sin ella responde 400 con detalle. `Ambulatory` no exige nada. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia.
+- **Egreso de estadías en la Casona (SCRUM-146)**: `PUT /api/casona-stays/{id}/egreso` registra el egreso de una estadía (`CasonaStay`) con fecha/hora automática server-side (UTC) y motivo opcional (`StayExitReason`: `VoluntaryDischarge`, `TeamDischarge`, `Referral`, `Abandonment`, `Other`) + texto libre obligatorio solo si motivo = `Other`. Estadía inexistente → 404, estadía ya egresada → 400, con registro de `AuditLog`. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia. Modelo y persistencia de estadías desde SCRUM-140.
 - CORS configurado (`Cors:AllowedOrigins` por ambiente).
 - Migración de motor de BD: Postgres → SQL Server, completa.
 - Frontend: login, registro, pending-approval y gestión de usuarios (pendientes/activos/suspendidos) conectados al backend real, con interceptor de auth y persistencia de sesión.
@@ -184,7 +185,7 @@ Según el diagrama de clases original del proyecto (diseño lógico vigente, map
 | 9 | MedicationSchedule (EsquemaMedicacion) | Esquema de medicamentos por persona | ❌ Pendiente (EP-11) |
 | 10 | MedicationAgenda (AgendaMedicamentos) | Agenda diaria generada automáticamente | ❌ Pendiente (EP-11) |
 | 11 | MedicationCatalog (MedicamentoCatalogo) | Catálogo de medicamentos disponibles | ❌ Pendiente (EP-11) |
-| 12 | CasonaStay (EstadiasCasona) | Registro de estadías en la casona | ✅ Implementada (SCRUM-140, solo modelo/persistencia) |
+| 12 | CasonaStay (EstadiasCasona) | Registro de estadías en la casona | ✅ Implementada (SCRUM-140 modelo/persistencia + SCRUM-146 egreso) |
 | 13 | CasonaVisit (VisitasCasona) | Registro de visitas de residentes | ❌ Pendiente |
 | 14 | PsychiatricEvaluation (EvaluacionesPsiquiatricas) | Evaluaciones psicológicas documentadas | ✅ Modelo y persistencia (SCRUM-134); falta el CRUD (EP-12) |
 | 15 | CaritasReport (InformeCaritas) | Informes Cáritas (datos en JSONB en el diseño original) | ❌ Pendiente (EP-13) |

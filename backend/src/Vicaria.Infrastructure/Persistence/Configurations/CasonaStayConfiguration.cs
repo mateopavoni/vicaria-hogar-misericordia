@@ -17,6 +17,8 @@ public class CasonaStayConfiguration : IEntityTypeConfiguration<CasonaStay>
 
         builder.Property(e => e.ExitDate);
 
+        builder.Property(e => e.ExitReason);
+
         builder.Property(e => e.Reason)
             .HasMaxLength(500);
 
