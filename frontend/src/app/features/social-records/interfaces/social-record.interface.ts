@@ -69,6 +69,7 @@ export interface SocialRecordsResponse {
 }
 
   export interface SocialRecordDetail {
+staysHistory: any;
     id: string;
     personId: string;
 

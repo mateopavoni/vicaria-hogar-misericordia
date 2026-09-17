@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateSocialRecordRequest, CreateSocialRecordResponse ,SocialRecordDetail,SocialRecordsResponse} from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
+import { RegisterExitRequest } from '../interfaces/exit-stay.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +20,7 @@ export class SocialRecordsService {
     return this.http.post<CreateSocialRecordResponse>(this.apiUrl, dto);
   }
 
-   getAll( page: number = 1,search: string = '',filters?: SocialRecordFilters): Observable<SocialRecordsResponse> {
+  getAll( page: number = 1,search: string = '',filters?: SocialRecordFilters): Observable<SocialRecordsResponse> {
 
     let params = new HttpParams() .set('page', page);
     if (search.trim()) 
@@ -50,7 +51,7 @@ export class SocialRecordsService {
   // search(query: string): Observable<SocialRecordSearchResult[]> {
   // return this.http.get<SocialRecordSearchResult[]>(`${this.apiUrl}/search`, { params: {  q: query } } );}
 
-    getById(id: string): Observable<SocialRecordDetail> {
+  getById(id: string): Observable<SocialRecordDetail> {
     return this.http.get<SocialRecordDetail>(
       `${this.apiUrl}/${id}`
     );
@@ -60,6 +61,19 @@ export class SocialRecordsService {
   update(id: string, data: CreateSocialRecordRequest): Observable<SocialRecordDetail> {
   // Ajustá la URL según el endpoint de tu backend (p. ej. PUT o PATCH)
   return this.http.put<SocialRecordDetail>(`${this.apiUrl}/social-records/${id}`, data);
+ }
+
+
+ /**
+   * Registra el egreso de una estadía en la casona
+   */
+  registerExit(recordId: string, payload: RegisterExitRequest): Observable<SocialRecordDetail> {
+    return this.http.post<SocialRecordDetail>(
+      `${this.apiUrl}/${recordId}/stays/exit`,
+      payload
+    );
+  }
 }
-}
+
+
 

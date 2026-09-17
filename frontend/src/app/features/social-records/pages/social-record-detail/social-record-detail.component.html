@@ -762,6 +762,30 @@
 
             </div>
 
+            <!-- Botón de Registro de Egreso / Nuevo Ingreso (Solo Referentes) -->
+             
+          @if (permissionService.hasPermission('fichas.edit')) {
+            <div class="mb-4 flex justify-end gap-3">
+              @if (person.status === 'Resident') {
+                <button 
+                  type="button"
+                  (click)="openExitModal()"
+                  class="rounded-md bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+                  Registrar Egreso de Casona
+                </button>
+              } @else {
+                <button 
+                  type="button"
+                  (click)="registerEntry()"
+                  class="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
+                  Marcar como Residente (Ingreso)
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Componente Timeline de Estadías -->
+          <app-stays-timeline [stays]="person.staysHistory ?? []" />
 
             <!-- SITUACIÓN HABITACIONAL -->
             <div>

@@ -6,29 +6,66 @@ import { SocialRecordsService} from '../../services/social-records.service';
 import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
 import { ChangeHistoryItem } from '../../interfaces/change-history.interface';
 import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
+import { StaysTimelineComponent } from '../../components/stays-timeline/stays-timeline.component';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { RegisterExitRequest } from '../../interfaces/exit-stay.interface';
+
 
 @Component({
   selector: 'app-social-record-detail.component',
-  imports: [ RouterLink,DatePipe,TitleCasePipe, EmptyFieldBadgeComponent, ChangeHistoryComponent],
+  imports: [RouterLink, DatePipe, TitleCasePipe, EmptyFieldBadgeComponent, ChangeHistoryComponent, StaysTimelineComponent],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
 })
   export class SocialRecordDetailComponent
+
+
     implements OnInit {
-
       
-    private route = inject(ActivatedRoute);
-    private socialRecordsService =
-      inject(SocialRecordsService);
+      public permissionService = inject(PermissionService);
+      
+      
+      private route = inject(ActivatedRoute);
+      private socialRecordsService = inject(SocialRecordsService);
+      
+      record = signal<SocialRecordDetail | null>(null);
+      
+      loading = signal(true);
+      
+      errorMessage = signal<string | null>(null);
+      
+      activeTab = signal('datos');
+      
+      
+      showExitModal = signal(false);
+      [x: string]: any;
+      openExitModal() {
+      throw new Error('Method not implemented.');
+      }
+      registerEntry() {
+      throw new Error('Method not implemented.');
+      }
 
-    record = signal<SocialRecordDetail | null>(null);
+      /**
+   * Maneja la confirmación proveniente del modal de egreso
+   */
+    handleExitConfirm(data: RegisterExitRequest): void {
+        const recordId = this.record()?.id;
+        if (!recordId) return;
 
-    loading = signal(true);
-
-    errorMessage = signal<string | null>(null);
-
-    activeTab = signal('datos');
-
+        this.socialRecordsService.registerExit(recordId, data).subscribe({
+          next: (updatedRecord) => {
+            // Actualizamos el Signal con la ficha que retorna el backend
+            this.record.set(updatedRecord);
+            this.showExitModal.set(false);
+          },
+          error: (err) => {
+            this.errorMessage.set('Error al registrar el egreso.');
+            console.error('Error al registrar egreso:', err);
+          }
+        });
+      }
+    
 
     ngOnInit(): void {
 
