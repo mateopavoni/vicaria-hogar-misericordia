@@ -48,10 +48,18 @@ public class SocialRecordsController : ControllerBase
     }
 
     // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
+// SCRUM-137: Directora de Casona solo recibe Residentes; Referente ve todos.
     [HttpGet]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken cancellationToken)
     {
-        var results = await _socialRecordService.SearchAsync(q, cancellationToken);
+        PersonType? personTypeFilter = null;
+
+        if (User.IsInRole(RoleNames.DirectoraDeCasona))
+        {
+            personTypeFilter = PersonType.Resident;
+        }
+
+        var results = await _socialRecordService.SearchAsync(q, personTypeFilter, cancellationToken);
         return Ok(results);
     }
 

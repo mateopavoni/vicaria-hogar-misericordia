@@ -6,6 +6,7 @@ using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
+
 namespace Vicaria.Infrastructure.SocialRecords;
 
 public class SocialRecordService : ISocialRecordService
@@ -77,29 +78,28 @@ public class SocialRecordService : ISocialRecordService
         return CreateSocialRecordResult.Ok(person.Id, socialRecord.Id);
     }
 
-    public async Task<List<SocialRecordSearchResultDto>> SearchAsync(string? query, CancellationToken cancellationToken = default)
+    public async Task<List<SocialRecordSearchResultDto>> SearchAsync(string? query, PersonType? personTypeFilter = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
             return [];
         }
 
-        // filtra en memoria (no traduce a SQL), suficiente para el volumen de un centro barrial
         var records = await _dbContext.SocialRecords
             .Include(r => r.Person)
             .ToListAsync(cancellationToken);
 
         var normalizedQuery = Normalize(query);
 
-        return records
-            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery))
-            .Select(r => new SocialRecordSearchResultDto(
-                r.Id,
-                r.PersonId,
-                $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
-                r.Person.Dni,
-                r.UpdatedAt))
-            .ToList();
+        var filtered = records
+            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery));
+
+        if (personTypeFilter.HasValue)
+        {
+            filtered = filtered.Where(r => r.PersonType == personTypeFilter.Value);
+        }
+
+        return filtered.Select(r => new SocialRecordSearchResultDto(r.Id,r.PersonId,$"{r.Person!.FirstName} {r.Person.LastName}".Trim(),r.Person.Dni,r.UpdatedAt)).ToList();
     }
 
     public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
