@@ -8,4 +8,5 @@ public interface ISocialRecordService
     Task<List<SocialRecordSearchResultDto>> SearchAsync(string? query, CancellationToken cancellationToken = default);
     Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId,UpdatePersonProfileStatusDto dto,Guid actorId,CancellationToken cancellationToken = default);
 }

@@ -15,13 +15,16 @@ public class PersonsController : ControllerBase
 {
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<UpdatePersonTypeDto> _updatePersonTypeValidator;
+    private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
-        IValidator<UpdatePersonTypeDto> updatePersonTypeValidator)
+        IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
+        IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator)
     {
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
+        _updateProfileStatusValidator = updateProfileStatusValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -49,6 +52,28 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonTypeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonTypeError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    [HttpPut("{id}/estado")]
+    [HttpPut("/api/personas/{id}/estado")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    public async Task<IActionResult> UpdateProfileStatus(Guid id, [FromBody] UpdatePersonProfileStatusDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateProfileStatusValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors) { ModelState.AddModelError(error.PropertyName, error.ErrorMessage); }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _socialRecordService.UpdatePersonProfileStatusAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdatePersonProfileStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonProfileStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

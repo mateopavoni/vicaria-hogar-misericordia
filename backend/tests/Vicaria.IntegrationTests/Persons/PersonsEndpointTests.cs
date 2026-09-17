@@ -142,4 +142,78 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
+    [Fact]
+    public async Task UpdateEstado_AmbulatorioActivo_Devuelve204()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_AmbulatorioInactivo_Devuelve204()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 1 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_ResidenteSinEvaluacion_Devuelve400()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 2 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_ResidenteConEvaluacionVigente_Devuelve204()
+    {
+        var personId = await CrearPersonaAsync();
+        var userId = await RegistrarUsuarioAsync();
+        await SeedEvaluacionAsync(personId, userId, isValid: true);
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 2 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_PersonaInexistente_Devuelve404()
+    {
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/personas/{Guid.NewGuid()}/estado", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_SinToken_Devuelve401()
+    {
+        var response = await _client.PutAsJsonAsync($"/api/personas/{Guid.NewGuid()}/estado", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_ComoEscucha_Devuelve403()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Escucha);
+
+        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }
