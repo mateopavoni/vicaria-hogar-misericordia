@@ -12,6 +12,7 @@ using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.Infrastructure.SocialRecords;
+using Vicaria.Infrastructure.Persons;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,9 @@ builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenDtoValidator
 builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateSocialRecordDto>, UpdateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdatePersonProfileStatusDto>, UpdatePersonProfileStatusValidator>();
+builder.Services.AddScoped<IPersonInactivityService, PersonInactivityService>();
+builder.Services.AddHostedService<InactivityBackgroundService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
