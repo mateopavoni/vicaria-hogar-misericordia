@@ -41,7 +41,7 @@ export const routes: Routes = [
       },
       {
         // SCRUM-6 (listado) todavía no existe, "Fichas" apunta directo a crear
-        path: 'fichas',
+        path: 'fichas/crear',
 
         loadComponent: () =>
           import('./features/social-records/pages/new-social-record/new-social-record.component')

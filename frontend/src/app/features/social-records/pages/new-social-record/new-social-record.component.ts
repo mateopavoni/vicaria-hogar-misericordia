@@ -17,12 +17,13 @@ export class NewSocialRecordComponent {
   loading = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  private messageTimeout?: ReturnType<typeof setTimeout>;
+  // tope para los inputs de fecha, no se puede cargar una fecha futura
+  today = new Date().toISOString().split('T')[0];
   // solo mostramos errores de validación después de intentar enviar el formulario
   submitted = signal(false);
   // el contacto de referencia es un sub-formulario opcional y colapsable (SCRUM-109)
   showContact = signal(false);
-  // información personal extra, opcional y colapsable, mismo patrón que el contacto
-  showMoreInfo = signal(false);
 
   form = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -49,10 +50,6 @@ export class NewSocialRecordComponent {
     this.showContact.update(value => !value);
   }
 
-  toggleMoreInfo(): void {
-    this.showMoreInfo.update(value => !value);
-  }
-
   submit(): void {
     if (this.loading()) {
       return;
@@ -74,7 +71,7 @@ export class NewSocialRecordComponent {
     // el contacto es opcional, pero si se completa algún dato requiere nombre (igual que el backend)
     const contactHasData = !!(contact.lastName || contact.phone || contact.address);
     if (contactHasData && !contact.firstName) {
-      this.errorMessage.set('El nombre del contacto es obligatorio si cargás sus datos.');
+      this.mostrarError('El nombre del contacto es obligatorio si cargás sus datos.');
       return;
     }
 
@@ -107,14 +104,26 @@ export class NewSocialRecordComponent {
         this.loading.set(false);
         this.submitted.set(false);
         // sin listado de fichas todavía (SCRUM-6), mostramos éxito acá en vez de navegar
-        this.successMessage.set('Ficha creada correctamente.');
+        this.mostrarExito('Ficha creada correctamente.');
         this.form.reset();
         this.showContact.set(false);
       },
       error: (err) => {
         this.loading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Ocurrió un error al guardar la ficha.');
+        this.mostrarError(err?.error?.message || 'Ocurrió un error al guardar la ficha.');
       }
     });
+  }
+
+  private mostrarExito(mensaje: string) {
+    clearTimeout(this.messageTimeout);
+    this.successMessage.set(mensaje);
+    this.messageTimeout = setTimeout(() => this.successMessage.set(null), 5000);
+  }
+
+  private mostrarError(mensaje: string) {
+    clearTimeout(this.messageTimeout);
+    this.errorMessage.set(mensaje);
+    this.messageTimeout = setTimeout(() => this.errorMessage.set(null), 5000);
   }
 }
