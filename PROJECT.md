@@ -37,7 +37,7 @@ El nombre formal completo del dispositivo atendido por el sistema es "Parroquia 
 - **Frontend:** Angular 16+ (TypeScript, RxJS, Bootstrap/Tailwind CSS)
 - **Backend:** .NET 9.0 + C#
 - **Base de datos:** SQL Server + Entity Framework
-- **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (3 roles)
+- **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (4 roles — ver sección Usuarios)
 - **DevOps:** Docker, docker-compose, GitHub Actions, Oracle Cloud VM
 - **Testing:** xUnit (backend), Jest + Cypress (frontend, si aplica)
 
@@ -90,8 +90,10 @@ Organizadas por épica/sprint según la planificación del proyecto:
 | Sprint 2 | EP-01 + EP-02 | Fichas de personas + observaciones/historia de vida |
 | Sprint 3 | EP-04 + EP-05 | Calendario compartido/personal + gestión de colaboradores |
 | Sprint 4 | EP-10 + EP-11 | Asistencia diaria + agenda de medicamentos |
-| Sprint 5 | EP-12 + EP-07 | Evaluación psiquiátrica/estado + documentación y adjuntos (PDF) |
+| Sprint 5 | EP-12 + EP-07 | Evaluación psiquiátrica/estado (incluye estadías y egreso en Casa de Convivencia — ver nota) + documentación y adjuntos (PDF) |
 | Sprint 6 | EP-13 + QA | Informes institucionales + regresión y cierre |
+
+**Nota (2026-09-18):** el trabajo de estadías en casona y egreso de residente (SCRUM-140/146, ya reflejado en la sección "Estado actual" y en la tabla de entidades de abajo) se integra a **EP-12** — no tenía épica asignada en versiones anteriores de esta tabla. Ver `.ai/context/DOMAIN.md` y `.ai/context/DECISIONS.md` para el detalle y para revertir esta clasificación si el equipo prefiere una épica propia.
 
 
 ### Sprint 1 — Historias de usuario (Módulo de acceso y roles, Ep-03)
@@ -206,5 +208,7 @@ Este sistema es el Trabajo Final Integrador de la materia Prácticas Profesional
 - El stack tecnológico (SQL Server + EF, .NET 9 + C#) es una decisión cerrada — no volver a plantearla como duda.
 - Ante cualquier **otra** ambigüedad entre este documento, el código y la documentación original del Google Drive del proyecto, **señalar la contradicción explícitamente** — no asumir ni resolver por cuenta propia.
 - Este archivo debe actualizarse a medida que avanza el desarrollo real, para que no quede desalineado con el código (como pasó con los diagramas técnicos originales).
+
+**Ver también:** [`.ai/context/00_INDEX.md`](./.ai/context/00_INDEX.md) — estado verificado contra código al 2026-09-18 (compara `main`/`dev-backend`/`dev-frontend` por separado, ya que no están alineadas), decisiones con evidencia, known issues con severidad y preguntas abiertas para el equipo. No duplica este archivo, lo complementa.
 
  
