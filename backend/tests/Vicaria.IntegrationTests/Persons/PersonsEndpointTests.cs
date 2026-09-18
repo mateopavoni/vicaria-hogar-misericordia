@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -90,6 +91,25 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateType_ResidenteConEvaluacionVigente_CreaEstadiaCasona()
+    {
+        var personId = await CrearPersonaAsync();
+        var userId = await RegistrarUsuarioAsync();
+        await SeedEvaluacionAsync(personId, userId, isValid: true);
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var estadia = await db.CasonaStays.SingleOrDefaultAsync(s => s.PersonId == personId);
+        Assert.NotNull(estadia);
+        Assert.True(estadia!.EntryDate <= DateTime.UtcNow);
     }
 
     [Fact]
