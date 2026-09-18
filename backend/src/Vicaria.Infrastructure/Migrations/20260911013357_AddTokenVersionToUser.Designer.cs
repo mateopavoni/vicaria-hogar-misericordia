@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Vicaria.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    partial class VicariaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260911013357_AddTokenVersionToUser")]
+    partial class AddTokenVersionToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,9 +63,6 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ExitDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int?>("ExitReason")
-                        .HasColumnType("int");
 
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier");
@@ -217,40 +217,6 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("persona", (string)null);
-                });
-
-            modelBuilder.Entity("Vicaria.Domain.Entities.PsychiatricEvaluation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Diagnosis")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsValid")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("PersonId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Professional")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<Guid>("RegisteredByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PersonId");
-
-                    b.HasIndex("RegisteredByUserId");
-
-                    b.ToTable("psychiatric_evaluation", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Role", b =>
@@ -480,25 +446,6 @@ namespace Vicaria.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("SocialRecord");
-                });
-
-            modelBuilder.Entity("Vicaria.Domain.Entities.PsychiatricEvaluation", b =>
-                {
-                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
-                        .WithMany()
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Vicaria.Domain.Entities.User", "RegisteredBy")
-                        .WithMany()
-                        .HasForeignKey("RegisteredByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Person");
-
-                    b.Navigation("RegisteredBy");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.SocialRecord", b =>
