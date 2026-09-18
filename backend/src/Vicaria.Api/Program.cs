@@ -5,10 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
+using Vicaria.Application.CasonaStays;
 using Vicaria.Application.Notifications;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Infrastructure.Auth;
+using Vicaria.Infrastructure.CasonaStays;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.Infrastructure.SocialRecords;
@@ -42,6 +44,7 @@ builder.Services.AddDbContext<VicariaDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISocialRecordService, SocialRecordService>();
+builder.Services.AddScoped<ICasonaStayService, CasonaStayService>();
 builder.Services.AddScoped<IValidator<RegisterDto>, RegisterDtoValidator>();
 builder.Services.AddScoped<IValidator<ApproveUserDto>, ApproveUserDtoValidator>();
 builder.Services.AddScoped<IValidator<RejectUserDto>, RejectUserDtoValidator>();
@@ -50,6 +53,7 @@ builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenDtoValidator
 builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateSocialRecordDto>, UpdateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoValidator>();
+builder.Services.AddScoped<IValidator<CasonaStayExitDto>, CasonaStayExitDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
