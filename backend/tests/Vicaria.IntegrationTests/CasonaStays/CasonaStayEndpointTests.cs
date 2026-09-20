@@ -121,4 +121,97 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Exit_ActualizaEstadoPersonAAmbulatorioYGeneraAuditorias_SCRUM147()
+    {
+        // Arrange
+        UsarToken(RoleNames.Referente);
+        var responseCreate = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Carlos" });
+        var body = await responseCreate.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        var personId = body!["personId"];
+
+        var stayId = Guid.NewGuid();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            var sr = db.SocialRecords.First(s => s.PersonId == personId);
+            sr.PersonType = PersonType.Resident;
+            sr.Status = SocialRecordStatus.Active;
+
+            db.CasonaStays.Add(new CasonaStay
+            {
+                Id = stayId,
+                PersonId = personId,
+                EntryDate = DateTime.UtcNow.AddDays(-10)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // Act: egreso especificando cambio a Ambulatorio Inactivo
+        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new
+        {
+            exitReason = 0,
+            newStatus = (int)SocialRecordStatus.Inactive
+        });
+
+        // Assert HTTP
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        // Assert DB
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+
+            var stay = db.CasonaStays.First(s => s.Id == stayId);
+            Assert.NotNull(stay.ExitDate);
+
+            var socialRecord = db.SocialRecords.First(s => s.PersonId == personId);
+            Assert.Equal(PersonType.Ambulatory, socialRecord.PersonType);
+            Assert.Equal(SocialRecordStatus.Inactive, socialRecord.Status);
+
+            var auditLogs = db.AuditLogs
+                .Where(a => a.AffectedEntity == $"CasonaStay:{stayId}" || a.AffectedEntity == $"Person:{personId}")
+                .ToList();
+            Assert.Equal(2, auditLogs.Count);
+        }
+    }
+
+    [Fact]
+    public async Task Exit_SinEspecificarNewStatus_PasaAAmbulatorioActivoPorDefecto_SCRUM147()
+    {
+        UsarToken(RoleNames.Referente);
+        var responseCreate = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Martin" });
+        var body = await responseCreate.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        var personId = body!["personId"];
+
+        var stayId = Guid.NewGuid();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            var sr = db.SocialRecords.First(s => s.PersonId == personId);
+            sr.PersonType = PersonType.Resident;
+
+            db.CasonaStays.Add(new CasonaStay
+            {
+                Id = stayId,
+                PersonId = personId,
+                EntryDate = DateTime.UtcNow.AddDays(-5)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 1 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+
+            var socialRecord = db.SocialRecords.First(s => s.PersonId == personId);
+            Assert.Equal(PersonType.Ambulatory, socialRecord.PersonType);
+            Assert.Equal(SocialRecordStatus.Active, socialRecord.Status);
+        }
+    }
 }
