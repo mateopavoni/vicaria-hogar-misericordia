@@ -13,7 +13,7 @@ El diseño lógico original (`/PROJECT.md`, sección "Modelo de datos conceptual
 | 5 | Observación | — | ❌ no existe |
 | 6 | CategoriaObservacion | — | ❌ no existe |
 | 7 | HistoriaVida | — | ❌ no existe |
-| 8 | Asistencia | — | ❌ no existe |
+| 8 | Asistencia | `Attendance` | ✅ implementada (SCRUM-135): registro diario + job de inactividad de 30 días |
 | 9 | EsquemaMedicacion | — | ❌ no existe |
 | 10 | AgendaMedicamentos | — | ❌ no existe |
 | 11 | MedicamentoCatalogo | — | ❌ no existe |
