@@ -177,6 +177,7 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            UserStatusError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
@@ -201,6 +202,7 @@ public class AuthController : ControllerBase
             null => NoContent(),
             ApproveUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
             ApproveUserError.InvalidRole => BadRequest(new { message = result.ErrorMessage }),
+            ApproveUserError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
@@ -224,6 +226,7 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             RejectUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            RejectUserError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
@@ -237,6 +240,7 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            UserStatusError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
@@ -250,6 +254,7 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            UserStatusError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }

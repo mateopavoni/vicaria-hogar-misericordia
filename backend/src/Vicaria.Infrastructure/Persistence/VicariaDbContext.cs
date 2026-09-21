@@ -20,6 +20,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Contact> Contacts => Set<Contact>();
     public DbSet<CasonaStay> CasonaStays => Set<CasonaStay>();
     public DbSet<PsychiatricEvaluation> PsychiatricEvaluations => Set<PsychiatricEvaluation>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -119,6 +119,11 @@ public class AuthService : IAuthService
 
     public async Task<UserStatusResult> UpdateUserRoleAsync(Guid userId, Guid roleId, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return UserStatusResult.CannotActOnSelf("No podés cambiar tu propio rol.");
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -132,6 +137,7 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = roleId;
+        user.TokenVersion++;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -148,6 +154,11 @@ public class AuthService : IAuthService
 
     public async Task<ApproveUserResult> ApproveUserAsync(Guid userId, ApproveUserDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return ApproveUserResult.CannotActOnSelf();
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -184,6 +195,11 @@ public class AuthService : IAuthService
 
     public async Task<RejectUserResult> RejectUserAsync(Guid userId, RejectUserDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return RejectUserResult.CannotActOnSelf();
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -361,7 +377,8 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}".Trim()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, role)
+            new Claim(ClaimTypes.Role, role),
+            new Claim("token_version", user.TokenVersion.ToString())
         ];
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? string.Empty));
@@ -380,6 +397,11 @@ public class AuthService : IAuthService
 
     public async Task<UserStatusResult> DeactivateUserAsync(Guid userId, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return UserStatusResult.CannotActOnSelf("No podés desactivar tu propia cuenta.");
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -392,6 +414,7 @@ public class AuthService : IAuthService
         }
 
         user.Status = UserStatus.Inactive;
+        user.TokenVersion++;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -408,6 +431,11 @@ public class AuthService : IAuthService
 
     public async Task<UserStatusResult> ReactivateUserAsync(Guid userId, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return UserStatusResult.CannotActOnSelf("No podés reactivar tu propia cuenta.");
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {

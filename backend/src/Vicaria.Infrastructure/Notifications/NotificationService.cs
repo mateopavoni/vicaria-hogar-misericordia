@@ -46,7 +46,7 @@ public class NotificationService : INotificationService
         return MarkAsReadResult.Ok();
     }
 
-    public async Task MarkAllAsReadAsync(string role, CancellationToken cancellationToken = default)
+    public async Task MarkAllAsReadAsync(string role, Guid actorId, CancellationToken cancellationToken = default)
     {
         var notifications = await _dbContext.Notifications
             .Where(n => n.TargetRole == role && !n.IsRead)
@@ -55,6 +55,15 @@ public class NotificationService : INotificationService
         foreach (var notification in notifications)
         {
             notification.IsRead = true;
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = actorId,
+                Action = "MarcarNotificacionLeida",
+                AffectedEntity = $"Notificacion:{notification.Id}",
+                Date = DateTime.UtcNow
+            });
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -170,6 +170,9 @@ public class SocialRecordService : ISocialRecordService
             }
         }
 
+        // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
+        // la casona con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
+        var wasAlreadyResident = socialRecord.PersonType == PersonType.Resident;
         socialRecord.PersonType = dto.PersonType;
         socialRecord.UpdatedAt = DateTime.UtcNow;
 
@@ -181,6 +184,26 @@ public class SocialRecordService : ISocialRecordService
             AffectedEntity = $"Person:{personId}",
             Date = DateTime.UtcNow
         });
+
+        if (dto.PersonType == PersonType.Resident && !wasAlreadyResident)
+        {
+            var casonaStay = new CasonaStay
+            {
+                Id = Guid.NewGuid(),
+                PersonId = personId,
+                EntryDate = DateTime.UtcNow
+            };
+            _dbContext.CasonaStays.Add(casonaStay);
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = actorId,
+                Action = "Estadía en casona registrada",
+                AffectedEntity = $"CasonaStay:{casonaStay.Id}",
+                Date = DateTime.UtcNow
+            });
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

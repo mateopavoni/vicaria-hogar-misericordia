@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
+using Vicaria.Infrastructure.Persistence;
 using Vicaria.IntegrationTests.Auth;
 
 namespace Vicaria.IntegrationTests.SocialRecords;
@@ -10,20 +12,48 @@ namespace Vicaria.IntegrationTests.SocialRecords;
 public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly VicariaWebApplicationFactory _factory;
 
     public SocialRecordsEndpointTests(VicariaWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
+        _factory = factory;
     }
 
-    private void UsarToken(string rol) =>
+    // el token ahora se valida contra un usuario real en la base (chequeo de sesion activa)
+    private async Task<Guid> SembrarActorAsync(string rol)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var roleId = db.Roles.First(r => r.Name == rol).Id;
+
+        var actor = new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Actor",
+            LastName = "Test",
+            Email = $"{Guid.NewGuid()}@mail.com",
+            PasswordHash = "x",
+            Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(actor);
+        await db.SaveChangesAsync();
+        return actor.Id;
+    }
+
+    private async Task UsarTokenAsync(string rol)
+    {
+        var actorId = await SembrarActorAsync(rol);
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, Guid.NewGuid()));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, actorId));
+    }
 
     [Fact]
     public async Task Create_ComoReferenteConSoloNombre_Devuelve201()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
 
@@ -33,7 +63,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Create_ComoEscucha_Devuelve403()
     {
-        UsarToken(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Escucha);
 
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
 
@@ -43,7 +73,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Create_SinNombre_Devuelve400()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "" });
 
@@ -61,9 +91,9 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Search_ComoEscucha_Devuelve200()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ramón", lastName = "Gómez" });
-        UsarToken(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Escucha);
 
         var response = await _client.GetAsync("/api/social-records?q=gomez");
 
@@ -83,7 +113,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ComoReferente_Devuelve204()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         var creada = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
         var id = (await creada.Content.ReadFromJsonAsync<Dictionary<string, Guid>>())!["id"];
 
@@ -95,7 +125,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ComoEscucha_Devuelve403()
     {
-        UsarToken(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Escucha);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
 
@@ -106,7 +136,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     public async Task Update_ComoCoordinador_Devuelve403()
     {
         // SCRUM-117: solo Referente y Directora pueden editar, a diferencia de crear
-        UsarToken(RoleNames.CoordinadorDeCasaConvivencia);
+        await UsarTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
 
@@ -116,7 +146,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ConFichaInexistente_Devuelve404()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
 
@@ -126,7 +156,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_SinNombre_Devuelve400()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "", hasDocumentation = false });
 
