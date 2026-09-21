@@ -55,8 +55,8 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
-    [HttpPut("{id}/estado")]
-    [HttpPut("/api/personas/{id}/estado")]
+    // cambia el estado del perfil (ambulatorio activo/inactivo, residente) y audita el cambio (SCRUM-152/153)
+    [HttpPut("{id}/status")]
     [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
     public async Task<IActionResult> UpdateProfileStatus(Guid id, [FromBody] UpdatePersonProfileStatusDto dto, CancellationToken cancellationToken)
     {

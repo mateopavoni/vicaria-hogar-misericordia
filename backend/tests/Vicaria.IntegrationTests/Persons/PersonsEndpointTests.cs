@@ -148,7 +148,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         UsarToken(RoleNames.Referente);
 
-        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 0 });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -159,7 +159,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         UsarToken(RoleNames.Referente);
 
-        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 1 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 1 });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -170,7 +170,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         UsarToken(RoleNames.Referente);
 
-        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 2 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 2 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -183,7 +183,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         await SeedEvaluacionAsync(personId, userId, isValid: true);
         UsarToken(RoleNames.Referente);
 
-        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 2 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 2 });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -193,7 +193,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     {
         UsarToken(RoleNames.Referente);
 
-        var response = await _client.PutAsJsonAsync($"/api/personas/{Guid.NewGuid()}/estado", new { status = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/status", new { status = 0 });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -201,7 +201,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     [Fact]
     public async Task UpdateEstado_SinToken_Devuelve401()
     {
-        var response = await _client.PutAsJsonAsync($"/api/personas/{Guid.NewGuid()}/estado", new { status = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/status", new { status = 0 });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -212,7 +212,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         UsarToken(RoleNames.Escucha);
 
-        var response = await _client.PutAsJsonAsync($"/api/personas/{personId}/estado", new { status = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 0 });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
