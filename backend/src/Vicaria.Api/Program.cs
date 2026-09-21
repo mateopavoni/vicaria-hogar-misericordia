@@ -18,6 +18,8 @@ using Vicaria.Infrastructure.CasonaStays;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.Infrastructure.SocialRecords;
+using Vicaria.Application.Observations;
+using Vicaria.Infrastructure.Observations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,8 @@ builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoV
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
+builder.Services.AddScoped<IObservationService, ObservationService>();
+builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
