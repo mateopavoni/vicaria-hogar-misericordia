@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -101,6 +102,25 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
         var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 1 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Exit_ConEstadiaActiva_RegistraAuditLogConElActor()
+    {
+        var stayId = await CrearEstadiaActivaAsync();
+        var actorId = Guid.NewGuid();
+        _client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", RoleNames.Referente, actorId));
+        var beforeExit = DateTime.UtcNow;
+
+        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var log = await db.AuditLogs.SingleAsync(a => a.AffectedEntity == $"CasonaStay:{stayId}");
+        Assert.Equal(actorId, log.UserId);
+        Assert.True(log.Date >= beforeExit);
     }
 
     [Fact]
