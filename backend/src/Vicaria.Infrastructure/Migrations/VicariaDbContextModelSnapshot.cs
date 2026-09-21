@@ -22,6 +22,28 @@ namespace Vicaria.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.Attendance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("asistencia", (string)null);
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -60,6 +82,9 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ExitDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExitReason")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier");
@@ -444,6 +469,9 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int>("TokenVersion")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -452,6 +480,17 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("usuario", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.Attendance", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.CasonaStay", b =>
