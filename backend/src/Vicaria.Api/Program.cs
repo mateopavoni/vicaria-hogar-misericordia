@@ -6,11 +6,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
+using Vicaria.Application.Attendances;
 using Vicaria.Application.CasonaStays;
 using Vicaria.Application.Notifications;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
+using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.CasonaStays;
 using Vicaria.Infrastructure.Notifications;
@@ -56,6 +58,10 @@ builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecord
 builder.Services.AddScoped<IValidator<UpdateSocialRecordDto>, UpdateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoValidator>();
 builder.Services.AddScoped<IValidator<CasonaStayExitDto>, CasonaStayExitDtoValidator>();
+builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoValidator>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
+builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
