@@ -1,3 +1,5 @@
+using Vicaria.Domain.Entities;
+
 namespace Vicaria.Application.SocialRecords;
 
 public record FilterSocialRecordsDto(
@@ -5,5 +7,7 @@ public record FilterSocialRecordsDto(
     DateTime? EntryDateTo = null,
     int? DaysWithoutObservations = null,
     bool? HasDni = null,
-    bool? HasAddress = null
+    bool? HasAddress = null,
+    SocialRecordStatus? Status = null,
+    PersonType? PersonType = null
 );

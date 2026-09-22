@@ -63,7 +63,7 @@ public class SocialRecordsController : ControllerBase
         return Ok(results);
     }
 
-    // listado paginado con busqueda y filtros combinables para la pantalla de fichas (SCRUM-6/21/127)
+    // listado paginado con busqueda y filtros combinables para la pantalla de fichas (SCRUM-6/21/127/164)
     [HttpGet("list")]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
@@ -73,10 +73,12 @@ public class SocialRecordsController : ControllerBase
         [FromQuery] int? withoutObservationsDays = null,
         [FromQuery] bool? hasDni = null,
         [FromQuery] bool? hasAddress = null,
+        [FromQuery] SocialRecordStatus? status = null,
+        [FromQuery] PersonType? personType = null,
         CancellationToken cancellationToken = default)
     {
         PersonType? personTypeFilter = User.IsInRole(RoleNames.DirectoraDeCasona) ? PersonType.Resident : null;
-        var filter = new FilterSocialRecordsDto(entryDateFrom, entryDateTo, withoutObservationsDays, hasDni, hasAddress);
+        var filter = new FilterSocialRecordsDto(entryDateFrom, entryDateTo, withoutObservationsDays, hasDni, hasAddress, status, personType);
 
         var result = await _socialRecordService.GetPagedAsync(page, search, filter, personTypeFilter, cancellationToken);
         return Ok(result);
