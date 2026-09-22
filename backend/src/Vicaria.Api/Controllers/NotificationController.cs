@@ -54,7 +54,7 @@ public class NotificationController : ControllerBase
             return Forbid();
         }
 
-        await _notificationService.MarkAllAsReadAsync(role, cancellationToken);
+        await _notificationService.MarkAllAsReadAsync(role, ActorId, cancellationToken);
         return NoContent();
     }
 }

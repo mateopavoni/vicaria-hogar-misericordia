@@ -4,7 +4,8 @@ public enum ApproveUserError
 {
     UserNotFound,
     InvalidState,
-    InvalidRole
+    InvalidRole,
+    CannotActOnSelf
 }
 
 public class ApproveUserResult
@@ -23,4 +24,7 @@ public class ApproveUserResult
 
     public static ApproveUserResult InvalidRole() =>
         new() { Success = false, Error = ApproveUserError.InvalidRole, ErrorMessage = "El rol indicado no existe." };
+
+    public static ApproveUserResult CannotActOnSelf() =>
+        new() { Success = false, Error = ApproveUserError.CannotActOnSelf, ErrorMessage = "No podés realizar esta acción sobre tu propia cuenta." };
 }

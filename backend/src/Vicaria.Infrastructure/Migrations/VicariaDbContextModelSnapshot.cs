@@ -22,6 +22,28 @@ namespace Vicaria.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.Attendance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("asistencia", (string)null);
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -60,6 +82,9 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ExitDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("ExitReason")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier");
@@ -144,6 +169,66 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("TargetRole", "IsRead");
 
                     b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.Observation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("categoria_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("contenido");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha_creacion");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("persona_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorUserId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("observacion", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.ObservationCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("categoria_observacion", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Permission", b =>
@@ -444,6 +529,9 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int>("TokenVersion")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -452,6 +540,17 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("usuario", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.Attendance", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.CasonaStay", b =>
@@ -474,6 +573,32 @@ namespace Vicaria.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("SocialRecord");
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.Observation", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.User", "AuthorUser")
+                        .WithMany()
+                        .HasForeignKey("AuthorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vicaria.Domain.Entities.ObservationCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AuthorUser");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.PsychiatricEvaluation", b =>

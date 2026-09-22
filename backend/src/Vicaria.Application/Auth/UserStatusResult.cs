@@ -3,7 +3,8 @@ namespace Vicaria.Application.Auth;
 public enum UserStatusError
 {
     UserNotFound,
-    AlreadyInThatState
+    AlreadyInThatState,
+    CannotActOnSelf
 }
 
 public class UserStatusResult
@@ -19,4 +20,7 @@ public class UserStatusResult
 
     public static UserStatusResult AlreadyInThatState(string message) =>
         new() { Success = false, Error = UserStatusError.AlreadyInThatState, ErrorMessage = message };
+
+    public static UserStatusResult CannotActOnSelf(string message) =>
+        new() { Success = false, Error = UserStatusError.CannotActOnSelf, ErrorMessage = message };
 }

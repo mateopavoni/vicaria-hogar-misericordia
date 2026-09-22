@@ -85,7 +85,34 @@ public class SocialRecordService : ISocialRecordService
             return [];
         }
 
+        var pattern = $"%{query.Trim().ToUpper()}%";
+
+        if (_dbContext.Database.IsRelational())
+        {
+            return await _dbContext.SocialRecords
+                .AsNoTracking()
+                .Include(r => r.Person)
+                .Where(r => r.Person != null
+                    && (!personTypeFilter.HasValue || r.PersonType == personTypeFilter.Value)
+                    && (
+                        EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
+                        (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
+                        (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern)) ||
+                        (r.Person.DateOfBirth != null && EF.Functions.Like(r.Person.DateOfBirth.ToString()!, pattern))
+                    ))
+                .Select(r => new SocialRecordSearchResultDto(
+                    r.Id,
+                    r.PersonId,
+                    $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
+                    r.Person.Dni,
+                    r.UpdatedAt))
+                .ToListAsync(cancellationToken);
+        }
+
+        // fallback en memoria (ej. InMemory DB de tests, que no soporta EF.Functions.Like):
+        // normaliza tildes/mayúsculas a mano en vez de contar con el collation del motor real
         var records = await _dbContext.SocialRecords
+            .AsNoTracking()
             .Include(r => r.Person)
             .ToListAsync(cancellationToken);
 
@@ -99,7 +126,7 @@ public class SocialRecordService : ISocialRecordService
             filtered = filtered.Where(r => r.PersonType == personTypeFilter.Value);
         }
 
-        return filtered.Select(r => new SocialRecordSearchResultDto(r.Id,r.PersonId,$"{r.Person!.FirstName} {r.Person.LastName}".Trim(),r.Person.Dni,r.UpdatedAt)).ToList();
+        return filtered.Select(r => new SocialRecordSearchResultDto(r.Id, r.PersonId, $"{r.Person!.FirstName} {r.Person.LastName}".Trim(), r.Person.Dni, r.UpdatedAt)).ToList();
     }
 
     public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
@@ -142,6 +169,62 @@ public class SocialRecordService : ISocialRecordService
 
         return UpdateSocialRecordResult.Ok();
     }
+    public async Task<int> CountByFilterAsync(FilterSocialRecordsDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.SocialRecords
+            .Include(r => r.Person)
+            .AsQueryable();
+
+        if (filter.EntryDateFrom.HasValue)
+        {
+            query = query.Where(r => r.EntryDate >= filter.EntryDateFrom.Value);
+        }
+
+        if (filter.EntryDateTo.HasValue)
+        {
+            query = query.Where(r => r.EntryDate <= filter.EntryDateTo.Value);
+        }
+
+        if (filter.DaysWithoutObservations.HasValue)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-filter.DaysWithoutObservations.Value);
+            query = query.Where(r => r.UpdatedAt <= cutoff);
+        }
+
+        if (filter.HasDni.HasValue)
+        {
+            if (filter.HasDni.Value)
+            {
+                query = query.Where(r => r.Person != null && r.Person.Dni != null && r.Person.Dni != "");
+            }
+            else
+            {
+                query = query.Where(r => r.Person == null || r.Person.Dni == null || r.Person.Dni == "");
+            }
+        }
+
+        if (filter.HasAddress.HasValue)
+        {
+            var recordsWithContactAddress = _dbContext.Contacts
+                .Where(c => c.Address != null && c.Address != "")
+                .Select(c => c.SocialRecordId);
+
+            if (filter.HasAddress.Value)
+            {
+                query = query.Where(r => 
+                    (r.OvernightLocation != null && r.OvernightLocation != "") || 
+                    recordsWithContactAddress.Contains(r.Id));
+            }
+            else
+            {
+                query = query.Where(r => 
+                    (r.OvernightLocation == null || r.OvernightLocation == "") && 
+                    !recordsWithContactAddress.Contains(r.Id));
+            }
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
 
     public async Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
@@ -170,6 +253,9 @@ public class SocialRecordService : ISocialRecordService
             }
         }
 
+        // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
+        // la casona con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
+        var wasAlreadyResident = socialRecord.PersonType == PersonType.Resident;
         socialRecord.PersonType = dto.PersonType;
         socialRecord.UpdatedAt = DateTime.UtcNow;
 
@@ -182,9 +268,83 @@ public class SocialRecordService : ISocialRecordService
             Date = DateTime.UtcNow
         });
 
+        if (dto.PersonType == PersonType.Resident && !wasAlreadyResident)
+        {
+            var casonaStay = new CasonaStay
+            {
+                Id = Guid.NewGuid(),
+                PersonId = personId,
+                EntryDate = DateTime.UtcNow
+            };
+            _dbContext.CasonaStays.Add(casonaStay);
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = actorId,
+                Action = "Estadía en casona registrada",
+                AffectedEntity = $"CasonaStay:{casonaStay.Id}",
+                Date = DateTime.UtcNow
+            });
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return UpdatePersonTypeResult.Ok();
+    }
+        public async Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId,UpdatePersonProfileStatusDto dto,Guid actorId,CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
+        if (person is null)
+        {
+            return UpdatePersonProfileStatusResult.PersonNotFound();
+        }
+
+        var socialRecord = await _dbContext.SocialRecords
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (socialRecord is null)
+        {
+            return UpdatePersonProfileStatusResult.SocialRecordNotFound();
+        }
+
+        if (dto.Status == PersonProfileStatus.Resident)
+        {
+            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
+                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+
+            if (!hasValidEvaluation)
+            {
+                return UpdatePersonProfileStatusResult.MissingPsychiatricEvaluation();
+            }
+
+            socialRecord.PersonType = PersonType.Resident;
+            socialRecord.Status = SocialRecordStatus.Active;
+        }
+        else if (dto.Status == PersonProfileStatus.ActiveAmbulatory)
+        {
+            socialRecord.PersonType = PersonType.Ambulatory;
+            socialRecord.Status = SocialRecordStatus.Active;
+        }
+        else if (dto.Status == PersonProfileStatus.InactiveAmbulatory)
+        {
+            socialRecord.PersonType = PersonType.Ambulatory;
+            socialRecord.Status = SocialRecordStatus.Inactive;
+        }
+
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Estado de persona actualizado desde perfil",
+            AffectedEntity = $"Person:{personId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdatePersonProfileStatusResult.Ok();
     }
 
     private static bool MatchesQuery(Person person, string normalizedQuery)

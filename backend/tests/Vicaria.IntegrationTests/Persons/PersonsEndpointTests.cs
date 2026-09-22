@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -93,6 +94,25 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     }
 
     [Fact]
+    public async Task UpdateType_ResidenteConEvaluacionVigente_CreaEstadiaCasona()
+    {
+        var personId = await CrearPersonaAsync();
+        var userId = await RegistrarUsuarioAsync();
+        await SeedEvaluacionAsync(personId, userId, isValid: true);
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var estadia = await db.CasonaStays.SingleOrDefaultAsync(s => s.PersonId == personId);
+        Assert.NotNull(estadia);
+        Assert.True(estadia!.EntryDate <= DateTime.UtcNow);
+    }
+
+    [Fact]
     public async Task UpdateType_AmbulatorioSinEvaluacion_Devuelve204()
     {
         var personId = await CrearPersonaAsync();
@@ -139,6 +159,80 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         UsarToken(RoleNames.Escucha);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+    [Fact]
+    public async Task UpdateEstado_AmbulatorioActivo_Devuelve204()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_AmbulatorioInactivo_Devuelve204()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 1 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_ResidenteSinEvaluacion_Devuelve400()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 2 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_ResidenteConEvaluacionVigente_Devuelve204()
+    {
+        var personId = await CrearPersonaAsync();
+        var userId = await RegistrarUsuarioAsync();
+        await SeedEvaluacionAsync(personId, userId, isValid: true);
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 2 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_PersonaInexistente_Devuelve404()
+    {
+        UsarToken(RoleNames.Referente);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/status", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_SinToken_Devuelve401()
+    {
+        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/status", new { status = 0 });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateEstado_ComoEscucha_Devuelve403()
+    {
+        var personId = await CrearPersonaAsync();
+        UsarToken(RoleNames.Escucha);
+
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 0 });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
