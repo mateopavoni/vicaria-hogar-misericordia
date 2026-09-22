@@ -77,4 +77,52 @@ public class ObservationService : IObservationService
 
         return new CreateObservationResult(Success: true, Data: response);
     }
+    public async Task<ObservationsTimelineResponseDto> GetTimelineAsync(
+    Guid personId,
+    GetObservationsFilterDto filters,
+    CancellationToken cancellationToken = default)
+{
+    var query = _dbContext.Observations
+        .AsNoTracking()
+        .Where(o => o.PersonId == personId);
+
+    if (filters.CategoryId.HasValue)
+    {
+        query = query.Where(o => o.CategoryId == filters.CategoryId.Value);
+    }
+
+    if (filters.AuthorUserId.HasValue)
+    {
+        query = query.Where(o => o.AuthorUserId == filters.AuthorUserId.Value);
+    }
+
+    if (filters.FromDate.HasValue)
+    {
+        query = query.Where(o => o.CreatedAt >= filters.FromDate.Value);
+    }
+
+    if (filters.ToDate.HasValue)
+    {
+        query = query.Where(o => o.CreatedAt <= filters.ToDate.Value);
+    }
+
+    var totalCount = await query.CountAsync(cancellationToken);
+
+    var items = await query
+        .OrderByDescending(o => o.CreatedAt)
+        .Select(o => new ObservationResponseDto(
+            o.Id,
+            o.PersonId,
+            o.Content,
+            o.CategoryId,
+            o.Category != null ? o.Category.Name : null,
+            o.AuthorUserId,
+            o.AuthorUser != null ? (o.AuthorUser.FirstName + " " + o.AuthorUser.LastName).Trim() : string.Empty,
+            o.CreatedAt
+        ))
+        .ToListAsync(cancellationToken);
+
+    return new ObservationsTimelineResponseDto(items, totalCount);
+}
+
 }

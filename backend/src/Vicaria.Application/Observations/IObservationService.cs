@@ -7,4 +7,9 @@ public interface IObservationService
         CreateObservationDto dto,
         Guid authorUserId,
         CancellationToken cancellationToken);
+
+        Task<ObservationsTimelineResponseDto> GetTimelineAsync(
+        Guid personId,
+        GetObservationsFilterDto filters,
+        CancellationToken cancellationToken = default);
 }

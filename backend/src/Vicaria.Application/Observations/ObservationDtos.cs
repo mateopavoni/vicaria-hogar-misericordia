@@ -28,3 +28,13 @@ public record CreateObservationResult(
     CreateObservationError? Error = null,
     string? ErrorMessage = null
 );
+public record GetObservationsFilterDto(
+    Guid? CategoryId = null,
+    Guid? AuthorUserId = null,
+    DateTime? FromDate = null,
+    DateTime? ToDate = null
+);
+public record ObservationsTimelineResponseDto(
+    IReadOnlyList<ObservationResponseDto> Items,
+    int TotalCount
+);
