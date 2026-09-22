@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateSocialRecordRequest, CreateSocialRecordResponse ,SocialRecordDetail,SocialRecordsResponse} from '../interfaces/social-record.interface';
+import { CreateSocialRecordRequest, CreateSocialRecordResponse, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
 import { RegisterExitRequest } from '../interfaces/exit-stay.interface';
 
@@ -12,21 +12,20 @@ export class SocialRecordsService {
 
   private http = inject(HttpClient);
 
-  // private readonly apiUrl = '/api/social-records';
-  // URL  backend:
-  private readonly apiUrl = 'http://localhost:5000/api/social-records';
+  // ruta relativa: el proxy de dev (proxy.conf.json) y el interceptor de auth la resuelven
+  private readonly apiUrl = '/api/social-records';
 
   create(dto: CreateSocialRecordRequest): Observable<CreateSocialRecordResponse> {
     return this.http.post<CreateSocialRecordResponse>(this.apiUrl, dto);
   }
 
-  getAll( page: number = 1,search: string = '',filters?: SocialRecordFilters): Observable<SocialRecordsResponse> {
-
-    let params = new HttpParams() .set('page', page);
-    if (search.trim()) 
-      {params = params.set( 'search', search.trim() );}
+  // listado paginado con búsqueda y filtros avanzados (SCRUM-6, SCRUM-21)
+  getAll(page: number = 1, search: string = '', filters?: SocialRecordFilters): Observable<SocialRecordsResponse> {
+    let params = new HttpParams().set('page', page);
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
     if (filters) {
-      // Agregar parámetros de filtro
       if (filters.entryDateFrom) {
         params = params.set('entryDateFrom', filters.entryDateFrom);
       }
@@ -43,37 +42,19 @@ export class SocialRecordsService {
         params = params.set('hasAddress', filters.hasAddress);
       }
     }
-    return this.http.get<SocialRecordsResponse>(
-      this.apiUrl,
-      { params }
-    );
+    return this.http.get<SocialRecordsResponse>(this.apiUrl, { params });
   }
-  // search(query: string): Observable<SocialRecordSearchResult[]> {
-  // return this.http.get<SocialRecordSearchResult[]>(`${this.apiUrl}/search`, { params: {  q: query } } );}
 
   getById(id: string): Observable<SocialRecordDetail> {
-    return this.http.get<SocialRecordDetail>(
-      `${this.apiUrl}/${id}`
-    );
-   
+    return this.http.get<SocialRecordDetail>(`${this.apiUrl}/${id}`);
   }
 
   update(id: string, data: CreateSocialRecordRequest): Observable<SocialRecordDetail> {
-  // Ajustá la URL según el endpoint de tu backend (p. ej. PUT o PATCH)
-  return this.http.put<SocialRecordDetail>(`${this.apiUrl}/social-records/${id}`, data);
- }
+    return this.http.put<SocialRecordDetail>(`${this.apiUrl}/${id}`, data);
+  }
 
-
- /**
-   * Registra el egreso de una estadía en la casona
-   */
+  // registra el egreso de una estadía en la casona
   registerExit(recordId: string, payload: RegisterExitRequest): Observable<SocialRecordDetail> {
-    return this.http.post<SocialRecordDetail>(
-      `${this.apiUrl}/${recordId}/stays/exit`,
-      payload
-    );
+    return this.http.post<SocialRecordDetail>(`${this.apiUrl}/${recordId}/stays/exit`, payload);
   }
 }
-
-
-
