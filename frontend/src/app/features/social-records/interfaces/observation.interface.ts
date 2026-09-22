@@ -12,7 +12,7 @@ export interface Observation {
 
 export interface CreateObservationDto {
   socialRecordId: string;
-  categoryId: string;
+  categoryId: string | null;
   content: string;
 }
 

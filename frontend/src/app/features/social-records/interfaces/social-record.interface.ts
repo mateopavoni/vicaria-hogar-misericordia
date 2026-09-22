@@ -1,5 +1,6 @@
 import { ChangeHistoryItem } from "./change-history.interface";
 
+
 // 0 = Ambulatory, 1 = Resident (el backend no serializa el enum como string, ver PersonType.cs)
 export enum PersonType {
   Ambulatory = 0,

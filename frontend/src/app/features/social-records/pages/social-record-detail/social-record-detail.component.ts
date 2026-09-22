@@ -13,7 +13,8 @@ import { LifeHistory } from '../../interfaces/life-history.interface';
 import { ExitStayModalComponent } from '../../components/exit-stay-modal/exit-stay-modal.component';
 import { RegisterEntrySubmitData, RegisterEntryStayModalComponent } from '../../components/register-entry-stay-modal/register-entry-stay-modal.component';
 import { SuccessModalComponent } from '../../../../shared/components/success-modal/success-modal.component';
-
+import { ObservationsComponent } from '../../components/observations/observations.component';
+import { Observation } from '../../interfaces/observation.interface';
 @Component({
   selector: 'app-social-record-detail',
   imports: [
@@ -26,8 +27,9 @@ import { SuccessModalComponent } from '../../../../shared/components/success-mod
     LifeHistoryComponent,
     ExitStayModalComponent,
     RegisterEntryStayModalComponent,
-    SuccessModalComponent
-  ],
+    SuccessModalComponent,
+    ObservationsComponent
+],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
 })

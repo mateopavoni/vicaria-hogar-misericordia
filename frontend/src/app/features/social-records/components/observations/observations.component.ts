@@ -5,11 +5,12 @@ import { ObservationCategory } from '../../interfaces/observation-category.inter
 import { Observation } from '../../interfaces/observation.interface';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
+import { CreateObservationModalComponent } from '../create-observation-modal/create-observation-modal.component';
 
 @Component({
   selector: 'app-observations',
   standalone: true,
-  imports: [DatePipe, EmptyFieldBadgeComponent],
+  imports: [DatePipe, EmptyFieldBadgeComponent, CreateObservationModalComponent],
   templateUrl: './observations.component.html',
   styleUrl: './observations.component.css'
 })
@@ -17,36 +18,46 @@ export class ObservationsComponent implements OnInit {
   private categoriesService = inject(ObservationCategoriesService);
   public permissionService = inject(PermissionService);
 
-  // Recibe las observaciones de la ficha social desde el componente padre
-  observations = input<Observation[]>([]);
+  // Recibe ID de la ficha social y lista inicial de observaciones
+  socialRecordId = input.required<string>();
+  initialObservations = input<Observation[]>([]);
 
-  // Signals para gestionar las categorías y la pestaña activa
+  // Internal Signals
+  observationsList = signal<Observation[]>([]);
   categories = signal<ObservationCategory[]>([]);
   activeTabId = signal<string>('all');
   loading = signal<boolean>(true);
+  showCreateModal = signal<boolean>(false);
 
   ngOnInit(): void {
+    // Inicializar lista con lo proveniente del input
+    this.observationsList.set(this.initialObservations() ?? []);
     this.loadCategories();
   }
 
   loadCategories(): void {
     this.loading.set(true);
-    // Cargamos todas las categorías para que las observaciones históricas de categorías inactivas sigan viéndose
     this.categoriesService.getAll().subscribe({
       next: (data) => {
         this.categories.set(data);
         this.loading.set(false);
       },
       error: (err: unknown) => {
-        console.error('Error al cargar categorías de observaciones:', err);
+        console.error('Error al cargar categorías:', err);
         this.loading.set(false);
       }
     });
   }
 
-  // Filtrado reactivo de observaciones según la solapa activa
+  // SCRUM-162: Inserta la nueva observación al tope de la lista sin recargar
+  onObservationSaved(newObservation: Observation): void {
+    this.observationsList.update(current => [newObservation, ...current]);
+    this.showCreateModal.set(false);
+  }
+
+  // Filtrado reactivo por tab
   filteredObservations = computed(() => {
-    const list = this.observations() ?? [];
+    const list = this.observationsList();
     const currentTab = this.activeTabId();
 
     if (currentTab === 'all') {
@@ -60,9 +71,7 @@ export class ObservationsComponent implements OnInit {
     this.activeTabId.set(tabId);
   }
 
-  // Devuelve la cantidad de observaciones que pertenecen a una categoría específica
   getCategoryCount(categoryId: string): number {
-    const list = this.observations() ?? [];
-    return list.filter((obs) => obs.categoryId === categoryId).length;
+    return this.observationsList().filter((obs) => obs.categoryId === categoryId).length;
   }
 }

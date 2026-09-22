@@ -13,10 +13,21 @@
     @if (permissionService.hasRole('Referente') || permissionService.hasRole('Escucha')) {
       <button
         type="button"
+        (click)="showCreateModal.set(true)"
         class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
       >
         <span>+</span> Nueva observación
       </button>
+    }
+    <!-- ... Renderizado de Solapas y Timeline ... -->
+
+    <!-- Modal de Carga de Observación -->
+    @if (showCreateModal()) {
+    <app-create-observation-modal
+        [socialRecordId]="socialRecordId()"
+        (observationSaved)="onObservationSaved($event)"
+        (cancel)="showCreateModal.set(false)"
+    />
     }
   </div>
 
@@ -34,7 +45,7 @@
       >
         Todas
         <span class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-          {{ (observations() ?? []).length }}
+         {{ observationsList().length }}
         </span>
       </button>
 
