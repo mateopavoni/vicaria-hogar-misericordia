@@ -209,6 +209,60 @@ public class SocialRecordService : ISocialRecordService
 
         return UpdatePersonTypeResult.Ok();
     }
+        public async Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId,UpdatePersonProfileStatusDto dto,Guid actorId,CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
+        if (person is null)
+        {
+            return UpdatePersonProfileStatusResult.PersonNotFound();
+        }
+
+        var socialRecord = await _dbContext.SocialRecords
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (socialRecord is null)
+        {
+            return UpdatePersonProfileStatusResult.SocialRecordNotFound();
+        }
+
+        if (dto.Status == PersonProfileStatus.Resident)
+        {
+            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
+                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+
+            if (!hasValidEvaluation)
+            {
+                return UpdatePersonProfileStatusResult.MissingPsychiatricEvaluation();
+            }
+
+            socialRecord.PersonType = PersonType.Resident;
+            socialRecord.Status = SocialRecordStatus.Active;
+        }
+        else if (dto.Status == PersonProfileStatus.ActiveAmbulatory)
+        {
+            socialRecord.PersonType = PersonType.Ambulatory;
+            socialRecord.Status = SocialRecordStatus.Active;
+        }
+        else if (dto.Status == PersonProfileStatus.InactiveAmbulatory)
+        {
+            socialRecord.PersonType = PersonType.Ambulatory;
+            socialRecord.Status = SocialRecordStatus.Inactive;
+        }
+
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Estado de persona actualizado desde perfil",
+            AffectedEntity = $"Person:{personId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdatePersonProfileStatusResult.Ok();
+    }
 
     private static bool MatchesQuery(Person person, string normalizedQuery)
     {

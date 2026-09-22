@@ -18,6 +18,7 @@ using Vicaria.Infrastructure.CasonaStays;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.Infrastructure.SocialRecords;
+using Vicaria.Infrastructure.Persons;
 using Vicaria.Application.Observations;
 using Vicaria.Infrastructure.Observations;
 
@@ -59,6 +60,9 @@ builder.Services.AddScoped<IValidator<RefreshTokenDto>, RefreshTokenDtoValidator
 builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateSocialRecordDto>, UpdateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdatePersonProfileStatusDto>, UpdatePersonProfileStatusValidator>();
+builder.Services.AddScoped<IPersonInactivityService, PersonInactivityService>();
+builder.Services.AddHostedService<InactivityBackgroundService>();
 builder.Services.AddScoped<IValidator<CasonaStayExitDto>, CasonaStayExitDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoValidator>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();

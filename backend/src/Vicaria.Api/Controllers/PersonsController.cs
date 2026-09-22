@@ -16,15 +16,18 @@ public class PersonsController : ControllerBase
 {
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<UpdatePersonTypeDto> _updatePersonTypeValidator;
+    private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
     private readonly ICasonaStayService _casonaStayService;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
         IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
+        IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator,
         ICasonaStayService casonaStayService)
     {
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
+        _updateProfileStatusValidator = updateProfileStatusValidator;
         _casonaStayService = casonaStayService;
     }
 
@@ -60,6 +63,28 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonTypeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonTypeError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    // cambia el estado del perfil (ambulatorio activo/inactivo, residente) y audita el cambio (SCRUM-152/153)
+    [HttpPut("{id}/status")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    public async Task<IActionResult> UpdateProfileStatus(Guid id, [FromBody] UpdatePersonProfileStatusDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateProfileStatusValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors) { ModelState.AddModelError(error.PropertyName, error.ErrorMessage); }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _socialRecordService.UpdatePersonProfileStatusAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdatePersonProfileStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonProfileStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
