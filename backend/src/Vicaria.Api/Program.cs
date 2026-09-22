@@ -76,6 +76,7 @@ builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryServi
 builder.Services.AddScoped<IValidator<CreateObservationCategoryDto>, CreateObservationCategoryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObservationCategoryDtoValidator>();
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
+builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
