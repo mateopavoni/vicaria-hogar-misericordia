@@ -142,6 +142,89 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     }
 
     [Fact]
+    public async Task GetPaged_ConFiltroEstado_DevuelveSoloEsasFichas()
+    {
+        await UsarTokenAsync(RoleNames.Referente);
+        var nombreActiva = $"Carla{Guid.NewGuid():N}";
+        var nombreInactiva = $"Diego{Guid.NewGuid():N}";
+        await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreActiva });
+        var creada = await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreInactiva });
+        var id = (await creada.Content.ReadFromJsonAsync<Dictionary<string, Guid>>())!["id"];
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            var ficha = await db.SocialRecords.FindAsync(id);
+            ficha!.Status = SocialRecordStatus.Inactive;
+            await db.SaveChangesAsync();
+        }
+
+        var inactivas = await _client.GetAsync($"/api/social-records/list?status=Inactive&search={nombreInactiva}");
+        Assert.Equal(HttpStatusCode.OK, inactivas.StatusCode);
+        var resultadoInactivas = await inactivas.Content.ReadFromJsonAsync<PagedResult<SocialRecordListItemDto>>();
+        Assert.Single(resultadoInactivas!.Items);
+        Assert.Equal(nombreInactiva, resultadoInactivas.Items[0].FirstName);
+
+        var activas = await _client.GetAsync($"/api/social-records/list?status=Active&search={nombreActiva}");
+        Assert.Equal(HttpStatusCode.OK, activas.StatusCode);
+        var resultadoActivas = await activas.Content.ReadFromJsonAsync<PagedResult<SocialRecordListItemDto>>();
+        Assert.Equal(1, resultadoActivas!.Total);
+        Assert.Equal(nombreActiva, resultadoActivas.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task GetPaged_ConFiltroTipoPersona_DevuelveSoloEseTipo()
+    {
+        await UsarTokenAsync(RoleNames.Referente);
+        var nombreAmbulatorio = $"Elena{Guid.NewGuid():N}";
+        var nombreResidente = $"Fabio{Guid.NewGuid():N}";
+        await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreAmbulatorio });
+        var creada = await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreResidente });
+        var id = (await creada.Content.ReadFromJsonAsync<Dictionary<string, Guid>>())!["id"];
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            var ficha = await db.SocialRecords.FindAsync(id);
+            ficha!.PersonType = PersonType.Resident;
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync("/api/social-records/list?personType=Resident");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var resultado = await response.Content.ReadFromJsonAsync<PagedResult<SocialRecordListItemDto>>();
+        Assert.Single(resultado!.Items);
+        Assert.Equal(nombreResidente, resultado.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task GetPaged_CombinaEstadoTipoYFecha_DevuelveSoloLaCoincidencia()
+    {
+        await UsarTokenAsync(RoleNames.Referente);
+        var nombreActivo = $"Gaston{Guid.NewGuid():N}";
+        var nombreInactivo = $"Hector{Guid.NewGuid():N}";
+        await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreActivo, entryDate = DateTime.UtcNow.AddDays(-2) });
+        var creada = await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreInactivo, entryDate = DateTime.UtcNow.AddDays(-2) });
+        var id = (await creada.Content.ReadFromJsonAsync<Dictionary<string, Guid>>())!["id"];
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            var ficha = await db.SocialRecords.FindAsync(id);
+            ficha!.Status = SocialRecordStatus.Inactive;
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync(
+            $"/api/social-records/list?status=Active&personType=Resident&entryDateFrom={DateTime.UtcNow.AddDays(-5):yyyy-MM-dd}&entryDateTo={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var resultado = await response.Content.ReadFromJsonAsync<PagedResult<SocialRecordListItemDto>>();
+        Assert.Empty(resultado!.Items);
+    }
+
+    [Fact]
     public async Task Update_ComoReferente_Devuelve204()
     {
         await UsarTokenAsync(RoleNames.Referente);
