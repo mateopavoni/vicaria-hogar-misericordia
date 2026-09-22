@@ -297,7 +297,8 @@ export class SocialRecordFormComponent {
         phone || null,
 
       
-      personType: PersonType.Ambulatory,
+    // Asignamos dinámicamente el personType que viene del formulario
+     personType: personType ?? PersonType.Ambulatory,
 
       reasonForEntry:
         reasonForEntry || null,

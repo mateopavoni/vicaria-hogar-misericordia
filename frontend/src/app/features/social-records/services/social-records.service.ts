@@ -65,6 +65,20 @@ export class SocialRecordsService {
 
 
  /**
+ * Registra el ingreso de una persona a la Casona (cambia personType a Residente y crea estadía)
+ */
+registerEntry(recordId: string, entryDate?: string): Observable<SocialRecordDetail> {
+  const payload = {
+    entryDate: entryDate || new Date().toISOString().substring(0, 10)
+  };
+
+  return this.http.post<SocialRecordDetail>(
+    `${this.apiUrl}/${recordId}/stays/entry`,
+    payload
+  );
+}
+
+ /**
    * Registra el egreso de una estadía en la casona
    */
   registerExit(recordId: string, payload: RegisterExitRequest): Observable<SocialRecordDetail> {

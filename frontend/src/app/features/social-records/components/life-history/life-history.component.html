@@ -1,0 +1,70 @@
+<section>
+  <div class="mb-5">
+    <h2 class="pt-5 text-xl font-semibold text-slate-800">
+      Historia de vida
+    </h2>
+    <p class="mt-2 mb-5 text-sm text-slate-500">
+      Registro en tres etapas.
+    </p>
+  </div>
+
+  <div class="relative">
+    <!-- Línea vertical -->
+    <div class="absolute top-5 bottom-5 left-[18px] w-px bg-slate-300"></div>
+
+    @for (stageConfig of stages; track stageConfig.id) {
+      @let section = history()?.[stageConfig.id];
+
+      <div class="relative flex gap-5 pb-4">
+        <!-- Ícono -->
+        <div [class]="'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-4 ring-[#F5F7FB] ' + stageConfig.colorClass">
+          <span class="text-white">⌂</span>
+        </div>
+
+        <!-- Tarjeta de Contenido -->
+        <div class="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-4">
+          <div class="flex items-start justify-between gap-4">
+            <div class="w-full">
+              <h3 [class]="'text-sm font-semibold ' + stageConfig.textClass">
+                {{ stageConfig.title }}
+              </h3>
+
+              @if (section?.text?.trim()) {
+                <p class="mt-2 text-sm leading-6 text-slate-500 whitespace-pre-line">
+                  {{ section?.text }}
+                </p>
+                @if (section?.lastEditedBy) {
+                  <p class="mt-2 text-xs text-slate-400">
+                    Última edición por {{ section?.lastEditedBy }} - {{ section?.lastEditedAt | date:'dd/MM/yyyy HH:mm' }}
+                  </p>
+                }
+              } @else {
+                <div class="mt-2">
+                  <app-empty-field-badge />
+                </div>
+              }
+            </div>
+
+            <button
+              type="button"
+              (click)="startEditing(stageConfig.id)"
+              class="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              Editar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Modal Reutilizable -->
+  @if (editingStage()) {
+    <app-life-history-editor-modal
+      [stageTitle]="currentEditingTitle"
+      [initialText]="currentEditingText"
+      (save)="handleSave($event)"
+      (cancel)="closeEditor()"
+    />
+  }
+</section>

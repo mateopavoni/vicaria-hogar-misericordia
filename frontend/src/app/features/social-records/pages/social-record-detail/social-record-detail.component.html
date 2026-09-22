@@ -120,9 +120,6 @@
 
               <!-- ESTADO -->
               <div>
-                <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Estado
-                </p>
 
                 @if (person.status === 'Active') {
                   <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -395,13 +392,29 @@
         <button
           type="button"
           (click)="selectTab('historia')"
-          class="px-5 py-3
+          class="relative
+                 px-5 py-3
                  text-[12px]
-                 font-semibold
-                 text-slate-500
-                 hover:text-[#4167D9]"
+                 font-semibold"
+          [class.text-[#4167D9]]="
+            activeTab() === 'historia'
+          "
+          [class.text-slate-500]="
+            activeTab() !== 'historia'
+          "
         >
           Historia de vida
+
+          @if (activeTab() === 'historia') {
+
+            <span
+              class="absolute
+                     bottom-0 left-0
+                     h-[2px] w-full
+                     bg-[#4167D9]"
+            ></span>
+
+          }
         </button>
 
 
@@ -681,7 +694,7 @@
 
 
         <!-- INFORMACIÓN DE INGRESO -->
-        <section
+    <section
           class="mt-5
                  overflow-hidden
                  rounded-lg
@@ -762,31 +775,8 @@
 
             </div>
 
-            <!-- Botón de Registro de Egreso / Nuevo Ingreso (Solo Referentes) -->
-             
-          @if (permissionService.hasPermission('fichas.edit')) {
-            <div class="mb-4 flex justify-end gap-3">
-              @if (person.status === 'Resident') {
-                <button 
-                  type="button"
-                  (click)="openExitModal()"
-                  class="rounded-md bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
-                  Registrar Egreso de Casona
-                </button>
-              } @else {
-                <button 
-                  type="button"
-                  (click)="registerEntry()"
-                  class="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
-                  Marcar como Residente (Ingreso)
-                </button>
-              }
-            </div>
-          }
-
-          <!-- Componente Timeline de Estadías -->
-          <app-stays-timeline [stays]="person.staysHistory ?? []" />
-
+            
+        
             <!-- SITUACIÓN HABITACIONAL -->
             <div>
 
@@ -888,7 +878,10 @@
 
           </div>
 
+      
+        
         </section>
+
 
 
         <!-- CONTACTO -->
@@ -1013,7 +1006,7 @@
 
         <!-- OBSERVACIONES GENERALES -->
         <section
-          class="mt-5
+          class="mt-5 mb-5
                  overflow-hidden
                  rounded-lg
                  border border-slate-200"
@@ -1058,48 +1051,71 @@
 
         </section>
 
-        <!-- Historial de cambios (Sección inferior en pestaña datos) -->
-        <section class="mt-5">
-          <app-change-history
-            [title]="'Historial de Tipo de Persona'"
-            [items]="person.personTypeHistory ?? []" 
+          <!-- Componente Timeline de Estadías -->
+              <app-stays-timeline [stays]="person.staysHistory ?? []" />
+          <!-- Botón de Registro de Egreso / Nuevo Ingreso (Solo Referentes) -->
+          
+          <!-- @if (permissionService.hasPermission('fichas.edit')) { -->
+          <div class="mb-4 mt-4 flex justify-end gap-3">
+        @if (person.personType === PersonType.Resident) {
+          <!-- BOTÓN REGISTRAR EGRESO -->
+          <button 
+            type="button"
+            (click)="openExitModal()"
+            class="rounded-md bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 shadow-sm"
+          >
+            Registrar Egreso de Casona
+          </button>
+        } @else {
+          <!-- BOTÓN MARCAR COMO RESIDENTE -->
+          <button 
+            type="button"
+            (click)="openEntryModal()"
+            class="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 shadow-sm"
+          >
+            Marcar como Residente (Ingreso)
+          </button>
+        }
+      </div>
+      
+      <!-- Historial de cambios (Sección inferior en pestaña datos) -->
+         <section class="mt-5">
+         <app-change-history
+          [title]="'Historial de Tipo de Persona'"
+          [items]="person.personTypeHistory ?? []" 
           />
         </section>
+        
+    }
 
-      }
+        <!-- MODAL DE INGRESO -->
+        @if (showEntryModal()) {
+          <app-register-entry-stay-modal
+            (cancel)="showEntryModal.set(false)"
+            (confirm)="handleEntryConfirm($event)"
+          />
+        }
+
+        <!-- MODAL DE EGRESO -->
+        @if (showExitModal()) {
+          <app-exit-stay-modal
+            (cancel)="showExitModal.set(false)"
+            (confirm)="handleExitConfirm($event)"
+          />
+        }
+      
+            
+
+      
 
       <!-- OTROS TABS -->
-      @if (activeTab() !== 'datos') {
+     @if (activeTab() === 'historia') {
+      
+      <app-life-history
+        [history]="lifeHistory()"
+      />
 
-        <div
-          class="flex min-h-[220px]
-                 items-center
-                 justify-center"
-        >
-
-          <div class="text-center">
-
-            <p
-              class="text-[14px]
-                     font-semibold
-                     text-slate-700"
-            >
-              {{ activeTab() | titlecase }}
-            </p>
-
-            <p
-              class="mt-2
-                     text-[12px]
-                     text-slate-400"
-            >
-              Esta sección se implementará próximamente.
-            </p>
-
-          </div>
-
-        </div>
-
-      }
+    }
 
     </div>
 

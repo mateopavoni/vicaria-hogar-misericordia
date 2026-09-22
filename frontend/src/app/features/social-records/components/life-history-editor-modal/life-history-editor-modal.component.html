@@ -1,0 +1,46 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-semibold text-slate-800">
+            Editar: {{ stageTitle() }}
+          </h3>
+          <button
+            type="button"
+            (click)="cancel.emit()"
+            class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-xs font-medium text-slate-500 mb-2">
+            Narrativa / Historia de vida
+          </label>
+          <textarea
+            [value]="textSignal()"
+            (input)="onInput($event)"
+            rows="6"
+            class="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            placeholder="Escribe el registro para esta etapa..."
+          ></textarea>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="cancel.emit()"
+            class="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="onSave()"
+            class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+          >
+            Guardar cambios
+          </button>
+        </div>
+      </div>
+    </div>
