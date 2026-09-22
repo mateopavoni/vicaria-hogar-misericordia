@@ -47,12 +47,19 @@ public class SocialRecordsController : ControllerBase
         return CreatedAtAction(nameof(Create), new { id = result.SocialRecordId }, new { personId = result.PersonId, id = result.SocialRecordId });
     }
 
-   // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
+    // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
+    // SCRUM-137: Directora de Casona solo recibe Residentes; Referente ve todos.
     [HttpGet]
-    [HttpGet("/api/personas/search")]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken cancellationToken)
     {
-        var results = await _socialRecordService.SearchAsync(q, cancellationToken);
+        PersonType? personTypeFilter = null;
+
+        if (User.IsInRole(RoleNames.DirectoraDeCasona))
+        {
+            personTypeFilter = PersonType.Resident;
+        }
+
+        var results = await _socialRecordService.SearchAsync(q, personTypeFilter, cancellationToken);
         return Ok(results);
     }
 
@@ -75,7 +82,6 @@ public class SocialRecordsController : ControllerBase
         return result.Success ? NoContent() : NotFound(new { message = result.ErrorMessage });
     }
     [HttpGet("filter/count")]
-    [HttpGet("/api/personas/filtrar/count")]
     public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)
     {
         var count = await _socialRecordService.CountByFilterAsync(filter, cancellationToken);

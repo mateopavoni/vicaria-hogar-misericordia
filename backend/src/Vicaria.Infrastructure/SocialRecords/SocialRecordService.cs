@@ -6,6 +6,7 @@ using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
+
 namespace Vicaria.Infrastructure.SocialRecords;
 
 public class SocialRecordService : ISocialRecordService
@@ -77,14 +78,13 @@ public class SocialRecordService : ISocialRecordService
         return CreateSocialRecordResult.Ok(person.Id, socialRecord.Id);
     }
 
-    public async Task<List<SocialRecordSearchResultDto>> SearchAsync(string? query, CancellationToken cancellationToken = default)
+    public async Task<List<SocialRecordSearchResultDto>> SearchAsync(string? query, PersonType? personTypeFilter = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
             return [];
         }
 
-        var normalizedQuery = Normalize(query);
         var pattern = $"%{query.Trim().ToUpper()}%";
 
         if (_dbContext.Database.IsRelational())
@@ -92,12 +92,14 @@ public class SocialRecordService : ISocialRecordService
             return await _dbContext.SocialRecords
                 .AsNoTracking()
                 .Include(r => r.Person)
-                .Where(r => r.Person != null && (
-                    EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
-                    (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
-                    (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern)) ||
-                    (r.Person.DateOfBirth != null && EF.Functions.Like(r.Person.DateOfBirth.ToString()!, pattern))
-                ))
+                .Where(r => r.Person != null
+                    && (!personTypeFilter.HasValue || r.PersonType == personTypeFilter.Value)
+                    && (
+                        EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
+                        (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
+                        (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern)) ||
+                        (r.Person.DateOfBirth != null && EF.Functions.Like(r.Person.DateOfBirth.ToString()!, pattern))
+                    ))
                 .Select(r => new SocialRecordSearchResultDto(
                     r.Id,
                     r.PersonId,
@@ -107,25 +109,24 @@ public class SocialRecordService : ISocialRecordService
                 .ToListAsync(cancellationToken);
         }
 
+        // fallback en memoria (ej. InMemory DB de tests, que no soporta EF.Functions.Like):
+        // normaliza tildes/mayúsculas a mano en vez de contar con el collation del motor real
         var records = await _dbContext.SocialRecords
             .AsNoTracking()
             .Include(r => r.Person)
             .ToListAsync(cancellationToken);
 
-        return records
-            .Where(r => r.Person != null && (
-                Normalize(r.Person.FirstName).Contains(normalizedQuery) ||
-                (r.Person.LastName != null && Normalize(r.Person.LastName).Contains(normalizedQuery)) ||
-                (r.Person.Dni != null && Normalize(r.Person.Dni).Contains(normalizedQuery)) ||
-                (r.Person.DateOfBirth != null && r.Person.DateOfBirth.Value.ToString("yyyy-MM-dd").Contains(normalizedQuery))
-            ))
-            .Select(r => new SocialRecordSearchResultDto(
-                r.Id,
-                r.PersonId,
-                $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
-                r.Person.Dni,
-                r.UpdatedAt))
-            .ToList();
+        var normalizedQuery = Normalize(query);
+
+        var filtered = records
+            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery));
+
+        if (personTypeFilter.HasValue)
+        {
+            filtered = filtered.Where(r => r.PersonType == personTypeFilter.Value);
+        }
+
+        return filtered.Select(r => new SocialRecordSearchResultDto(r.Id, r.PersonId, $"{r.Person!.FirstName} {r.Person.LastName}".Trim(), r.Person.Dni, r.UpdatedAt)).ToList();
     }
 
     public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
