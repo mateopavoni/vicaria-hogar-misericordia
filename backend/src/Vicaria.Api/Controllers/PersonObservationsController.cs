@@ -8,7 +8,7 @@ using Vicaria.Domain.Entities;
 namespace Vicaria.Api.Controllers;
 
 [ApiController]
-[Route("api/personas/{id:guid}/observaciones")]
+[Route("api/persons/{id:guid}/observations")]
 public class PersonObservationsController : ControllerBase
 {
     private readonly IObservationService _observationService;
