@@ -88,6 +88,65 @@ public class LifeStoryService : ILifeStoryService
         return MapToDto(entity);
     }
 
+    // edita una sola etapa de forma independiente (SCRUM-171): la persona se crea
+    // la fila si no existe, y solo esa etapa actualiza su contenido y auditoría
+    public async Task<LifeStoryResponseDto?> UpdateStageAsync(Guid personId, LifeStoryStage stage, string content, Guid actorUserId, CancellationToken cancellationToken = default)
+    {
+        var personExists = await _dbContext.People.AnyAsync(p => p.Id == personId, cancellationToken);
+        if (!personExists) return null;
+
+        var entity = await _dbContext.LifeStories
+            .Include(l => l.BeforeHogarUpdatedByUser)
+            .Include(l => l.InHogarUpdatedByUser)
+            .Include(l => l.AfterHogarUpdatedByUser)
+            .FirstOrDefaultAsync(l => l.PersonId == personId, cancellationToken);
+
+        if (entity is null)
+        {
+            entity = new LifeStory { PersonId = personId };
+            _dbContext.LifeStories.Add(entity);
+        }
+
+        ApplyStageContent(entity, stage, content, actorUserId, DateTime.UtcNow);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Recargar entidades de navegación de usuario para reflejar nombres actualizados
+        await _dbContext.Entry(entity).Reference(l => l.BeforeHogarUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.InHogarUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.AfterHogarUpdatedByUser).LoadAsync(cancellationToken);
+
+        return MapToDto(entity);
+    }
+
+    // actualiza una etapa y su auditoría solo si el contenido cambió (consistente con SCRUM-172)
+    private static void ApplyStageContent(LifeStory entity, LifeStoryStage stage, string content, Guid actorUserId, DateTime now)
+    {
+        var trimmed = content.Trim();
+
+        switch (stage)
+        {
+            case LifeStoryStage.BeforeHogar:
+                if (entity.BeforeHogar == trimmed) return;
+                entity.BeforeHogar = trimmed;
+                entity.BeforeHogarUpdatedByUserId = actorUserId;
+                entity.BeforeHogarUpdatedAt = now;
+                break;
+            case LifeStoryStage.InHogar:
+                if (entity.InHogar == trimmed) return;
+                entity.InHogar = trimmed;
+                entity.InHogarUpdatedByUserId = actorUserId;
+                entity.InHogarUpdatedAt = now;
+                break;
+            case LifeStoryStage.AfterHogar:
+                if (entity.AfterHogar == trimmed) return;
+                entity.AfterHogar = trimmed;
+                entity.AfterHogarUpdatedByUserId = actorUserId;
+                entity.AfterHogarUpdatedAt = now;
+                break;
+        }
+    }
+
     private static LifeStoryResponseDto MapToDto(LifeStory entity)
     {
         static string? FormatAuthor(User? user) => user is null ? null : $"{user.FirstName} {user.LastName}".Trim();
