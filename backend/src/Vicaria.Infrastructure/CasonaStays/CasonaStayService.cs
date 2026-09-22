@@ -47,4 +47,32 @@ public class CasonaStayService : ICasonaStayService
 
         return CasonaStayExitResult.Ok();
     }
+
+    public async Task<IEnumerable<CasonaStayDto>> GetByPersonIdAsync(Guid personId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+
+        var stays = await _dbContext.CasonaStays
+            .AsNoTracking()
+            .Where(s => s.PersonId == personId)
+            .OrderByDescending(s => s.EntryDate)
+            .ToListAsync(cancellationToken);
+
+        return stays.Select(s =>
+        {
+            var endDate = s.ExitDate ?? now;
+            var duration = (int)(endDate - s.EntryDate).TotalDays;
+
+            return new CasonaStayDto
+            {
+                Id = s.Id,
+                PersonId = s.PersonId,
+                EntryDate = s.EntryDate,
+                ExitDate = s.ExitDate,
+                ExitReason = s.ExitReason,
+                Reason = s.Reason,
+                DurationDays = Math.Max(0, duration)
+            };
+        });
+    }
 }
