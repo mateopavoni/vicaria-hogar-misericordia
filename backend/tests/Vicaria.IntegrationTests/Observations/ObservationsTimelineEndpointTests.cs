@@ -154,4 +154,44 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Export_DevuelveCsvConLasObservacionesFiltradas()
+    {
+        var personId = await CrearPersonaAsync();
+        var catSaludId = Guid.NewGuid();
+        Guid authorId;
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            authorId = db.Users.First().Id;
+
+            db.ObservationCategories.Add(new ObservationCategory { Id = catSaludId, Name = "Salud", IsActive = true });
+            db.Observations.AddRange(
+                new Observation { Id = Guid.NewGuid(), PersonId = personId, CategoryId = catSaludId, AuthorUserId = authorId, Content = "Con categoría", CreatedAt = DateTime.UtcNow },
+                new Observation { Id = Guid.NewGuid(), PersonId = personId, AuthorUserId = authorId, Content = "Sin categoría", CreatedAt = DateTime.UtcNow.AddDays(-1) }
+            );
+            await db.SaveChangesAsync();
+        }
+
+        await UsarTokenAsync(RoleNames.Referente);
+
+        var response = await _client.GetAsync($"/api/persons/{personId}/observations/export?categoryId={catSaludId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType?.MediaType);
+        var csv = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Fecha,Categoría,Autor,Contenido", csv);
+        Assert.Contains("Con categoría", csv);
+        Assert.DoesNotContain("Sin categoría", csv);
+    }
+
+    [Fact]
+    public async Task Export_SinToken_Devuelve401()
+    {
+        var response = await _client.GetAsync($"/api/persons/{Guid.NewGuid()}/observations/export");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }

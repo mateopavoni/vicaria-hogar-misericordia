@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,5 +65,18 @@ public class PersonObservationsController : ControllerBase
     {
         var response = await _observationService.GetTimelineAsync(id, filters, cancellationToken);
         return Ok(response);
+    }
+
+    // exportacion de las observaciones filtradas a CSV (SCRUM-166)
+    [HttpGet("export")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    public async Task<IActionResult> ExportObservations(
+        Guid id,
+        [FromQuery] GetObservationsFilterDto filters,
+        CancellationToken cancellationToken)
+    {
+        var csv = await _observationService.ExportToCsvAsync(id, filters, cancellationToken);
+        var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
+        return File(bytes, "text/csv", $"observaciones_{id}.csv");
     }
 }

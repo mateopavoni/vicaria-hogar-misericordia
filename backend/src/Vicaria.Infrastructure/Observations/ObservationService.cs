@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.Observations;
 using Vicaria.Domain.Entities;
@@ -78,51 +79,93 @@ public class ObservationService : IObservationService
         return new CreateObservationResult(Success: true, Data: response);
     }
     public async Task<ObservationsTimelineResponseDto> GetTimelineAsync(
-    Guid personId,
-    GetObservationsFilterDto filters,
-    CancellationToken cancellationToken = default)
-{
-    var query = _dbContext.Observations
-        .AsNoTracking()
-        .Where(o => o.PersonId == personId);
-
-    if (filters.CategoryId.HasValue)
+        Guid personId,
+        GetObservationsFilterDto filters,
+        CancellationToken cancellationToken = default)
     {
-        query = query.Where(o => o.CategoryId == filters.CategoryId.Value);
+        var query = ApplyFilters(personId, filters);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .Select(o => ToResponseDto(o))
+            .ToListAsync(cancellationToken);
+
+        return new ObservationsTimelineResponseDto(items, totalCount);
     }
 
-    if (filters.AuthorUserId.HasValue)
+    // exportacion de las observaciones filtradas a CSV, mismo filtro que el timeline (SCRUM-166)
+    public async Task<string> ExportToCsvAsync(
+        Guid personId,
+        GetObservationsFilterDto filters,
+        CancellationToken cancellationToken = default)
     {
-        query = query.Where(o => o.AuthorUserId == filters.AuthorUserId.Value);
+        var items = await ApplyFilters(personId, filters)
+            .OrderByDescending(o => o.CreatedAt)
+            .Select(o => ToResponseDto(o))
+            .ToListAsync(cancellationToken);
+
+        var csv = new StringBuilder();
+        csv.AppendLine("Fecha,Categoría,Autor,Contenido");
+        foreach (var item in items)
+        {
+            csv.AppendLine(string.Join(',',
+                item.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                CsvEscape(item.CategoryName ?? ""),
+                CsvEscape(item.AuthorName),
+                CsvEscape(item.Content)));
+        }
+
+        return csv.ToString();
     }
 
-    if (filters.FromDate.HasValue)
+    private IQueryable<Observation> ApplyFilters(Guid personId, GetObservationsFilterDto filters)
     {
-        query = query.Where(o => o.CreatedAt >= filters.FromDate.Value);
+        var query = _dbContext.Observations
+            .AsNoTracking()
+            .Where(o => o.PersonId == personId);
+
+        if (filters.CategoryId.HasValue)
+        {
+            query = query.Where(o => o.CategoryId == filters.CategoryId.Value);
+        }
+
+        if (filters.AuthorUserId.HasValue)
+        {
+            query = query.Where(o => o.AuthorUserId == filters.AuthorUserId.Value);
+        }
+
+        if (filters.FromDate.HasValue)
+        {
+            query = query.Where(o => o.CreatedAt >= filters.FromDate.Value);
+        }
+
+        if (filters.ToDate.HasValue)
+        {
+            query = query.Where(o => o.CreatedAt <= filters.ToDate.Value);
+        }
+
+        return query;
     }
 
-    if (filters.ToDate.HasValue)
+    private static ObservationResponseDto ToResponseDto(Observation o) => new(
+        o.Id,
+        o.PersonId,
+        o.Content,
+        o.CategoryId,
+        o.Category != null ? o.Category.Name : null,
+        o.AuthorUserId,
+        o.AuthorUser != null ? (o.AuthorUser.FirstName + " " + o.AuthorUser.LastName).Trim() : string.Empty,
+        o.CreatedAt);
+
+    // envuelve en comillas y escapa comillas internas si el valor tiene coma, comilla o salto de linea
+    private static string CsvEscape(string value)
     {
-        query = query.Where(o => o.CreatedAt <= filters.ToDate.Value);
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        {
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
+        return value;
     }
-
-    var totalCount = await query.CountAsync(cancellationToken);
-
-    var items = await query
-        .OrderByDescending(o => o.CreatedAt)
-        .Select(o => new ObservationResponseDto(
-            o.Id,
-            o.PersonId,
-            o.Content,
-            o.CategoryId,
-            o.Category != null ? o.Category.Name : null,
-            o.AuthorUserId,
-            o.AuthorUser != null ? (o.AuthorUser.FirstName + " " + o.AuthorUser.LastName).Trim() : string.Empty,
-            o.CreatedAt
-        ))
-        .ToListAsync(cancellationToken);
-
-    return new ObservationsTimelineResponseDto(items, totalCount);
-}
-
 }
