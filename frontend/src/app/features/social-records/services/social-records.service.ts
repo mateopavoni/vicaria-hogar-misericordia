@@ -53,7 +53,8 @@ export class SocialRecordsService {
     return this.http.put<SocialRecordDetail>(`${this.apiUrl}/${id}`, data);
   }
 
-  // cambia el tipo de persona (ambulatorio/residente), ej. al marcar reingreso (SCRUM-134)
+  // cambia el tipo de persona (ambulatorio/residente); el backend crea la estadía en la Casona
+  // automáticamente al pasar a Residente (SCRUM-134), no hace falta un endpoint de "entry" aparte
   updatePersonType(personId: string, personType: PersonType): Observable<void> {
     return this.http.put<void>(`/api/persons/${personId}/type`, { personType });
   }
@@ -64,3 +65,6 @@ export class SocialRecordsService {
     return this.http.put<void>(`/api/casona-stays/${stayId}/egreso`, payload);
   }
 }
+
+
+

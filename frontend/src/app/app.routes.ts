@@ -60,9 +60,9 @@ export const routes: Routes = [
           import('./features/social-records/pages/new-social-record/new-social-record.component')
             .then(m => m.NewSocialRecordComponent),
 
-        canActivate: [
-          permissionGuard('fichas.create')
-        ]
+        // canActivate: [
+        //   permissionGuard('fichas.create')
+        // ]
       },
 
       {
