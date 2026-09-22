@@ -74,4 +74,11 @@ public class SocialRecordsController : ControllerBase
         var result = await _socialRecordService.UpdateAsync(id, dto, ActorId, cancellationToken);
         return result.Success ? NoContent() : NotFound(new { message = result.ErrorMessage });
     }
+    [HttpGet("filter/count")]
+    [HttpGet("/api/personas/filtrar/count")]
+    public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)
+    {
+        var count = await _socialRecordService.CountByFilterAsync(filter, cancellationToken);
+        return Ok(new { count });
+    }
 }

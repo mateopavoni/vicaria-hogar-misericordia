@@ -176,4 +176,35 @@ public class SocialRecordServiceTests
         var log = await db.AuditLogs.FirstOrDefaultAsync(a => a.AffectedEntity == $"SocialRecord:{creada.SocialRecordId}" && a.UserId == actorId);
         Assert.NotNull(log);
     }
+    [Fact]
+    public async Task CountByFilterAsync_FiltraCorrectamentePorDniYFecha()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+
+        //Con DNI y fecha de ingreso reciente
+        var dto1 = new CreateSocialRecordDto("Marcos", "Paz", "35111222", null, null, null, null, DateTime.UtcNow.AddDays(-5), null, null, null, false, null, null);
+        await service.CreateAsync(dto1, actorId);
+
+        //Sin DNI y fecha de ingreso antigua
+        var dto2 = new CreateSocialRecordDto("Lucas", "Sosa", null, null, null, null, null, DateTime.UtcNow.AddDays(-40), null, null, null, false, null, null);
+        await service.CreateAsync(dto2, actorId);
+
+        //Conteo total sin filtros
+        var countTotal = await service.CountByFilterAsync(new FilterSocialRecordsDto());
+        Assert.Equal(2, countTotal);
+
+        //Solo con DNI
+        var countConDni = await service.CountByFilterAsync(new FilterSocialRecordsDto(HasDni: true));
+        Assert.Equal(1, countConDni);
+
+        //Sin DNI
+        var countSinDni = await service.CountByFilterAsync(new FilterSocialRecordsDto(HasDni: false));
+        Assert.Equal(1, countSinDni);
+
+        //Por rango de fecha de ingreso
+        var countFecha = await service.CountByFilterAsync(new FilterSocialRecordsDto(EntryDateFrom: DateTime.UtcNow.AddDays(-10)));
+        Assert.Equal(1, countFecha);
+    }
 }
