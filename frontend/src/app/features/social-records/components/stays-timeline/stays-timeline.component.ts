@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Stay } from '../../interfaces/stay.interface';
+import { Stay, getExitReasonLabel } from '../../interfaces/stay.interface';
 
 @Component({
   selector: 'app-stays-timeline',
@@ -10,6 +10,11 @@ import { Stay } from '../../interfaces/stay.interface';
 })
 export class StaysTimelineComponent {
   stays = input.required<Stay[]>();
+
+  // el backend manda el motivo de egreso como numero (enum), acá lo traducimos a texto
+  getExitReasonLabel(exitReason: number | string | null | undefined): string {
+    return getExitReasonLabel(exitReason);
+  }
 
   // Calcula la duración entre dos fechas o hasta hoy si sigue activo
   calculateDuration(entryDateStr: string, exitDateStr?: string | null): string {
