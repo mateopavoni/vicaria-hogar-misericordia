@@ -452,8 +452,8 @@
       <!-- PESTAÑA: OBSERVACIONES -->
       @if (activeTab() === 'observaciones') {
         <app-observations
-          [socialRecordId]="person.id"
-          [initialObservations]="$any(person).observations ?? []"
+          [socialRecordId]="person.personId"
+          [initialObservations]="initialObservations()"
         />
       }
 
@@ -461,6 +461,7 @@
       @if (activeTab() === 'historia') {
         <app-life-history
           [history]="lifeHistory()"
+          (historySaved)="handleLifeHistorySaved($event)"
         />
       }
 
@@ -491,6 +492,13 @@
       />
     }
 
+  }
+
+  @if (showExitModal()) {
+    <app-exit-stay-modal
+      (cancel)="showExitModal.set(false)"
+      (confirm)="handleExitConfirm($event)"
+    />
   }
 
 </div>

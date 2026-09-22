@@ -56,7 +56,7 @@ export class CreateObservationModalComponent implements OnInit {
       content: this.observationForm.value.content!.trim()
     };
 
-    this.observationsService.create(dto).subscribe({
+    this.observationsService.create(this.socialRecordId(), dto).subscribe({
       next: (newObservation) => {
         this.submitting.set(false);
         this.observationSaved.emit(newObservation);
