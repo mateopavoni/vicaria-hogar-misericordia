@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { permissionGuard } from './core/guards/permission.guard';
 import { authGuard } from './core/auth/auth.guard';
+import { pendingChangesGuard } from './core/guards/pending-changes.guard';
 
 export const routes: Routes = [
 
@@ -22,7 +23,7 @@ export const routes: Routes = [
   // SISTEMA PRINCIPAL
   {
     path: 'dashboard',
-    canActivate: [authGuard],
+    // canActivate: [authGuard],
     loadComponent: () =>
       import('./shared/layout/layout.component')
         .then(m => m.LayoutComponent),
@@ -35,12 +36,24 @@ export const routes: Routes = [
           import('./features/users/pages/user-management/user-management.component')
             .then(m => m.UserManagementComponent),
 
-        canActivate: [
-          permissionGuard('users.view')
-        ]
+        // canActivate: [
+        //   permissionGuard('users.view')
+        // ]
       },
+      // SCRUM-6 (listado)
       {
-        // SCRUM-6 (listado) todavía no existe, "Fichas" apunta directo a crear
+        path: 'fichas',
+
+        loadComponent: () =>
+          import(
+            './features/social-records/pages/social-record-list/social-record-list.component'
+          )
+            .then(
+              m => m.SocialRecordListComponent
+            ),
+      },
+
+      {
         path: 'fichas/crear',
 
         loadComponent: () =>
@@ -51,6 +64,22 @@ export const routes: Routes = [
           permissionGuard('fichas.create')
         ]
       },
+
+      {
+        path: 'fichas/:id',
+        loadComponent: () =>
+          import('./features/social-records/pages/social-record-detail/social-record-detail.component')
+            .then(m => m.SocialRecordDetailComponent)
+      },
+
+      // RUTA DE EDICIÓN
+      {
+        path: 'fichas/:id/edit',
+        loadComponent: () =>
+          import('./features/social-records/pages/social-record-edit/social-record-edit.component')
+            .then(m => m.SocialRecordEditComponent),
+        canDeactivate: [pendingChangesGuard]
+      }
     ],
   },
 

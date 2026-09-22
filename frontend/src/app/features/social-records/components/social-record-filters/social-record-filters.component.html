@@ -1,0 +1,195 @@
+<div class="rounded-xl border border-[#E3E8F5] bg-white p-5">
+
+  <div class="mb-4 flex items-center justify-between">
+
+    <div>
+      <h3 class="text-[14px] font-semibold text-slate-700">
+        Filtros
+      </h3>
+
+      <p class="text-[12px] text-slate-400">
+        Refiná la búsqueda de personas.
+      </p>
+    </div>
+
+  </div>
+
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="applyFilters()"
+    class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5"
+  >
+
+    <!-- Fecha desde -->
+
+    <div>
+
+      <label
+        for="entryDateFrom"
+        class="mb-2 block text-[13px] font-semibold text-slate-700"
+      >
+        Ingreso desde
+      </label>
+
+      <input
+        id="entryDateFrom"
+        type="date"
+        formControlName="entryDateFrom"
+        class="h-[40px] w-full rounded-md border border-[#D5DDF3] px-3 text-[13px]"
+      />
+
+    </div>
+
+
+    <!-- Fecha hasta -->
+
+    <div>
+
+      <label
+        for="entryDateTo"
+        class="mb-2 block text-[13px] font-semibold text-slate-700"
+      >
+        Ingreso hasta
+      </label>
+
+      <input
+        id="entryDateTo"
+        type="date"
+        formControlName="entryDateTo"
+        class="h-[40px] w-full rounded-md border border-[#D5DDF3] px-3 text-[13px]"
+      />
+
+    </div>
+
+
+    <!-- Sin observaciones -->
+
+    <div>
+
+      <label
+        for="withoutObservationsDays"
+        class="mb-2 block text-[13px] font-semibold text-slate-700"
+      >
+        Sin observaciones
+      </label>
+
+      <select
+        id="withoutObservationsDays"
+        formControlName="withoutObservationsDays"
+        class="h-[40px] w-full rounded-md border border-[#D5DDF3] px-3 text-[13px]"
+      >
+
+        <option value="">
+          Todos
+        </option>
+
+        <option value="30">
+          Más de 30 días
+        </option>
+
+        <option value="60">
+          Más de 60 días
+        </option>
+
+        <option value="90">
+          Más de 90 días
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- DNI -->
+
+    <div>
+
+      <label
+        for="hasDni"
+        class="mb-2 block text-[13px] font-semibold text-slate-700"
+      >
+        DNI
+      </label>
+
+      <select
+        id="hasDni"
+        formControlName="hasDni"
+        class="h-[40px] w-full rounded-md border border-[#D5DDF3] px-3 text-[13px]"
+      >
+
+        <option value="all">
+          Todos
+        </option>
+
+        <option value="yes">
+          Con DNI
+        </option>
+
+        <option value="no">
+          Sin DNI
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- Domicilio -->
+
+    <div>
+
+      <label
+        for="hasAddress"
+        class="mb-2 block text-[13px] font-semibold text-slate-700"
+      >
+        Domicilio
+      </label>
+
+      <select
+        id="hasAddress"
+        formControlName="hasAddress"
+        class="h-[40px] w-full rounded-md border border-[#D5DDF3] px-3 text-[13px]"
+      >
+
+        <option value="all">
+          Todos
+        </option>
+
+        <option value="yes">
+          Con domicilio
+        </option>
+
+        <option value="no">
+          Sin domicilio
+        </option>
+
+      </select>
+
+    </div>
+
+  </form>
+
+
+  <div class="mt-4 flex justify-end">
+
+     <button
+    type="button"
+        (click)="clearFilters()"
+        class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 "
+    >
+        Limpiar filtros
+    </button>
+
+    <button
+      type="button"
+      (click)="applyFilters()"
+      class="h-[40px] rounded-md bg-[#6B8DF5] px-5 text-[13px] font-semibold text-white pl-4 hover:bg-[#4167D9] ml-2"
+    >
+      Aplicar filtros
+    </button>
+
+    
+  </div>
+
+</div>
