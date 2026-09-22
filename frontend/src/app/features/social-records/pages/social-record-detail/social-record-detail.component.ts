@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
+import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
 import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
 import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
@@ -40,6 +40,7 @@ export class SocialRecordDetailComponent implements OnInit {
 
   public permissionService = inject(PermissionService);
   readonly PersonType = PersonType;
+  readonly PersonStatus = PersonStatus;
 
   private route = inject(ActivatedRoute);
   private socialRecordsService = inject(SocialRecordsService);
@@ -112,6 +113,25 @@ export class SocialRecordDetailComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage.set(err?.error?.message || 'Error al registrar el egreso.');
+      }
+    });
+  }
+
+  // marca a una persona ambulatoria como activa/inactiva a mano (SCRUM-78/156)
+  toggleProfileStatus(): void {
+    const person = this.record();
+    if (!person) {
+      return;
+    }
+
+    const newStatus = person.status === PersonStatus.Active
+      ? PersonProfileStatus.InactiveAmbulatory
+      : PersonProfileStatus.ActiveAmbulatory;
+
+    this.socialRecordsService.updateProfileStatus(person.personId, newStatus).subscribe({
+      next: () => this.loadRecord(person.id),
+      error: (err) => {
+        this.errorMessage.set(err?.error?.message || 'No se pudo cambiar el estado.');
       }
     });
   }

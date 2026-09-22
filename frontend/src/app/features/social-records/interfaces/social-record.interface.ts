@@ -99,6 +99,14 @@ export interface SocialRecordsResponse {
 
     contact: ContactRequest | null;
 
-    status?: string;
+    status: PersonStatus;
     lastModifiedAt?: string | null;
   }
+
+// PersonProfileStatus del backend (Application/Persons/PersonProfileStatus.cs): distinto de PersonStatus,
+// combina ambulatorio activo/inactivo y residente en un solo enum para el endpoint de cambio de estado
+export enum PersonProfileStatus {
+  ActiveAmbulatory = 0,
+  InactiveAmbulatory = 1,
+  Resident = 2,
+}

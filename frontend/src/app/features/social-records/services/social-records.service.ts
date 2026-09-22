@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
+import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonProfileStatus, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
 import { CasonaStayExitRequest } from '../interfaces/exit-stay.interface';
 
@@ -63,6 +63,11 @@ export class SocialRecordsService {
   // no en social-records, y necesita el id de la estadía activa (no el de la ficha)
   registerExit(stayId: string, payload: CasonaStayExitRequest): Observable<void> {
     return this.http.put<void>(`/api/casona-stays/${stayId}/egreso`, payload);
+  }
+
+  // marca manualmente a una persona ambulatoria como activa/inactiva (SCRUM-78/156)
+  updateProfileStatus(personId: string, status: PersonProfileStatus): Observable<void> {
+    return this.http.put<void>(`/api/persons/${personId}/status`, { status });
   }
 }
 
