@@ -24,7 +24,7 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
 
         var resultado = await service.CreateAsync(dto, Guid.NewGuid());
 
@@ -41,7 +41,7 @@ public class SocialRecordServiceTests
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
         var contacto = new ContactDto("Juan", "Perez", "1234", "Calle Falsa 123");
-        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, contacto);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, contacto);
 
         var resultado = await service.CreateAsync(dto, Guid.NewGuid());
 
@@ -55,7 +55,7 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
 
         var resultado = await service.CreateAsync(dto, Guid.NewGuid());
 
@@ -69,7 +69,7 @@ public class SocialRecordServiceTests
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
         var actorId = Guid.NewGuid();
-        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
 
         var resultado = await service.CreateAsync(dto, actorId);
 
@@ -83,7 +83,7 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new CreateSocialRecordDto("Ramón", "Gómez", null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Ramón", "Gómez", null, null, null, null, null, null, null, null, null, false, null, null);
         await service.CreateAsync(dto, Guid.NewGuid());
 
         var resultados = await service.SearchAsync("gom");
@@ -97,12 +97,16 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new CreateSocialRecordDto("Ramón", "Gómez", null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Joaquín", "Gómez", null, null, null, null, null, null, null, null, null, false, null, null);
         await service.CreateAsync(dto, Guid.NewGuid());
 
-        var resultados = await service.SearchAsync("RAMON");
+        
+        var resultadosSinTilde = await service.SearchAsync("Joaquin");
+        Assert.Single(resultadosSinTilde);
 
-        Assert.Single(resultados);
+        
+        var resultadosMayusculas = await service.SearchAsync("JOAQUÍN");
+        Assert.Single(resultadosMayusculas);
     }
 
     [Fact]
@@ -110,7 +114,7 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
         await service.CreateAsync(dto, Guid.NewGuid());
 
         var resultados = await service.SearchAsync("noexiste");
@@ -134,8 +138,8 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
-        var dto = new UpdateSocialRecordDto("Ana", "Torres", "30111222", null, null, "Nuevo motivo", null, null, null, null, true, null);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var dto = new UpdateSocialRecordDto("Ana", "Torres", "30111222", null, null, null, "Nuevo motivo", null, null, null, null, true, null);
 
         var resultado = await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
 
@@ -151,7 +155,7 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null);
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null);
 
         var resultado = await service.UpdateAsync(Guid.NewGuid(), dto, Guid.NewGuid());
 
@@ -163,9 +167,9 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
         var actorId = Guid.NewGuid();
-        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, false, null);
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null);
 
         await service.UpdateAsync(creada.SocialRecordId, dto, actorId);
 
@@ -180,11 +184,11 @@ public class SocialRecordServiceTests
         var actorId = Guid.NewGuid();
 
         //Con DNI y fecha de ingreso reciente
-        var dto1 = new CreateSocialRecordDto("Marcos", "Paz", "35111222", null, null, null, null, DateTime.UtcNow.AddDays(-5), null, null, null, false, null);
+        var dto1 = new CreateSocialRecordDto("Marcos", "Paz", "35111222", null, null, null, null, DateTime.UtcNow.AddDays(-5), null, null, null, false, null, null);
         await service.CreateAsync(dto1, actorId);
 
         //Sin DNI y fecha de ingreso antigua
-        var dto2 = new CreateSocialRecordDto("Lucas", "Sosa", null, null, null, null, null, DateTime.UtcNow.AddDays(-40), null, null, null, false, null);
+        var dto2 = new CreateSocialRecordDto("Lucas", "Sosa", null, null, null, null, null, DateTime.UtcNow.AddDays(-40), null, null, null, false, null, null);
         await service.CreateAsync(dto2, actorId);
 
         //Conteo total sin filtros

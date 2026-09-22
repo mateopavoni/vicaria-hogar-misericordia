@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -83,15 +84,41 @@ public class SocialRecordService : ISocialRecordService
             return [];
         }
 
-        // filtra en memoria (no traduce a SQL), suficiente para el volumen de un centro barrial
+        var normalizedQuery = Normalize(query);
+        var pattern = $"%{query.Trim().ToUpper()}%";
+
+        if (_dbContext.Database.IsRelational())
+        {
+            return await _dbContext.SocialRecords
+                .AsNoTracking()
+                .Include(r => r.Person)
+                .Where(r => r.Person != null && (
+                    EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
+                    (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
+                    (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern)) ||
+                    (r.Person.DateOfBirth != null && EF.Functions.Like(r.Person.DateOfBirth.ToString()!, pattern))
+                ))
+                .Select(r => new SocialRecordSearchResultDto(
+                    r.Id,
+                    r.PersonId,
+                    $"{r.Person!.FirstName} {r.Person.LastName}".Trim(),
+                    r.Person.Dni,
+                    r.UpdatedAt))
+                .ToListAsync(cancellationToken);
+        }
+
         var records = await _dbContext.SocialRecords
+            .AsNoTracking()
             .Include(r => r.Person)
             .ToListAsync(cancellationToken);
 
-        var normalizedQuery = Normalize(query);
-
         return records
-            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery))
+            .Where(r => r.Person != null && (
+                Normalize(r.Person.FirstName).Contains(normalizedQuery) ||
+                (r.Person.LastName != null && Normalize(r.Person.LastName).Contains(normalizedQuery)) ||
+                (r.Person.Dni != null && Normalize(r.Person.Dni).Contains(normalizedQuery)) ||
+                (r.Person.DateOfBirth != null && r.Person.DateOfBirth.Value.ToString("yyyy-MM-dd").Contains(normalizedQuery))
+            ))
             .Select(r => new SocialRecordSearchResultDto(
                 r.Id,
                 r.PersonId,
@@ -196,6 +223,127 @@ public class SocialRecordService : ISocialRecordService
         }
 
         return await query.CountAsync(cancellationToken);
+    }
+
+    public async Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
+        if (person is null)
+        {
+            return UpdatePersonTypeResult.PersonNotFound();
+        }
+
+        var socialRecord = await _dbContext.SocialRecords
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (socialRecord is null)
+        {
+            return UpdatePersonTypeResult.SocialRecordNotFound();
+        }
+
+        // SCRUM-134: pasar a Residente exige una evaluación psiquiátrica vigente
+        if (dto.PersonType == PersonType.Resident)
+        {
+            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
+                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+
+            if (!hasValidEvaluation)
+            {
+                return UpdatePersonTypeResult.MissingPsychiatricEvaluation();
+            }
+        }
+
+        // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
+        // la casona con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
+        var wasAlreadyResident = socialRecord.PersonType == PersonType.Resident;
+        socialRecord.PersonType = dto.PersonType;
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Tipo de persona actualizado",
+            AffectedEntity = $"Person:{personId}",
+            Date = DateTime.UtcNow
+        });
+
+        if (dto.PersonType == PersonType.Resident && !wasAlreadyResident)
+        {
+            var casonaStay = new CasonaStay
+            {
+                Id = Guid.NewGuid(),
+                PersonId = personId,
+                EntryDate = DateTime.UtcNow
+            };
+            _dbContext.CasonaStays.Add(casonaStay);
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = actorId,
+                Action = "Estadía en casona registrada",
+                AffectedEntity = $"CasonaStay:{casonaStay.Id}",
+                Date = DateTime.UtcNow
+            });
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdatePersonTypeResult.Ok();
+    }
+        public async Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId,UpdatePersonProfileStatusDto dto,Guid actorId,CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
+        if (person is null)
+        {
+            return UpdatePersonProfileStatusResult.PersonNotFound();
+        }
+
+        var socialRecord = await _dbContext.SocialRecords
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (socialRecord is null)
+        {
+            return UpdatePersonProfileStatusResult.SocialRecordNotFound();
+        }
+
+        if (dto.Status == PersonProfileStatus.Resident)
+        {
+            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
+                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+
+            if (!hasValidEvaluation)
+            {
+                return UpdatePersonProfileStatusResult.MissingPsychiatricEvaluation();
+            }
+
+            socialRecord.PersonType = PersonType.Resident;
+            socialRecord.Status = SocialRecordStatus.Active;
+        }
+        else if (dto.Status == PersonProfileStatus.ActiveAmbulatory)
+        {
+            socialRecord.PersonType = PersonType.Ambulatory;
+            socialRecord.Status = SocialRecordStatus.Active;
+        }
+        else if (dto.Status == PersonProfileStatus.InactiveAmbulatory)
+        {
+            socialRecord.PersonType = PersonType.Ambulatory;
+            socialRecord.Status = SocialRecordStatus.Inactive;
+        }
+
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Estado de persona actualizado desde perfil",
+            AffectedEntity = $"Person:{personId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdatePersonProfileStatusResult.Ok();
     }
 
     private static bool MatchesQuery(Person person, string normalizedQuery)
