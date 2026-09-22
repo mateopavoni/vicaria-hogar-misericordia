@@ -129,4 +129,29 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
         Assert.Equal(2, result!.TotalCount);
         Assert.True(result.Items[0].CreatedAt > result.Items[1].CreatedAt);
     }
+
+    [Fact]
+    public async Task GetTimeline_AsCoordinadorDeCasaConvivencia_Returns200()
+    {
+        var personId = await CrearPersonaAsync();
+        await UsarTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+
+        var response = await _client.GetAsync($"/api/persons/{personId}/observations");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<ObservationsTimelineResponseDto>();
+        Assert.NotNull(result);
+        Assert.NotNull(result!.Items);
+    }
+
+    [Fact]
+    public async Task CreateObservation_AsCoordinadorDeCasaConvivencia_Returns201()
+    {
+        var personId = await CrearPersonaAsync();
+        await UsarTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+
+        var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/observations", new { content = "Observación del coordinador" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
 }

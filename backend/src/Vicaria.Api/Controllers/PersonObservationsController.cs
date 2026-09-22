@@ -25,7 +25,7 @@ public class PersonObservationsController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpPost]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
     public async Task<IActionResult> Create(
         [FromRoute] Guid id,
         [FromBody] CreateObservationDto dto,
@@ -56,7 +56,7 @@ public class PersonObservationsController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result.Data);
     }
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
     public async Task<ActionResult<ObservationsTimelineResponseDto>> GetObservationsTimeline(
         Guid id,
         [FromQuery] GetObservationsFilterDto filters,

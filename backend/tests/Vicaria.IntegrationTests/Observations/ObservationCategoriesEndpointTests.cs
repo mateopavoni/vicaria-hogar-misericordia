@@ -330,4 +330,15 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Get_AsCoordinadorDeCasaConvivencia_Returns200()
+    {
+        await UseTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+        await SeedCategoryAsync("Salud");
+
+        var response = await _client.GetAsync("/api/observation-categories");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
 }

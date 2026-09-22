@@ -25,7 +25,7 @@ public class ObservationCategoriesController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
     public async Task<IActionResult> GetAll([FromQuery] bool onlyActive = true, CancellationToken cancellationToken = default) =>
         Ok(await _categoryService.GetCategoriesAsync(onlyActive, cancellationToken));
 
