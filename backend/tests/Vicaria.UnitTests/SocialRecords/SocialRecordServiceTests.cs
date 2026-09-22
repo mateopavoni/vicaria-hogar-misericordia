@@ -207,4 +207,49 @@ public class SocialRecordServiceTests
         var countFecha = await service.CountByFilterAsync(new FilterSocialRecordsDto(EntryDateFrom: DateTime.UtcNow.AddDays(-10)));
         Assert.Equal(1, countFecha);
     }
+
+    [Fact]
+    public async Task GetPagedAsync_CombinaBusquedaYFiltros()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+
+        await service.CreateAsync(new CreateSocialRecordDto("Marcos", "Paz", "35111222", null, null, null, null, null, null, null, null, false, null, null), actorId);
+        await service.CreateAsync(new CreateSocialRecordDto("Lucas", "Sosa", null, null, null, null, null, null, null, null, null, false, null, null), actorId);
+
+        // sin filtros ni busqueda: trae todo
+        var todos = await service.GetPagedAsync(page: 1, search: null, filter: null);
+        Assert.Equal(2, todos.Total);
+        Assert.Equal(1, todos.TotalPages);
+
+        // busqueda por nombre
+        var porNombre = await service.GetPagedAsync(page: 1, search: "marcos", filter: null);
+        Assert.Single(porNombre.Items);
+        Assert.Equal("Marcos", porNombre.Items[0].FirstName);
+
+        // filtro por DNI
+        var conDni = await service.GetPagedAsync(page: 1, search: null, filter: new FilterSocialRecordsDto(HasDni: true));
+        Assert.Single(conDni.Items);
+        Assert.Equal("35111222", conDni.Items[0].Dni);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_ComoDirectoraDeCasona_SoloTraeResidentes()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+
+        var ambulatorio = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), actorId);
+        var residente = await service.CreateAsync(new CreateSocialRecordDto("Beto", null, null, null, null, null, null, null, null, null, null, false, null, null), actorId);
+        var socialRecordResidente = await db.SocialRecords.FirstAsync(r => r.Id == residente.SocialRecordId);
+        socialRecordResidente.PersonType = PersonType.Resident;
+        await db.SaveChangesAsync();
+
+        var result = await service.GetPagedAsync(page: 1, search: null, filter: null, personTypeFilter: PersonType.Resident);
+
+        Assert.Single(result.Items);
+        Assert.Equal(residente.PersonId, result.Items[0].PersonId);
+    }
 }

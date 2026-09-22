@@ -63,6 +63,25 @@ public class SocialRecordsController : ControllerBase
         return Ok(results);
     }
 
+    // listado paginado con busqueda y filtros combinables para la pantalla de fichas (SCRUM-6/21/127)
+    [HttpGet("list")]
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] string? search = null,
+        [FromQuery] DateTime? entryDateFrom = null,
+        [FromQuery] DateTime? entryDateTo = null,
+        [FromQuery] int? withoutObservationsDays = null,
+        [FromQuery] bool? hasDni = null,
+        [FromQuery] bool? hasAddress = null,
+        CancellationToken cancellationToken = default)
+    {
+        PersonType? personTypeFilter = User.IsInRole(RoleNames.DirectoraDeCasona) ? PersonType.Resident : null;
+        var filter = new FilterSocialRecordsDto(entryDateFrom, entryDateTo, withoutObservationsDays, hasDni, hasAddress);
+
+        var result = await _socialRecordService.GetPagedAsync(page, search, filter, personTypeFilter, cancellationToken);
+        return Ok(result);
+    }
+
     // solo Referente y Directora pueden editar (SCRUM-7)
     [HttpPut("{id}")]
     [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona}")]

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Vicaria.Application.Common;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -108,6 +109,36 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
         var response = await _client.GetAsync("/api/social-records?q=ana");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetPaged_DevuelveListadoPaginado()
+    {
+        await UsarTokenAsync(RoleNames.Referente);
+        var nombreUnico = $"Valentina{Guid.NewGuid():N}";
+        await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreUnico, lastName = "Ríos" });
+
+        var response = await _client.GetAsync($"/api/social-records/list?page=1&search={nombreUnico}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var resultado = await response.Content.ReadFromJsonAsync<PagedResult<SocialRecordListItemDto>>();
+        Assert.Equal(1, resultado!.Total);
+        Assert.Single(resultado.Items);
+    }
+
+    [Fact]
+    public async Task GetPaged_ComoDirectoraDeCasona_SoloTraeResidentes()
+    {
+        await UsarTokenAsync(RoleNames.Referente);
+        var nombreUnico = $"Nicolas{Guid.NewGuid():N}";
+        await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreUnico });
+
+        await UsarTokenAsync(RoleNames.DirectoraDeCasona);
+        var response = await _client.GetAsync($"/api/social-records/list?search={nombreUnico}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var resultado = await response.Content.ReadFromJsonAsync<PagedResult<SocialRecordListItemDto>>();
+        Assert.Empty(resultado!.Items);
     }
 
     [Fact]
