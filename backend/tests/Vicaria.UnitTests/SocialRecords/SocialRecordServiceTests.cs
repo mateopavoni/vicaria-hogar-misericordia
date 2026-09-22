@@ -252,4 +252,34 @@ public class SocialRecordServiceTests
         Assert.Single(result.Items);
         Assert.Equal(residente.PersonId, result.Items[0].PersonId);
     }
+
+    [Fact]
+    public async Task GetByIdAsync_ConFichaExistente_DevuelveElPerfilCompleto()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var contacto = new ContactDto("Juan", "Perez", "1234", "Calle Falsa 123");
+        var dto = new CreateSocialRecordDto("Ana", "Gomez", "30111222", null, null, null, "Derivación", null, null, null, null, false, null, contacto);
+        var creada = await service.CreateAsync(dto, Guid.NewGuid());
+
+        var perfil = await service.GetByIdAsync(creada.SocialRecordId);
+
+        Assert.NotNull(perfil);
+        Assert.Equal("Ana", perfil!.FirstName);
+        Assert.Equal("Gomez", perfil.LastName);
+        Assert.NotNull(perfil.Contact);
+        Assert.Equal("Juan", perfil.Contact!.FirstName);
+        Assert.Empty(perfil.StaysHistory);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ConFichaInexistente_DevuelveNull()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+
+        var perfil = await service.GetByIdAsync(Guid.NewGuid());
+
+        Assert.Null(perfil);
+    }
 }

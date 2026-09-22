@@ -130,6 +130,58 @@ public class SocialRecordService : ISocialRecordService
         return filtered.Select(r => new SocialRecordSearchResultDto(r.Id, r.PersonId, $"{r.Person!.FirstName} {r.Person.LastName}".Trim(), r.Person.Dni, r.UpdatedAt)).ToList();
     }
 
+    // perfil completo de una ficha, para la pantalla de detalle (SCRUM-8/121)
+    public async Task<SocialRecordDetailDto?> GetByIdAsync(Guid socialRecordId, CancellationToken cancellationToken = default)
+    {
+        var record = await _dbContext.SocialRecords
+            .AsNoTracking()
+            .Include(r => r.Person)
+            .FirstOrDefaultAsync(r => r.Id == socialRecordId, cancellationToken);
+
+        if (record is null || record.Person is null)
+        {
+            return null;
+        }
+
+        var contact = await _dbContext.Contacts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.SocialRecordId == socialRecordId, cancellationToken);
+
+        var now = DateTime.UtcNow;
+        var stays = await _dbContext.CasonaStays
+            .AsNoTracking()
+            .Where(s => s.PersonId == record.PersonId)
+            .OrderByDescending(s => s.EntryDate)
+            .Select(s => new SocialRecordStayDto(
+                s.Id,
+                s.EntryDate,
+                s.ExitDate,
+                s.ExitReason,
+                Math.Max(0, (int)((s.ExitDate ?? now) - s.EntryDate).TotalDays)))
+            .ToListAsync(cancellationToken);
+
+        return new SocialRecordDetailDto(
+            record.Id,
+            record.PersonId,
+            record.Person.FirstName,
+            record.Person.LastName,
+            record.Person.Dni,
+            record.Person.DateOfBirth,
+            record.Person.Phone,
+            record.PersonType,
+            record.ReasonForEntry,
+            record.EntryDate,
+            record.HousingSituation,
+            record.OvernightLocation,
+            record.Occupation,
+            record.GeneralNotes,
+            record.HasDocumentation,
+            contact is null ? null : new ContactDto(contact.FirstName, contact.LastName, contact.Phone, contact.Address),
+            record.Status,
+            record.UpdatedAt,
+            stays);
+    }
+
     public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
         var socialRecord = await _dbContext.SocialRecords

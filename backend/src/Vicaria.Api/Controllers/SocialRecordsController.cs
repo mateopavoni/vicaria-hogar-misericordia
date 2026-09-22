@@ -82,6 +82,14 @@ public class SocialRecordsController : ControllerBase
         return Ok(result);
     }
 
+    // perfil completo de una ficha (SCRUM-8/121)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var record = await _socialRecordService.GetByIdAsync(id, cancellationToken);
+        return record is null ? NotFound() : Ok(record);
+    }
+
     // solo Referente y Directora pueden editar (SCRUM-7)
     [HttpPut("{id}")]
     [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona}")]
