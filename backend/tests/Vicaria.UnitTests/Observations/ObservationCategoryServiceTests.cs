@@ -96,7 +96,8 @@ public class ObservationCategoryServiceTests
         var service = new ObservationCategoryService(db);
         var actorId = Guid.NewGuid();
 
-        var resultado = await service.CreateAsync(new CreateObservationCategoryDto("Salud"), actorId);
+        // nombre distinto a las categorias predefinidas por seed (SCRUM-179), sino choca con DuplicateName
+        var resultado = await service.CreateAsync(new CreateObservationCategoryDto("Autonomía"), actorId);
 
         Assert.True(resultado.Success);
         var log = await db.AuditLogs.SingleAsync(a => a.AffectedEntity == $"ObservationCategory:{resultado.Data!.Id}");
@@ -125,10 +126,11 @@ public class ObservationCategoryServiceTests
     public async Task UpdateAsync_ConDescripcionVacia_GuardaNull()
     {
         using var db = CrearDbContext();
-        var categoria = await CrearCategoriaAsync(db, "Salud", "Vieja descripción");
+        // nombre distinto a las categorias predefinidas por seed (SCRUM-179), sino choca con DuplicateName
+        var categoria = await CrearCategoriaAsync(db, "Autonomía", "Vieja descripción");
         var service = new ObservationCategoryService(db);
 
-        var resultado = await service.UpdateAsync(categoria.Id, new UpdateObservationCategoryDto("Salud", "   "), Guid.NewGuid());
+        var resultado = await service.UpdateAsync(categoria.Id, new UpdateObservationCategoryDto("Autonomía", "   "), Guid.NewGuid());
 
         Assert.True(resultado.Success);
         Assert.Null(resultado.Data!.Description);
@@ -252,7 +254,9 @@ public class ObservationCategoryServiceTests
     public async Task GetCategoriesAsync_OnlyActiveFalse_IncluyeInactivas()
     {
         using var db = CrearDbContext();
-        var activa = await CrearCategoriaAsync(db, "Salud");
+        // hay 6 categorias predefinidas por seed (SCRUM-179), ademas de las 2 que crea este test
+        var categoriasPreexistentes = await db.ObservationCategories.CountAsync();
+        var activa = await CrearCategoriaAsync(db, "Autonomía");
         var inactiva = await CrearCategoriaAsync(db, "Legal");
         inactiva.IsActive = false;
         await db.SaveChangesAsync();
@@ -260,7 +264,7 @@ public class ObservationCategoryServiceTests
 
         var todas = await service.GetCategoriesAsync(false);
 
-        Assert.Equal(2, todas.Count);
+        Assert.Equal(categoriasPreexistentes + 2, todas.Count);
         Assert.Contains(activa.Id, todas.Select(c => c.Id));
         Assert.Contains(inactiva.Id, todas.Select(c => c.Id));
     }

@@ -94,6 +94,34 @@ public class ObservationCategoryService : IObservationCategoryService
         return CategoryOperationResult.Ok();
     }
 
+    // restringe el borrado fisico si la categoria ya tiene observaciones cargadas (SCRUM-177)
+    public async Task<CategoryOperationResult> DeleteAsync(Guid id, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var category = await _dbContext.ObservationCategories.FindAsync([id], cancellationToken);
+        if (category is null) return CategoryOperationResult.NotFound();
+
+        var hasObservations = await _dbContext.Observations.AnyAsync(o => o.CategoryId == id, cancellationToken);
+        if (hasObservations)
+        {
+            return CategoryOperationResult.HasObservations();
+        }
+
+        _dbContext.ObservationCategories.Remove(category);
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Categoría de observación eliminada",
+            AffectedEntity = $"ObservationCategory:{id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CategoryOperationResult.Ok();
+    }
+
     private static string? NormalizeDescription(string? description)
     {
         if (string.IsNullOrWhiteSpace(description)) return null;
