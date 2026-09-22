@@ -3,10 +3,10 @@
   <div class="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-semibold text-slate-800">
-        Observaciones
+        Historial de Observaciones
       </h2>
       <p class="mt-1 text-sm text-slate-500">
-        Registro cronológico categorizado del participante.
+        Línea de tiempo cronológica con seguimiento social.
       </p>
     </div>
 
@@ -19,65 +19,19 @@
         <span>+</span> Nueva observación
       </button>
     }
-    <!-- ... Renderizado de Solapas y Timeline ... -->
-
-    <!-- Modal de Carga de Observación -->
-    @if (showCreateModal()) {
-    <app-create-observation-modal
-        [socialRecordId]="socialRecordId()"
-        (observationSaved)="onObservationSaved($event)"
-        (cancel)="showCreateModal.set(false)"
-    />
-    }
   </div>
 
-  <!-- NAVEGACIÓN POR SOLAPAS (TABS) -->
-  <div class="border-b border-slate-200 mb-6 overflow-x-auto">
-    <nav class="flex gap-2 min-w-max pb-px" aria-label="Tabs de Categorías">
-      <!-- Tab: Todas -->
-      <button
-        type="button"
-        (click)="selectTab('all')"
-        [class]="activeTabId() === 'all'
-          ? 'border-indigo-600 text-indigo-600 font-semibold'
-          : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-        class="whitespace-nowrap border-b-2 py-3 px-4 text-sm font-medium transition-colors"
-      >
-        Todas
-        <span class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-         {{ observationsList().length }}
-        </span>
-      </button>
+  <!-- COMPONENTE REUTILIZABLE PANEL DE FILTROS -->
+  <app-observation-filters
+    [categories]="categories()"
+    [authors]="authorsList()"
+    [totalCount]="observationsList().length"
+    [filteredCount]="filteredObservations().length"
+    (filterChange)="onFilterChange($event)"
+    (exportReport)="exportReport()"
+  />
 
-      <!-- Tabs dinámicos por Categoría -->
-      @for (category of categories(); track category.id) {
-        @let count = getCategoryCount(category.id);
-
-        <button
-          type="button"
-          (click)="selectTab(category.id)"
-          [class]="activeTabId() === category.id
-            ? 'border-indigo-600 text-indigo-600 font-semibold'
-            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-          class="whitespace-nowrap border-b-2 py-3 px-4 text-sm font-medium transition-colors flex items-center gap-2"
-        >
-          <span>{{ category.name }}</span>
-          
-          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-            {{ count }}
-          </span>
-
-          @if (!category.isActive) {
-            <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-normal">
-              Inactiva
-            </span>
-          }
-        </button>
-      }
-    </nav>
-  </div>
-
-  <!-- CONTENIDO: TIMELINE DE OBSERVACIONES -->
+  <!-- TIMELINE DE OBSERVACIONES -->
   <div class="relative">
     @if (filteredObservations().length > 0) {
       <div class="absolute top-5 bottom-5 left-[18px] w-px bg-slate-300"></div>
@@ -93,15 +47,15 @@
               <div class="flex items-start justify-between gap-4">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                      {{ obs.categoryName }}
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      {{ obs.categoryName || 'General' }}
                     </span>
                     <span class="text-xs text-slate-400">
                       {{ obs.createdAt | date:'dd/MM/yyyy HH:mm' }}
                     </span>
                   </div>
 
-                  <p class="mt-3 text-sm leading-6 text-slate-600 whitespace-pre-line">
+                  <p class="mt-3 text-sm leading-6 text-slate-700 whitespace-pre-line">
                     {{ obs.content }}
                   </p>
 
@@ -116,8 +70,17 @@
       </div>
     } @else {
       <div class="py-12 text-center bg-white rounded-2xl border border-slate-200 p-6">
-        <app-empty-field-badge text="No hay observaciones en esta categoría." />
+        <app-empty-field-badge text="No se encontraron observaciones con los filtros aplicados" />
       </div>
     }
   </div>
+
+  <!-- MODAL NUEVA OBSERVACIÓN -->
+  @if (showCreateModal()) {
+    <app-create-observation-modal
+      [socialRecordId]="socialRecordId()"
+      (observationSaved)="onObservationSaved($event)"
+      (cancel)="showCreateModal.set(false)"
+    />
+  }
 </section>
