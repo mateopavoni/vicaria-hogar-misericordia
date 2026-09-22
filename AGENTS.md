@@ -153,8 +153,9 @@ Estado del código real (rama `dev`). Antes de tocar un dominio, verificar si ya
 | **Auth** (registro, login/JWT, aprobación, roles, baja lógica) | Api `AuthController`, Application `Auth/`, Infrastructure `AuthService` | `api/auth/*` (13 endpoints) |
 | **Notificaciones internas** (pendiente, bloqueo, marcado leído) | Api `NotificationController`, Application `Notifications/`, Infrastructure `NotificationService` | `api/notifications` |
 | **Fichas de personas (Social Records)** | Api `SocialRecordsController`, Application `SocialRecords/`, Infrastructure `SocialRecordService` | `api/social-records` |
+| **Personas - tipo (SCRUM-134)** | Api `PersonsController`, Application `Persons/` + `SocialRecords/`, Infrastructure `SocialRecordService` | `api/persons/{id}/type` |
 
-Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`.
+Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`, `CasonaStay`, `PsychiatricEvaluation`.
 
 ---
 
@@ -205,3 +206,9 @@ Secretos locales (connection string real, etc.) van en `appsettings.{Environment
 5. Nuevas features en Application/Infrastructure deben tener tests unitarios (InMemory DB) y, si tocan un endpoint, tests de integración siguiendo el patrón de `AuthControllerTests`.
 6. Todo identificador de código nuevo (clases, métodos, variables, propiedades) va en inglés — ver sección Convenciones. Si el código que estás tocando todavía tiene nombres en español (pendiente de refactor), no mezclar inglés y español dentro del mismo archivo sin que el refactor esté explícitamente en curso.
 7. No asumir ni inventar decisiones de producto — para dudas sobre alcance o prioridad, consultar `PROJECT.md` primero; si no está ahí, preguntar antes de implementar.
+
+---
+
+## Contexto extendido
+
+Para estado real verificado contra código (qué rama tiene qué), decisiones ya cerradas con evidencia, huecos conocidos con severidad, y preguntas abiertas para el equipo (no para resolver por tu cuenta), ver **[`.ai/context/00_INDEX.md`](./.ai/context/00_INDEX.md)**. Este archivo (`AGENTS.md`) sigue siendo la fuente de verdad de convenciones de código — `.ai/context/` no las duplica, las complementa.
