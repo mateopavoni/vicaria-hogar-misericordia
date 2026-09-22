@@ -302,6 +302,16 @@ public class SocialRecordService : ISocialRecordService
 
     private IQueryable<SocialRecord> ApplyFilters(IQueryable<SocialRecord> query, FilterSocialRecordsDto filter)
     {
+        if (filter.Status.HasValue)
+        {
+            query = query.Where(r => r.Status == filter.Status.Value);
+        }
+
+        if (filter.PersonType.HasValue)
+        {
+            query = query.Where(r => r.PersonType == filter.PersonType.Value);
+        }
+
         if (filter.EntryDateFrom.HasValue)
         {
             query = query.Where(r => r.EntryDate >= filter.EntryDateFrom.Value);

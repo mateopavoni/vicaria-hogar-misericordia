@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Vicaria.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    partial class VicariaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922162314_AddDescriptionObservationCategory")]
+    partial class AddDescriptionObservationCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -294,50 +297,6 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("categoria_observacion", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111101"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Salud"
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111102"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Documentación"
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111103"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Situación habitacional"
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111104"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Consumo"
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111105"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "Judicial"
-                        },
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111106"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsActive = true,
-                            Name = "General"
-                        });
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Permission", b =>

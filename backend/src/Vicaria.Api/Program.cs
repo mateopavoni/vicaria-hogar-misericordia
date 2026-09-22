@@ -21,6 +21,8 @@ using Vicaria.Infrastructure.SocialRecords;
 using Vicaria.Infrastructure.Persons;
 using Vicaria.Application.Observations;
 using Vicaria.Infrastructure.Observations;
+using Vicaria.Application.LifeStories;
+using Vicaria.Infrastructure.LifeStories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +72,11 @@ builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivitySer
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 builder.Services.AddScoped<IObservationService, ObservationService>();
 builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDtoValidator>();
+builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
+builder.Services.AddScoped<IValidator<CreateObservationCategoryDto>, CreateObservationCategoryDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObservationCategoryDtoValidator>();
+builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
+builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

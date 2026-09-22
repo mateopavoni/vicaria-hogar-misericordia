@@ -254,6 +254,72 @@ public class SocialRecordServiceTests
     }
 
     [Fact]
+    public async Task GetPagedAsync_ConEstado_FiltraPorEstado()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+
+        await service.CreateAsync(new CreateSocialRecordDto("Marcos", null, null, null, null, null, null, null, null, null, null, false, null, null), actorId);
+        var inactiva = await service.CreateAsync(new CreateSocialRecordDto("Lucas", null, null, null, null, null, null, null, null, null, null, false, null, null), actorId);
+        var socialRecordInactiva = await db.SocialRecords.FirstAsync(r => r.Id == inactiva.SocialRecordId);
+        socialRecordInactiva.Status = SocialRecordStatus.Inactive;
+        await db.SaveChangesAsync();
+
+        var activas = await service.GetPagedAsync(page: 1, search: null, filter: new FilterSocialRecordsDto(Status: SocialRecordStatus.Active));
+        var inactivas = await service.GetPagedAsync(page: 1, search: null, filter: new FilterSocialRecordsDto(Status: SocialRecordStatus.Inactive));
+
+        Assert.Single(activas.Items);
+        Assert.Equal("Marcos", activas.Items[0].FirstName);
+        Assert.Single(inactivas.Items);
+        Assert.Equal("Lucas", inactivas.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_ConTipoPersona_FiltraPorTipo()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+
+await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, PersonType.Ambulatory, null, null, null, null, null, false, null, null), actorId);
+        var residente = await service.CreateAsync(new CreateSocialRecordDto("Beto", null, null, null, null, PersonType.Resident, null, null, null, null, null, false, null, null), actorId);
+
+        var ambulatorios = await service.GetPagedAsync(page: 1, search: null, filter: new FilterSocialRecordsDto(PersonType: PersonType.Ambulatory));
+        var residentes = await service.GetPagedAsync(page: 1, search: null, filter: new FilterSocialRecordsDto(PersonType: PersonType.Resident));
+
+        Assert.Single(ambulatorios.Items);
+        Assert.Equal("Ana", ambulatorios.Items[0].FirstName);
+        Assert.Single(residentes.Items);
+        Assert.Equal("Beto", residentes.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_CombinaEstadoTipoYRangoDeFechas()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var actorId = Guid.NewGuid();
+
+        await service.CreateAsync(new CreateSocialRecordDto("Marcos", null, null, null, null, PersonType.Resident, null, DateTime.UtcNow.AddDays(-2), null, null, null, false, null, null), actorId);
+        var residenteInactivo = await service.CreateAsync(new CreateSocialRecordDto("Lucas", null, null, null, null, PersonType.Resident, null, DateTime.UtcNow.AddDays(-2), null, null, null, false, null, null), actorId);
+        var socialRecordInactivo = await db.SocialRecords.FirstAsync(r => r.Id == residenteInactivo.SocialRecordId);
+        socialRecordInactivo.Status = SocialRecordStatus.Inactive;
+        await db.SaveChangesAsync();
+
+        var filter = new FilterSocialRecordsDto(
+            EntryDateFrom: DateTime.UtcNow.AddDays(-5),
+            EntryDateTo: DateTime.UtcNow,
+            Status: SocialRecordStatus.Active,
+            PersonType: PersonType.Resident);
+
+        var result = await service.GetPagedAsync(page: 1, search: null, filter: filter);
+
+        Assert.Single(result.Items);
+        Assert.Equal("Marcos", result.Items[0].FirstName);
+    }
+
+    [Fact]
     public async Task GetByIdAsync_ConFichaExistente_DevuelveElPerfilCompleto()
     {
         using var db = CrearDbContext();
