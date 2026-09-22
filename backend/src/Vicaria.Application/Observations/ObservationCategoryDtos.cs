@@ -1,8 +1,8 @@
 namespace Vicaria.Application.Observations;
 
-public record ObservationCategoryDto(Guid Id, string Name, bool IsActive, DateTime CreatedAt);
-public record CreateObservationCategoryDto(string Name);
-public record UpdateObservationCategoryDto(string Name);
+public record ObservationCategoryDto(Guid Id, string Name, string? Description, bool IsActive, DateTime CreatedAt);
+public record CreateObservationCategoryDto(string Name, string? Description = null);
+public record UpdateObservationCategoryDto(string Name, string? Description = null);
 public record ToggleObservationCategoryStatusDto(bool IsActive);
 
 public enum CategoryOperationError { NotFound, DuplicateName }

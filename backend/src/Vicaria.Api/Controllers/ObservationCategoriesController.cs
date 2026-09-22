@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,8 @@ public class ObservationCategoriesController : ControllerBase
         _updateValidator = updateValidator;
     }
 
+    private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
     [HttpGet]
     [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
     public async Task<IActionResult> GetAll([FromQuery] bool onlyActive = true, CancellationToken cancellationToken = default) =>
@@ -37,7 +40,7 @@ public class ObservationCategoriesController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var result = await _categoryService.CreateAsync(dto, cancellationToken);
+        var result = await _categoryService.CreateAsync(dto, ActorId, cancellationToken);
         if (!result.Success) return Conflict(new { message = result.ErrorMessage });
         return StatusCode(StatusCodes.Status201Created, result.Data);
     }
@@ -53,7 +56,7 @@ public class ObservationCategoriesController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var result = await _categoryService.UpdateAsync(id, dto, cancellationToken);
+        var result = await _categoryService.UpdateAsync(id, dto, ActorId, cancellationToken);
         return result.Error switch
         {
             null => Ok(result.Data),
@@ -67,7 +70,7 @@ public class ObservationCategoriesController : ControllerBase
     [Authorize(Roles = RoleNames.Referente)]
     public async Task<IActionResult> ToggleStatus(Guid id, [FromBody] ToggleObservationCategoryStatusDto dto, CancellationToken cancellationToken)
     {
-        var result = await _categoryService.ToggleStatusAsync(id, dto.IsActive, cancellationToken);
+        var result = await _categoryService.ToggleStatusAsync(id, dto.IsActive, ActorId, cancellationToken);
         if (!result.Success) return NotFound(new { message = result.ErrorMessage });
         return NoContent();
     }

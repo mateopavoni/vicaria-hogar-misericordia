@@ -72,6 +72,9 @@ builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivitySer
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 builder.Services.AddScoped<IObservationService, ObservationService>();
 builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDtoValidator>();
+builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
+builder.Services.AddScoped<IValidator<CreateObservationCategoryDto>, CreateObservationCategoryDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObservationCategoryDtoValidator>();
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 
 

@@ -16,6 +16,10 @@ public class ObservationCategoryConfiguration : IEntityTypeConfiguration<Observa
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(c => c.Description)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.Property(c => c.IsActive)
             .IsRequired();
 
