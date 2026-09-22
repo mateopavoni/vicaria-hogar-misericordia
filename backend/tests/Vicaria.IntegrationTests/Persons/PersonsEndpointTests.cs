@@ -20,13 +20,40 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
-    private void UsarToken(string rol) =>
+    // firma el token con un usuario real seedeado en la base, no con un Guid random:
+    // el OnTokenValidated de Program.cs valida el token contra un usuario existente y Active
+    private async Task<Guid> SembrarActorAsync(string rol)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var roleId = db.Roles.First(r => r.Name == rol).Id;
+
+        var actor = new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Actor",
+            LastName = "Test",
+            Email = $"{Guid.NewGuid()}@mail.com",
+            PasswordHash = "x",
+            Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(actor);
+        await db.SaveChangesAsync();
+        return actor.Id;
+    }
+
+    private async Task UsarTokenAsync(string rol)
+    {
+        var actorId = await SembrarActorAsync(rol);
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, Guid.NewGuid()));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, actorId));
+    }
 
     private async Task<Guid> CrearPersonaAsync()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
         var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         return body!["personId"];
@@ -60,7 +87,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateType_ResidenteSinEvaluacion_Devuelve400()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
 
@@ -73,7 +100,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         var userId = await RegistrarUsuarioAsync();
         await SeedEvaluacionAsync(personId, userId, isValid: true);
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
 
@@ -86,7 +113,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         var userId = await RegistrarUsuarioAsync();
         await SeedEvaluacionAsync(personId, userId, isValid: false);
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
 
@@ -99,7 +126,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         var userId = await RegistrarUsuarioAsync();
         await SeedEvaluacionAsync(personId, userId, isValid: true);
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
 
@@ -116,7 +143,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateType_AmbulatorioSinEvaluacion_Devuelve204()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 0 });
 
@@ -126,7 +153,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     [Fact]
     public async Task UpdateType_PersonaInexistente_Devuelve404()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/type", new { personType = 1 });
 
@@ -137,7 +164,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateType_TipoInvalido_Devuelve400()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 99 });
 
@@ -156,7 +183,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateType_ComoEscucha_Devuelve403()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Escucha);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/type", new { personType = 1 });
 
@@ -166,7 +193,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateEstado_AmbulatorioActivo_Devuelve204()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 0 });
 
@@ -177,7 +204,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateEstado_AmbulatorioInactivo_Devuelve204()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 1 });
 
@@ -188,7 +215,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateEstado_ResidenteSinEvaluacion_Devuelve400()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 2 });
 
@@ -201,7 +228,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
         var personId = await CrearPersonaAsync();
         var userId = await RegistrarUsuarioAsync();
         await SeedEvaluacionAsync(personId, userId, isValid: true);
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 2 });
 
@@ -211,7 +238,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     [Fact]
     public async Task UpdateEstado_PersonaInexistente_Devuelve404()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/status", new { status = 0 });
 
@@ -230,7 +257,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task UpdateEstado_ComoEscucha_Devuelve403()
     {
         var personId = await CrearPersonaAsync();
-        UsarToken(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Escucha);
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/status", new { status = 0 });
 
