@@ -71,4 +71,17 @@ public class ObservationCategoriesController : ControllerBase
         if (!result.Success) return NotFound(new { message = result.ErrorMessage });
         return NoContent();
     }
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = RoleNames.Referente)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _categoryService.DeleteAsync(id, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            CategoryOperationError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            CategoryOperationError.HasAssociatedObservations => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
 }

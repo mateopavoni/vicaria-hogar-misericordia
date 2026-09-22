@@ -6,4 +6,5 @@ public interface IObservationCategoryService
     Task<CategoryOperationResult> CreateAsync(CreateObservationCategoryDto dto, CancellationToken cancellationToken = default);
     Task<CategoryOperationResult> UpdateAsync(Guid id, UpdateObservationCategoryDto dto, CancellationToken cancellationToken = default);
     Task<CategoryOperationResult> ToggleStatusAsync(Guid id, bool isActive, CancellationToken cancellationToken = default);
+    Task<CategoryOperationResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

@@ -55,4 +55,21 @@ public class ObservationCategoryService : IObservationCategoryService
         await _dbContext.SaveChangesAsync(cancellationToken);
         return CategoryOperationResult.Ok();
     }
+
+    public async Task<CategoryOperationResult> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var category = await _dbContext.ObservationCategories.FindAsync([id], cancellationToken);
+        if (category is null) return CategoryOperationResult.NotFound();
+
+        var hasObservations = await _dbContext.Observations.AnyAsync(o => o.CategoryId == id, cancellationToken);
+        if (hasObservations)
+        {
+            return CategoryOperationResult.HasObservations();
+        }
+
+        _dbContext.ObservationCategories.Remove(category);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CategoryOperationResult.Ok();
+    }
 }
