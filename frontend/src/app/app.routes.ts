@@ -40,7 +40,7 @@ export const routes: Routes = [
         //   permissionGuard('users.view')
         // ]
       },
-       // SCRUM-6 (listado) 
+      // SCRUM-6 (listado)
       {
         path: 'fichas',
 
@@ -51,15 +51,10 @@ export const routes: Routes = [
             .then(
               m => m.SocialRecordListComponent
             ),
-
-        // canActivate: [
-        //   permissionGuard('fichas.view')
-        // ]
       },
-      
+
       {
-       
-        path: 'ficha-nueva',
+        path: 'fichas/crear',
 
         loadComponent: () =>
           import('./features/social-records/pages/new-social-record/new-social-record.component')
@@ -68,28 +63,23 @@ export const routes: Routes = [
         // canActivate: [
         //   permissionGuard('fichas.create')
         // ]
-        //canDeactivate: [pendingChangesGuard] 
       },
 
       {
+        path: 'fichas/:id',
+        loadComponent: () =>
+          import('./features/social-records/pages/social-record-detail/social-record-detail.component')
+            .then(m => m.SocialRecordDetailComponent)
+      },
 
-      path: 'fichas/:id',
-      loadComponent: () =>
-        import('./features/social-records/pages/social-record-detail/social-record-detail.component')
-          .then(m => m.SocialRecordDetailComponent)
-
-    },
-    
-    // RUTA DE EDICIÓN
-
-    {
-      path: 'fichas/:id/edit',
-      loadComponent: () =>
-        import('./features/social-records/pages/social-record-edit/social-record-edit.component')
-          .then(m => m.SocialRecordEditComponent),
-          canDeactivate: [pendingChangesGuard] 
-    }
-
+      // RUTA DE EDICIÓN
+      {
+        path: 'fichas/:id/edit',
+        loadComponent: () =>
+          import('./features/social-records/pages/social-record-edit/social-record-edit.component')
+            .then(m => m.SocialRecordEditComponent),
+        canDeactivate: [pendingChangesGuard]
+      }
     ],
   },
 

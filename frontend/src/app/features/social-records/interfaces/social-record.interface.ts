@@ -9,6 +9,7 @@ export enum PersonStatus {
   Active = 0,
   Inactive = 1,
 }
+
 export interface ContactRequest {
   firstName: string;
   lastName: string | null;

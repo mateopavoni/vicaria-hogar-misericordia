@@ -86,6 +86,7 @@
             id="dateFrom"
             type="date"
             [value]="dateFrom()"
+            [max]="dateTo() || today"
             (change)="setDateFrom($any($event.target).value)"
             class="h-[40px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[13px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
           />
@@ -99,6 +100,8 @@
             id="dateTo"
             type="date"
             [value]="dateTo()"
+            [min]="dateFrom()"
+            [max]="today"
             (change)="setDateTo($any($event.target).value)"
             class="h-[40px] rounded-md border border-[#D5DDF3] bg-white px-3 text-[13px] text-slate-600 outline-none focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
           />
@@ -143,7 +146,10 @@
               Email
             </th>
             <th class="px-6 py-3 text-left text-[13px] font-bold text-slate-700">
-              Fecha 
+              Rol
+            </th>
+            <th class="px-6 py-3 text-left text-[13px] font-bold text-slate-700">
+              Fecha
             </th>
             <th class="px-6 py-3 text-center text-[13px] font-bold text-slate-700">
               Acciones
@@ -157,7 +163,7 @@
           <!-- LOADING -->
           @if (loading()) {
             <tr>
-              <td colspan="4" class="px-6 py-12 text-center">
+              <td colspan="5" class="px-6 py-12 text-center">
                 <div class="inline-flex items-center gap-2 text-[14px] text-slate-400">
                   <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
                   Cargando usuarios...
@@ -183,15 +189,20 @@
                   {{ user.email }}
                 </td>
 
-                <!-- FECHA / ROL -->
+                <!-- ROL -->
                 <td class="px-6 py-3 text-[13px] text-slate-600">
                   @if (user.role) {
                     <span class="inline-block rounded-md bg-slate-100 px-2 py-0.5 text-[13px] font-medium text-slate-700">
                       {{ user.role }}
                     </span>
                   } @else {
-                    {{ user.requestDate | date:'dd/MM/yy' }}
+                    -
                   }
+                </td>
+
+                <!-- FECHA -->
+                <td class="px-6 py-3 text-[13px] text-slate-600">
+                  {{ user.requestDate | date:'dd/MM/yy' }}
                 </td>
 
                 <!-- ACCIONES SEGÚN LA PESTAÑA -->
@@ -223,7 +234,9 @@
                       <button
                         type="button"
                         (click)="openChangeRoleModal(user)"
-                        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                        [disabled]="esUsuarioActual(user)"
+                        [title]="esUsuarioActual(user) ? 'No podés cambiar tu propio rol' : ''"
+                        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Reasignar Rol
                       </button>
@@ -231,7 +244,9 @@
                       <button
                         type="button"
                         (click)="deactivateUser(user)"
-                        class="rounded-md bg-amber-500 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-600 active:bg-amber-700"
+                        [disabled]="esUsuarioActual(user)"
+                        [title]="esUsuarioActual(user) ? 'No podés desactivar tu propia cuenta' : ''"
+                        class="rounded-md bg-amber-500 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-600 active:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Inactivar
                       </button>
@@ -258,7 +273,7 @@
           <!-- SIN RESULTADOS -->
           @if (!loading() && users().length === 0) {
             <tr>
-              <td colspan="4" class="px-6 py-16 text-center">
+              <td colspan="5" class="px-6 py-16 text-center">
                 <div class="flex flex-col items-center justify-center">
                   <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#EDF2FF] text-[#6B8DF5]">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -283,41 +298,41 @@
   </div>
 
   <!-- PAGINACIÓN -->
-  <div class="mt-6 flex items-center justify-center gap-3 text-[13px]">
-    <button
-      type="button"
-      (click)="goToPage(currentPage() - 1)"
-      [disabled]="currentPage() === 1"
-      class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:text-slate-400 disabled:opacity-40"
-    >
-      &lt; Anterior
-    </button>
-
-    @for (page of [1, 2, 3]; track page) {
+  @if (totalPages() > 1) {
+    <div class="mt-6 flex items-center justify-center gap-3 text-[13px]">
       <button
         type="button"
-        (click)="goToPage(page)"
-        class="flex h-8 w-8 items-center justify-center rounded-md font-semibold transition"
-        [class.bg-[#6B8DF5]]="currentPage() === page"
-        [class.text-white]="currentPage() === page"
-        [class.text-slate-600]="currentPage() !== page"
-        [class.hover:bg-slate-100]="currentPage() !== page"
+        (click)="goToPage(currentPage() - 1)"
+        [disabled]="currentPage() === 1"
+        class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:text-slate-400 disabled:opacity-40"
       >
-        {{ page }}
+        &lt; Anterior
       </button>
-    }
 
-    <span class="px-1 text-slate-400">...</span>
+      @for (page of pageNumbers(); track page) {
+        <button
+          type="button"
+          (click)="goToPage(page)"
+          class="flex h-8 w-8 items-center justify-center rounded-md font-semibold transition"
+          [class.bg-[#6B8DF5]]="currentPage() === page"
+          [class.text-white]="currentPage() === page"
+          [class.text-slate-600]="currentPage() !== page"
+          [class.hover:bg-slate-100]="currentPage() !== page"
+        >
+          {{ page }}
+        </button>
+      }
 
-    <button
-      type="button"
-      (click)="goToPage(currentPage() + 1)"
-      [disabled]="currentPage() === totalPages()"
-      class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      Siguiente &gt;
-    </button>
-  </div>
+      <button
+        type="button"
+        (click)="goToPage(currentPage() + 1)"
+        [disabled]="currentPage() === totalPages()"
+        class="px-2 py-1 font-semibold text-[#4167D9] transition hover:text-[#3155C5] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Siguiente &gt;
+      </button>
+    </div>
+  }
 
   <!-- MODALES EXISTENTES -->
   @if (showApproveModal()) {
