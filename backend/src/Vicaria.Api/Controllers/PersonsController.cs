@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Application.CasonaStays;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
@@ -16,18 +17,28 @@ public class PersonsController : ControllerBase
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<UpdatePersonTypeDto> _updatePersonTypeValidator;
     private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
+    private readonly ICasonaStayService _casonaStayService;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
         IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
-        IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator)
+        IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator,
+        ICasonaStayService casonaStayService)
     {
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
+        _casonaStayService = casonaStayService;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    [HttpGet("{id}/casona-stays")]
+    public async Task<ActionResult<IEnumerable<CasonaStayDto>>> GetCasonaStays(Guid id, CancellationToken cancellationToken)
+    {
+        var stays = await _casonaStayService.GetByPersonIdAsync(id, cancellationToken);
+        return Ok(stays);
+    }
 
     // cambia el tipo de persona (SCRUM-134): para Residente exige evaluación
     // psiquiátrica vigente; sin ella responde 400 con el detalle
