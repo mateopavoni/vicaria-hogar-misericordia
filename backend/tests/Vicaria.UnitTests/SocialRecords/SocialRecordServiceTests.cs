@@ -97,12 +97,16 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new CreateSocialRecordDto("Ramón", "Gómez", null, null, null, null, null, null, null, null, null, false, null, null);
+        var dto = new CreateSocialRecordDto("Joaquín", "Gómez", null, null, null, null, null, null, null, null, null, false, null, null);
         await service.CreateAsync(dto, Guid.NewGuid());
 
-        var resultados = await service.SearchAsync("RAMON");
+        
+        var resultadosSinTilde = await service.SearchAsync("Joaquin");
+        Assert.Single(resultadosSinTilde);
 
-        Assert.Single(resultados);
+        
+        var resultadosMayusculas = await service.SearchAsync("JOAQUÍN");
+        Assert.Single(resultadosMayusculas);
     }
 
     [Fact]
