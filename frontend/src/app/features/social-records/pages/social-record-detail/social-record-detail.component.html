@@ -59,7 +59,7 @@
 
               <!-- ESTADO -->
               <div>
-                @if (person.status === 'Active') {
+                @if (person.status === PersonStatus.Active) {
                   <span class="mt-1 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     Activo
@@ -71,6 +71,17 @@
                   </span>
                 }
               </div>
+
+              <!-- CAMBIO MANUAL DE ESTADO (solo ambulatorios, Residentes usan el flujo de Casona) -->
+              @if (person.personType === PersonType.Ambulatory && permissionService.hasPermission('fichas.edit')) {
+                <button
+                  type="button"
+                  (click)="toggleProfileStatus()"
+                  class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {{ person.status === PersonStatus.Active ? 'Marcar como Inactivo' : 'Marcar como Activo' }}
+                </button>
+              }
             </div>
           </div>
         </div>
