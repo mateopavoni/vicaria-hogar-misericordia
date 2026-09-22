@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateSocialRecordRequest, CreateSocialRecordResponse, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
+import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
-import { RegisterExitRequest } from '../interfaces/exit-stay.interface';
+import { CasonaStayExitRequest } from '../interfaces/exit-stay.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -42,7 +42,7 @@ export class SocialRecordsService {
         params = params.set('hasAddress', filters.hasAddress);
       }
     }
-    return this.http.get<SocialRecordsResponse>(this.apiUrl, { params });
+    return this.http.get<SocialRecordsResponse>(`${this.apiUrl}/list`, { params });
   }
 
   getById(id: string): Observable<SocialRecordDetail> {
@@ -53,8 +53,14 @@ export class SocialRecordsService {
     return this.http.put<SocialRecordDetail>(`${this.apiUrl}/${id}`, data);
   }
 
-  // registra el egreso de una estadía en la casona
-  registerExit(recordId: string, payload: RegisterExitRequest): Observable<SocialRecordDetail> {
-    return this.http.post<SocialRecordDetail>(`${this.apiUrl}/${recordId}/stays/exit`, payload);
+  // cambia el tipo de persona (ambulatorio/residente), ej. al marcar reingreso (SCRUM-134)
+  updatePersonType(personId: string, personType: PersonType): Observable<void> {
+    return this.http.put<void>(`/api/persons/${personId}/type`, { personType });
+  }
+
+  // registra el egreso de una estadía en la casona: la ruta real vive en CasonaStayController,
+  // no en social-records, y necesita el id de la estadía activa (no el de la ficha)
+  registerExit(stayId: string, payload: CasonaStayExitRequest): Observable<void> {
+    return this.http.put<void>(`/api/casona-stays/${stayId}/egreso`, payload);
   }
 }

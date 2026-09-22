@@ -1,4 +1,5 @@
 import { ChangeHistoryItem } from "./change-history.interface";
+import { Stay } from "./stay.interface";
 
 // 0 = Ambulatory, 1 = Resident (el backend no serializa el enum como string, ver PersonType.cs)
 export enum PersonType {
@@ -70,7 +71,7 @@ export interface SocialRecordsResponse {
 }
 
   export interface SocialRecordDetail {
-staysHistory: any;
+    staysHistory: Stay[];
     id: string;
     personId: string;
 
