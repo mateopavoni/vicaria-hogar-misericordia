@@ -20,13 +20,41 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
         _client = factory.CreateClient();
     }
 
-    private void UsarToken(string rol) =>
+    // firma el token con un usuario real seedeado en la base, no con un Guid random:
+    // el OnTokenValidated de Program.cs valida el token contra un usuario existente y Active
+    private async Task<Guid> SembrarActorAsync(string rol)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var roleId = db.Roles.First(r => r.Name == rol).Id;
+
+        var actor = new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Actor",
+            LastName = "Test",
+            Email = $"{Guid.NewGuid()}@mail.com",
+            PasswordHash = "x",
+            Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(actor);
+        await db.SaveChangesAsync();
+        return actor.Id;
+    }
+
+    private async Task<Guid> UsarTokenAsync(string rol)
+    {
+        var actorId = await SembrarActorAsync(rol);
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, Guid.NewGuid()));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, actorId));
+        return actorId;
+    }
 
     private async Task<Guid> CrearEstadiaActivaAsync()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
         var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         var personId = body!["personId"];
@@ -87,7 +115,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Exit_ConEstadiaInexistente_Devuelve404()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         var response = await _client.PutAsJsonAsync($"/api/casona-stays/{Guid.NewGuid()}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -108,9 +136,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     public async Task Exit_ConEstadiaActiva_RegistraAuditLogConElActor()
     {
         var stayId = await CrearEstadiaActivaAsync();
-        var actorId = Guid.NewGuid();
-        _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", RoleNames.Referente, actorId));
+        var actorId = await UsarTokenAsync(RoleNames.Referente);
         var beforeExit = DateTime.UtcNow;
 
         var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
@@ -127,7 +153,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     public async Task Exit_ComoEscucha_Devuelve403()
     {
         var stayId = await CrearEstadiaActivaAsync();
-        UsarToken(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Escucha);
 
         var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
 
@@ -146,7 +172,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     public async Task Exit_ActualizaEstadoPersonAAmbulatorioYGeneraAuditorias_SCRUM147()
     {
         // Arrange
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         var responseCreate = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Carlos" });
         var body = await responseCreate.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         var personId = body!["personId"];
@@ -200,7 +226,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Exit_SinEspecificarNewStatus_PasaAAmbulatorioActivoPorDefecto_SCRUM147()
     {
-        UsarToken(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referente);
         var responseCreate = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Martin" });
         var body = await responseCreate.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         var personId = body!["personId"];
