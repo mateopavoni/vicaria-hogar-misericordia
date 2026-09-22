@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
@@ -171,10 +172,84 @@ public class SocialRecordService : ISocialRecordService
     }
     public async Task<int> CountByFilterAsync(FilterSocialRecordsDto filter, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.SocialRecords
-            .Include(r => r.Person)
-            .AsQueryable();
+        var query = ApplyFilters(_dbContext.SocialRecords.Include(r => r.Person), filter);
+        return await query.CountAsync(cancellationToken);
+    }
 
+    // listado paginado con busqueda de texto y filtros combinables (SCRUM-21/127)
+    public async Task<PagedResult<SocialRecordListItemDto>> GetPagedAsync(int page, string? search, FilterSocialRecordsDto? filter, PersonType? personTypeFilter = null, CancellationToken cancellationToken = default)
+    {
+        const int pageSize = 10;
+
+        var query = _dbContext.SocialRecords.Include(r => r.Person).AsQueryable();
+
+        if (filter is not null)
+        {
+            query = ApplyFilters(query, filter);
+        }
+
+        if (personTypeFilter.HasValue)
+        {
+            query = query.Where(r => r.PersonType == personTypeFilter.Value);
+        }
+
+        if (_dbContext.Database.IsRelational())
+        {
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var pattern = $"%{search.Trim().ToUpper()}%";
+                query = query.Where(r => r.Person != null && (
+                    EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
+                    (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
+                    (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern))
+                ));
+            }
+
+            var total = await query.CountAsync(cancellationToken);
+            var items = await query
+                .OrderByDescending(r => r.UpdatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => ToListItemDto(r))
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<SocialRecordListItemDto>(items, total, (int)Math.Ceiling(total / (double)pageSize));
+        }
+
+        // fallback en memoria (ej. InMemory DB de tests, que no soporta EF.Functions.Like)
+        var allFiltered = await query.ToListAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var normalizedSearch = Normalize(search);
+            allFiltered = allFiltered
+                .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedSearch))
+                .ToList();
+        }
+
+        var totalMem = allFiltered.Count;
+        var itemsMem = allFiltered
+            .OrderByDescending(r => r.UpdatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(r => ToListItemDto(r))
+            .ToList();
+
+        return new PagedResult<SocialRecordListItemDto>(itemsMem, totalMem, (int)Math.Ceiling(totalMem / (double)pageSize));
+    }
+
+    private static SocialRecordListItemDto ToListItemDto(SocialRecord r) => new(
+        r.Id,
+        r.PersonId,
+        r.Person!.FirstName,
+        r.Person.LastName,
+        r.Person.Dni,
+        r.Person.DateOfBirth,
+        r.PersonType,
+        r.Status,
+        r.UpdatedAt);
+
+    private IQueryable<SocialRecord> ApplyFilters(IQueryable<SocialRecord> query, FilterSocialRecordsDto filter)
+    {
         if (filter.EntryDateFrom.HasValue)
         {
             query = query.Where(r => r.EntryDate >= filter.EntryDateFrom.Value);
@@ -211,19 +286,19 @@ public class SocialRecordService : ISocialRecordService
 
             if (filter.HasAddress.Value)
             {
-                query = query.Where(r => 
-                    (r.OvernightLocation != null && r.OvernightLocation != "") || 
+                query = query.Where(r =>
+                    (r.OvernightLocation != null && r.OvernightLocation != "") ||
                     recordsWithContactAddress.Contains(r.Id));
             }
             else
             {
-                query = query.Where(r => 
-                    (r.OvernightLocation == null || r.OvernightLocation == "") && 
+                query = query.Where(r =>
+                    (r.OvernightLocation == null || r.OvernightLocation == "") &&
                     !recordsWithContactAddress.Contains(r.Id));
             }
         }
 
-        return await query.CountAsync(cancellationToken);
+        return query;
     }
 
     public async Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default)
