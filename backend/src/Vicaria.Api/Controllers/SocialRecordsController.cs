@@ -47,8 +47,9 @@ public class SocialRecordsController : ControllerBase
         return CreatedAtAction(nameof(Create), new { id = result.SocialRecordId }, new { personId = result.PersonId, id = result.SocialRecordId });
     }
 
-    // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
+   // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
     [HttpGet]
+    [HttpGet("/api/personas/search")]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken cancellationToken)
     {
         var results = await _socialRecordService.SearchAsync(q, cancellationToken);
