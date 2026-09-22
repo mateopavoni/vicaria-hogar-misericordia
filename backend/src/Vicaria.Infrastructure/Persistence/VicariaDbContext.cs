@@ -23,6 +23,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<Observation> Observations => Set<Observation>();
     public DbSet<ObservationCategory> ObservationCategories => Set<ObservationCategory>();
+    public DbSet<LifeStory> LifeStories => Set<LifeStory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
