@@ -21,6 +21,8 @@ public class VicariaDbContext : DbContext
     public DbSet<CasonaStay> CasonaStays => Set<CasonaStay>();
     public DbSet<PsychiatricEvaluation> PsychiatricEvaluations => Set<PsychiatricEvaluation>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<Observation> Observations => Set<Observation>();
+    public DbSet<ObservationCategory> ObservationCategories => Set<ObservationCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
