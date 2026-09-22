@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Vicaria.Application.CasonaStays;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
+using Vicaria.Application.Timelines;
 using Vicaria.Domain.Entities;
 
 namespace Vicaria.Api.Controllers;
@@ -18,17 +19,20 @@ public class PersonsController : ControllerBase
     private readonly IValidator<UpdatePersonTypeDto> _updatePersonTypeValidator;
     private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
     private readonly ICasonaStayService _casonaStayService;
+    private readonly IProfileTimelineService _profileTimelineService;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
         IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
         IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator,
-        ICasonaStayService casonaStayService)
+        ICasonaStayService casonaStayService,
+        IProfileTimelineService profileTimelineService)
     {
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
         _casonaStayService = casonaStayService;
+        _profileTimelineService = profileTimelineService;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -85,6 +89,21 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonProfileStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonProfileStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    // timeline unificado del perfil (SCRUM-159): hitos del expediente (estadías de
+    // Casona) + observaciones, ordenados por fecha. Lectura para los roles con acceso al perfil.
+    [HttpGet("{id}/timeline")]
+    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    public async Task<IActionResult> GetTimeline(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _profileTimelineService.GetTimelineAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Data),
+            ProfileTimelineError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

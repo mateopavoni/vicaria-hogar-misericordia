@@ -55,14 +55,14 @@ public class PersonObservationsController : ControllerBase
 
         return StatusCode(StatusCodes.Status201Created, result.Data);
     }
-    [HttpGet("{personId:guid}/observations")]
+    [HttpGet]
     [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
     public async Task<ActionResult<ObservationsTimelineResponseDto>> GetObservationsTimeline(
-        Guid personId,
+        Guid id,
         [FromQuery] GetObservationsFilterDto filters,
         CancellationToken cancellationToken)
     {
-        var response = await _observationService.GetTimelineAsync(personId, filters, cancellationToken);
+        var response = await _observationService.GetTimelineAsync(id, filters, cancellationToken);
         return Ok(response);
     }
 }
