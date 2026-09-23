@@ -610,7 +610,8 @@
                   <!-- Editar -->
                   <button
                     type="button"
-                    class="text-slate-500
+                    [routerLink]="['/dashboard/fichas', record.id, 'edit']"
+                    class="text-slate-500 cursor-pointer
                            hover:text-[#4167D9]"
                     aria-label="Editar ficha"
                   >
