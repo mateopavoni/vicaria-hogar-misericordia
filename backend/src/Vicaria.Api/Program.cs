@@ -158,6 +158,7 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment())
     {
         SeedTestUsers(dbContext);
+        SeedDemoData(dbContext);
     }
 }
 
@@ -209,6 +210,223 @@ static void SeedTestUsers(VicariaDbContext dbContext)
             CreatedAt = DateTime.UtcNow
         });
     }
+
+    dbContext.SaveChanges();
+}
+
+// datos de ejemplo (personas ambulatorias/residentes, estadías, observaciones) para QA manual
+// local y demos (docker-compose) — idempotente: si ya hay alguna Person, no vuelve a sembrar
+static void SeedDemoData(VicariaDbContext dbContext)
+{
+    if (dbContext.People.Any())
+    {
+        return;
+    }
+
+    var referente = dbContext.Users.FirstOrDefault(u => u.Email == "referente@test.com");
+    var escucha = dbContext.Users.FirstOrDefault(u => u.Email == "escucha@test.com");
+    var directora = dbContext.Users.FirstOrDefault(u => u.Email == "directora@test.com");
+    if (referente is null || escucha is null || directora is null)
+    {
+        // sin los usuarios de prueba no hay a quién asignarle CreatedByUserId/AuthorUserId
+        return;
+    }
+
+    var now = DateTime.UtcNow;
+
+    (Person Person, SocialRecord Record) MakePerson(
+        string firstName, string lastName, string? dni, PersonType personType, SocialRecordStatus status,
+        string reasonForEntry, string? housingSituation, string? occupation, int entryDaysAgo)
+    {
+        var person = new Person
+        {
+            Id = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
+            Dni = dni,
+            CreatedAt = now.AddDays(-entryDaysAgo)
+        };
+        var record = new SocialRecord
+        {
+            Id = Guid.NewGuid(),
+            PersonId = person.Id,
+            Status = status,
+            PersonType = personType,
+            ReasonForEntry = reasonForEntry,
+            EntryDate = now.AddDays(-entryDaysAgo),
+            HousingSituation = housingSituation,
+            Occupation = occupation,
+            HasDocumentation = dni is not null,
+            CreatedByUserId = referente.Id,
+            CreatedAt = now.AddDays(-entryDaysAgo),
+            UpdatedAt = now.AddDays(-entryDaysAgo)
+        };
+        return (person, record);
+    }
+
+    var (personJuan, recordJuan) = MakePerson(
+        "Juan", "Pérez", "30123456", PersonType.Ambulatory, SocialRecordStatus.Active,
+        "Situación de calle, se acerca al Centro Barrial por el comedor", "Calle", "Changas", 25);
+    var (personMaria, recordMaria) = MakePerson(
+        "María", "Gómez", "28987654", PersonType.Ambulatory, SocialRecordStatus.Active,
+        "Busca acompañamiento y apoyo alimentario", "Pensión", "Desocupada", 15);
+    var (personCarlos, recordCarlos) = MakePerson(
+        "Carlos", "Rodríguez", "25456789", PersonType.Resident, SocialRecordStatus.Active,
+        "Ingresa a la Casa de Convivencia derivado por el equipo de calle", "Sin vivienda", null, 20);
+    var (personLucia, recordLucia) = MakePerson(
+        "Lucía", "Fernández", null, PersonType.Resident, SocialRecordStatus.Active,
+        "Ingreso voluntario a la Casa de Convivencia", "Sin vivienda", null, 10);
+    var (personRoberto, recordRoberto) = MakePerson(
+        "Roberto", "Sánchez", "22334455", PersonType.Resident, SocialRecordStatus.Inactive,
+        "Estadía finalizada, alta del equipo", "Sin vivienda", "Changas", 90);
+    var (personAna, recordAna) = MakePerson(
+        "Ana", "Torres", null, PersonType.Ambulatory, SocialRecordStatus.Inactive,
+        "Dejó de asistir al Centro Barrial", "Familiar", null, 120);
+
+    dbContext.People.AddRange(personJuan, personMaria, personCarlos, personLucia, personRoberto, personAna);
+    dbContext.SocialRecords.AddRange(recordJuan, recordMaria, recordCarlos, recordLucia, recordRoberto, recordAna);
+
+    dbContext.Contacts.AddRange(
+        new Contact
+        {
+            Id = Guid.NewGuid(),
+            SocialRecordId = recordJuan.Id,
+            FirstName = "Marta",
+            LastName = "Pérez",
+            Phone = "1145678901",
+            Address = "Av. Rivadavia 1234, CABA"
+        },
+        new Contact
+        {
+            Id = Guid.NewGuid(),
+            SocialRecordId = recordMaria.Id,
+            FirstName = "Pedro",
+            LastName = "Gómez",
+            Phone = "1156789012"
+        }
+    );
+
+    // evaluación psiquiátrica vigente para los residentes (Carlos, Lucía) — condición para PersonType.Resident (SCRUM-134)
+    dbContext.PsychiatricEvaluations.AddRange(
+        new PsychiatricEvaluation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personCarlos.Id,
+            Date = now.AddDays(-20),
+            Professional = "Dra. Silvina López",
+            Diagnosis = "Apto para convivencia asistida",
+            IsValid = true,
+            RegisteredByUserId = directora.Id
+        },
+        new PsychiatricEvaluation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personLucia.Id,
+            Date = now.AddDays(-10),
+            Professional = "Dr. Fernando Castro",
+            Diagnosis = "Apto para convivencia asistida",
+            IsValid = true,
+            RegisteredByUserId = directora.Id
+        },
+        new PsychiatricEvaluation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personRoberto.Id,
+            Date = now.AddDays(-90),
+            Professional = "Dra. Silvina López",
+            Diagnosis = "Apto para convivencia asistida",
+            IsValid = false,
+            RegisteredByUserId = directora.Id
+        }
+    );
+
+    // estadías en la Casa de Convivencia: dos abiertas (residentes activos), una cerrada (Roberto)
+    dbContext.CasaConvivenciaStays.AddRange(
+        new CasaConvivenciaStay
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personCarlos.Id,
+            EntryDate = now.AddDays(-20)
+        },
+        new CasaConvivenciaStay
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personLucia.Id,
+            EntryDate = now.AddDays(-10)
+        },
+        new CasaConvivenciaStay
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personRoberto.Id,
+            EntryDate = now.AddDays(-90),
+            ExitDate = now.AddDays(-5),
+            ExitReason = StayExitReason.TeamDischarge
+        }
+    );
+
+    // ids fijos de ObservationCategoryConfiguration (Salud, Documentación, Situación habitacional, ...)
+    var categoriaSalud = Guid.Parse("11111111-1111-1111-1111-111111111101");
+    var categoriaDocumentacion = Guid.Parse("11111111-1111-1111-1111-111111111102");
+    var categoriaHabitacional = Guid.Parse("11111111-1111-1111-1111-111111111103");
+    var categoriaGeneral = Guid.Parse("11111111-1111-1111-1111-111111111106");
+
+    dbContext.Observations.AddRange(
+        new Observation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personJuan.Id,
+            Content = "Se acercó al Centro Barrial, buenas condiciones generales de salud. Se le ofreció turno médico.",
+            CategoryId = categoriaSalud,
+            AuthorUserId = escucha.Id,
+            CreatedAt = now.AddDays(-40)
+        },
+        new Observation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personJuan.Id,
+            Content = "Inició trámite de renovación de DNI con acompañamiento del referente.",
+            CategoryId = categoriaDocumentacion,
+            AuthorUserId = referente.Id,
+            CreatedAt = now.AddDays(-15)
+        },
+        new Observation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personMaria.Id,
+            Content = "Consultó por posibilidad de alojamiento transitorio, se evaluará derivación.",
+            CategoryId = categoriaHabitacional,
+            AuthorUserId = escucha.Id,
+            CreatedAt = now.AddDays(-25)
+        },
+        new Observation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personCarlos.Id,
+            Content = "Buena adaptación a la convivencia durante la primera semana.",
+            CategoryId = categoriaGeneral,
+            AuthorUserId = directora.Id,
+            CreatedAt = now.AddDays(-13)
+        },
+        new Observation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personLucia.Id,
+            Content = "Participó activamente de las actividades grupales de la semana.",
+            CategoryId = categoriaGeneral,
+            AuthorUserId = directora.Id,
+            CreatedAt = now.AddDays(-3)
+        }
+    );
+
+    // asistencia reciente para los 4 activos: el job de inactividad (SCRUM-135) pasa a
+    // Inactive cualquier ficha Activa sin asistencia en los últimos 30 días, sin importar
+    // qué tan reciente sea el ingreso — sin esto, la demo arranca con todo marcado inactivo
+    dbContext.Attendances.AddRange(
+        new Attendance { Id = Guid.NewGuid(), PersonId = personJuan.Id, Date = now.AddDays(-2), CreatedByUserId = referente.Id },
+        new Attendance { Id = Guid.NewGuid(), PersonId = personMaria.Id, Date = now.AddDays(-5), CreatedByUserId = escucha.Id },
+        new Attendance { Id = Guid.NewGuid(), PersonId = personCarlos.Id, Date = now.AddDays(-1), CreatedByUserId = directora.Id },
+        new Attendance { Id = Guid.NewGuid(), PersonId = personLucia.Id, Date = now, CreatedByUserId = directora.Id }
+    );
 
     dbContext.SaveChanges();
 }
