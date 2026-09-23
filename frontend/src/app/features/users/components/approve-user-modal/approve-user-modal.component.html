@@ -1,0 +1,281 @@
+<!-- FONDO DEL MODAL -->
+
+<div
+  class="fixed inset-0 z-50
+         flex items-center justify-center
+         bg-slate-950/40
+         p-4"
+>
+
+  <!-- MODAL -->
+
+  <div
+    class="w-full max-w-md
+           rounded-2xl
+           border border-[#E3E8F5]
+           bg-white
+           shadow-[0_20px_50px_rgba(15,23,42,0.15)]"
+  >
+
+    <!-- ================================= -->
+    <!-- ENCABEZADO -->
+    <!-- ================================= -->
+
+    <div
+      class="flex items-start
+             justify-between
+             border-b border-slate-100
+             px-6 py-5"
+    >
+
+      <div>
+
+        <h2
+          class="text-[17px]
+                 font-bold
+                 text-slate-900"
+        >
+          Aprobar usuario
+        </h2>
+
+        <p
+          class="mt-1
+                 text-[11px]
+                 text-slate-400"
+        >
+          Asigná un rol para habilitar el acceso al sistema.
+        </p>
+
+      </div>
+
+
+      <!-- CERRAR -->
+
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="flex
+               h-8
+               w-8
+               items-center
+               justify-center
+               rounded-md
+               text-slate-400
+               transition
+               hover:bg-slate-100
+               hover:text-slate-600"
+        aria-label="Cerrar"
+      >
+
+        <svg
+          class="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+
+          <path d="M6 6l12 12" />
+          <path d="M18 6L6 18" />
+
+        </svg>
+
+      </button>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- CONTENIDO -->
+    <!-- ================================= -->
+
+    <div class="px-6 py-6">
+
+      @if (user) {
+
+        <!-- DATOS DEL USUARIO -->
+
+        <div
+          class="mb-6
+                 rounded-xl
+                 bg-[#F7F8FC]
+                 px-4 py-3"
+        >
+
+          <p
+            class="text-[12px]
+                   font-bold
+                   text-slate-700"
+          >
+            {{ user.name }}
+            {{ user.lastname }}
+          </p>
+
+          <p
+            class="mt-1
+                   text-[10px]
+                   text-slate-400"
+          >
+            {{ user.email }}
+          </p>
+
+        </div>
+
+
+        <!-- ROL -->
+
+        <div>
+
+          <label
+            class="mb-2
+                   block
+                   text-[12px]
+                   font-semibold
+                   text-slate-700"
+          >
+            Asignar rol
+          </label>
+
+
+          <div class="space-y-2">
+
+            @for (
+              role of roles;
+              track role
+            ) {
+
+              <button
+                type="button"
+                (click)="selectRole(role)"
+                class="flex
+                       w-full
+                       items-center
+                       justify-between
+                       rounded-lg
+                       border
+                       px-4 py-3
+                       text-left
+                       transition"
+                [class.border-[#6B8DF5]]="
+                  selectedRole() === role
+                "
+                [class.bg-[#EDF2FF]]="
+                  selectedRole() === role
+                "
+                [class.border-[#E3E8F5]]="
+                  selectedRole() !== role
+                "
+                [class.bg-white]="
+                  selectedRole() !== role
+                "
+              >
+
+                <span
+                  class="text-[12px]
+                         font-semibold"
+                  [class.text-[#4167D9]]="
+                    selectedRole() === role
+                  "
+                  [class.text-slate-700]="
+                    selectedRole() !== role
+                  "
+                >
+                  {{ roleLabel(role) }}
+                </span>
+
+
+                <!-- CHECK -->
+
+                @if (selectedRole() === role) {
+
+                  <span
+                    class="flex
+                           h-5
+                           w-5
+                           items-center
+                           justify-center
+                           rounded-full
+                           bg-[#6B8DF5]
+                           text-white"
+                  >
+
+                    <svg
+                      class="h-3 w-3"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 12l4 4L19 7" />
+                    </svg>
+
+                  </span>
+
+                }
+
+              </button>
+
+            }
+
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- BOTONES -->
+    <!-- ================================= -->
+
+    <div
+      class="flex
+             justify-end
+             gap-3
+             border-t border-slate-100
+             px-6 py-4"
+    >
+
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="rounded-md
+               border border-[#D5DDF3]
+               bg-white
+               px-4 py-2
+               text-[11px]
+               font-semibold
+               text-slate-600
+               transition
+               hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+
+
+      <button
+        type="button"
+        (click)="approveUser()"
+        [disabled]="!selectedRole()"
+        class="rounded-md
+               bg-[#6B8DF5]
+               px-4 py-2
+               text-[11px]
+               font-semibold
+               text-white
+               shadow-sm
+               transition
+               hover:bg-[#587BE8]
+               disabled:cursor-not-allowed
+               disabled:opacity-50"
+      >
+        Aprobar usuario
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
