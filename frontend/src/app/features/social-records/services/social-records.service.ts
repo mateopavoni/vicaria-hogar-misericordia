@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonProfileStatus, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
-import { CasonaStayExitRequest } from '../interfaces/exit-stay.interface';
+import { CasaConvivenciaStayExitRequest } from '../interfaces/exit-stay.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -53,16 +53,16 @@ export class SocialRecordsService {
     return this.http.put<SocialRecordDetail>(`${this.apiUrl}/${id}`, data);
   }
 
-  // cambia el tipo de persona (ambulatorio/residente); el backend crea la estadía en la Casona
+  // cambia el tipo de persona (ambulatorio/residente); el backend crea la estadía en la Casa de Convivencia
   // automáticamente al pasar a Residente (SCRUM-134), no hace falta un endpoint de "entry" aparte
   updatePersonType(personId: string, personType: PersonType): Observable<void> {
     return this.http.put<void>(`/api/persons/${personId}/type`, { personType });
   }
 
-  // registra el egreso de una estadía en la casona: la ruta real vive en CasonaStayController,
+  // registra el egreso de una estadía en la Casa de Convivencia: la ruta real vive en CasaConvivenciaStayController,
   // no en social-records, y necesita el id de la estadía activa (no el de la ficha)
-  registerExit(stayId: string, payload: CasonaStayExitRequest): Observable<void> {
-    return this.http.put<void>(`/api/casona-stays/${stayId}/egreso`, payload);
+  registerExit(stayId: string, payload: CasaConvivenciaStayExitRequest): Observable<void> {
+    return this.http.put<void>(`/api/casa-convivencia-stays/${stayId}/egreso`, payload);
   }
 
   // marca manualmente a una persona ambulatoria como activa/inactiva (SCRUM-78/156)

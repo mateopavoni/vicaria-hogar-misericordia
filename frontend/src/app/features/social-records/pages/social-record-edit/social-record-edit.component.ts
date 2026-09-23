@@ -121,7 +121,7 @@ export class SocialRecordEditComponent
       reasonForEntry: 'Acompañamiento e ingreso por situación habitacional.',
       entryDate: '2026-01-15T00:00:00.000Z',
       housingSituation: 'Parador / Casa de Convivencia',
-      overnightLocation: 'Casona',
+      overnightLocation: 'Casa de Convivencia',
       occupation: 'Estudiante',
       hasDocumentation: true,
       generalNotes: 'Observaciones generales ficticias cargadas en modo edición.',

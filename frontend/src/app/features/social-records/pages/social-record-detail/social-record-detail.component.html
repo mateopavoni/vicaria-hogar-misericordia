@@ -72,7 +72,7 @@
                 }
               </div>
 
-              <!-- CAMBIO MANUAL DE ESTADO (solo ambulatorios, Residentes usan el flujo de Casona) -->
+              <!-- CAMBIO MANUAL DE ESTADO (solo ambulatorios, Residentes usan el flujo de Casa de Convivencia) -->
               @if (person.personType === PersonType.Ambulatory && permissionService.hasPermission('fichas.edit')) {
                 <button
                   type="button"
@@ -437,7 +437,7 @@
               (click)="openExitModal()"
               class="rounded-md bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 shadow-sm"
             >
-              Registrar Egreso de Casona
+              Registrar Egreso de Casa de Convivencia
             </button>
           } @else {
             <button 

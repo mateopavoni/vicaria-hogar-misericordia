@@ -69,7 +69,7 @@ export class SocialRecordDetailComponent implements OnInit {
     this.showEntryModal.set(true);
   }
 
-  // marca a la persona como Residente; el backend crea la estadia en la Casona automaticamente (SCRUM-134).
+  // marca a la persona como Residente; el backend crea la estadía en la Casa de Convivencia automaticamente (SCRUM-134).
   // la fecha que carga el modal no se usa: el backend siempre registra el ingreso "ahora" (SCRUM-141)
   handleEntryConfirm(_data?: RegisterEntrySubmitData): void {
     const personId = this.record()?.personId;
@@ -81,12 +81,12 @@ export class SocialRecordDetailComponent implements OnInit {
       next: () => {
         this.showEntryModal.set(false);
         this.successModalTitle.set('¡Ingreso Registrado!');
-        this.successModalMessage.set('El ingreso a la Casona y el estado de Residente se registraron correctamente.');
+        this.successModalMessage.set('El ingreso a la Casa de Convivencia y el estado de Residente se registraron correctamente.');
         this.showSuccessModal.set(true);
         this.loadRecord(this.record()!.id);
       },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message || 'No se pudo registrar el ingreso a la Casona.');
+        this.errorMessage.set(err?.error?.message || 'No se pudo registrar el ingreso a la Casa de Convivencia.');
       }
     });
   }
@@ -107,7 +107,7 @@ export class SocialRecordDetailComponent implements OnInit {
       next: () => {
         this.showExitModal.set(false);
         this.successModalTitle.set('¡Egreso Registrado!');
-        this.successModalMessage.set('El egreso de la Casona se registró correctamente en la línea de tiempo.');
+        this.successModalMessage.set('El egreso de la Casa de Convivencia se registró correctamente en la línea de tiempo.');
         this.showSuccessModal.set(true);
         this.loadRecord(person!.id);
       },

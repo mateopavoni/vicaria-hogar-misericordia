@@ -7,8 +7,8 @@ export interface RegisterExitRequest {
   exitDetail?: string | null;
 }
 
-// lo que espera el backend real (CasonaStayExitDto): exitReason es el enum StayExitReason como numero
-export interface CasonaStayExitRequest {
+// lo que espera el backend real (CasaConvivenciaStayExitDto): exitReason es el enum StayExitReason como numero
+export interface CasaConvivenciaStayExitRequest {
   exitReason: number;
   reason?: string | null;
   newStatus?: number;
