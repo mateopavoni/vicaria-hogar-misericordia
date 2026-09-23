@@ -26,7 +26,7 @@ public class AttendanceController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     // registra la asistencia diaria de una persona (SCRUM-135) y reactiva su ficha si
-    // estaba Inactiva; Escucha también puede cargarla en el día a día del Hogar
+    // estaba Inactiva; Escucha también puede cargarla en el día a día del Centro Barrial
     [HttpPost]
     [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia},{RoleNames.Escucha}")]
     public async Task<IActionResult> Register([FromBody] CreateAttendanceDto dto, CancellationToken cancellationToken)
