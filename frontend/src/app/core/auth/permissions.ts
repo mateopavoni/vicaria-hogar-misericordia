@@ -80,39 +80,39 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
   'DirectoraDeCasona': [
 
-     // Fichas Casona
+     // Fichas Casa de Convivencia
     'fichas.view',
     'fichas.create',
     'fichas.edit',
 
-    // Observaciones Casona
+    // Observaciones Casa de Convivencia
     'observaciones.view',
     'observaciones.create',
     'observaciones.edit',
 
-    // Calendario Casona
+    // Calendario Casa de Convivencia
     'calendario.view',
     'calendario.create',
     'calendario.edit',
 
-    // Colaboradores Casona
+    // Colaboradores Casa de Convivencia
     'colaboradores.view',
     'colaboradores.create',
     'colaboradores.edit',
 
-    // Stock Casona
+    // Stock Casa de Convivencia
     'stock.view',
     'stock.create',
     'stock.edit',
 
-    // Usuarios Casona
+    // Usuarios Casa de Convivencia
     'users.view',
     'users.approve',
     'users.reject',
     'users.change-role',
     'users.disable',
 
-    // Medicamentos Casona
+    // Medicamentos Casa de Convivencia
     'medicamentos.view',
     'medicamentos.create',
     'medicamentos.edit'
