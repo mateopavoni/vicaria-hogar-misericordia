@@ -1,52 +1,43 @@
-# Estado actual — foto verificada al 2026-09-18
+# Estado actual — foto verificada al 2026-09-23
 
-Reemplaza la sección "Estado actual" desactualizada que tenía `/PROJECT.md` (fechada 2026-08-26, sobre una sola rama `dev`). Esta foto compara `main`, `dev-backend` y `dev-frontend` por separado, porque **no están alineadas entre sí** (ver [ARCHITECTURE.md](./ARCHITECTURE.md)).
+Reemplaza la versión anterior (fechada 2026-09-18). Entre esa fecha y hoy se cerró el Sprint 2 completo (backend y frontend), se mergeó `dev-backend` + `dev-frontend` → `dev`, y se hizo QA manual end-to-end con datos sembrados. Ver [DECISIONS.md](./DECISIONS.md) para el detalle de qué se mergeó en cada tanda.
 
-## `main` (lo más cercano a "producción/referencia estable")
+## `dev` (rama de integración — la que se demuestra/deploya)
 
-Solo tiene **EP-03** (auth/roles) completo:
-- Entidades: `User`, `Role`, `Permission`, `RolePermission`, `AuditLog`, `Notification` únicamente.
-- Registro, login/JWT/refresh, aprobación/rechazo de cuentas, bloqueo por 5 intentos, notificaciones internas, listado de usuarios paginado.
-- **No tiene** `Person`, `SocialRecord`, `PsychiatricEvaluation` ni `CasonaStay` — es decir, todo lo de fichas y casona (abajo) todavía no llegó a `main`.
+Desde hoy tiene **todo** lo de `dev-backend` y `dev-frontend` fusionado (merge manual vía rama `dev-integration`, sin conflictos de negocio sin resolver). Es la rama que refleja el estado real más avanzado del proyecto.
 
-## `dev-backend` (rama más adelantada de backend)
+- **EP-03 (auth/roles):** completo. Registro, login/JWT/refresh, aprobación/rechazo, bloqueo por 5 intentos, notificaciones internas, listado de usuarios paginado.
+- **EP-01 (fichas):** completo, back y front. Alta, búsqueda con filtros combinables (`GET /api/social-records/list`), edición, perfil completo (`GET /api/social-records/{id}`), selector/historial de tipo de persona (Ambulatorio/Residente).
+- **Clúster Casa de Convivencia (EP-12):** completo, back y front. Evaluación psiquiátrica (`IsValid`), estadías con ingreso automático y flujo de egreso (motivo + auditoría), timeline de estadías en el perfil.
+- **EP-02 (observaciones/historia de vida):** completo, back y front. Alta de observación, timeline con filtros, exportación a CSV, categorías de observación (CRUD, 6 categorías predefinidas sembradas), historia de vida por etapas (antes/durante/después).
+- **Control manual de estado activo/inactivo** (SCRUM-156): UI + endpoint, además de los jobs automáticos (ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) sobre la duplicación de esos jobs).
+- **Timeline unificado de perfil** (SCRUM-159): combina observaciones + hitos de estadía, un solo endpoint (`GET /api/persons/{id}/timeline`).
 
-Todo lo de `main`, más:
-- **EP-01 parcial:** `Person`, `Contact`, `SocialRecord` (ficha, separada de persona) — crear, buscar, editar ficha (SCRUM-5/6/7), actualización de tipo de persona.
-- **Clúster de casona (EP-12):** `PsychiatricEvaluation` con flag `IsValid`, `CasonaStay` con flujo de egreso (SCRUM-134/140/146), registro automático de ingreso (SCRUM-141).
-- Recién integrado en esta sesión (PRs #25, #28, #29): fixes de QA sobre fichas/usuarios, endpoint de egreso, registro automático de ingreso.
-- **No tiene:** Observación/HistoriaVida (EP-02), Asistencia/AgendaMedicamentos (EP-10/11), InformeCaritas/adjuntos-PDF (EP-07), Colaboradores (EP-05), Calendario (EP-04), EP-13.
+**No tiene todavía:** Asistencia/AgendaMedicamentos más allá del job de 30 días (EP-10/11 parcial — existe `Attendance` y el job, no la agenda de medicamentos), InformeCaritas/adjuntos-PDF (EP-07), Colaboradores (EP-05), Calendario (EP-04), EP-13.
 
-## `dev-frontend` (rama más adelantada de frontend)
+## `main`
 
-- Auth completo: login, registro, pending-approval.
-- Gestión de usuarios: listado paginado, aprobar/rechazar/cambiar rol.
-- Fichas: **solo alta** (`new-social-record`) — no hay pantalla de búsqueda, edición ni visualización de ficha, aunque el backend ya expone esos endpoints (SCRUM-6/7). Ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md), gap de paridad front/back.
-- **No tiene ninguna pantalla de casona** (ni estadías ni egreso), aunque el backend ya lo expone.
-- Recién integrado en esta sesión (PR #26): fixes de QA de fichas/gestión de usuarios.
+Sin tocar en esta sesión — sigue solo con EP-03. El pase de `dev` → `main` es un paso posterior, condicionado a que el renombre pendiente (ver abajo) y la revisión de convenciones estén cerrados primero.
 
-## Qué se hizo en esta sesión (2026-09-18)
+## Renombre de terminología (en curso, no completo)
 
-4 PRs abiertas se mergearon (merge commit, sin borrar las ramas fuente, sin tocar `dev`/`main`, por decisión explícita del usuario):
+Decisión de equipo (confirmada): "Casona" → "Casa de Convivencia", "Hogar" → "Centro Barrial", personas que asisten (no residen) → "Ambulatorio".
 
-| PR | Rama fuente | Base |
-|---|---|---|
-| #29 | `feature/SCRUM-146-endopoint-egreso` | `dev-backend` |
-| #28 | `SCRUM-141-registro-automatico-de-ingreso` | `dev-backend` |
-| #25 | `fix/qa-social-records-usuarios-backend` | `dev-backend` |
-| #26 | `fix/qa-social-records-usuarios` | `dev-frontend` |
+- ✅ **Completo:** entidades, DTOs, rutas, tablas y comentarios de "Casona" → "Casa de Convivencia" (`CasaConvivenciaStay`, `api/casa-convivencia-stays`, migración `RenameCasonaToCasaConvivencia`). `PersonType.Ambulatory` ya nace con el nombre correcto en inglés (no hubo que renombrarlo). UI del topbar ("Sede actual: Centro Barrial").
+- ❌ **Pendiente:** el dominio `LifeStory` completo usa `Hogar` como identificador de las 3 etapas (`BeforeHogar`/`InHogar`/`AfterHogar`, DTOs, rutas `before-hogar`/`in-hogar`/`after-hogar`, columnas de tabla). Es un rename profundo (toca migración de DB, no solo código) — deliberadamente **no** se tocó en esta sesión para no arriesgar el demo del día; queda como tarea explícita antes de pasar `dev` a `main`.
+- ❌ **Sin decidir:** `RoleNames.DirectoraDeCasona` — es un valor persistido (rol en DB, claims de JWT, decenas de `[Authorize(Roles=...)]`). Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), no renombrar sin decisión de equipo.
 
-Quedaron 0 PRs abiertas. No se tocaron las ~24 ramas `feature/*` restantes sin PR — inventario en [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
+## QA manual end-to-end (2026-09-23)
 
-## Épicas: estado por sprint (cruza con la tabla de `/PROJECT.md`)
+Verificado levantando el stack completo con `docker compose` (ver `/deploy-local.md`) contra datos sembrados (`Program.cs`, `SeedTestUsers` + `SeedDemoData`, 6 personas de ejemplo con observaciones/estadías/evaluaciones):
 
-| Épica | Estado real |
-|---|---|
-| EP-03 (Sprint 1) | ✅ Completo, en `main` |
-| EP-01 (fichas, Sprint 2) | 🟡 Parcial, solo en `dev-backend`/`dev-frontend`, sin llegar a `dev`/`main`; front solo tiene alta |
-| EP-02 (observaciones/historia de vida, Sprint 2) | ❌ Sin empezar — ninguna entidad |
-| EP-04/EP-05 (calendario/colaboradores, Sprint 3) | ❌ Sin empezar |
-| EP-10/EP-11 (asistencia/medicación, Sprint 4) | ❌ Sin empezar |
-| EP-12 (evaluación psiquiátrica/estado, Sprint 5) | 🟡 Clúster de casona implementado en `dev-backend`, sin frontend, sin llegar a `dev`/`main` |
-| EP-07 (documentación/adjuntos PDF, Sprint 5) | ❌ Sin empezar |
-| EP-13 (informes institucionales, Sprint 6) | ❌ Sin empezar |
+- Login con los 4 roles, listado y detalle de fichas, observaciones con nombre de categoría/autor, estadías activas/cerradas — todo verificado con requests reales contra la API containerizada, no solo por lectura de código.
+- **Bug encontrado y arreglado en esta pasada:** `ObservationService.ApplyFilters` no traía `Include(Category)`/`Include(AuthorUser)` — el timeline y el CSV de observaciones mostraban categoría y autor siempre vacíos. Arreglado + test de regresión agregado (`ObservationServiceTests`).
+- **Bug encontrado y arreglado:** el `docker-compose.yml` local apuntaba el frontend a `frontend/Dockerfile.local` (no existía) y el único `nginx.conf` real proxeaba `/api/` a producción — se hubiera usado el backend de producción en vez del local sin ningún error visible. Se crearon `frontend/Dockerfile.local` + `frontend/nginx.local.conf` dedicados a compose.
+- **Bug encontrado y arreglado:** `ng serve` no aplicaba `proxy.conf.json` (faltaba `options.proxyConfig` en `angular.json`) — cualquiera que corriera `npm start` sin saber del flag manual se encontraba con llamadas a la API fallando en dev sin compose.
+
+Backend: `dotnet build` limpio, 113/113 tests unitarios en verde. Frontend: `ng build` de producción limpio.
+
+## Merge `dev-backend` + `dev-frontend` → `dev`: nota técnica importante
+
+El merge de `origin/dev-backend` a la rama de integración **borró silenciosamente los ~101 archivos de `frontend/`** que ya existían en `origin/dev` (falso positivo de detección de renombre de git al mergear una rama backend-only que diverge de `dev` desde antes de que `frontend/` existiera) — sin marcarlo como conflicto. Se detectó porque `npm install` fallaba con `package.json` no encontrado, y se confirmó comparando árboles de archivos completos (`git ls-tree -r`) entre ramas, no solo el archivo que falló. Restaurado completo desde `origin/dev-frontend`. **Lección para el equipo:** después de cualquier merge de ramas con superficies de archivos muy distintas (backend-only + frontend-only), comparar conteos de archivos por carpeta antes de confiar en que "no hubo conflictos" significa "no se perdió nada".

@@ -33,3 +33,11 @@ Lista 3 roles (Referente, DirectoraDeCasona, Escucha); el código (`RoleNames`) 
 ## (f) ¿El clúster de casona es EP-12 o merece épica propia?
 
 En esta pasada se documentó como parte de EP-12 por instrucción directa de Mateo al pedir este trabajo. Si el equipo prefiere una épica separada (tiene bastante entidad propia: estadías + evaluación psiquiátrica + egreso), es una corrección simple a `/PROJECT.md` y a [CURRENT_STATE.md](./CURRENT_STATE.md).
+
+## (g) Dos jobs de inactividad automática pisándose (encontrado 2026-09-23)
+
+`PersonInactivityService` y `AttendanceInactivityService` corren en paralelo sobre el mismo `SocialRecord.Status`, con criterios distintos (staleness de `UpdatedAt` vs. falta de `Attendance`). Ninguno distingue `PersonType` — un Residente de la Casa de Convivencia (presente físicamente todos los días) puede pasar a Inactive solo por no tener un registro de asistencia explícito. Preguntas para el equipo: **¿se unifican en un solo job?**, **¿un Residente con estadía abierta debería quedar exento del chequeo de asistencia?** Ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
+
+## (h) Rename `Hogar` → `Centro Barrial` en `LifeStory`: ¿cuándo?
+
+Confirmado por el equipo que corresponde (mismo criterio que "Casona" → "Casa de Convivencia", ya aplicado en el resto del código). Queda pendiente específicamente en el dominio `LifeStory` (entidad, DTOs, rutas, columnas de DB) porque es un rename que toca migración, no solo texto — no se hizo el 2026-09-23 para no arriesgar un demo el mismo día. ¿Se hace antes de pasar `dev` a `main` (como el resto de la revisión de convenciones), o se puede posponer a un sprint dedicado?

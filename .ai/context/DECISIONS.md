@@ -21,6 +21,13 @@ El diseño técnico original (NestJS + PostgreSQL + Prisma) fue reemplazado por 
 - **La contradicción de versión de Angular (doc: 16+, código: `^22.1.0`) no se resolvió** — se documenta como pregunta abierta en vez de asumir cuál es la correcta, por instrucción explícita.
 - **La restricción sobre información sensible (abusos) se documenta como acuerdo humano sin enforcement técnico**, porque no se encontró ningún mecanismo en código que la haga cumplir (búsqueda de "abuso"/"información sensible" en todo el repo: sin resultados). Ver [CONSTRAINTS.md](./CONSTRAINTS.md).
 
+## Decisiones del 2026-09-23 (cierre de Sprint 2)
+
+- **`dev-backend` + `dev-frontend` se integran a `dev`**, sin borrar ninguna de las dos ramas fuente. `main` queda sin tocar hasta que se resuelva el rename pendiente de `Hogar`→`Centro Barrial` en `LifeStory` — ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
+- **Rename "Casona"→"Casa de Convivencia" confirmado y aplicado** en todo el código, rutas y DB (migración `RenameTable`, no drop+create). **Rename "Hogar"→"Centro Barrial" confirmado pero aplicado solo parcialmente** — el dominio `LifeStory` queda pendiente por ser un rename que toca migración de DB, decisión explícita de no arriesgarlo el mismo día de un demo.
+- **`RoleNames.DirectoraDeCasona` no se renombra** — es un valor persistido (rol en DB/JWT), requiere decisión de equipo aparte, no se asume unilateralmente. Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
+- **Seed de datos de demo** (`Program.cs`, `SeedDemoData`) se agrega como código de aplicación (no como script SQL aparte), mismo patrón que `SeedTestUsers` ya existente — corre solo en `Development`, es idempotente.
+
 ## Gate de RAG / subagente dedicado (Fase 3)
 
 **Verdict: no aplica todavía, con evidencia (no se asume por defecto).**
