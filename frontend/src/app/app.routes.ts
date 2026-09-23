@@ -53,6 +53,13 @@ export const routes: Routes = [
             ),
       },
 
+      // Redirect por compatibilidad (URL vieja del botón "Nueva ficha")
+      {
+        path: 'ficha-nueva',
+        redirectTo: 'fichas/crear',
+        pathMatch: 'full',
+      },
+
       {
         path: 'fichas/crear',
 
@@ -90,11 +97,13 @@ export const routes: Routes = [
     import('./shared/components/access-denied/access-denied.component')
       .then(m => m.AccessDeniedComponent),
    },
-  // CUALQUIER RUTA DESCONOCIDA (Redirige al login de auth)
-  // {
-  //   path: '**',
-  //   redirectTo: 'auth/login',
-  // },
+  // CUALQUIER RUTA DESCONOCIDA (Página 404, para que links muertos no fallen en silencio)
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./shared/components/not-found/not-found.component')
+        .then(m => m.NotFoundComponent)
+  },
 
 ];
 
