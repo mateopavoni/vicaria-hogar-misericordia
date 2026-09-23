@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using Vicaria.Application.CasonaStays;
+using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Domain.Entities;
-using Vicaria.Infrastructure.CasonaStays;
+using Vicaria.Infrastructure.CasaConvivenciaStays;
 using Vicaria.Infrastructure.Persistence;
 
-namespace Vicaria.UnitTests.CasonaStays;
+namespace Vicaria.UnitTests.CasaConvivenciaStays;
 
-public class CasonaStayServiceTests
+public class CasaConvivenciaStayServiceTests
 {
     private static VicariaDbContext CrearDbContext()
     {
@@ -19,18 +19,18 @@ public class CasonaStayServiceTests
         return db;
     }
 
-    private async Task<CasonaStay> CrearEstadiaActiva(VicariaDbContext db, Guid? personId = null)
+    private async Task<CasaConvivenciaStay> CrearEstadiaActiva(VicariaDbContext db, Guid? personId = null)
     {
         var person = new Person { Id = personId ?? Guid.NewGuid(), FirstName = "Ana", CreatedAt = DateTime.UtcNow };
         db.People.Add(person);
 
-        var stay = new CasonaStay
+        var stay = new CasaConvivenciaStay
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
             EntryDate = DateTime.UtcNow.AddDays(-10)
         };
-        db.CasonaStays.Add(stay);
+        db.CasaConvivenciaStays.Add(stay);
         await db.SaveChangesAsync();
         return stay;
     }
@@ -40,13 +40,13 @@ public class CasonaStayServiceTests
     {
         var beforeExit = DateTime.UtcNow;
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
         var stay = await CrearEstadiaActiva(db);
 
-        var resultado = await service.ExitAsync(stay.Id, new CasonaStayExitDto(null, null), Guid.NewGuid());
+        var resultado = await service.ExitAsync(stay.Id, new CasaConvivenciaStayExitDto(null, null), Guid.NewGuid());
 
         Assert.True(resultado.Success);
-        var egresada = await db.CasonaStays.FindAsync(stay.Id);
+        var egresada = await db.CasaConvivenciaStays.FindAsync(stay.Id);
         Assert.NotNull(egresada!.ExitDate);
         Assert.True(egresada.ExitDate >= beforeExit);
     }
@@ -55,13 +55,13 @@ public class CasonaStayServiceTests
     public async Task ExitAsync_ConMotivoOtroYTexto_GuardaAmbos()
     {
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
         var stay = await CrearEstadiaActiva(db);
 
-        var resultado = await service.ExitAsync(stay.Id, new CasonaStayExitDto(StayExitReason.Other, "Se retiró por motivos personales"), Guid.NewGuid());
+        var resultado = await service.ExitAsync(stay.Id, new CasaConvivenciaStayExitDto(StayExitReason.Other, "Se retiró por motivos personales"), Guid.NewGuid());
 
         Assert.True(resultado.Success);
-        var egresada = await db.CasonaStays.FindAsync(stay.Id);
+        var egresada = await db.CasaConvivenciaStays.FindAsync(stay.Id);
         Assert.Equal(StayExitReason.Other, egresada!.ExitReason);
         Assert.Equal("Se retiró por motivos personales", egresada.Reason);
     }
@@ -70,13 +70,13 @@ public class CasonaStayServiceTests
     public async Task ExitAsync_ConMotivoEspecificoYTexto_GuardaExitReasonYTambienTexto()
     {
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
         var stay = await CrearEstadiaActiva(db);
 
-        var resultado = await service.ExitAsync(stay.Id, new CasonaStayExitDto(StayExitReason.Abandonment, "No volvió"), Guid.NewGuid());
+        var resultado = await service.ExitAsync(stay.Id, new CasaConvivenciaStayExitDto(StayExitReason.Abandonment, "No volvió"), Guid.NewGuid());
 
         Assert.True(resultado.Success);
-        var egresada = await db.CasonaStays.FindAsync(stay.Id);
+        var egresada = await db.CasaConvivenciaStays.FindAsync(stay.Id);
         Assert.Equal(StayExitReason.Abandonment, egresada!.ExitReason);
         Assert.Equal("No volvió", egresada.Reason);
     }
@@ -85,13 +85,13 @@ public class CasonaStayServiceTests
     public async Task ExitAsync_SinMotivo_GuardaNullEnExitReasonYReason()
     {
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
         var stay = await CrearEstadiaActiva(db);
 
-        var resultado = await service.ExitAsync(stay.Id, new CasonaStayExitDto(null, null), Guid.NewGuid());
+        var resultado = await service.ExitAsync(stay.Id, new CasaConvivenciaStayExitDto(null, null), Guid.NewGuid());
 
         Assert.True(resultado.Success);
-        var egresada = await db.CasonaStays.FindAsync(stay.Id);
+        var egresada = await db.CasaConvivenciaStays.FindAsync(stay.Id);
         Assert.Null(egresada!.ExitReason);
         Assert.Null(egresada.Reason);
     }
@@ -100,40 +100,40 @@ public class CasonaStayServiceTests
     public async Task ExitAsync_ConEstadiaInexistente_DevuelveStayNotFound()
     {
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
 
-        var resultado = await service.ExitAsync(Guid.NewGuid(), new CasonaStayExitDto(null, null), Guid.NewGuid());
+        var resultado = await service.ExitAsync(Guid.NewGuid(), new CasaConvivenciaStayExitDto(null, null), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(CasonaStayExitError.StayNotFound, resultado.Error);
+        Assert.Equal(CasaConvivenciaStayExitError.StayNotFound, resultado.Error);
     }
 
     [Fact]
     public async Task ExitAsync_ConEstadiaYaEgresada_DevuelveAlreadyExited()
     {
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
         var stay = await CrearEstadiaActiva(db);
         stay.ExitDate = DateTime.UtcNow.AddDays(-1);
         await db.SaveChangesAsync();
 
-        var resultado = await service.ExitAsync(stay.Id, new CasonaStayExitDto(StayExitReason.TeamDischarge, null), Guid.NewGuid());
+        var resultado = await service.ExitAsync(stay.Id, new CasaConvivenciaStayExitDto(StayExitReason.TeamDischarge, null), Guid.NewGuid());
 
         Assert.False(resultado.Success);
-        Assert.Equal(CasonaStayExitError.AlreadyExited, resultado.Error);
+        Assert.Equal(CasaConvivenciaStayExitError.AlreadyExited, resultado.Error);
     }
 
     [Fact]
     public async Task ExitAsync_RegistraAuditLogConElActor()
     {
         using var db = CrearDbContext();
-        var service = new CasonaStayService(db);
+        var service = new CasaConvivenciaStayService(db);
         var stay = await CrearEstadiaActiva(db);
         var actorId = Guid.NewGuid();
 
-        await service.ExitAsync(stay.Id, new CasonaStayExitDto(StayExitReason.VoluntaryDischarge, null), actorId);
+        await service.ExitAsync(stay.Id, new CasaConvivenciaStayExitDto(StayExitReason.VoluntaryDischarge, null), actorId);
 
-        var log = await db.AuditLogs.FirstOrDefaultAsync(a => a.AffectedEntity == $"CasonaStay:{stay.Id}" && a.UserId == actorId);
+        var log = await db.AuditLogs.FirstOrDefaultAsync(a => a.AffectedEntity == $"CasaConvivenciaStay:{stay.Id}" && a.UserId == actorId);
         Assert.NotNull(log);
     }
 }

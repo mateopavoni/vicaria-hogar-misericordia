@@ -70,7 +70,7 @@ public class PersonTypeUpdateTests
     }
 
     [Fact]
-    public async Task SetResident_ConEvaluacionVigente_CreaEstadiaCasonaConEntryDateHoy()
+    public async Task SetResident_ConEvaluacionVigente_CreaEstadiaCasaConvivenciaConEntryDateHoy()
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
@@ -80,7 +80,7 @@ public class PersonTypeUpdateTests
 
         await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
 
-        var estadia = await db.CasonaStays.SingleOrDefaultAsync(s => s.PersonId == creada.PersonId);
+        var estadia = await db.CasaConvivenciaStays.SingleOrDefaultAsync(s => s.PersonId == creada.PersonId);
         var despues = DateTime.UtcNow.AddMinutes(1);
         Assert.NotNull(estadia);
         Assert.True(estadia!.EntryDate >= antes && estadia.EntryDate <= despues);
@@ -88,7 +88,7 @@ public class PersonTypeUpdateTests
     }
 
     [Fact]
-    public async Task SetAmbulatory_NoCreaEstadiaCasona()
+    public async Task SetAmbulatory_NoCreaEstadiaCasaConvivencia()
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
@@ -96,11 +96,11 @@ public class PersonTypeUpdateTests
 
         await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Ambulatory), Guid.NewGuid());
 
-        Assert.Empty(await db.CasonaStays.Where(s => s.PersonId == creada.PersonId).ToListAsync());
+        Assert.Empty(await db.CasaConvivenciaStays.Where(s => s.PersonId == creada.PersonId).ToListAsync());
     }
 
     [Fact]
-    public async Task ReesetearResidente_NoDuplicaEstadiaCasona()
+    public async Task ReesetearResidente_NoDuplicaEstadiaCasaConvivencia()
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
@@ -110,11 +110,11 @@ public class PersonTypeUpdateTests
         await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
         await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
 
-        Assert.Single(await db.CasonaStays.Where(s => s.PersonId == creada.PersonId).ToListAsync());
+        Assert.Single(await db.CasaConvivenciaStays.Where(s => s.PersonId == creada.PersonId).ToListAsync());
     }
 
     [Fact]
-    public async Task CreaEstadiaCasona_RegistraAuditLog()
+    public async Task CreaEstadiaCasaConvivencia_RegistraAuditLog()
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
@@ -124,9 +124,9 @@ public class PersonTypeUpdateTests
 
         await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), actorId);
 
-        var estadia = await db.CasonaStays.SingleAsync(s => s.PersonId == creada.PersonId);
+        var estadia = await db.CasaConvivenciaStays.SingleAsync(s => s.PersonId == creada.PersonId);
         var log = await db.AuditLogs.FirstOrDefaultAsync(a =>
-            a.AffectedEntity == $"CasonaStay:{estadia.Id}" && a.UserId == actorId);
+            a.AffectedEntity == $"CasaConvivenciaStay:{estadia.Id}" && a.UserId == actorId);
         Assert.NotNull(log);
     }
 

@@ -1,11 +1,11 @@
 using FluentValidation;
 using Vicaria.Domain.Entities;
 
-namespace Vicaria.Application.CasonaStays;
+namespace Vicaria.Application.CasaConvivenciaStays;
 
-public class CasonaStayExitDtoValidator : AbstractValidator<CasonaStayExitDto>
+public class CasaConvivenciaStayExitDtoValidator : AbstractValidator<CasaConvivenciaStayExitDto>
 {
-    public CasonaStayExitDtoValidator()
+    public CasaConvivenciaStayExitDtoValidator()
     {
         When(x => x.ExitReason == StayExitReason.Other, () =>
         {

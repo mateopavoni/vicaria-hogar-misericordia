@@ -77,7 +77,7 @@ public class ProfileTimelineEndpointTests : IClassFixture<VicariaWebApplicationF
                 CreatedAt = DateTime.UtcNow
             });
 
-            db.CasonaStays.Add(new CasonaStay
+            db.CasaConvivenciaStays.Add(new CasaConvivenciaStay
             {
                 Id = Guid.NewGuid(),
                 PersonId = personId,
@@ -104,8 +104,8 @@ public class ProfileTimelineEndpointTests : IClassFixture<VicariaWebApplicationF
         }
 
         Assert.Contains(result.Items, e => e.Type == ProfileTimelineEntryType.Observation && e.Content == "Obs reciente" && e.CategoryName == "Salud" && e.AuthorName != null);
-        Assert.Contains(result.Items, e => e.Type == ProfileTimelineEntryType.CasonaStayEntry && e.Title == "Ingreso a la Casona");
-        Assert.Contains(result.Items, e => e.Type == ProfileTimelineEntryType.CasonaStayExit && e.Title == "Egreso de la Casona");
+        Assert.Contains(result.Items, e => e.Type == ProfileTimelineEntryType.CasaConvivenciaStayEntry && e.Title == "Ingreso a la Casa de Convivencia");
+        Assert.Contains(result.Items, e => e.Type == ProfileTimelineEntryType.CasaConvivenciaStayExit && e.Title == "Egreso de la Casa de Convivencia");
     }
 
     [Fact]

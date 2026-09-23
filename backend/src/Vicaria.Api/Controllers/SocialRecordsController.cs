@@ -48,7 +48,7 @@ public class SocialRecordsController : ControllerBase
     }
 
     // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
-    // SCRUM-137: Directora de Casona solo recibe Residentes; Referente ve todos.
+    // SCRUM-137: Directora de Casa de Convivencia solo recibe Residentes; Referente ve todos.
     [HttpGet]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken cancellationToken)
     {

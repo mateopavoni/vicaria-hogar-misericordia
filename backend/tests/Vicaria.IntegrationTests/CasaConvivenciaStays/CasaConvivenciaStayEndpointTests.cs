@@ -7,14 +7,14 @@ using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.IntegrationTests.Auth;
 
-namespace Vicaria.IntegrationTests.CasonaStays;
+namespace Vicaria.IntegrationTests.CasaConvivenciaStays;
 
-public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactory>
+public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicationFactory>
 {
     private readonly VicariaWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public CasonaStayEndpointTests(VicariaWebApplicationFactory factory)
+    public CasaConvivenciaStayEndpointTests(VicariaWebApplicationFactory factory)
     {
         _factory = factory;
         _client = factory.CreateClient();
@@ -61,13 +61,13 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
-        var stay = new CasonaStay
+        var stay = new CasaConvivenciaStay
         {
             Id = Guid.NewGuid(),
             PersonId = personId,
             EntryDate = DateTime.UtcNow
         };
-        db.CasonaStays.Add(stay);
+        db.CasaConvivenciaStays.Add(stay);
         await db.SaveChangesAsync();
         return stay.Id;
     }
@@ -77,7 +77,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var stayId = await CrearEstadiaActivaAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -87,7 +87,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var stayId = await CrearEstadiaActivaAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -97,7 +97,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var stayId = await CrearEstadiaActivaAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 4, reason = "Se retiró por motivos personales" });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 4, reason = "Se retiró por motivos personales" });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -107,7 +107,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var stayId = await CrearEstadiaActivaAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 4 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 4 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -116,7 +116,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     public async Task Exit_ConEstadiaInexistente_Devuelve404()
     {
         await UsarTokenAsync(RoleNames.Referente);
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{Guid.NewGuid()}/egreso", new { exitReason = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{Guid.NewGuid()}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -126,8 +126,8 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var stayId = await CrearEstadiaActivaAsync();
 
-        await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 1 });
+        await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 1 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -139,12 +139,12 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
         var actorId = await UsarTokenAsync(RoleNames.Referente);
         var beforeExit = DateTime.UtcNow;
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
-        var log = await db.AuditLogs.SingleAsync(a => a.AffectedEntity == $"CasonaStay:{stayId}");
+        var log = await db.AuditLogs.SingleAsync(a => a.AffectedEntity == $"CasaConvivenciaStay:{stayId}");
         Assert.Equal(actorId, log.UserId);
         Assert.True(log.Date >= beforeExit);
     }
@@ -155,7 +155,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
         var stayId = await CrearEstadiaActivaAsync();
         await UsarTokenAsync(RoleNames.Escucha);
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -163,7 +163,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Exit_SinToken_Devuelve401()
     {
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{Guid.NewGuid()}/egreso", new { exitReason = 0 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{Guid.NewGuid()}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -185,7 +185,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
             sr.PersonType = PersonType.Resident;
             sr.Status = SocialRecordStatus.Active;
 
-            db.CasonaStays.Add(new CasonaStay
+            db.CasaConvivenciaStays.Add(new CasaConvivenciaStay
             {
                 Id = stayId,
                 PersonId = personId,
@@ -195,7 +195,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
         }
 
         // Act: egreso especificando cambio a Ambulatorio Inactivo
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new
         {
             exitReason = 0,
             newStatus = (int)SocialRecordStatus.Inactive
@@ -209,7 +209,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
         {
             var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
 
-            var stay = db.CasonaStays.First(s => s.Id == stayId);
+            var stay = db.CasaConvivenciaStays.First(s => s.Id == stayId);
             Assert.NotNull(stay.ExitDate);
 
             var socialRecord = db.SocialRecords.First(s => s.PersonId == personId);
@@ -217,7 +217,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
             Assert.Equal(SocialRecordStatus.Inactive, socialRecord.Status);
 
             var auditLogs = db.AuditLogs
-                .Where(a => a.AffectedEntity == $"CasonaStay:{stayId}" || a.AffectedEntity == $"Person:{personId}")
+                .Where(a => a.AffectedEntity == $"CasaConvivenciaStay:{stayId}" || a.AffectedEntity == $"Person:{personId}")
                 .ToList();
             Assert.Equal(2, auditLogs.Count);
         }
@@ -238,7 +238,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
             var sr = db.SocialRecords.First(s => s.PersonId == personId);
             sr.PersonType = PersonType.Resident;
 
-            db.CasonaStays.Add(new CasonaStay
+            db.CasaConvivenciaStays.Add(new CasaConvivenciaStay
             {
                 Id = stayId,
                 PersonId = personId,
@@ -247,7 +247,7 @@ public class CasonaStayEndpointTests : IClassFixture<VicariaWebApplicationFactor
             await db.SaveChangesAsync();
         }
 
-        var response = await _client.PutAsJsonAsync($"/api/casona-stays/{stayId}/egreso", new { exitReason = 1 });
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 1 });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 

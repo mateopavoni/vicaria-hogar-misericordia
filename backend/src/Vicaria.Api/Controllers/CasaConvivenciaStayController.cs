@@ -2,24 +2,24 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vicaria.Application.CasonaStays;
+using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Domain.Entities;
 
 namespace Vicaria.Api.Controllers;
 
 [ApiController]
-[Route("api/casona-stays")]
+[Route("api/casa-convivencia-stays")]
 [Authorize]
-public class CasonaStayController : ControllerBase
+public class CasaConvivenciaStayController : ControllerBase
 {
-    private readonly ICasonaStayService _casonaStayService;
-    private readonly IValidator<CasonaStayExitDto> _exitValidator;
+    private readonly ICasaConvivenciaStayService _casaConvivenciaStayService;
+    private readonly IValidator<CasaConvivenciaStayExitDto> _exitValidator;
 
-    public CasonaStayController(
-        ICasonaStayService casonaStayService,
-        IValidator<CasonaStayExitDto> exitValidator)
+    public CasaConvivenciaStayController(
+        ICasaConvivenciaStayService casaConvivenciaStayService,
+        IValidator<CasaConvivenciaStayExitDto> exitValidator)
     {
-        _casonaStayService = casonaStayService;
+        _casaConvivenciaStayService = casaConvivenciaStayService;
         _exitValidator = exitValidator;
     }
 
@@ -29,7 +29,7 @@ public class CasonaStayController : ControllerBase
     // motivo opcional (enum) + texto libre solo si motivo = otro
     [HttpPut("{id}/egreso")]
     [Authorize(Roles = RoleNames.Referente)]
-    public async Task<IActionResult> Exit(Guid id, [FromBody] CasonaStayExitDto dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Exit(Guid id, [FromBody] CasaConvivenciaStayExitDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _exitValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
@@ -41,13 +41,13 @@ public class CasonaStayController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var result = await _casonaStayService.ExitAsync(id, dto, ActorId, cancellationToken);
+        var result = await _casaConvivenciaStayService.ExitAsync(id, dto, ActorId, cancellationToken);
 
         return result.Error switch
         {
             null => NoContent(),
-            CasonaStayExitError.StayNotFound => NotFound(new { message = result.ErrorMessage }),
-            CasonaStayExitError.AlreadyExited => BadRequest(new { message = result.ErrorMessage }),
+            CasaConvivenciaStayExitError.StayNotFound => NotFound(new { message = result.ErrorMessage }),
+            CasaConvivenciaStayExitError.AlreadyExited => BadRequest(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

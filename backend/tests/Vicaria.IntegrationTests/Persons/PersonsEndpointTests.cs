@@ -121,7 +121,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     }
 
     [Fact]
-    public async Task UpdateType_ResidenteConEvaluacionVigente_CreaEstadiaCasona()
+    public async Task UpdateType_ResidenteConEvaluacionVigente_CreaEstadiaCasaConvivencia()
     {
         var personId = await CrearPersonaAsync();
         var userId = await RegistrarUsuarioAsync();
@@ -134,7 +134,7 @@ public class PersonsEndpointTests : IClassFixture<VicariaWebApplicationFactory>
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
-        var estadia = await db.CasonaStays.SingleOrDefaultAsync(s => s.PersonId == personId);
+        var estadia = await db.CasaConvivenciaStays.SingleOrDefaultAsync(s => s.PersonId == personId);
         Assert.NotNull(estadia);
         Assert.True(estadia!.EntryDate <= DateTime.UtcNow);
     }

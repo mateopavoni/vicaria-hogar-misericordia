@@ -4,11 +4,11 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Infrastructure.Persistence.Configurations;
 
-public class CasonaStayConfiguration : IEntityTypeConfiguration<CasonaStay>
+public class CasaConvivenciaStayConfiguration : IEntityTypeConfiguration<CasaConvivenciaStay>
 {
-    public void Configure(EntityTypeBuilder<CasonaStay> builder)
+    public void Configure(EntityTypeBuilder<CasaConvivenciaStay> builder)
     {
-        builder.ToTable("estadia_casona");
+        builder.ToTable("estadia_casa_convivencia");
 
         builder.HasKey(e => e.Id);
 
@@ -22,7 +22,7 @@ public class CasonaStayConfiguration : IEntityTypeConfiguration<CasonaStay>
         builder.Property(e => e.Reason)
             .HasMaxLength(500);
 
-        // una persona puede tener múltiples estadías en la casona (1:N)
+        // una persona puede tener múltiples estadías en la casa de convivencia (1:N)
         builder.HasOne(e => e.Person)
             .WithMany()
             .HasForeignKey(e => e.PersonId)
