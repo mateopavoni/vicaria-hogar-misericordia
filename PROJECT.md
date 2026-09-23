@@ -37,7 +37,7 @@ El nombre formal completo del dispositivo atendido por el sistema es "Parroquia 
 - **Frontend:** Angular 16+ (TypeScript, RxJS, Bootstrap/Tailwind CSS)
 - **Backend:** .NET 9.0 + C#
 - **Base de datos:** SQL Server + Entity Framework
-- **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (3 roles)
+- **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (4 roles — ver sección Usuarios)
 - **DevOps:** Docker, docker-compose, GitHub Actions, Oracle Cloud VM
 - **Testing:** xUnit (backend), Jest + Cypress (frontend, si aplica)
 
@@ -67,12 +67,15 @@ El nombre formal completo del dispositivo atendido por el sistema es "Parroquia 
 
 ## Usuarios
 
-El sistema tiene 3 roles con permisos diferenciados (RBAC):
+El sistema tiene 4 roles con permisos diferenciados (RBAC):
 | Rol - Permisos |
 |----|
 | **Referente** - Acceso completo (full) |
 | **DirectoraDeCasona** - Fichas y medicación |
 | **Escucha** - Lectura y carga de observaciones únicamente |
+| **CoordinadorDeCasaConvivencia** - Gestión de residentes de la casa convivencial (Casona) |
+
+Los 4 roles están definidos como constantes en `RoleNames` (Domain), y los permisos por rol en `Permission`/`RolePermission` con códigos en `PermissionNames`.
 
 **Usuarios finales indirectos (no usan el sistema, pero son el motivo de su existencia):** personas en situación de calle y con problemáticas de consumo que asisten al Hogar de Día, muchas veces sin documentación ni domicilio fijo.
 
@@ -87,8 +90,10 @@ Organizadas por épica/sprint según la planificación del proyecto:
 | Sprint 2 | EP-01 + EP-02 | Fichas de personas + observaciones/historia de vida |
 | Sprint 3 | EP-04 + EP-05 | Calendario compartido/personal + gestión de colaboradores |
 | Sprint 4 | EP-10 + EP-11 | Asistencia diaria + agenda de medicamentos |
-| Sprint 5 | EP-12 + EP-07 | Evaluación psiquiátrica/estado + documentación y adjuntos (PDF) |
+| Sprint 5 | EP-12 + EP-07 | Evaluación psiquiátrica/estado (incluye estadías y egreso en Casa de Convivencia — ver nota) + documentación y adjuntos (PDF) |
 | Sprint 6 | EP-13 + QA | Informes institucionales + regresión y cierre |
+
+**Nota (2026-09-18):** el trabajo de estadías en casona y egreso de residente (SCRUM-140/146, ya reflejado en la sección "Estado actual" y en la tabla de entidades de abajo) se integra a **EP-12** — no tenía épica asignada en versiones anteriores de esta tabla. Ver `.ai/context/DOMAIN.md` y `.ai/context/DECISIONS.md` para el detalle y para revertir esta clasificación si el equipo prefiere una épica propia.
 
 
 ### Sprint 1 — Historias de usuario (Módulo de acceso y roles, Ep-03)
@@ -115,12 +120,16 @@ Organizadas por épica/sprint según la planificación del proyecto:
 - RF-03 (roles diferenciados): 4 roles (Referente, DirectoraDeCasona, Escucha, CoordinadorDeCasaConvivencia), tabla de permisos (`Permission`/`RolePermission`), reasignación de rol desde el panel.
 - RF-04 (desactivación de cuentas): activar/desactivar con auditoría, listado real de usuarios activos/inactivos en el panel.
 - RF-19 (notificaciones internas): cuenta pendiente y cuenta bloqueada, panel de notificaciones en el front con marcado individual y masivo como leídas.
+- **Fichas de personas (Social Records, EP-01/EP-02 parcial)**: creación, búsqueda con paginación (`PagedResult<T>`) y actualización de fichas flexibles (solo el nombre es obligatorio), con contacto asociado y auditoría. Backend completo en `api/social-records`.
+- **Tipo de persona (SCRUM-134)**: `PUT /api/persons/{id}/type` cambia el tipo de persona. Asignar `Resident` exige una evaluación psiquiátrica vigente (`PsychiatricEvaluation` con `IsValid = true`); sin ella responde 400 con detalle. `Ambulatory` no exige nada. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia.
+- **Egreso de estadías en la Casona (SCRUM-146)**: `PUT /api/casona-stays/{id}/egreso` registra el egreso de una estadía (`CasonaStay`) con fecha/hora automática server-side (UTC) y motivo opcional (`StayExitReason`: `VoluntaryDischarge`, `TeamDischarge`, `Referral`, `Abandonment`, `Other`) + texto libre obligatorio solo si motivo = `Other`. Estadía inexistente → 404, estadía ya egresada → 400, con registro de `AuditLog`. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia. Modelo y persistencia de estadías desde SCRUM-140.
 - CORS configurado (`Cors:AllowedOrigins` por ambiente).
 - Migración de motor de BD: Postgres → SQL Server, completa.
 - Frontend: login, registro, pending-approval y gestión de usuarios (pendientes/activos/suspendidos) conectados al backend real, con interceptor de auth y persistencia de sesión.
 
 ❌ **Pendiente:**
-- Filtrado de fichas por tipo de persona (SCRUM-88) — bloqueado, la entidad `Ficha` todavía no existe (otro épica).
+- Filtrado de fichas por tipo de persona (SCRUM-88) — backend de fichas (`api/social-records`) ya implementado (crear/buscar/editar), pendiente conectar el panel de fichas del front con estos endpoints.
+- Bitácora de observaciones e historia de vida en 3 etapas (EP-02): entidades `Observación`/`HistoriaVida` todavía no existen.
 - Listado general de usuarios con paginación y filtro por fecha (hoy el listado de pendientes/activos/inactivos no pagina).
 - Tests automatizados de frontend.
 
@@ -165,26 +174,28 @@ El sistema **no debe encasillar ni limitar el ingreso de una persona**. Ningún 
 Según el diagrama de clases original del proyecto (diseño lógico vigente, mapeo tecnológico desactualizado — ver Stack):
 
 
-| # | Entidad | Descripción 
-|---|---|---|
-| 1 | Usuario | Cuentas de usuario con autenticación |
-| 2 | Persona | Datos básicos de cada persona atendida |
-| 3 | Contacto | Información de contacto relacionada |
-| 4 | Ficha | Información extendida de cada persona |
-| 5 | Observación | Bitácora de notas y observaciones |
-| 6 | CategoriaObservacion | Categorías para clasificar observaciones |
-| 7 | HistoriaVida | Registro de historia de vida en 3 etapas |
-| 8 | Asistencia | Registro diario de asistencia |
-| 9 | EsquemaMedicacion | Esquema de medicamentos por persona |
-| 10 | AgendaMedicamentos | Agenda diaria generada automáticamente |
-| 11 | MedicamentoCatalogo | Catálogo de medicamentos disponibles |
-| 12 | EstadiasCasona | Registro de estadías en la casona |
-| 13 | VisitasCasona | Registro de visitas de residentes |
-| 14 | EvaluacionesPsiquiatricas | Evaluaciones psicológicas documentadas |
-| 15 | InformeCaritas | Informes Cáritas (datos en JSONB en el diseño original) |
-| 16 | EventoCalendarioPersonal | Eventos personales del usuario |
-| 17 | EventoCalendarioGeneral | Eventos compartidos institucionales |
-| 18 | Colaborador | Voluntarios y empleados |
+| # | Entidad | Descripción | Estado en código |
+|---|---|---|---|
+| 1 | User (Usuario) | Cuentas de usuario con autenticación | ✅ Implementada |
+| 2 | Person (Persona) | Datos básicos de cada persona atendida | ✅ Implementada |
+| 3 | Contact (Contacto) | Información de contacto relacionada | ✅ Implementada |
+| 4 | SocialRecord (Ficha) | Información extendida de cada persona | ✅ Implementada (la ficha actual es `SocialRecord` + `Person`, con campos flexibles) |
+| 5 | Observation (Observación) | Bitácora de notas y observaciones | ❌ Pendiente (EP-02) |
+| 6 | ObservationCategory (CategoriaObservacion) | Categorías para clasificar observaciones | ❌ Pendiente (EP-02) |
+| 7 | LifeHistory (HistoriaVida) | Registro de historia de vida en 3 etapas | ❌ Pendiente (EP-02) |
+| 8 | Attendance (Asistencia) | Registro diario de asistencia | ❌ Pendiente (EP-10) |
+| 9 | MedicationSchedule (EsquemaMedicacion) | Esquema de medicamentos por persona | ❌ Pendiente (EP-11) |
+| 10 | MedicationAgenda (AgendaMedicamentos) | Agenda diaria generada automáticamente | ❌ Pendiente (EP-11) |
+| 11 | MedicationCatalog (MedicamentoCatalogo) | Catálogo de medicamentos disponibles | ❌ Pendiente (EP-11) |
+| 12 | CasonaStay (EstadiasCasona) | Registro de estadías en la casona | ✅ Implementada (SCRUM-140 modelo/persistencia + SCRUM-146 egreso) |
+| 13 | CasonaVisit (VisitasCasona) | Registro de visitas de residentes | ❌ Pendiente |
+| 14 | PsychiatricEvaluation (EvaluacionesPsiquiatricas) | Evaluaciones psicológicas documentadas | ✅ Modelo y persistencia (SCRUM-134); falta el CRUD (EP-12) |
+| 15 | CaritasReport (InformeCaritas) | Informes Cáritas (datos en JSONB en el diseño original) | ❌ Pendiente (EP-13) |
+| 16 | PersonalCalendarEvent (EventoCalendarioPersonal) | Eventos personales del usuario | ❌ Pendiente (EP-04) |
+| 17 | GeneralCalendarEvent (EventoCalendarioGeneral) | Eventos compartidos institucionales | ❌ Pendiente (EP-04) |
+| 18 | Collaborator (Colaborador) | Voluntarios y empleados | ❌ Pendiente (EP-05) |
+
+**Nota sobre nombres en código vs. diseño conceptual:** el diagrama original usaba nombres en español (`Usuario`, `Ficha`, `Observación`, etc.). El código real usa identificadores en inglés (`User`, `SocialRecord`, ...), ya que **todo identificador de código va en inglés** (regla de `AGENTS.md`). La tabla expresa el mapeo conceptual → código. Además, en código existen entidades que el diseño original no listaba individualmente: `Role`, `Permission`, `RolePermission`, `AuditLog`, `Notification` (todas ✅ implementadas).
 
 ### Marco académico
 
@@ -197,5 +208,7 @@ Este sistema es el Trabajo Final Integrador de la materia Prácticas Profesional
 - El stack tecnológico (SQL Server + EF, .NET 9 + C#) es una decisión cerrada — no volver a plantearla como duda.
 - Ante cualquier **otra** ambigüedad entre este documento, el código y la documentación original del Google Drive del proyecto, **señalar la contradicción explícitamente** — no asumir ni resolver por cuenta propia.
 - Este archivo debe actualizarse a medida que avanza el desarrollo real, para que no quede desalineado con el código (como pasó con los diagramas técnicos originales).
+
+**Ver también:** [`.ai/context/00_INDEX.md`](./.ai/context/00_INDEX.md) — estado verificado contra código al 2026-09-18 (compara `main`/`dev-backend`/`dev-frontend` por separado, ya que no están alineadas), decisiones con evidencia, known issues con severidad y preguntas abiertas para el equipo. No duplica este archivo, lo complementa.
 
  

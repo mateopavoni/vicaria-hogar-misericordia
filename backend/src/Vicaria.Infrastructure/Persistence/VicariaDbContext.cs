@@ -15,6 +15,15 @@ public class VicariaDbContext : DbContext
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Person> People => Set<Person>();
+    public DbSet<SocialRecord> SocialRecords => Set<SocialRecord>();
+    public DbSet<Contact> Contacts => Set<Contact>();
+    public DbSet<CasaConvivenciaStay> CasaConvivenciaStays => Set<CasaConvivenciaStay>();
+    public DbSet<PsychiatricEvaluation> PsychiatricEvaluations => Set<PsychiatricEvaluation>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<Observation> Observations => Set<Observation>();
+    public DbSet<ObservationCategory> ObservationCategories => Set<ObservationCategory>();
+    public DbSet<LifeStory> LifeStories => Set<LifeStory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
