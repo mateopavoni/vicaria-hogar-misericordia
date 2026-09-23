@@ -5,7 +5,7 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Timelines;
 
 // proyección del timeline unificado del perfil (SCRUM-159): combina los hitos
-// ya registrados en el expediente (ingresos/egresos de Casona) con las
+// ya registrados en el expediente (ingresos/egresos de Casa de Convivencia) con las
 // observaciones, ordenados por fecha descendente para la vista del perfil
 public class ProfileTimelineService : IProfileTimelineService
 {
@@ -50,7 +50,7 @@ public class ProfileTimelineService : IProfileTimelineService
 
         entries.AddRange(observations);
 
-        var stays = await _dbContext.CasonaStays
+        var stays = await _dbContext.CasaConvivenciaStays
             .AsNoTracking()
             .Where(s => s.PersonId == personId)
             .ToListAsync(cancellationToken);
@@ -59,9 +59,9 @@ public class ProfileTimelineService : IProfileTimelineService
         {
             entries.Add(new ProfileTimelineEntryDto(
                 stay.Id,
-                ProfileTimelineEntryType.CasonaStayEntry,
+                ProfileTimelineEntryType.CasaConvivenciaStayEntry,
                 stay.EntryDate,
-                "Ingreso a la Casona",
+                "Ingreso a la Casa de Convivencia",
                 null,
                 null,
                 null,
@@ -71,9 +71,9 @@ public class ProfileTimelineService : IProfileTimelineService
             {
                 entries.Add(new ProfileTimelineEntryDto(
                     stay.Id,
-                    ProfileTimelineEntryType.CasonaStayExit,
+                    ProfileTimelineEntryType.CasaConvivenciaStayExit,
                     stay.ExitDate.Value,
-                    "Egreso de la Casona",
+                    "Egreso de la Casa de Convivencia",
                     null,
                     null,
                     null,

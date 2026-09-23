@@ -1,8 +1,8 @@
 using Vicaria.Domain.Entities;
 
-namespace Vicaria.Application.CasonaStays;
+namespace Vicaria.Application.CasaConvivenciaStays;
 
-public class CasonaStayDto
+public class CasaConvivenciaStayDto
 {
     public Guid Id { get; set; }
     public Guid PersonId { get; set; }

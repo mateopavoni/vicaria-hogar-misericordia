@@ -24,7 +24,7 @@ public record SocialRecordDetailDto(
     DateTime LastModifiedAt,
     IReadOnlyList<SocialRecordStayDto> StaysHistory);
 
-// estadia en la Casona, tal como la consume el timeline del perfil
+// estadia en la Casa de Convivencia, tal como la consume el timeline del perfil
 public record SocialRecordStayDto(
     Guid Id,
     DateTime EntryDate,

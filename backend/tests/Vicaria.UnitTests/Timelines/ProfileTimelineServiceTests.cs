@@ -92,7 +92,7 @@ public class ProfileTimelineServiceTests
             CreatedAt = DateTime.UtcNow
         });
 
-        var stay = new CasonaStay
+        var stay = new CasaConvivenciaStay
         {
             Id = Guid.NewGuid(),
             PersonId = personId,
@@ -100,7 +100,7 @@ public class ProfileTimelineServiceTests
             ExitDate = DateTime.UtcNow.AddDays(-3),
             ExitReason = StayExitReason.VoluntaryDischarge
         };
-        db.CasonaStays.Add(stay);
+        db.CasaConvivenciaStays.Add(stay);
 
         await db.SaveChangesAsync();
 
@@ -119,8 +119,8 @@ public class ProfileTimelineServiceTests
         }
 
         Assert.Contains(result.Data.Items, e => e.Type == ProfileTimelineEntryType.Observation && e.Content == "Evoluciona bien" && e.CategoryName == "Salud");
-        Assert.Contains(result.Data.Items, e => e.Type == ProfileTimelineEntryType.CasonaStayEntry && e.Title == "Ingreso a la Casona");
-        Assert.Contains(result.Data.Items, e => e.Type == ProfileTimelineEntryType.CasonaStayExit && e.Title == "Egreso de la Casona");
+        Assert.Contains(result.Data.Items, e => e.Type == ProfileTimelineEntryType.CasaConvivenciaStayEntry && e.Title == "Ingreso a la Casa de Convivencia");
+        Assert.Contains(result.Data.Items, e => e.Type == ProfileTimelineEntryType.CasaConvivenciaStayExit && e.Title == "Egreso de la Casa de Convivencia");
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class ProfileTimelineServiceTests
         using var db = CrearDbContext();
         var personId = await CrearPersonaAsync(db);
 
-        db.CasonaStays.Add(new CasonaStay
+        db.CasaConvivenciaStays.Add(new CasaConvivenciaStay
         {
             Id = Guid.NewGuid(),
             PersonId = personId,
@@ -143,6 +143,6 @@ public class ProfileTimelineServiceTests
 
         Assert.True(result.Success);
         Assert.Single(result.Data!.Items);
-        Assert.Equal(ProfileTimelineEntryType.CasonaStayEntry, result.Data.Items[0].Type);
+        Assert.Equal(ProfileTimelineEntryType.CasaConvivenciaStayEntry, result.Data.Items[0].Type);
     }
 }

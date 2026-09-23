@@ -1,32 +1,32 @@
 using Microsoft.EntityFrameworkCore;
-using Vicaria.Application.CasonaStays;
+using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
-namespace Vicaria.Infrastructure.CasonaStays;
+namespace Vicaria.Infrastructure.CasaConvivenciaStays;
 
-public class CasonaStayService : ICasonaStayService
+public class CasaConvivenciaStayService : ICasaConvivenciaStayService
 {
     private readonly VicariaDbContext _dbContext;
 
-    public CasonaStayService(VicariaDbContext dbContext)
+    public CasaConvivenciaStayService(VicariaDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
-    public async Task<CasonaStayExitResult> ExitAsync(Guid stayId, CasonaStayExitDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    public async Task<CasaConvivenciaStayExitResult> ExitAsync(Guid stayId, CasaConvivenciaStayExitDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
-        var stay = await _dbContext.CasonaStays
+        var stay = await _dbContext.CasaConvivenciaStays
             .FirstOrDefaultAsync(s => s.Id == stayId, cancellationToken);
 
         if (stay is null)
         {
-            return CasonaStayExitResult.StayNotFound();
+            return CasaConvivenciaStayExitResult.StayNotFound();
         }
 
         if (stay.ExitDate is not null)
         {
-            return CasonaStayExitResult.AlreadyExited();
+            return CasaConvivenciaStayExitResult.AlreadyExited();
         }
 
         var now = DateTime.UtcNow;
@@ -40,8 +40,8 @@ public class CasonaStayService : ICasonaStayService
         {
             Id = Guid.NewGuid(),
             UserId = actorId,
-            Action = "Egreso de estadía en Casona registrado",
-            AffectedEntity = $"CasonaStay:{stay.Id}",
+            Action = "Egreso de estadía en Casa de Convivencia registrado",
+            AffectedEntity = $"CasaConvivenciaStay:{stay.Id}",
             Date = now
         });
 
@@ -66,14 +66,14 @@ public class CasonaStayService : ICasonaStayService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return CasonaStayExitResult.Ok();
+        return CasaConvivenciaStayExitResult.Ok();
     }
 
-    public async Task<IEnumerable<CasonaStayDto>> GetByPersonIdAsync(Guid personId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CasaConvivenciaStayDto>> GetByPersonIdAsync(Guid personId, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
 
-        var stays = await _dbContext.CasonaStays
+        var stays = await _dbContext.CasaConvivenciaStays
             .AsNoTracking()
             .Where(s => s.PersonId == personId)
             .OrderByDescending(s => s.EntryDate)
@@ -84,7 +84,7 @@ public class CasonaStayService : ICasonaStayService
             var endDate = s.ExitDate ?? now;
             var duration = (int)(endDate - s.EntryDate).TotalDays;
 
-            return new CasonaStayDto
+            return new CasaConvivenciaStayDto
             {
                 Id = s.Id,
                 PersonId = s.PersonId,

@@ -148,7 +148,7 @@ public class SocialRecordService : ISocialRecordService
             .FirstOrDefaultAsync(c => c.SocialRecordId == socialRecordId, cancellationToken);
 
         var now = DateTime.UtcNow;
-        var stays = await _dbContext.CasonaStays
+        var stays = await _dbContext.CasaConvivenciaStays
             .AsNoTracking()
             .Where(s => s.PersonId == record.PersonId)
             .OrderByDescending(s => s.EntryDate)
@@ -391,7 +391,7 @@ public class SocialRecordService : ISocialRecordService
         }
 
         // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
-        // la casona con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
+        // la casa de convivencia con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
         var wasAlreadyResident = socialRecord.PersonType == PersonType.Resident;
         socialRecord.PersonType = dto.PersonType;
         socialRecord.UpdatedAt = DateTime.UtcNow;
@@ -407,20 +407,20 @@ public class SocialRecordService : ISocialRecordService
 
         if (dto.PersonType == PersonType.Resident && !wasAlreadyResident)
         {
-            var casonaStay = new CasonaStay
+            var casaConvivenciaStay = new CasaConvivenciaStay
             {
                 Id = Guid.NewGuid(),
                 PersonId = personId,
                 EntryDate = DateTime.UtcNow
             };
-            _dbContext.CasonaStays.Add(casonaStay);
+            _dbContext.CasaConvivenciaStays.Add(casaConvivenciaStay);
 
             _dbContext.AuditLogs.Add(new AuditLog
             {
                 Id = Guid.NewGuid(),
                 UserId = actorId,
-                Action = "Estadía en casona registrada",
-                AffectedEntity = $"CasonaStay:{casonaStay.Id}",
+                Action = "Estadía en casa de convivencia registrada",
+                AffectedEntity = $"CasaConvivenciaStay:{casaConvivenciaStay.Id}",
                 Date = DateTime.UtcNow
             });
         }

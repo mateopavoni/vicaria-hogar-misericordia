@@ -18,7 +18,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Person> People => Set<Person>();
     public DbSet<SocialRecord> SocialRecords => Set<SocialRecord>();
     public DbSet<Contact> Contacts => Set<Contact>();
-    public DbSet<CasonaStay> CasonaStays => Set<CasonaStay>();
+    public DbSet<CasaConvivenciaStay> CasaConvivenciaStays => Set<CasaConvivenciaStay>();
     public DbSet<PsychiatricEvaluation> PsychiatricEvaluations => Set<PsychiatricEvaluation>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<Observation> Observations => Set<Observation>();
