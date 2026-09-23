@@ -122,8 +122,12 @@ public class ObservationService : IObservationService
 
     private IQueryable<Observation> ApplyFilters(Guid personId, GetObservationsFilterDto filters)
     {
+        // Include obligatorio: ToResponseDto lee o.Category/o.AuthorUser para armar
+        // CategoryName/AuthorName; sin esto quedan siempre null/vacío (bug encontrado en QA local)
         var query = _dbContext.Observations
             .AsNoTracking()
+            .Include(o => o.Category)
+            .Include(o => o.AuthorUser)
             .Where(o => o.PersonId == personId);
 
         if (filters.CategoryId.HasValue)

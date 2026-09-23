@@ -28,6 +28,7 @@ public class ObservationServiceTests
         var categoriaId = Guid.NewGuid();
 
         db.ObservationCategories.Add(new ObservationCategory { Id = categoriaId, Name = "Salud", IsActive = true });
+        db.Users.Add(new User { Id = authorId, FirstName = "Autor", LastName = "De Prueba", Email = "autor@test.com" });
         db.Observations.AddRange(
             new Observation { Id = Guid.NewGuid(), PersonId = personId, CategoryId = categoriaId, AuthorUserId = authorId, Content = "Con categoría", CreatedAt = DateTime.UtcNow },
             new Observation { Id = Guid.NewGuid(), PersonId = personId, AuthorUserId = authorId, Content = "Sin categoría", CreatedAt = DateTime.UtcNow.AddDays(-1) },
@@ -42,6 +43,9 @@ public class ObservationServiceTests
         Assert.Contains("Con categoría", csv);
         Assert.DoesNotContain("Sin categoría", csv);
         Assert.DoesNotContain("De otra persona", csv);
+        // regresión: ApplyFilters debe traer Category/AuthorUser (Include), si no CategoryName/AuthorName quedan vacíos
+        Assert.Contains("Salud", csv);
+        Assert.Contains("Autor De Prueba", csv);
     }
 
     [Fact]
@@ -51,6 +55,7 @@ public class ObservationServiceTests
         var personId = Guid.NewGuid();
         var authorId = Guid.NewGuid();
 
+        db.Users.Add(new User { Id = authorId, FirstName = "Autor", LastName = "De Prueba", Email = "autor2@test.com" });
         db.Observations.Add(new Observation
         {
             Id = Guid.NewGuid(),
