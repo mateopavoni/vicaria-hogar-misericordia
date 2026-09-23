@@ -1,0 +1,85 @@
+<div class="mb-6 rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+  <!-- Botones Superiores de Acción -->
+  <div class="mb-4 flex items-center justify-between">
+    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+      Filtros de Búsqueda
+    </span>
+
+    <button
+      type="button"
+      (click)="exportReport.emit()"
+      [disabled]="filteredCount() === 0"
+      class="inline-flex items-center gap-2 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+    >
+      <span>📥</span> Exportar informe
+    </button>
+  </div>
+
+  <!-- Formulario de Filtros -->
+  <form [formGroup]="filterForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+    <!-- Categoría -->
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Categoría</label>
+      <select
+        formControlName="categoryId"
+        class="w-full rounded-xl border border-slate-300 bg-white p-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
+      >
+        <option value="all">Todas las categorías</option>
+        @for (cat of categories(); track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Autor -->
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Autor / Usuario</label>
+      <select
+        formControlName="author"
+        class="w-full rounded-xl border border-slate-300 bg-white p-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
+      >
+        <option value="">Todos los autores</option>
+        @for (author of authors(); track author) {
+          <option [value]="author">{{ author }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Desde -->
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Desde</label>
+      <input
+        type="date"
+        formControlName="dateFrom"
+        class="w-full rounded-xl border border-slate-300 bg-white p-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
+      />
+    </div>
+
+    <!-- Hasta -->
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Hasta</label>
+      <input
+        type="date"
+        formControlName="dateTo"
+        class="w-full rounded-xl border border-slate-300 bg-white p-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
+      />
+    </div>
+  </form>
+
+  <!-- Resumen y Limpieza -->
+  <div class="mt-4 flex items-center justify-between border-t border-slate-200/80 pt-3">
+    <div class="text-xs font-semibold text-slate-600">
+      Mostrando <span class="text-indigo-600 font-bold">{{ filteredCount() }}</span> de {{ totalCount() }} observaciones
+    </div>
+
+    @if (hasActiveFilters()) {
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors"
+      >
+        ✕ Limpiar filtros
+      </button>
+    }
+  </div>
+</div>

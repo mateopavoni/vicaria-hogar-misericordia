@@ -1,0 +1,21 @@
+<div class="min-h-full bg-[#F5F7FB] px-10 py-7">
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-600">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <app-social-record-form
+    mode="create"
+    [loading]="saving()"
+    (submittedForm)="createRecord($event)"
+  />
+
+</div>

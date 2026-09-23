@@ -93,7 +93,7 @@ Organizadas por épica/sprint según la planificación del proyecto:
 | Sprint 5 | EP-12 + EP-07 | Evaluación psiquiátrica/estado (incluye estadías y egreso en Casa de Convivencia — ver nota) + documentación y adjuntos (PDF) |
 | Sprint 6 | EP-13 + QA | Informes institucionales + regresión y cierre |
 
-**Nota (2026-09-18):** el trabajo de estadías en casona y egreso de residente (SCRUM-140/146, ya reflejado en la sección "Estado actual" y en la tabla de entidades de abajo) se integra a **EP-12** — no tenía épica asignada en versiones anteriores de esta tabla. Ver `.ai/context/DOMAIN.md` y `.ai/context/DECISIONS.md` para el detalle y para revertir esta clasificación si el equipo prefiere una épica propia.
+**Nota (2026-09-23):** el trabajo de estadías en Casa de Convivencia y egreso de residente (SCRUM-140/146, ya reflejado en la sección "Estado actual" y en la tabla de entidades de abajo) se integra a **EP-12** — no tenía épica asignada en versiones anteriores de esta tabla. Ver `.ai/context/DOMAIN.md` y `.ai/context/DECISIONS.md` para el detalle y para revertir esta clasificación si el equipo prefiere una épica propia.
 
 
 ### Sprint 1 — Historias de usuario (Módulo de acceso y roles, Ep-03)
@@ -112,7 +112,9 @@ Organizadas por épica/sprint según la planificación del proyecto:
 ---
 ## Estado actual
 
-**Último relevamiento del código real (rama `dev`, 2026-08-26):**
+**Nota (2026-09-23):** esta sección quedó desactualizada tras el cierre de Sprint 2 — ver `.ai/context/CURRENT_STATE.md` para el estado real verificado (regenerado en esta misma fecha).
+
+**Último relevamiento del código real (rama `dev`, 2026-09-23):**
 
 ✅ **Completo, backend y frontend conectados de punta a punta (no mockeado):**
 - RF-01 (registro y aprobación de cuenta): registro, listado de pendientes, aprobar, rechazar, con auditoría y notificación a referentes.
