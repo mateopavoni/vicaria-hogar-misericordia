@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 import { PendingApprovalComponent } from './pending-approval.component';
 
@@ -9,6 +11,7 @@ describe('PendingApprovalComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PendingApprovalComponent],
+      providers: [provideRouter([]), provideHttpClient()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PendingApprovalComponent);

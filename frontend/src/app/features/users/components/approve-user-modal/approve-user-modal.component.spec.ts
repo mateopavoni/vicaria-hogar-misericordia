@@ -1,22 +1,25 @@
-  // import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-  // import { ApproveUserComponent} from './approve-user.component';
+import { ApproveUserModalComponent } from './approve-user-modal.component';
 
-  // describe('ApproveUserComponent', () => {
-  //   let component: ApproveUserComponent;
-  //   let fixture: ComponentFixture<ApproveUserComponent>;
+// bug reportado 2026-09-23: este spec estaba comentado por completo (con un nombre de
+// clase viejo, "ApproveUserComponent") y Vitest lo contaba como archivo fallido
+// ("No test suite found").
+describe('ApproveUserModalComponent', () => {
+  let component: ApproveUserModalComponent;
+  let fixture: ComponentFixture<ApproveUserModalComponent>;
 
-  //   beforeEach(async () => {
-  //     await TestBed.configureTestingModule({
-  //       imports: [ApproveUserComponent],
-  //     }).compileComponents();
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ApproveUserModalComponent],
+    }).compileComponents();
 
-  //     fixture = TestBed.createComponent(ApproveUserComponent);
-  //     component = fixture.componentInstance;
-  //     await fixture.whenStable();
-  //   });
+    fixture = TestBed.createComponent(ApproveUserModalComponent);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
+  });
 
-  //   it('should create', () => {
-  //     expect(component).toBeTruthy();
-  //   });
-  // });
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
