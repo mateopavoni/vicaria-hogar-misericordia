@@ -12,10 +12,14 @@ export interface UsersResponse {
 }
 
 // id fijo de cada rol en la base (seed determinístico, ver RolConfiguration en el backend)
+// bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia (id real sembrado en
+// la migración AddCoordinadorRolePermissions) — sin esta entrada, aprobar o reasignar
+// a ese rol desde la UI mandaba roleId undefined.
 const ROLE_IDS: Record<UserRole, string> = {
   Referente: '11111111-1111-1111-1111-111111111111',
   DirectoraDeCasona: '22222222-2222-2222-2222-222222222222',
   Escucha: '33333333-3333-3333-3333-333333333333',
+  CoordinadorDeCasaConvivencia: '77777777-7777-7777-7777-777777777777',
 };
 
 // forma cruda que devuelve GET /api/auth/users/pending: { items, total, totalPages }

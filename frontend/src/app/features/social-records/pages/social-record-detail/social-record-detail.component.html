@@ -125,7 +125,7 @@
       </div>
 
       <!-- INFORMACIÓN PRINCIPAL (DATOS RÁPIDOS) -->
-      <div class="mt-5 grid grid-cols-3 overflow-hidden rounded-lg border border-slate-200">
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 overflow-hidden rounded-lg border border-slate-200">
         <!-- DNI -->
         <div class="border-r border-slate-200 px-6 py-3 text-center">
           <p class="text-[11px] font-semibold text-slate-700">DNI</p>
@@ -259,7 +259,7 @@
             <h2 class="text-[13px] font-semibold text-slate-800">Datos Personales</h2>
           </div>
 
-          <div class="grid grid-cols-2 gap-x-16 gap-y-5 px-12 py-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 sm:gap-x-16 gap-y-5 px-6 sm:px-12 py-6">
             <div>
               <p class="text-[12px] font-semibold text-slate-700">Nombre</p>
               <p class="mt-1 text-[12px] text-slate-500">{{ person.firstName }}</p>
@@ -314,7 +314,7 @@
             <h2 class="text-[13px] font-semibold text-slate-800">Información de ingreso</h2>
           </div>
 
-          <div class="grid grid-cols-2 gap-x-16 gap-y-5 px-12 py-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 sm:gap-x-16 gap-y-5 px-6 sm:px-12 py-6">
             <div>
               <p class="text-[12px] font-semibold text-slate-700">Motivo de ingreso</p>
               @if (person.reasonForEntry) {
@@ -375,7 +375,7 @@
 
           <div class="px-12 py-6">
             @if (person.contact) {
-              <div class="grid grid-cols-2 gap-x-16 gap-y-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 sm:gap-x-16 gap-y-5">
                 <div>
                   <p class="text-[12px] font-semibold text-slate-700">Nombre</p>
                   @if (person.contact.firstName || person.contact.lastName) {
@@ -431,8 +431,8 @@
 
         <!-- ACCIONES DE EGRESO / INGRESO -->
         <div class="mb-4 mt-4 flex justify-end gap-3">
-          @if (person.personType === PersonType.Resident) {
-            <button 
+          @if (hasActiveStay()) {
+            <button
               type="button"
               (click)="openExitModal()"
               class="rounded-md bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 shadow-sm"

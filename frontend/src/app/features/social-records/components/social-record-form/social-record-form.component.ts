@@ -57,7 +57,11 @@ export class SocialRecordFormComponent {
 
     lastName: [''],
 
-    dni: [''],
+    // bug reportado 2026-09-23: se guardaba con puntos/espacios ("38.123.456") y la
+    // búsqueda comparaba solo dígitos, así que nunca matcheaba. El backend ya normaliza
+    // al guardar, pero evitar que se tipeen puntos/espacios de entrada es más claro para
+    // quien completa la ficha que depender solo de una limpieza silenciosa del servidor.
+    dni: ['', [Validators.pattern(/^\d*$/)]],
 
     dateOfBirth: [''],
 

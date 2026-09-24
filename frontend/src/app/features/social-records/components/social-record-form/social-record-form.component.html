@@ -29,7 +29,7 @@
       <h2 class="text-[14px] font-semibold text-slate-700">Información Personal</h2>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 p-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
 
       <div>
         <label for="firstName" class="mb-2 block text-[14px] font-semibold text-slate-700">Nombre *</label>
@@ -65,8 +65,14 @@
           type="text"
           formControlName="dni"
           placeholder="Sin puntos ni espacios"
-          class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          inputmode="numeric"
+          class="h-[42px] w-full rounded-md border bg-white px-4 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+          [class.border-red-500]="form.controls.dni.invalid && form.controls.dni.touched"
+          [class.border-[#D5DDF3]]="form.controls.dni.valid || !form.controls.dni.touched"
         />
+        @if (form.controls.dni.touched && form.controls.dni.hasError('pattern')) {
+          <p class="mt-1 text-[12px] text-red-500">El DNI solo puede tener números, sin puntos ni espacios.</p>
+        }
       </div>
 
       <div>
@@ -135,7 +141,7 @@
     </div>
 
     @if (showMoreInfo()) {
-      <div class="grid grid-cols-2 gap-4 p-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
 
         <div>
           <label for="dateOfBirth" class="mb-2 block text-[14px] font-semibold text-slate-700">Fecha de nacimiento</label>
@@ -250,7 +256,7 @@
     </div>
 
     @if (showContact()) {
-      <div formGroupName="contact" class="grid grid-cols-2 gap-4 p-6">
+      <div formGroupName="contact" class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
 
         <div>
           <label for="contactFirstName" class="mb-2 block text-[14px] font-semibold text-slate-700">Nombre</label>

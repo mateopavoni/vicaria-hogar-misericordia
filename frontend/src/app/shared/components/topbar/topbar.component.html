@@ -1,13 +1,26 @@
 
 <header
-  class="fixed left-[218px] right-0 top-0 z-30
-         flex h-[104px] items-center
+  class="fixed left-0 md:left-[218px] right-0 top-0 z-30
+         flex h-[104px] items-center gap-3
          border-b border-slate-100 bg-white
-         px-8"
+         px-4 sm:px-8"
 >
+  <!-- Botón hamburguesa: bug reportado 2026-09-23, el sidebar no se podía ocultar/mostrar
+       en mobile -->
+  <button
+    type="button"
+    (click)="sidebarState.toggle()"
+    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 md:hidden"
+    aria-label="Abrir menú"
+  >
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
   <!-- Selector de sede -->
   <div
-    class="flex h-[40px] items-center gap-3 rounded-lg
+    class="hidden sm:flex h-[40px] items-center gap-3 rounded-lg
            border border-indigo-200 bg-white
            px-3 text-sm font-medium text-slate-700"
   >

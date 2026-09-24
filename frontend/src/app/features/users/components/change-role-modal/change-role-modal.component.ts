@@ -14,7 +14,9 @@ export class ChangeRoleModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() changeRole = new EventEmitter<UserRole>();
 
-  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasona', 'Escucha'];
+  // bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia, no se le podía
+  // reasignar ese rol a un usuario existente desde este modal.
+  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasona', 'Escucha', 'CoordinadorDeCasaConvivencia'];
   selectedRole = signal<UserRole>('Escucha');
 
   // nombres lindos para mostrar en el select
@@ -22,6 +24,7 @@ export class ChangeRoleModalComponent implements OnInit {
     Referente: 'Referente',
     DirectoraDeCasona: 'Directora de Casona',
     Escucha: 'Escucha',
+    CoordinadorDeCasaConvivencia: 'Coordinador de Casa de Convivencia',
   };
 
   roleLabel(role: UserRole): string {

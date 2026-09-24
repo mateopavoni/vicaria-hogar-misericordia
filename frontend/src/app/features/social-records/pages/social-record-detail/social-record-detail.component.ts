@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
@@ -60,6 +60,11 @@ export class SocialRecordDetailComponent implements OnInit {
   showSuccessModal = signal(false);
   successModalTitle = signal('¡Registro Exitoso!');
   successModalMessage = signal('');
+
+  // bug reportado 2026-09-23: el botón de ingreso/egreso se gateaba solo por personType,
+  // que puede desincronizarse de si hay una estadía realmente abierta. Ahora depende de si
+  // existe una estadía sin egreso, que es la condición que de verdad importa para el botón.
+  hasActiveStay = computed(() => (this.record()?.staysHistory ?? []).some(stay => !stay.exitDate));
 
   openExitModal(): void {
     this.showExitModal.set(true);
@@ -136,7 +141,9 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // guarda una etapa de la historia de vida (SCRUM-11/171)
+  // agrega una entrada nueva a una etapa de la historia de vida (SCRUM-11/171).
+  // Bug reportado 2026-09-23: faltaba el modal de éxito acá (sí existía para
+  // ingreso/egreso) — se reusa el mismo patrón de signals.
   handleLifeHistorySaved(event: { stage: LifeHistoryStage; text: string }): void {
     const personId = this.record()?.personId;
     if (!personId) {
@@ -144,7 +151,12 @@ export class SocialRecordDetailComponent implements OnInit {
     }
 
     this.lifeStoryService.updateStage(personId, event.stage, event.text).subscribe({
-      next: (updated) => this.lifeHistory.set(updated),
+      next: (updated) => {
+        this.lifeHistory.set(updated);
+        this.successModalTitle.set('¡Entrada Registrada!');
+        this.successModalMessage.set('La entrada de historia de vida se guardó correctamente.');
+        this.showSuccessModal.set(true);
+      },
       error: (err) => {
         this.errorMessage.set(err?.error?.message || 'No se pudo guardar la historia de vida.');
       }

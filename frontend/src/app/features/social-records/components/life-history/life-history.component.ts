@@ -27,12 +27,22 @@ export class LifeHistoryComponent {
     { id: 'afterHome', title: 'Después del hogar', colorClass: 'bg-purple-500', textClass: 'text-purple-600' }
   ];
 
-  startEditing(stage: LifeHistoryStage): void {
+  // por etapa: si se está mostrando el historial completo de entradas anteriores
+  expandedStage = signal<LifeHistoryStage | null>(null);
+
+  // bug reportado 2026-09-23: "Editar" guardaba siempre sobre la misma entrada en vez de
+  // crear una nueva. Ahora el modal siempre arranca en blanco: cada guardado es una entrada
+  // nueva en el historial, no una edición de la anterior.
+  startNewEntry(stage: LifeHistoryStage): void {
     this.editingStage.set(stage);
   }
 
   closeEditor(): void {
     this.editingStage.set(null);
+  }
+
+  toggleHistory(stage: LifeHistoryStage): void {
+    this.expandedStage.update(current => (current === stage ? null : stage));
   }
 
   handleSave(text: string): void {
@@ -52,11 +62,5 @@ export class LifeHistoryComponent {
   get currentEditingTitle(): string {
     const stage = this.editingStage();
     return this.stages.find(s => s.id === stage)?.title ?? '';
-  }
-
-  get currentEditingText(): string {
-    const stage = this.editingStage();
-    if (!stage) return '';
-    return this.history()?.[stage]?.text ?? '';
   }
 }

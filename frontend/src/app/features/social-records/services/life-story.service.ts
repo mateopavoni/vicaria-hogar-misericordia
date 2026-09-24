@@ -1,16 +1,25 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { LifeHistory, LifeHistoryStage } from '../interfaces/life-history.interface';
+import { LifeHistory, LifeHistoryEntry, LifeHistoryStage } from '../interfaces/life-history.interface';
 
 // forma real de la respuesta del backend (LifeStoryResponseDto): nombres de etapa distintos
 // a los del frontend (beforeHogar/inHogar/afterHogar vs beforeHome/duringHome/afterHome)
+interface LifeStoryEntryResponse {
+  id: string;
+  content: string;
+  createdByUserId: string;
+  createdByName: string | null;
+  createdAt: string;
+}
+
 interface LifeStorySectionResponse {
   content: string | null;
   isCompleted: boolean;
   updatedByUserId: string | null;
   updatedByName: string | null;
   updatedAt: string | null;
+  entries: LifeStoryEntryResponse[];
 }
 
 interface LifeStoryResponse {
@@ -28,11 +37,21 @@ const STAGE_TO_BACKEND_PATH: Record<LifeHistoryStage, string> = {
   afterHome: 'after-hogar',
 };
 
+function toEntry(entry: LifeStoryEntryResponse): LifeHistoryEntry {
+  return {
+    id: entry.id,
+    text: entry.content,
+    authoredBy: entry.createdByName,
+    authoredAt: entry.createdAt,
+  };
+}
+
 function toSection(section: LifeStorySectionResponse) {
   return {
     text: section.content,
     lastEditedBy: section.updatedByName,
     lastEditedAt: section.updatedAt,
+    entries: (section.entries ?? []).map(toEntry),
   };
 }
 

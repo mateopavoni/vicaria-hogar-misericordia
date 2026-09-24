@@ -35,7 +35,7 @@
                 </p>
                 @if (section?.lastEditedBy) {
                   <p class="mt-2 text-xs text-slate-400">
-                    Última edición por {{ section?.lastEditedBy }} - {{ section?.lastEditedAt | date:'dd/MM/yyyy HH:mm' }}
+                    Última entrada por {{ section?.lastEditedBy }} - {{ section?.lastEditedAt | date:'dd/MM/yyyy HH:mm' }}
                   </p>
                 }
               } @else {
@@ -43,14 +43,37 @@
                   <app-empty-field-badge />
                 </div>
               }
+
+              @if ((section?.entries?.length ?? 0) > 1) {
+                <button
+                  type="button"
+                  (click)="toggleHistory(stageConfig.id)"
+                  class="mt-2 text-xs font-medium text-slate-400 hover:text-slate-600"
+                >
+                  {{ expandedStage() === stageConfig.id ? 'Ocultar historial' : 'Ver historial (' + section!.entries.length + ')' }}
+                </button>
+
+                @if (expandedStage() === stageConfig.id) {
+                  <ul class="mt-2 space-y-2 border-l-2 border-slate-200 pl-3">
+                    @for (entry of section!.entries; track entry.id) {
+                      <li class="text-xs text-slate-500">
+                        <p class="whitespace-pre-line">{{ entry.text }}</p>
+                        <p class="mt-0.5 text-[11px] text-slate-400">
+                          {{ entry.authoredBy }} - {{ entry.authoredAt | date:'dd/MM/yyyy HH:mm' }}
+                        </p>
+                      </li>
+                    }
+                  </ul>
+                }
+              }
             </div>
 
             <button
               type="button"
-              (click)="startEditing(stageConfig.id)"
+              (click)="startNewEntry(stageConfig.id)"
               class="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
             >
-              Editar
+              Agregar entrada
             </button>
           </div>
         </div>
@@ -62,7 +85,6 @@
   @if (editingStage()) {
     <app-life-history-editor-modal
       [stageTitle]="currentEditingTitle"
-      [initialText]="currentEditingText"
       (save)="handleSave($event)"
       (cancel)="closeEditor()"
     />

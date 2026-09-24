@@ -116,6 +116,21 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.view',
     'medicamentos.create',
     'medicamentos.edit'
+  ],
+
+  // bug reportado 2026-09-23: faltaba este rol por completo. Los permisos granulares
+  // reales que le da la migración AddCoordinadorRolePermissions son solo 3: ver fichas de
+  // residentes de la Casa de Convivencia, cargar observaciones sobre residentes y ver la
+  // agenda de medicamentos — mucho más acotado que DirectoraDeCasona. (Nota: varios
+  // controllers además lo autorizan a nivel de [Authorize(Roles=...)] para crear fichas y
+  // cambiar tipo/estado de persona, que no tiene equivalente en este mapa de permisos
+  // granulares — discrepancia ya documentada en .ai/context/OPEN_QUESTIONS.md, no se
+  // resuelve acá.)
+  CoordinadorDeCasaConvivencia: [
+    'fichas.view',
+    'observaciones.view',
+    'observaciones.create',
+    'medicamentos.view'
   ]
 
 };
