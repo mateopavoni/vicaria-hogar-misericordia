@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Testcontainers.MsSql;
 using Vicaria.Infrastructure.Persistence;
 
@@ -28,6 +29,13 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // bug encontrado 24/09/2026: sin esto, WebApplicationFactory corre en "Development"
+        // por default, y Program.cs siembra SeedTestUsers + SeedDemoData (6 personas de
+        // ejemplo) en cada contenedor de test — rompía cualquier test que esperara un
+        // conteo exacto (Assert.Single) en listados/búsquedas. Cada clase de test ya siembra
+        // sus propios actores con SembrarActorAsync, no depende de SeedTestUsers.
+        builder.UseEnvironment("Testing");
+
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
@@ -47,6 +55,15 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
             services.AddDbContext<VicariaDbContext>(options => options.UseSqlServer(_sqlServer.GetConnectionString()));
             // el propio Program.cs corre Database.Migrate() al armar el host (igual que en la VPS),
             // así que no hace falta EnsureCreated acá aparte
+
+            // bug encontrado 24/09/2026: los 2 jobs de inactividad automática (KNOWN_ISSUES.md,
+            // ya documentados como solapados entre sí) corrían igual durante los tests de
+            // integración, pisando en background el estado de SocialRecords que un test estaba
+            // asertando en paralelo (ej. PersonInactivityTests esperaba un registro "reciente" en
+            // Active y lo encontraba en Inactive, cambiado por el otro job). Se sacan los dos acá;
+            // el servicio subyacente (IPersonInactivityService) se sigue pudiendo testear
+            // directamente, como ya hacen los tests existentes.
+            services.RemoveAll<IHostedService>();
         });
     }
 }
