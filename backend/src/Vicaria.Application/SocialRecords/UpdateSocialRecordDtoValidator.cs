@@ -20,5 +20,14 @@ public class UpdateSocialRecordDtoValidator : AbstractValidator<UpdateSocialReco
         RuleFor(x => x.OvernightLocation).MaximumLength(200).WithMessage("El lugar de pernoctación no puede superar los 200 caracteres.");
         RuleFor(x => x.Occupation).MaximumLength(200).WithMessage("La ocupación no puede superar los 200 caracteres.");
         RuleFor(x => x.GeneralNotes).MaximumLength(2000).WithMessage("Las observaciones generales no pueden superar los 2000 caracteres.");
+
+        When(x => x.Contact != null, () =>
+        {
+            RuleFor(x => x.Contact!.FirstName).NotEmpty().WithMessage("El nombre del contacto es obligatorio.");
+            RuleFor(x => x.Contact!.FirstName).MaximumLength(100).WithMessage("El nombre del contacto no puede superar los 100 caracteres.");
+            RuleFor(x => x.Contact!.LastName).MaximumLength(100).WithMessage("El apellido del contacto no puede superar los 100 caracteres.");
+            RuleFor(x => x.Contact!.Phone).MaximumLength(30).WithMessage("El teléfono del contacto no puede superar los 30 caracteres.");
+            RuleFor(x => x.Contact!.Address).MaximumLength(300).WithMessage("El domicilio del contacto no puede superar los 300 caracteres.");
+        });
     }
 }

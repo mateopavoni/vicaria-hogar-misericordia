@@ -67,6 +67,7 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonTypeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonTypeError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonTypeError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
@@ -89,6 +90,7 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonProfileStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonProfileStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonProfileStatusError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

@@ -4,7 +4,8 @@ public enum UpdatePersonProfileStatusError
 {
     PersonNotFound,
     SocialRecordNotFound,
-    MissingPsychiatricEvaluation
+    MissingPsychiatricEvaluation,
+    ActiveStayMustBeExitedFirst
 }
 
 public class UpdatePersonProfileStatusResult
@@ -31,5 +32,11 @@ public class UpdatePersonProfileStatusResult
     {
         Error = UpdatePersonProfileStatusError.MissingPsychiatricEvaluation,
         ErrorMessage = "No se puede asignar el estado de Residente sin una evaluación psiquiátrica vigente."
+    };
+
+    public static UpdatePersonProfileStatusResult ActiveStayMustBeExitedFirst() => new()
+    {
+        Error = UpdatePersonProfileStatusError.ActiveStayMustBeExitedFirst,
+        ErrorMessage = "Debe registrar el egreso de la Casa de Convivencia antes de cambiar el tipo de persona."
     };
 }

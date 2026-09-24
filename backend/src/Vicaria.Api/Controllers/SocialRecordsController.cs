@@ -108,7 +108,13 @@ public class SocialRecordsController : ControllerBase
         }
 
         var result = await _socialRecordService.UpdateAsync(id, dto, ActorId, cancellationToken);
-        return result.Success ? NoContent() : NotFound(new { message = result.ErrorMessage });
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdateSocialRecordError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdateSocialRecordError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
     }
     [HttpGet("filter/count")]
     public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)

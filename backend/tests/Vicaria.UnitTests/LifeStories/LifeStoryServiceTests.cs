@@ -27,6 +27,16 @@ public class LifeStoryServiceTests
         return person.Id;
     }
 
+    // el mapeo del historial de entradas hace Include(CreatedByUser); sin un User real
+    // sembrado, el Include no resuelve y la entrada queda afuera del resultado.
+    private static async Task<Guid> CrearUsuarioAsync(VicariaDbContext db)
+    {
+        var user = new User { Id = Guid.NewGuid(), FirstName = "Autor", LastName = "De Prueba", Email = $"{Guid.NewGuid()}@test.com" };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        return user.Id;
+    }
+
     [Fact]
     public async Task UpdateStageAsync_PersonaExistenteSinHistoria_CreaFilaYEditaSoloLaEtapa()
     {
@@ -113,5 +123,60 @@ public class LifeStoryServiceTests
         Assert.Null(result.BeforeHogar.Content);
         Assert.False(result.InHogar.IsCompleted);
         Assert.False(result.AfterHogar.IsCompleted);
+        Assert.Empty(result.BeforeHogar.Entries);
+    }
+
+    // bug reportado 2026-09-23: guardar una etapa pisaba el contenido anterior en vez de
+    // sumar una entrada nueva al historial.
+    [Fact]
+    public async Task UpdateStageAsync_GuardaDosVeces_SumaDosEntradasAlHistorialSinPerderLaPrimera()
+    {
+        using var db = CrearDbContext();
+        var service = new LifeStoryService(db);
+        var personId = await CrearPersonaAsync(db);
+        var actorId = await CrearUsuarioAsync(db);
+
+        await service.UpdateStageAsync(personId, LifeStoryStage.BeforeHogar, "primera entrada", actorId);
+        var result = await service.UpdateStageAsync(personId, LifeStoryStage.BeforeHogar, "segunda entrada", actorId);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result!.BeforeHogar.Entries.Count);
+        // orden descendente: la más nueva primero
+        Assert.Equal("segunda entrada", result.BeforeHogar.Entries[0].Content);
+        Assert.Equal("primera entrada", result.BeforeHogar.Entries[1].Content);
+        // el "valor actual" (compatibilidad con quien solo lea Content) refleja la última
+        Assert.Equal("segunda entrada", result.BeforeHogar.Content);
+    }
+
+    [Fact]
+    public async Task UpdateStageAsync_ConContenidoVacio_NoSumaEntradaAlHistorial()
+    {
+        using var db = CrearDbContext();
+        var service = new LifeStoryService(db);
+        var personId = await CrearPersonaAsync(db);
+        var actorId = Guid.NewGuid();
+
+        await service.UpdateStageAsync(personId, LifeStoryStage.BeforeHogar, "   ", actorId);
+
+        var entries = await db.LifeStoryEntries.Where(e => e.PersonId == personId).ToListAsync();
+        Assert.Empty(entries);
+    }
+
+    [Fact]
+    public async Task GetByPersonIdAsync_ConEntradasDeDistintasEtapas_LasSeparaCorrectamente()
+    {
+        using var db = CrearDbContext();
+        var service = new LifeStoryService(db);
+        var personId = await CrearPersonaAsync(db);
+        var actorId = await CrearUsuarioAsync(db);
+
+        await service.UpdateStageAsync(personId, LifeStoryStage.BeforeHogar, "antes", actorId);
+        await service.UpdateStageAsync(personId, LifeStoryStage.InHogar, "en", actorId);
+
+        var result = await service.GetByPersonIdAsync(personId);
+
+        Assert.Single(result.BeforeHogar.Entries);
+        Assert.Single(result.InHogar.Entries);
+        Assert.Empty(result.AfterHogar.Entries);
     }
 }

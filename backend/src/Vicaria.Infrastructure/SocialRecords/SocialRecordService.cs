@@ -26,7 +26,7 @@ public class SocialRecordService : ISocialRecordService
             Id = Guid.NewGuid(),
             FirstName = dto.FirstName.Trim(),
             LastName = dto.LastName?.Trim(),
-            Dni = dto.Dni?.Trim(),
+            Dni = NormalizeDni(dto.Dni),
             DateOfBirth = dto.DateOfBirth,
             Phone = dto.Phone?.Trim(),
             CreatedAt = DateTime.UtcNow
@@ -87,6 +87,8 @@ public class SocialRecordService : ISocialRecordService
         }
 
         var pattern = $"%{query.Trim().ToUpper()}%";
+        var dniDigits = DigitsOnly(query);
+        var dniPattern = dniDigits.Length > 0 ? $"%{dniDigits}%" : null;
 
         if (_dbContext.Database.IsRelational())
         {
@@ -98,7 +100,7 @@ public class SocialRecordService : ISocialRecordService
                     && (
                         EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
                         (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
-                        (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern)) ||
+                        (dniPattern != null && r.Person.Dni != null && EF.Functions.Like(r.Person.Dni, dniPattern)) ||
                         (r.Person.DateOfBirth != null && EF.Functions.Like(r.Person.DateOfBirth.ToString()!, pattern))
                     ))
                 .Select(r => new SocialRecordSearchResultDto(
@@ -120,7 +122,7 @@ public class SocialRecordService : ISocialRecordService
         var normalizedQuery = Normalize(query);
 
         var filtered = records
-            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery));
+            .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedQuery, dniDigits));
 
         if (personTypeFilter.HasValue)
         {
@@ -160,6 +162,25 @@ public class SocialRecordService : ISocialRecordService
                 Math.Max(0, (int)((s.ExitDate ?? now) - s.EntryDate).TotalDays)))
             .ToListAsync(cancellationToken);
 
+        // historial de cambios de tipo de persona (bug reportado 2026-09-23: nunca existió
+        // este campo). Se materializa primero y se mapea en memoria (en vez de armar el
+        // string dentro del Select) para no asumir que ChangedByUser siempre resuelve.
+        var personTypeChanges = await _dbContext.PersonTypeChanges
+            .AsNoTracking()
+            .Include(c => c.ChangedByUser)
+            .Where(c => c.PersonId == record.PersonId)
+            .OrderByDescending(c => c.ChangedAt)
+            .ToListAsync(cancellationToken);
+
+        var personTypeHistory = personTypeChanges
+            .Select(c => new PersonTypeHistoryItemDto(
+                c.Id,
+                c.PreviousType.HasValue ? PersonTypeLabel(c.PreviousType) : null,
+                PersonTypeLabel(c.NewType),
+                c.ChangedByUser is null ? "Usuario desconocido" : $"{c.ChangedByUser.FirstName} {c.ChangedByUser.LastName}".Trim(),
+                c.ChangedAt))
+            .ToList();
+
         return new SocialRecordDetailDto(
             record.Id,
             record.PersonId,
@@ -179,7 +200,8 @@ public class SocialRecordService : ISocialRecordService
             contact is null ? null : new ContactDto(contact.FirstName, contact.LastName, contact.Phone, contact.Address),
             record.Status,
             record.UpdatedAt,
-            stays);
+            stays,
+            personTypeHistory);
     }
 
     public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
@@ -193,13 +215,28 @@ public class SocialRecordService : ISocialRecordService
             return UpdateSocialRecordResult.NotFound();
         }
 
+        // el tipo de persona puede afectar la estadía en la Casa de Convivencia y queda
+        // auditado en el historial; se valida/aplica antes de tocar el resto de los campos
+        // (bug reportado 2026-09-23: este endpoint cambiaba PersonType sin la misma lógica
+        // que UpdatePersonTypeAsync, permitiendo desincronizar el estado de la estadía)
+        if (dto.PersonType.HasValue)
+        {
+            var outcome = await ChangePersonTypeAsync(socialRecord, dto.PersonType.Value, actorId, cancellationToken);
+            switch (outcome)
+            {
+                case PersonTypeChangeOutcome.MissingPsychiatricEvaluation:
+                    return UpdateSocialRecordResult.MissingPsychiatricEvaluation();
+                case PersonTypeChangeOutcome.ActiveStayMustBeExitedFirst:
+                    return UpdateSocialRecordResult.ActiveStayMustBeExitedFirst();
+            }
+        }
+
         socialRecord.Person.FirstName = dto.FirstName.Trim();
         socialRecord.Person.LastName = dto.LastName?.Trim();
-        socialRecord.Person.Dni = dto.Dni?.Trim();
+        socialRecord.Person.Dni = NormalizeDni(dto.Dni);
         socialRecord.Person.DateOfBirth = dto.DateOfBirth;
         socialRecord.Person.Phone = dto.Phone?.Trim();
 
-        socialRecord.PersonType = dto.PersonType;
         socialRecord.ReasonForEntry = dto.ReasonForEntry?.Trim();
         socialRecord.EntryDate = dto.EntryDate;
         socialRecord.HousingSituation = dto.HousingSituation?.Trim();
@@ -208,6 +245,10 @@ public class SocialRecordService : ISocialRecordService
         socialRecord.HasDocumentation = dto.HasDocumentation;
         socialRecord.GeneralNotes = dto.GeneralNotes?.Trim();
         socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        // bug reportado 2026-09-23: UpdateSocialRecordDto no tenía Contact, así que
+        // editar el contacto de referencia se perdía en silencio
+        await UpsertContactAsync(socialRecordId, dto.Contact, cancellationToken);
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -222,6 +263,7 @@ public class SocialRecordService : ISocialRecordService
 
         return UpdateSocialRecordResult.Ok();
     }
+
     public async Task<int> CountByFilterAsync(FilterSocialRecordsDto filter, CancellationToken cancellationToken = default)
     {
         var query = ApplyFilters(_dbContext.SocialRecords.Include(r => r.Person), filter);
@@ -250,10 +292,13 @@ public class SocialRecordService : ISocialRecordService
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var pattern = $"%{search.Trim().ToUpper()}%";
+                var dniDigits = DigitsOnly(search);
+                var dniPattern = dniDigits.Length > 0 ? $"%{dniDigits}%" : null;
+
                 query = query.Where(r => r.Person != null && (
                     EF.Functions.Like(r.Person.FirstName.ToUpper(), pattern) ||
                     (r.Person.LastName != null && EF.Functions.Like(r.Person.LastName.ToUpper(), pattern)) ||
-                    (r.Person.Dni != null && EF.Functions.Like(r.Person.Dni.ToUpper(), pattern))
+                    (dniPattern != null && r.Person.Dni != null && EF.Functions.Like(r.Person.Dni, dniPattern))
                 ));
             }
 
@@ -273,8 +318,9 @@ public class SocialRecordService : ISocialRecordService
         if (!string.IsNullOrWhiteSpace(search))
         {
             var normalizedSearch = Normalize(search);
+            var dniDigits = DigitsOnly(search);
             allFiltered = allFiltered
-                .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedSearch))
+                .Where(r => r.Person is not null && MatchesQuery(r.Person, normalizedSearch, dniDigits))
                 .ToList();
         }
 
@@ -378,58 +424,21 @@ public class SocialRecordService : ISocialRecordService
             return UpdatePersonTypeResult.SocialRecordNotFound();
         }
 
-        // SCRUM-134: pasar a Residente exige una evaluación psiquiátrica vigente
-        if (dto.PersonType == PersonType.Resident)
+        var outcome = await ChangePersonTypeAsync(socialRecord, dto.PersonType, actorId, cancellationToken);
+        switch (outcome)
         {
-            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
-                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
-
-            if (!hasValidEvaluation)
-            {
+            case PersonTypeChangeOutcome.MissingPsychiatricEvaluation:
                 return UpdatePersonTypeResult.MissingPsychiatricEvaluation();
-            }
-        }
-
-        // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
-        // la casa de convivencia con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
-        var wasAlreadyResident = socialRecord.PersonType == PersonType.Resident;
-        socialRecord.PersonType = dto.PersonType;
-        socialRecord.UpdatedAt = DateTime.UtcNow;
-
-        _dbContext.AuditLogs.Add(new AuditLog
-        {
-            Id = Guid.NewGuid(),
-            UserId = actorId,
-            Action = "Tipo de persona actualizado",
-            AffectedEntity = $"Person:{personId}",
-            Date = DateTime.UtcNow
-        });
-
-        if (dto.PersonType == PersonType.Resident && !wasAlreadyResident)
-        {
-            var casaConvivenciaStay = new CasaConvivenciaStay
-            {
-                Id = Guid.NewGuid(),
-                PersonId = personId,
-                EntryDate = DateTime.UtcNow
-            };
-            _dbContext.CasaConvivenciaStays.Add(casaConvivenciaStay);
-
-            _dbContext.AuditLogs.Add(new AuditLog
-            {
-                Id = Guid.NewGuid(),
-                UserId = actorId,
-                Action = "Estadía en casa de convivencia registrada",
-                AffectedEntity = $"CasaConvivenciaStay:{casaConvivenciaStay.Id}",
-                Date = DateTime.UtcNow
-            });
+            case PersonTypeChangeOutcome.ActiveStayMustBeExitedFirst:
+                return UpdatePersonTypeResult.ActiveStayMustBeExitedFirst();
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return UpdatePersonTypeResult.Ok();
     }
-        public async Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId,UpdatePersonProfileStatusDto dto,Guid actorId,CancellationToken cancellationToken = default)
+
+    public async Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId, UpdatePersonProfileStatusDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
         var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
         if (person is null)
@@ -444,30 +453,19 @@ public class SocialRecordService : ISocialRecordService
             return UpdatePersonProfileStatusResult.SocialRecordNotFound();
         }
 
-        if (dto.Status == PersonProfileStatus.Resident)
+        var targetType = dto.Status == PersonProfileStatus.Resident ? PersonType.Resident : PersonType.Ambulatory;
+        var outcome = await ChangePersonTypeAsync(socialRecord, targetType, actorId, cancellationToken);
+        switch (outcome)
         {
-            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
-                .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
-
-            if (!hasValidEvaluation)
-            {
+            case PersonTypeChangeOutcome.MissingPsychiatricEvaluation:
                 return UpdatePersonProfileStatusResult.MissingPsychiatricEvaluation();
-            }
-
-            socialRecord.PersonType = PersonType.Resident;
-            socialRecord.Status = SocialRecordStatus.Active;
-        }
-        else if (dto.Status == PersonProfileStatus.ActiveAmbulatory)
-        {
-            socialRecord.PersonType = PersonType.Ambulatory;
-            socialRecord.Status = SocialRecordStatus.Active;
-        }
-        else if (dto.Status == PersonProfileStatus.InactiveAmbulatory)
-        {
-            socialRecord.PersonType = PersonType.Ambulatory;
-            socialRecord.Status = SocialRecordStatus.Inactive;
+            case PersonTypeChangeOutcome.ActiveStayMustBeExitedFirst:
+                return UpdatePersonProfileStatusResult.ActiveStayMustBeExitedFirst();
         }
 
+        socialRecord.Status = dto.Status == PersonProfileStatus.InactiveAmbulatory
+            ? SocialRecordStatus.Inactive
+            : SocialRecordStatus.Active;
         socialRecord.UpdatedAt = DateTime.UtcNow;
 
         _dbContext.AuditLogs.Add(new AuditLog
@@ -484,11 +482,147 @@ public class SocialRecordService : ISocialRecordService
         return UpdatePersonProfileStatusResult.Ok();
     }
 
-    private static bool MatchesQuery(Person person, string normalizedQuery)
+    private enum PersonTypeChangeOutcome
+    {
+        Ok,
+        NoChange,
+        MissingPsychiatricEvaluation,
+        ActiveStayMustBeExitedFirst
+    }
+
+    // lógica única de cambio de PersonType, compartida por los 3 endpoints que pueden
+    // tocarlo (UpdatePersonTypeAsync, UpdateAsync de ficha, UpdatePersonProfileStatusAsync).
+    // Bug reportado 2026-09-23: antes solo UpdatePersonTypeAsync validaba la evaluación
+    // psiquiátrica y manejaba la estadía; los otros dos caminos podían desincronizar el
+    // tipo de persona con la estadía real de la Casa de Convivencia. No hace SaveChanges:
+    // el caller decide cuándo persistir junto con el resto de sus cambios.
+    private async Task<PersonTypeChangeOutcome> ChangePersonTypeAsync(SocialRecord socialRecord, PersonType newType, Guid actorId, CancellationToken cancellationToken)
+    {
+        if (socialRecord.PersonType == newType)
+        {
+            return PersonTypeChangeOutcome.NoChange;
+        }
+
+        var wasResident = socialRecord.PersonType == PersonType.Resident;
+
+        if (newType == PersonType.Resident)
+        {
+            // SCRUM-134: pasar a Residente exige una evaluación psiquiátrica vigente
+            var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
+                .AnyAsync(e => e.PersonId == socialRecord.PersonId && e.IsValid, cancellationToken);
+
+            if (!hasValidEvaluation)
+            {
+                return PersonTypeChangeOutcome.MissingPsychiatricEvaluation;
+            }
+        }
+        else if (wasResident)
+        {
+            // no se puede dejar de ser Residente con una estadía todavía abierta: el
+            // egreso se registra por el flujo dedicado (CasaConvivenciaStayController)
+            var hasActiveStay = await _dbContext.CasaConvivenciaStays
+                .AnyAsync(s => s.PersonId == socialRecord.PersonId && s.ExitDate == null, cancellationToken);
+
+            if (hasActiveStay)
+            {
+                return PersonTypeChangeOutcome.ActiveStayMustBeExitedFirst;
+            }
+        }
+
+        var previousType = socialRecord.PersonType;
+        socialRecord.PersonType = newType;
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.PersonTypeChanges.Add(new PersonTypeChange
+        {
+            Id = Guid.NewGuid(),
+            PersonId = socialRecord.PersonId,
+            PreviousType = previousType,
+            NewType = newType,
+            ChangedByUserId = actorId,
+            ChangedAt = DateTime.UtcNow
+        });
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Tipo de persona actualizado",
+            AffectedEntity = $"Person:{socialRecord.PersonId}",
+            Date = DateTime.UtcNow
+        });
+
+        // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
+        // la casa de convivencia con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
+        if (newType == PersonType.Resident && !wasResident)
+        {
+            var casaConvivenciaStay = new CasaConvivenciaStay
+            {
+                Id = Guid.NewGuid(),
+                PersonId = socialRecord.PersonId,
+                EntryDate = DateTime.UtcNow
+            };
+            _dbContext.CasaConvivenciaStays.Add(casaConvivenciaStay);
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = actorId,
+                Action = "Estadía en casa de convivencia registrada",
+                AffectedEntity = $"CasaConvivenciaStay:{casaConvivenciaStay.Id}",
+                Date = DateTime.UtcNow
+            });
+        }
+
+        return PersonTypeChangeOutcome.Ok;
+    }
+
+    private async Task UpsertContactAsync(Guid socialRecordId, ContactDto? contactDto, CancellationToken cancellationToken)
+    {
+        var existing = await _dbContext.Contacts
+            .FirstOrDefaultAsync(c => c.SocialRecordId == socialRecordId, cancellationToken);
+
+        if (contactDto is null)
+        {
+            if (existing is not null)
+            {
+                _dbContext.Contacts.Remove(existing);
+            }
+            return;
+        }
+
+        if (existing is null)
+        {
+            _dbContext.Contacts.Add(new Contact
+            {
+                Id = Guid.NewGuid(),
+                SocialRecordId = socialRecordId,
+                FirstName = contactDto.FirstName.Trim(),
+                LastName = contactDto.LastName?.Trim(),
+                Phone = contactDto.Phone?.Trim(),
+                Address = contactDto.Address?.Trim()
+            });
+            return;
+        }
+
+        existing.FirstName = contactDto.FirstName.Trim();
+        existing.LastName = contactDto.LastName?.Trim();
+        existing.Phone = contactDto.Phone?.Trim();
+        existing.Address = contactDto.Address?.Trim();
+    }
+
+    private static string PersonTypeLabel(PersonType? type) => type switch
+    {
+        PersonType.Ambulatory => "Ambulatorio",
+        PersonType.Resident => "Residente",
+        _ => "Sin definir"
+    };
+
+    private static bool MatchesQuery(Person person, string normalizedQuery, string dniDigitsQuery)
     {
         return Normalize(person.FirstName).Contains(normalizedQuery)
             || Normalize(person.LastName ?? "").Contains(normalizedQuery)
-            || Normalize(person.Dni ?? "").Contains(normalizedQuery);
+            || (dniDigitsQuery.Length > 0 && (person.Dni ?? "").Contains(dniDigitsQuery));
     }
 
     // saca tildes y pasa a minúsculas para que la búsqueda las ignore
@@ -497,5 +631,16 @@ public class SocialRecordService : ISocialRecordService
         var withoutAccents = value.Normalize(NormalizationForm.FormD)
             .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
         return new string(withoutAccents.ToArray()).ToLowerInvariant();
+    }
+
+    // deja solo los dígitos del DNI (bug reportado 2026-09-23: "38.123.456" guardado y
+    // "38123456" buscado no matcheaban porque la comparación era literal)
+    private static string DigitsOnly(string value) => new(value.Where(char.IsDigit).ToArray());
+
+    private static string? NormalizeDni(string? dni)
+    {
+        if (string.IsNullOrWhiteSpace(dni)) return null;
+        var digitsOnly = DigitsOnly(dni);
+        return digitsOnly.Length > 0 ? digitsOnly : dni.Trim();
     }
 }

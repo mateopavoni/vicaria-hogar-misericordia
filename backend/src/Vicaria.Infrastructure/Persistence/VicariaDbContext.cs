@@ -24,6 +24,8 @@ public class VicariaDbContext : DbContext
     public DbSet<Observation> Observations => Set<Observation>();
     public DbSet<ObservationCategory> ObservationCategories => Set<ObservationCategory>();
     public DbSet<LifeStory> LifeStories => Set<LifeStory>();
+    public DbSet<LifeStoryEntry> LifeStoryEntries => Set<LifeStoryEntry>();
+    public DbSet<PersonTypeChange> PersonTypeChanges => Set<PersonTypeChange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

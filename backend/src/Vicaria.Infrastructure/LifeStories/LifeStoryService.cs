@@ -23,18 +23,20 @@ public class LifeStoryService : ILifeStoryService
             .Include(l => l.AfterHogarUpdatedByUser)
             .FirstOrDefaultAsync(l => l.PersonId == personId, cancellationToken);
 
+        var entriesByStage = await GetEntriesByStageAsync(personId, cancellationToken);
+
         if (entity is null)
         {
             return new LifeStoryResponseDto(
                 Guid.Empty,
                 personId,
-                new LifeStorySectionDto(null, false, null, null, null),
-                new LifeStorySectionDto(null, false, null, null, null),
-                new LifeStorySectionDto(null, false, null, null, null)
+                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.BeforeHogar]),
+                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.InHogar]),
+                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.AfterHogar])
             );
         }
 
-        return MapToDto(entity);
+        return MapToDto(entity, entriesByStage);
     }
 
     public async Task<LifeStoryResponseDto?> UpdateAsync(Guid personId, UpdateLifeStoryDto dto, Guid actorUserId, CancellationToken cancellationToken = default)
@@ -56,26 +58,25 @@ public class LifeStoryService : ILifeStoryService
             _dbContext.LifeStories.Add(entity);
         }
 
-        // Auditoría automática por etapa (SCRUM-172)
+        // Auditoría automática por etapa (SCRUM-172) — este endpoint (PUT masivo de las 3
+        // etapas) también suma una entrada nueva al historial de cada etapa que cambió,
+        // igual que UpdateStageAsync, para no dejar un camino que siga pisando contenido.
         if (dto.BeforeHogar is not null && dto.BeforeHogar != entity.BeforeHogar)
         {
-            entity.BeforeHogar = dto.BeforeHogar.Trim();
-            entity.BeforeHogarUpdatedByUserId = actorUserId;
-            entity.BeforeHogarUpdatedAt = now;
+            ApplyStageContent(entity, LifeStoryStage.BeforeHogar, dto.BeforeHogar, actorUserId, now);
+            AddEntry(personId, LifeStoryStage.BeforeHogar, dto.BeforeHogar, actorUserId, now);
         }
 
         if (dto.InHogar is not null && dto.InHogar != entity.InHogar)
         {
-            entity.InHogar = dto.InHogar.Trim();
-            entity.InHogarUpdatedByUserId = actorUserId;
-            entity.InHogarUpdatedAt = now;
+            ApplyStageContent(entity, LifeStoryStage.InHogar, dto.InHogar, actorUserId, now);
+            AddEntry(personId, LifeStoryStage.InHogar, dto.InHogar, actorUserId, now);
         }
 
         if (dto.AfterHogar is not null && dto.AfterHogar != entity.AfterHogar)
         {
-            entity.AfterHogar = dto.AfterHogar.Trim();
-            entity.AfterHogarUpdatedByUserId = actorUserId;
-            entity.AfterHogarUpdatedAt = now;
+            ApplyStageContent(entity, LifeStoryStage.AfterHogar, dto.AfterHogar, actorUserId, now);
+            AddEntry(personId, LifeStoryStage.AfterHogar, dto.AfterHogar, actorUserId, now);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -85,11 +86,14 @@ public class LifeStoryService : ILifeStoryService
         await _dbContext.Entry(entity).Reference(l => l.InHogarUpdatedByUser).LoadAsync(cancellationToken);
         await _dbContext.Entry(entity).Reference(l => l.AfterHogarUpdatedByUser).LoadAsync(cancellationToken);
 
-        return MapToDto(entity);
+        var entriesByStage = await GetEntriesByStageAsync(personId, cancellationToken);
+        return MapToDto(entity, entriesByStage);
     }
 
-    // edita una sola etapa de forma independiente (SCRUM-171): la persona se crea
-    // la fila si no existe, y solo esa etapa actualiza su contenido y auditoría
+    // guarda una nueva entrada de una etapa (bug reportado 2026-09-23: antes pisaba el
+    // contenido anterior en vez de crear una entrada nueva). LifeStory sigue actualizándose
+    // como caché de "última entrada" para no romper a nadie que solo lea el valor actual;
+    // la fuente de verdad del historial completo es LifeStoryEntry (append-only).
     public async Task<LifeStoryResponseDto?> UpdateStageAsync(Guid personId, LifeStoryStage stage, string content, Guid actorUserId, CancellationToken cancellationToken = default)
     {
         var personExists = await _dbContext.People.AnyAsync(p => p.Id == personId, cancellationToken);
@@ -107,7 +111,15 @@ public class LifeStoryService : ILifeStoryService
             _dbContext.LifeStories.Add(entity);
         }
 
-        ApplyStageContent(entity, stage, content, actorUserId, DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+        var trimmed = content.Trim();
+
+        if (!string.IsNullOrWhiteSpace(trimmed))
+        {
+            AddEntry(personId, stage, trimmed, actorUserId, now);
+        }
+
+        ApplyStageContent(entity, stage, content, actorUserId, now);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -116,7 +128,62 @@ public class LifeStoryService : ILifeStoryService
         await _dbContext.Entry(entity).Reference(l => l.InHogarUpdatedByUser).LoadAsync(cancellationToken);
         await _dbContext.Entry(entity).Reference(l => l.AfterHogarUpdatedByUser).LoadAsync(cancellationToken);
 
-        return MapToDto(entity);
+        var entriesByStage = await GetEntriesByStageAsync(personId, cancellationToken);
+        return MapToDto(entity, entriesByStage);
+    }
+
+    private void AddEntry(Guid personId, LifeStoryStage stage, string content, Guid actorUserId, DateTime now)
+    {
+        _dbContext.LifeStoryEntries.Add(new LifeStoryEntry
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personId,
+            Stage = stage,
+            Content = content.Trim(),
+            CreatedByUserId = actorUserId,
+            CreatedAt = now
+        });
+    }
+
+    private async Task<Dictionary<LifeStoryStage, IReadOnlyList<LifeStoryEntryDto>>> GetEntriesByStageAsync(Guid personId, CancellationToken cancellationToken)
+    {
+        var entries = await _dbContext.LifeStoryEntries
+            .AsNoTracking()
+            .Include(e => e.CreatedByUser)
+            .Where(e => e.PersonId == personId)
+            .OrderByDescending(e => e.CreatedAt)
+            .Select(e => new
+            {
+                e.Id,
+                e.Stage,
+                e.Content,
+                e.CreatedByUserId,
+                AuthorFirstName = e.CreatedByUser.FirstName,
+                AuthorLastName = e.CreatedByUser.LastName,
+                e.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var result = new Dictionary<LifeStoryStage, IReadOnlyList<LifeStoryEntryDto>>
+        {
+            [LifeStoryStage.BeforeHogar] = [],
+            [LifeStoryStage.InHogar] = [],
+            [LifeStoryStage.AfterHogar] = []
+        };
+
+        foreach (var group in entries.GroupBy(e => e.Stage))
+        {
+            result[group.Key] = group
+                .Select(e => new LifeStoryEntryDto(
+                    e.Id,
+                    e.Content,
+                    e.CreatedByUserId,
+                    $"{e.AuthorFirstName} {e.AuthorLastName}".Trim(),
+                    e.CreatedAt))
+                .ToList();
+        }
+
+        return result;
     }
 
     // actualiza una etapa y su auditoría solo si el contenido cambió (consistente con SCRUM-172)
@@ -147,7 +214,7 @@ public class LifeStoryService : ILifeStoryService
         }
     }
 
-    private static LifeStoryResponseDto MapToDto(LifeStory entity)
+    private static LifeStoryResponseDto MapToDto(LifeStory entity, Dictionary<LifeStoryStage, IReadOnlyList<LifeStoryEntryDto>> entriesByStage)
     {
         static string? FormatAuthor(User? user) => user is null ? null : $"{user.FirstName} {user.LastName}".Trim();
 
@@ -159,21 +226,24 @@ public class LifeStoryService : ILifeStoryService
                 !string.IsNullOrWhiteSpace(entity.BeforeHogar),
                 entity.BeforeHogarUpdatedByUserId,
                 FormatAuthor(entity.BeforeHogarUpdatedByUser),
-                entity.BeforeHogarUpdatedAt
+                entity.BeforeHogarUpdatedAt,
+                entriesByStage[LifeStoryStage.BeforeHogar]
             ),
             new LifeStorySectionDto(
                 entity.InHogar,
                 !string.IsNullOrWhiteSpace(entity.InHogar),
                 entity.InHogarUpdatedByUserId,
                 FormatAuthor(entity.InHogarUpdatedByUser),
-                entity.InHogarUpdatedAt
+                entity.InHogarUpdatedAt,
+                entriesByStage[LifeStoryStage.InHogar]
             ),
             new LifeStorySectionDto(
                 entity.AfterHogar,
                 !string.IsNullOrWhiteSpace(entity.AfterHogar),
                 entity.AfterHogarUpdatedByUserId,
                 FormatAuthor(entity.AfterHogarUpdatedByUser),
-                entity.AfterHogarUpdatedAt
+                entity.AfterHogarUpdatedAt,
+                entriesByStage[LifeStoryStage.AfterHogar]
             )
         );
     }
