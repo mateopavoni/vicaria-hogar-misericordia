@@ -1,0 +1,28 @@
+<ui-modal [title]="title()" size="sm" [closeOnBackdrop]="false" (closed)="onClose()">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+
+    <ui-form-field label="Nombre" for="category-name" [required]="true" [error]="nameError">
+      <input id="category-name" uiInput type="text" formControlName="name" placeholder="Ej: Salud" maxlength="100" />
+    </ui-form-field>
+
+    <ui-form-field label="Descripción" for="category-description" [error]="descriptionError">
+      <textarea
+        id="category-description"
+        uiInput
+        formControlName="description"
+        rows="3"
+        maxlength="500"
+        placeholder="Para qué se usa esta categoría (opcional)"
+      ></textarea>
+    </ui-form-field>
+
+    @if (errorMessage()) {
+      <p class="text-[12px] font-semibold text-rose-500" role="alert">{{ errorMessage() }}</p>
+    }
+  </form>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" [disabled]="saving()" (click)="onClose()">Cancelar</button>
+    <button uiButton type="button" [loading]="saving()" [disabled]="saving()" (click)="submit()">Guardar</button>
+  </ng-container>
+</ui-modal>

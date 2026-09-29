@@ -1,0 +1,17 @@
+<ui-modal [title]="'Nueva entrada: ' + stageTitle()" [closeOnBackdrop]="false" (closed)="cancel.emit()">
+  <ui-form-field label="Narrativa / historia de vida" for="life-history-text">
+    <textarea
+      id="life-history-text"
+      uiInput
+      [value]="textSignal()"
+      (input)="onInput($event)"
+      rows="6"
+      placeholder="Escribí el registro para esta etapa..."
+    ></textarea>
+  </ui-form-field>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" (click)="cancel.emit()">Cancelar</button>
+    <button uiButton type="button" (click)="onSave()">Guardar cambios</button>
+  </ng-container>
+</ui-modal>

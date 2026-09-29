@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonProfileStatus, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
-import { CasaConvivenciaStayExitRequest } from '../interfaces/exit-stay.interface';
+import { CasaConvivenciaStayExitRequest } from '../casa-convivencia-stays/interfaces/exit-stay.interface';
 
 @Injectable({
   providedIn: 'root'

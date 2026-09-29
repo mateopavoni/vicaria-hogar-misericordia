@@ -1,19 +1,47 @@
 import {Component,inject,signal,computed, OnInit} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ManagedUser,UserStatus} from '../../interfaces/user.interface';
-import { UserRole } from '../../../../core/auth/userRole';
+import { UserRole } from '../../../../core/auth/models/user-role';
 import { UsersService } from '../../services/users.service';
 import { ApproveUserModalComponent } from '../../components/approve-user-modal/approve-user-modal.component';
 import {  RejectUserModalComponent } from '../../components/reject-user-modal/reject-user-modal.component';
 import { ChangeRoleModalComponent } from "../../components/change-role-modal/change-role-modal.component";
 import { AuthService } from '../../../../core/auth/auth.service';
+import {
+  UiButtonComponent,
+  UiCellDirective,
+  UiColumn,
+  UiConfirmDialogComponent,
+  UiDataTableComponent,
+  UiFormFieldComponent,
+  UiInputDirective,
+  UiPaginationComponent,
+  UiTab,
+  UiTabsComponent,
+} from '../../../../shared/ui';
 
+// acción destructiva/sensible pendiente de confirmación en el modal (reemplaza a confirm() del navegador)
+type PendingUserAction =
+  | { type: 'deactivate'; user: ManagedUser }
+  | { type: 'reactivate'; user: ManagedUser };
 
 @Component({
   selector: 'app-user-management',
-  imports: [DatePipe, ApproveUserModalComponent, RejectUserModalComponent, ChangeRoleModalComponent],
+  imports: [
+    DatePipe,
+    ApproveUserModalComponent,
+    RejectUserModalComponent,
+    ChangeRoleModalComponent,
+    UiTabsComponent,
+    UiPaginationComponent,
+    UiDataTableComponent,
+    UiCellDirective,
+    UiButtonComponent,
+    UiFormFieldComponent,
+    UiInputDirective,
+    UiConfirmDialogComponent,
+  ],
   templateUrl: './user-management.component.html',
-  styleUrl: './user-management.component.css',
 })
 export class UserManagementComponent implements OnInit {
 
@@ -42,7 +70,12 @@ export class UserManagementComponent implements OnInit {
       showRejectModal = signal(false);
 
       showChangeRoleModal = signal(false);
-      
+
+      // acción pendiente de confirmar en ui-confirm-dialog (inactivar/reactivar); null = sin modal abierto
+      pendingAction = signal<PendingUserAction | null>(null);
+      confirmingAction = signal(false);
+
+
       dateFrom = signal('');
 
       dateTo = signal('');
@@ -54,6 +87,46 @@ export class UserManagementComponent implements OnInit {
       pendingTotal = signal(0);
       activeTotal = signal(0);
       suspendedTotal = signal(0);
+
+      // columnas de ui-data-table (name/role/requestDate/actions tienen plantilla propia, ver el .html)
+      columns: UiColumn[] = [
+        { key: 'name', header: 'Nombre y Apellido' },
+        { key: 'email', header: 'Email' },
+        { key: 'role', header: 'Rol' },
+        { key: 'requestDate', header: 'Fecha' },
+        { key: 'actions', header: 'Acciones', align: 'center' },
+      ];
+
+      // pestañas de ui-tabs, con los mismos contadores que ya se cargaban
+      tabs = computed<UiTab<UserStatus>[]>(() => [
+        { id: 'Pending', label: 'Pendientes', count: this.pendingTotal(), tone: 'alert' },
+        { id: 'Approved', label: 'Activos', count: this.activeTotal() },
+        { id: 'Suspended', label: 'Inactivos / Suspendidos', count: this.suspendedTotal() },
+      ]);
+
+      // texto del ui-confirm-dialog según la acción pendiente (inactivar/reactivar)
+      pendingActionDialog = computed(() => {
+        const action = this.pendingAction();
+        if (!action) {
+          return null;
+        }
+
+        const fullName = `${action.user.name} ${action.user.lastname}`;
+
+        return action.type === 'deactivate'
+          ? {
+              title: 'Inactivar usuario',
+              message: `¿Estás seguro de que deseas inhabilitar/desactivar la cuenta de ${fullName}?`,
+              confirmLabel: 'Inactivar',
+              confirmVariant: 'warning' as const,
+            }
+          : {
+              title: 'Reactivar usuario',
+              message: `¿Deseas reactivar la cuenta de ${fullName}?`,
+              confirmLabel: 'Reactivar',
+              confirmVariant: 'info' as const,
+            };
+      });
 
       ngOnInit(): void {
         this.loadUsers();
@@ -243,36 +316,52 @@ export class UserManagementComponent implements OnInit {
 
       // INACTIVAR, ACTIVAR Y REASIGNAR ROL
 
+      // antes usaban confirm() nativo del navegador; ahora abren ui-confirm-dialog
+      // (ver confirmPendingAction/cancelPendingAction) y la llamada al servicio se hace recién al confirmar.
       deactivateUser(user: ManagedUser): void {
         if (user.id === this.authService.user()?.id) {
           this.error.set('No podés desactivar tu propia cuenta.');
           return;
         }
-        if (confirm(`¿Estás seguro de que deseas inhabilitar/desactivar la cuenta de ${user.name} ${user.lastname}?`)) {
-          // Llama a tu endpoint en el servicio para desactivar
-          this.usersService.deactivateUser(user.id).subscribe({
-            next: () => {
-              this.loadUsers();
-            },
-            error: (err) => {
-              this.error.set(err?.error?.message || 'No se pudo desactivar el usuario.');
-            }
-          });
-        }
+        this.pendingAction.set({ type: 'deactivate', user });
       }
 
       reactivateUser(user: ManagedUser): void {
-        if (confirm(`¿Deseas reactivar la cuenta de ${user.name} ${user.lastname}?`)) {
-          // Llama a tu endpoint en el servicio para reactivar con efecto inmediato
-          this.usersService.reactivateUser(user.id).subscribe({
-            next: () => {
-              this.loadUsers();
-            },
-            error: (err) => {
-              this.error.set(err?.error?.message || 'No se pudo reactivar el usuario.');
-            }
-          });
+        this.pendingAction.set({ type: 'reactivate', user });
+      }
+
+      cancelPendingAction(): void {
+        this.pendingAction.set(null);
+      }
+
+      confirmPendingAction(): void {
+        const action = this.pendingAction();
+        if (!action) {
+          return;
         }
+
+        const { type, user } = action;
+        this.confirmingAction.set(true);
+
+        const request$ =
+          type === 'deactivate'
+            ? this.usersService.deactivateUser(user.id)
+            : this.usersService.reactivateUser(user.id);
+
+        request$.subscribe({
+          next: () => {
+            this.confirmingAction.set(false);
+            this.pendingAction.set(null);
+            this.loadUsers();
+          },
+          error: (err) => {
+            this.confirmingAction.set(false);
+            this.pendingAction.set(null);
+            const fallback =
+              type === 'deactivate' ? 'No se pudo desactivar el usuario.' : 'No se pudo reactivar el usuario.';
+            this.error.set(err?.error?.message || fallback);
+          }
+        });
       }
 
       openChangeRoleModal(user: ManagedUser): void {

@@ -1,12 +1,12 @@
-import {Component,EventEmitter,Input,Output,signal} from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 
 import { ManagedUser } from '../../interfaces/user.interface';
+import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
 
 @Component({
   selector: 'app-reject-user-modal',
-  imports: [],
+  imports: [UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],
   templateUrl: './reject-user-modal.component.html',
-  styleUrl: './reject-user-modal.component.css',
 })
 export class RejectUserModalComponent {
 

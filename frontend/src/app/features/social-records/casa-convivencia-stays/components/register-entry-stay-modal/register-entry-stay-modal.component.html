@@ -1,0 +1,23 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <ui-modal title="Registrar ingreso a la Casa de Convivencia" [closeOnBackdrop]="false" (closed)="cancel.emit()">
+    <div class="space-y-4">
+      <ui-form-field
+        label="Fecha de ingreso"
+        for="entry-date"
+        [required]="true"
+        [error]="form.controls.entryDate.touched && form.controls.entryDate.invalid ? 'Debe seleccionar una fecha de ingreso válida.' : null"
+      >
+        <input id="entry-date" type="date" uiInput formControlName="entryDate" />
+      </ui-form-field>
+
+      <p class="text-[11px] italic text-slate-500">
+        Al confirmar, la persona pasará a tipo <strong>Residente</strong> y se iniciará un nuevo período de estadía en la línea de tiempo.
+      </p>
+    </div>
+
+    <ng-container ngProjectAs="[modal-footer]">
+      <button uiButton variant="secondary" type="button" (click)="cancel.emit()">Cancelar</button>
+      <button uiButton variant="success" type="submit">Confirmar ingreso</button>
+    </ng-container>
+  </ui-modal>
+</form>

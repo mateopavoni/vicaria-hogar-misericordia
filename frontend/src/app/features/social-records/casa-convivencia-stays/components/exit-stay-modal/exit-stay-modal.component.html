@@ -1,0 +1,34 @@
+<!-- El <form> envuelve al modal para que el botón submit del footer quede dentro del formulario -->
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <ui-modal title="Registrar egreso de la Casa de Convivencia" [closeOnBackdrop]="false" (closed)="cancel.emit()">
+    <div class="space-y-4">
+      <ui-form-field label="Fecha de egreso" for="exit-date" [required]="true">
+        <input id="exit-date" type="date" uiInput formControlName="exitDate" />
+      </ui-form-field>
+
+      <ui-form-field label="Motivo de egreso" for="exit-reason" [required]="true">
+        <select id="exit-reason" uiInput formControlName="exitReason">
+          <option value="Alta voluntaria">Alta voluntaria</option>
+          <option value="Derivación">Derivación</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </ui-form-field>
+
+      @if (form.controls.exitReason.value === 'Otro') {
+        <ui-form-field
+          label="Especifique el motivo"
+          for="exit-detail"
+          [required]="true"
+          [error]="form.controls.exitDetail.touched && form.controls.exitDetail.invalid ? 'Debe especificar el motivo del egreso.' : null"
+        >
+          <textarea id="exit-detail" uiInput rows="3" formControlName="exitDetail" placeholder="Detalle los motivos del egreso..."></textarea>
+        </ui-form-field>
+      }
+    </div>
+
+    <ng-container ngProjectAs="[modal-footer]">
+      <button uiButton variant="secondary" type="button" (click)="cancel.emit()">Cancelar</button>
+      <button uiButton variant="danger" type="submit">Confirmar egreso</button>
+    </ng-container>
+  </ui-modal>
+</form>

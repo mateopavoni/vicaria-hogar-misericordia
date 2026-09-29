@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
-import { BackendUser, LoginErrorBody, LoginErrorType, LoginRequest, LoginResponse, RegisterRequest, User } from './auth.interfaces';
+import { BackendUser, LoginErrorBody, LoginErrorType, LoginRequest, LoginResponse, RegisterRequest, User } from './models/auth.interfaces';
 import { Router } from '@angular/router';
-import { UserRole } from './userRole';
+import { UserRole } from './models/user-role';
 
 // forma cruda que devuelve el backend en /api/auth/login y /api/auth/refresh
 interface BackendLoginResponse {

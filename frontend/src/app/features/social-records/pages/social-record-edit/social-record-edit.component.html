@@ -8,17 +8,32 @@
       {{ errorMessage() }}
     </div>
   } @else {
-    @if (successMessage()) {
-      <div class="p-3 mb-4 text-green-700 bg-green-100 rounded-lg">
-        {{ successMessage() }}
-      </div>
-    }
-
     <app-social-record-form
       mode="edit"
       [initialData]="record()"
       [loading]="saving()"
       (submittedForm)="updateRecord($event)"
+    />
+  }
+
+  <!-- confirmación de salir sin guardar (reemplaza al confirm() nativo de pendingChangesGuard) -->
+  @if (confirmingLeave()) {
+    <ui-confirm-dialog
+      title="Cambios sin guardar"
+      message="Tenés cambios sin guardar. ¿Estás seguro de que querés salir de la página?"
+      confirmLabel="Salir sin guardar"
+      confirmVariant="warning"
+      (confirmed)="confirmLeave()"
+      (cancelled)="cancelLeave()"
+    />
+  }
+
+  <!-- aviso de guardado exitoso (antes era un cartel verde inline, fácil de pasar por alto) -->
+  @if (showSuccessModal()) {
+    <app-success-modal
+      title="¡Ficha actualizada!"
+      message="Los cambios se guardaron correctamente."
+      (close)="closeSuccessModal()"
     />
   }
 </div>

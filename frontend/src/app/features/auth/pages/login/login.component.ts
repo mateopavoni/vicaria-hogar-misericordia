@@ -8,9 +8,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { LoginErrorType, LoginRequest } from '../../../../core/auth/auth.interfaces';
+import { LoginErrorType, LoginRequest } from '../../../../core/auth/models/auth.interfaces';
 import { AuthLayoutComponent } from '../../auth-layout/auth-layout.component';
-import { UserRole } from '../../../../core/auth/userRole';
+import { UserRole } from '../../../../core/auth/models/user-role';
 
 @Component({
   selector: 'app-login',

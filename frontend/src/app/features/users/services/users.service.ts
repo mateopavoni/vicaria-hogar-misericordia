@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable, of } from 'rxjs';
 import { ManagedUser, UserStatus, ApproveUserRequest, RejectUserRequest } from '../interfaces/user.interface';
-import { UsersFilters } from '../interfaces/UsersFilters.interface';
-import { UserRole } from '../../../core/auth/userRole';
+import { UsersFilters } from '../interfaces/users-filters.interface';
+import { UserRole } from '../../../core/auth/models/user-role';
 
 export interface UsersResponse {
   items: ManagedUser[];
@@ -38,6 +38,7 @@ interface BackendManagedUser {
   lastName: string;
   email: string;
   role: UserRole | null;
+  createdAt: string;
 }
 
 interface BackendPagedResult<T> {
@@ -88,7 +89,7 @@ export class UsersService {
           name: u.firstName,
           lastname: u.lastName,
           email: u.email,
-          requestDate: '',
+          requestDate: u.createdAt,
           status,
           role: u.role,
         })),

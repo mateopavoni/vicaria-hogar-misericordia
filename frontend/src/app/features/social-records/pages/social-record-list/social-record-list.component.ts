@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SocialRecordListItem} from '../../interfaces/social-record.interface';
+import { SocialRecordListItem, PersonStatus} from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
 import {debounceTime,distinctUntilChanged,Subject,takeUntil} from 'rxjs';
 import { OnDestroy } from '@angular/core';
@@ -9,15 +9,21 @@ import { SocialRecordFilters } from '../../interfaces/social-record-filters.inte
 import { SocialRecordFiltersService } from '../../services/social-record-filters.service';
 import { SocialRecordFiltersComponent } from '../../components/social-record-filters/social-record-filters.component';
 import { PermissionService } from '../../../../core/auth/permission.service';
+import { UiPaginationComponent } from '../../../../shared/ui';
 
 
 @Component({
   selector: 'app-social-record-list',
-  imports: [DatePipe, RouterLink, SocialRecordFiltersComponent],
+  imports: [DatePipe, RouterLink, SocialRecordFiltersComponent, UiPaginationComponent],
   templateUrl: './social-record-list.component.html',
   styleUrl: './social-record-list.component.css'
 })
 export class SocialRecordListComponent implements OnInit, OnDestroy {
+  // bug reportado 2026-09-29: el badge de "Estado" en el listado estaba
+  // hardcodeado a "Activo" en el HTML, así que nunca reflejaba record.status
+  // (ni el valor real ni los cambios hechos desde el detalle de la ficha).
+  readonly PersonStatus = PersonStatus;
+
   private socialRecordsService = inject(SocialRecordsService);
   private destroy$ = new Subject<void>();
   private filtersService = inject(SocialRecordFiltersService);

@@ -3,21 +3,21 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
-import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
+import { EmptyFieldBadgeComponent } from '../../../../shared/ui/empty-field-badge/empty-field-badge.component';
 import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
-import { StaysTimelineComponent } from '../../components/stays-timeline/stays-timeline.component';
-import { ExitStayModalComponent } from '../../components/exit-stay-modal/exit-stay-modal.component';
-import { RegisterEntryStayModalComponent, RegisterEntrySubmitData } from '../../components/register-entry-stay-modal/register-entry-stay-modal.component';
-import { SuccessModalComponent } from '../../../../shared/components/success-modal/success-modal.component';
-import { LifeHistoryComponent } from '../../components/life-history/life-history.component';
-import { ObservationsComponent } from '../../components/observations/observations.component';
+import { StaysTimelineComponent } from '../../casa-convivencia-stays/components/stays-timeline/stays-timeline.component';
+import { ExitStayModalComponent } from '../../casa-convivencia-stays/components/exit-stay-modal/exit-stay-modal.component';
+import { RegisterEntryStayModalComponent, RegisterEntrySubmitData } from '../../casa-convivencia-stays/components/register-entry-stay-modal/register-entry-stay-modal.component';
+import { SuccessModalComponent } from '../../../../shared/ui/success-modal/success-modal.component';
+import { LifeHistoryComponent } from '../../life-story/components/life-history/life-history.component';
+import { ObservationsComponent } from '../../observations/components/observations/observations.component';
 import { PermissionService } from '../../../../core/auth/permission.service';
-import { RegisterExitRequest } from '../../interfaces/exit-stay.interface';
-import { EXIT_REASON_TO_BACKEND } from '../../interfaces/stay.interface';
-import { LifeHistory, LifeHistoryStage } from '../../interfaces/life-history.interface';
-import { LifeStoryService } from '../../services/life-story.service';
-import { Observation } from '../../interfaces/observation.interface';
-import { ObservationsService } from '../../services/observations.service';
+import { RegisterExitRequest } from '../../casa-convivencia-stays/interfaces/exit-stay.interface';
+import { EXIT_REASON_TO_BACKEND } from '../../casa-convivencia-stays/interfaces/stay.interface';
+import { LifeHistory, LifeHistoryStage } from '../../life-story/interfaces/life-history.interface';
+import { LifeStoryService } from '../../life-story/services/life-story.service';
+import { Observation } from '../../observations/interfaces/observation.interface';
+import { ObservationsService } from '../../observations/services/observations.service';
 
 @Component({
   selector: 'app-social-record-detail',

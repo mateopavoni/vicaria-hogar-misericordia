@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
 import { PermissionService } from '../auth/permission.service';
-import { Permission } from '../auth/permissions';
+import { Permission } from '../auth/models/permissions';
 
 export const permissionGuard = (
   permission: Permission

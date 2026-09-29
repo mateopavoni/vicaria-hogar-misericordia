@@ -1,0 +1,101 @@
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+
+  <!-- ENCABEZADO -->
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-[26px] font-bold text-slate-900">Categorías de observaciones</h1>
+      <p class="mt-1 text-[14px] text-slate-500">
+        Creá, editá y desactivá las categorías que usa todo el equipo del Centro Barrial al cargar observaciones.
+      </p>
+    </div>
+
+    <button uiButton type="button" (click)="openCreateModal()">Nueva categoría</button>
+  </div>
+
+  <!-- CARD PRINCIPAL -->
+  <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+
+    <ui-tabs [tabs]="tabs()" [active]="activeTab()" (tabChange)="changeTab($event)" />
+
+    <!-- ERROR -->
+    @if (errorMessage()) {
+      <div class="mx-6 mt-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    @if (activeTab() === 'inactive' && !loading() && visibleCategories().length > 0) {
+      <p class="mx-6 mt-4 rounded-md bg-slate-50 px-4 py-3 text-[13px] text-slate-500">
+        Estas categorías no se ofrecen al cargar una observación nueva, pero se siguen mostrando en las observaciones históricas que ya las usaban.
+      </p>
+    }
+
+    <!-- TABLA -->
+    <ui-data-table
+      [columns]="columns"
+      [rows]="visibleCategories()"
+      [loading]="loading()"
+      loadingText="Cargando categorías..."
+      [emptyMessage]="activeTab() === 'active' ? 'No hay categorías activas.' : 'No hay categorías inactivas.'"
+    >
+      <ng-template uiCell="name" let-category>
+        <span class="font-semibold text-slate-700">{{ category.name }}</span>
+      </ng-template>
+
+      <ng-template uiCell="description" let-category>
+        @if (category.description) {
+          {{ category.description }}
+        } @else {
+          <span class="text-slate-400">—</span>
+        }
+      </ng-template>
+
+      <ng-template uiCell="createdAt" let-category>
+        {{ category.createdAt | date: 'dd/MM/yy' }}
+      </ng-template>
+
+      <ng-template uiCell="actions" let-category>
+        <div class="flex justify-center gap-2">
+          <button uiButton size="sm" variant="secondary" type="button" (click)="openEditModal(category)">
+            Editar
+          </button>
+
+          @if (category.isActive) {
+            <button uiButton size="sm" variant="warning" type="button" (click)="requestDeactivate(category)">
+              Desactivar
+            </button>
+          } @else {
+            <button uiButton size="sm" variant="info" type="button" (click)="activate(category)">
+              Activar
+            </button>
+          }
+        </div>
+      </ng-template>
+    </ui-data-table>
+  </div>
+
+  <!-- ALTA / EDICIÓN -->
+  @if (showFormModal()) {
+    <app-category-form-modal
+      [category]="editingCategory()"
+      [saving]="saving()"
+      [errorMessage]="formError()"
+      (saved)="saveCategory($event)"
+      (closed)="closeFormModal()"
+    />
+  }
+
+  <!-- confirmación de desactivar (reemplaza al confirm() del navegador) -->
+  @if (pendingDeactivate(); as category) {
+    <ui-confirm-dialog
+      title="Desactivar categoría"
+      [message]="'¿Estás seguro de que querés desactivar la categoría \'' + category.name + '\'? Dejará de estar disponible para observaciones nuevas.'"
+      confirmLabel="Desactivar"
+      confirmVariant="warning"
+      [loading]="togglingStatus()"
+      (confirmed)="confirmDeactivate()"
+      (cancelled)="cancelDeactivate()"
+    />
+  }
+
+</div>

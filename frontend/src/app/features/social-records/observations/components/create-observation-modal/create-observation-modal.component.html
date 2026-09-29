@@ -1,0 +1,42 @@
+<form [formGroup]="observationForm" (ngSubmit)="save()">
+  <ui-modal title="Nueva observación" [closeOnBackdrop]="false" (closed)="cancel.emit()">
+    <div class="space-y-4">
+      <ui-form-field label="Categoría (opcional)" for="observation-category">
+        <select id="observation-category" uiInput formControlName="categoryId">
+          <option [value]="null">Sin categoría (General)</option>
+          @for (category of activeCategories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      </ui-form-field>
+
+      <ui-form-field
+        label="Observación"
+        for="observation-content"
+        [required]="true"
+        [error]="observationForm.controls.content.invalid && observationForm.controls.content.touched ? 'La observación no puede estar vacía.' : null"
+      >
+        <textarea
+          id="observation-content"
+          uiInput
+          rows="5"
+          formControlName="content"
+          placeholder="Escribí acá los detalles del seguimiento..."
+        ></textarea>
+      </ui-form-field>
+
+      @if (errorMessage()) {
+        <div class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-[13px] text-rose-600">
+          {{ errorMessage() }}
+        </div>
+      }
+    </div>
+
+    <ng-container ngProjectAs="[modal-footer]">
+      <button uiButton variant="secondary" type="button" (click)="cancel.emit()">Cancelar</button>
+      <button uiButton type="submit" [loading]="submitting()" [disabled]="observationForm.invalid || submitting()">
+        Guardar observación
+      </button>
+    </ng-container>
+  </ui-modal>
+</form>

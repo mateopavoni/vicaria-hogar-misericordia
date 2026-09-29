@@ -1,13 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ManagedUser } from '../../interfaces/user.interface';
-import { UserRole } from '../../../../core/auth/userRole';
+import { UserRole } from '../../../../core/auth/models/user-role';
+import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
 
 @Component({
   selector: 'app-change-role-modal',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './change-role-modal.component.html', // O el template inline
+  imports: [UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],
+  templateUrl: './change-role-modal.component.html',
 })
 export class ChangeRoleModalComponent implements OnInit {
   @Input() user: ManagedUser | null = null;

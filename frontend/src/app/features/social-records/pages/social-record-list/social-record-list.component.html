@@ -550,16 +550,33 @@
 
               <td class="px-5 py-3">
 
-              <span
-                class="rounded-full
-                       bg-green-100
-                       px-3 py-1
-                       text-[11px]
-                       font-semibold
-                       text-green-700"
-              >
-                Activo
-              </span>
+              @if (record.status === PersonStatus.Active) {
+
+                <span
+                  class="rounded-full
+                         bg-green-100
+                         px-3 py-1
+                         text-[11px]
+                         font-semibold
+                         text-green-700"
+                >
+                  Activo
+                </span>
+
+              } @else {
+
+                <span
+                  class="rounded-full
+                         bg-slate-100
+                         px-3 py-1
+                         text-[11px]
+                         font-semibold
+                         text-slate-500"
+                >
+                  Inactivo
+                </span>
+
+              }
 
             </td>
 
@@ -652,60 +669,9 @@
 
 
     <!-- PAGINACIÓN -->
-    @if (totalPages() > 1) {
-
-      <div
-        class="flex items-center justify-end
-               gap-2 border-t border-slate-100
-               px-6 py-4"
-      >
-
-        <button
-          type="button"
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)"
-          class="rounded-md px-3 py-1.5
-                 text-[12px] text-slate-500
-                 disabled:opacity-40"
-        >
-          &lt; Anterior
-        </button>
-
-
-        @for (
-          page of [].constructor(totalPages());
-          track $index
-        ) {
-
-          <button
-            type="button"
-            (click)="goToPage($index + 1)"
-            class="h-8 min-w-8 rounded-md
-                   text-[12px]"
-            [class.bg-[#4167D9]]="currentPage() === $index + 1"
-            [class.text-white]="currentPage() === $index + 1"
-            [class.text-slate-600]="currentPage() !== $index + 1"
-          >
-            {{ $index + 1 }}
-          </button>
-
-        }
-
-
-        <button
-          type="button"
-          [disabled]="currentPage() === totalPages()"
-          (click)="goToPage(currentPage() + 1)"
-          class="rounded-md px-3 py-1.5
-                 text-[12px] text-[#4167D9]
-                 disabled:opacity-40"
-        >
-          Siguiente &gt;
-        </button>
-
-      </div>
-
-    }
+    <div class="border-t border-slate-100 px-6 py-4">
+      <ui-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="goToPage($event)" />
+    </div>
 
   </div>
 

@@ -1,5 +1,5 @@
 import { ChangeHistoryItem } from "./change-history.interface";
-import { Stay } from "./stay.interface";
+import { Stay } from "../casa-convivencia-stays/interfaces/stay.interface";
 
 
 // 0 = Ambulatory, 1 = Resident (el backend no serializa el enum como string, ver PersonType.cs)

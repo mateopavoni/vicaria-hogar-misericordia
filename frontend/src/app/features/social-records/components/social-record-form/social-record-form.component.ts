@@ -362,4 +362,17 @@ export class SocialRecordFormComponent {
 
   }
 
+  /*
+   * Se llama desde el padre (modo edición) apenas el guardado
+   * se confirma como exitoso en el backend. A diferencia de
+   * resetForm(), NO vacía los campos (seguimos mostrando los
+   * datos recién guardados mientras se redirige al detalle):
+   * solo marca el formulario como "sin cambios pendientes" para
+   * que pendingChangesGuard dejé de considerarlo dirty y no
+   * muestre el confirm() del navegador de ahí en más.
+   */
+  markAsSaved(): void {
+    this.form.markAsPristine();
+  }
+
 }

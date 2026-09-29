@@ -1,6 +1,7 @@
-import {Component,EventEmitter,Input,Output,signal} from '@angular/core';
-import {ManagedUser} from '../../interfaces/user.interface';
-import {UserRole} from './../../../../core/auth/userRole';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+import { ManagedUser } from '../../interfaces/user.interface';
+import { UserRole } from '../../../../core/auth/models/user-role';
+import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 
 // nombres lindos para mostrar en pantalla
 // bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia, no se podía aprobar
@@ -14,7 +15,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 @Component({
   selector: 'app-approve-user-modal',
-  imports: [],
+  imports: [UiModalComponent, UiButtonComponent],
   templateUrl: './approve-user-modal.component.html',
 })
 export class ApproveUserModalComponent {

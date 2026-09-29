@@ -1,4 +1,4 @@
-import { UserRole } from "./../../../core/auth/userRole";
+import { UserRole } from "../../../core/auth/models/user-role";
 
 export interface ManagedUser {
   id: string;
