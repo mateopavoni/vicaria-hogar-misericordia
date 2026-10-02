@@ -20,6 +20,10 @@ export class CollaboratorFormModalComponent {
   // null = alta de un colaborador nuevo; con valor = edición de ese colaborador
   collaborator = input<Collaborator | null>(null);
 
+  // SCRUM-207: cuando se abre "Registrar colaborador" desde el estado vacío de la
+  // búsqueda, precarga el nombre tipeado. Solo aplica en modo alta (collaborator = null).
+  prefillFirstName = input<string | null>(null);
+
   // se prende mientras el padre espera la respuesta del backend (crear/editar)
   saving = input(false);
 
@@ -59,6 +63,12 @@ export class CollaboratorFormModalComponent {
           type: collaborator.type ?? '',
           workArea: collaborator.workArea ?? '',
         });
+        return;
+      }
+
+      const prefill = this.prefillFirstName();
+      if (prefill) {
+        this.form.patchValue({ firstName: prefill });
       }
     });
   }
