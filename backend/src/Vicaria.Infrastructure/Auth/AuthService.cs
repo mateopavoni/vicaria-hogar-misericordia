@@ -111,7 +111,7 @@ public class AuthService : IAuthService
         var items = await query
             .Skip((page - 1) * UsersPageSize)
             .Take(UsersPageSize)
-            .Select(u => new ManagedUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.Role != null ? u.Role.Name : null))
+            .Select(u => new ManagedUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.Role != null ? u.Role.Name : null, u.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<ManagedUserDto>(items, total, (int)Math.Ceiling(total / (double)UsersPageSize));

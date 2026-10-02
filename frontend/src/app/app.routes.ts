@@ -70,6 +70,21 @@ export const routes: Routes = [
           permissionGuard('categorias.manage')
         ]
       },
+
+      // SCRUM-29/SCRUM-18: alta, edición, baja y reactivación de colaboradores.
+      // colaboradores.view ya está en ROLE_PERMISSIONS solo para Referente y
+      // DirectoraDeCasona, así que bloquea a Escucha (y a Coordinador) como pide el AC.
+      // NOTA: el backend de esta feature todavía no existe (ver comentario en
+      // collaborator.interface.ts) — ruta y pantalla listas para cuando esté.
+      {
+        path: 'colaboradores',
+        loadComponent: () =>
+          import('./features/collaborators/pages/collaborator-management/collaborator-management.component')
+            .then(m => m.CollaboratorManagementComponent),
+        canActivate: [
+          permissionGuard('colaboradores.view')
+        ]
+      },
     ],
   },
 
