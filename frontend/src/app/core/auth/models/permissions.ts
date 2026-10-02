@@ -81,7 +81,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.view',
 
     'observaciones.view',
-    'observaciones.create'
+    'observaciones.create',
+
+    // SCRUM-15 (AC): "el calendario es de solo lectura para el rol Escucha (puede ver
+    // pero no crear ni editar eventos)" — por eso solo .view, nunca .create/.edit.
+    'calendario.view'
   ],
 
 

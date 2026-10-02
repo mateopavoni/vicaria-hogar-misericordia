@@ -85,6 +85,22 @@ export const routes: Routes = [
           permissionGuard('colaboradores.view')
         ]
       },
+
+      // SCRUM-28/SCRUM-15: calendario general del Centro Barrial. calendario.view ya
+      // está en ROLE_PERMISSIONS para Referente y DirectoraDeCasona, no para Escucha
+      // (que según el AC solo puede ver, nunca crear/editar — el componente lo oculta
+      // además chequeando calendario.create/calendario.edit).
+      // NOTA: el backend de esta feature todavía no existe (ver comentario en
+      // calendar-event.interface.ts) — ruta y pantalla listas para cuando esté.
+      {
+        path: 'calendario',
+        loadComponent: () =>
+          import('./features/calendar/pages/calendar/calendar.component')
+            .then(m => m.CalendarComponent),
+        canActivate: [
+          permissionGuard('calendario.view')
+        ]
+      },
     ],
   },
 

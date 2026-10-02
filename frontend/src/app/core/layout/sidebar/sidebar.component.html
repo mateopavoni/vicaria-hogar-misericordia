@@ -148,9 +148,13 @@
       <span>Medicación</span>
     </a>
 
-    <!-- Calendario -->
+    <!-- Calendario (SCRUM-28): bug reportado 2026-10-02 — el link ya existía pero
+         apuntaba a /inicio (quedó de un scaffolding viejo, la pantalla no existía
+         todavía) y no tenía ningún gate de permisos. -->
+     @if (permissionService.hasPermission('calendario.view')) {
+
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/calendario"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -177,6 +181,7 @@
 
       <span>Calendario</span>
     </a>
+  }
 
     <!-- Informes -->
     @if (permissionService.hasPermission('fichas.view')) {
