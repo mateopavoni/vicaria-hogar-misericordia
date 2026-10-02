@@ -51,6 +51,13 @@
     </div>
   </div>
 
+  <!-- ÉXITO (SCRUM-192): confirmación visible de crear/editar/eliminar, se oculta sola -->
+  @if (successMessage()) {
+    <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
   <!-- ERROR -->
   @if (errorMessage()) {
     <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
@@ -174,9 +181,23 @@
   @if (viewingEvent(); as event) {
     <app-event-detail-modal
       [event]="event"
-      [canEdit]="canEdit()"
+      [canEdit]="canManageEvent(event)"
       (closed)="closeDetail()"
       (editRequested)="editFromDetail($event)"
+      (deleteRequested)="requestDelete($event)"
+    />
+  }
+
+  <!-- ELIMINAR (SCRUM-16/SCRUM-192): confirmación previa obligatoria -->
+  @if (deletingEvent(); as event) {
+    <ui-confirm-dialog
+      title="Eliminar evento"
+      [message]="'¿Estás seguro de que querés eliminar \'' + event.title + '\'? Esta acción no se puede deshacer.'"
+      confirmLabel="Eliminar"
+      confirmVariant="danger"
+      [loading]="deleting()"
+      (confirmed)="confirmDelete()"
+      (cancelled)="cancelDelete()"
     />
   }
 

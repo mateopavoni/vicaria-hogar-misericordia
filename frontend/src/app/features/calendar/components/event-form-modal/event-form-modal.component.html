@@ -5,7 +5,7 @@
       <input id="event-title" uiInput type="text" formControlName="title" placeholder="Ej: Reunión de equipo" maxlength="150" />
     </ui-form-field>
 
-    <ui-form-field label="Fecha" for="event-date" [required]="true">
+    <ui-form-field label="Fecha" for="event-date" [required]="true" [error]="dateError">
       <input id="event-date" uiInput type="date" formControlName="date" />
     </ui-form-field>
 
@@ -21,6 +21,14 @@
 
     <ui-form-field label="Descripción" for="event-description" [error]="descriptionError">
       <textarea id="event-description" uiInput formControlName="description" rows="3" maxlength="500" placeholder="Opcional"></textarea>
+    </ui-form-field>
+
+    <ui-form-field label="Repetir" for="event-recurrence">
+      <select id="event-recurrence" uiInput formControlName="recurrence">
+        @for (option of recurrenceOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
     </ui-form-field>
 
     @if (errorMessage()) {

@@ -1,6 +1,6 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { UiButtonComponent, UiTab, UiTabsComponent } from '../../../../shared/ui';
+import { UiButtonComponent, UiConfirmDialogComponent, UiTab, UiTabsComponent } from '../../../../shared/ui';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { EventDetailModalComponent } from '../../components/event-detail-modal/event-detail-modal.component';
@@ -22,17 +22,25 @@ import { generateRecurringEvents } from '../../utils/recurring-events.util';
 type ViewMode = 'week' | 'month';
 
 /**
- * SCRUM-28 (SCRUM-186/SCRUM-187): calendario general del Centro Barrial. Vistas
- * semanal y mensual, actividades recurrentes precargadas (desayuno/almuerzo/
- * merendero), detalle de evento con autor, resaltado del día actual, y de solo
- * lectura para el rol Escucha (sin botón de alta ni de edición).
+ * SCRUM-28 (SCRUM-186/SCRUM-187) + SCRUM-16 (SCRUM-191/SCRUM-192): calendario general
+ * del Centro Barrial. Vistas semanal y mensual, actividades recurrentes precargadas
+ * (desayuno/almuerzo/merendero), alta/edición/baja de eventos propios (con opción de
+ * repetirlos diario/semanal/mensual), detalle con autor, resaltado del día actual,
+ * confirmación visible al guardar/eliminar, y de solo lectura para el rol Escucha.
  */
 @Component({
   selector: 'app-calendar',
-  imports: [DatePipe, UiTabsComponent, UiButtonComponent, EventFormModalComponent, EventDetailModalComponent],
+  imports: [
+    DatePipe,
+    UiTabsComponent,
+    UiButtonComponent,
+    UiConfirmDialogComponent,
+    EventFormModalComponent,
+    EventDetailModalComponent,
+  ],
   templateUrl: './calendar.component.html',
 })
-export class CalendarComponent implements OnInit {
+export class CalendarComponent implements OnInit, OnDestroy {
   private calendarEventsService = inject(CalendarEventsService);
   private permissionService = inject(PermissionService);
   private authService = inject(AuthService);
@@ -47,7 +55,11 @@ export class CalendarComponent implements OnInit {
   readonly today = new Date();
 
   canCreate = computed(() => this.permissionService.hasPermission('calendario.create'));
-  canEdit = computed(() => this.permissionService.hasPermission('calendario.edit'));
+
+  // permiso de rol crudo (Referente/DirectoraDeCasona hoy). SCRUM-16 (AC) agrega una
+  // regla MÁS estricta por evento encima de esto — ver canManageEvent().
+  private hasEditPermission = computed(() => this.permissionService.hasPermission('calendario.edit'));
+  private isReferente = computed(() => this.authService.user()?.role === 'Referente');
 
   viewTabs: UiTab<ViewMode>[] = [
     { id: 'week', label: 'Semana' },
@@ -91,7 +103,8 @@ export class CalendarComponent implements OnInit {
   weekDays = computed(() => weekDays(this.referenceDate()));
   monthWeeks = computed(() => monthGridWeeks(this.referenceDate()));
 
-  // alta/edición (oculto para Escucha, ver canCreate/canEdit)
+  // alta (oculto para Escucha, ver canCreate); edición/baja se evalúan por evento,
+  // ver canManageEvent()
   showFormModal = signal(false);
   editingEvent = signal<CalendarEvent | null>(null);
   formInitialDate = signal(isoDate(new Date()));
@@ -101,8 +114,32 @@ export class CalendarComponent implements OnInit {
   // detalle del evento (SCRUM-187)
   viewingEvent = signal<CalendarEvent | null>(null);
 
+  // eliminación (SCRUM-16/SCRUM-192): confirmación previa obligatoria. Un error acá
+  // se muestra en el mismo banner de errorMessage que usa la carga del calendario.
+  deletingEvent = signal<CalendarEvent | null>(null);
+  deleting = signal(false);
+
+  // SCRUM-192 (AC): mensaje de confirmación visible al crear/editar/eliminar, sin
+  // recargar la página — se limpia solo a los pocos segundos.
+  successMessage = signal<string | null>(null);
+  private successTimeout: ReturnType<typeof setTimeout> | null = null;
+
   ngOnInit(): void {
     this.loadEvents();
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+    }
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage.set(message);
+    if (this.successTimeout) {
+      clearTimeout(this.successTimeout);
+    }
+    this.successTimeout = setTimeout(() => this.successMessage.set(null), 4000);
   }
 
   isToday(date: Date): boolean {
@@ -121,6 +158,17 @@ export class CalendarComponent implements OnInit {
 
   eventTime(event: CalendarEvent): string {
     return new Date(event.start).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // SCRUM-16 (AC): "el autor del evento puede editarlo o eliminarlo; cualquier
+  // Referente también puede hacerlo". Las actividades recurrentes precargadas
+  // (isRecurring) nunca son editables, las creó el sistema, no un usuario.
+  canManageEvent(event: CalendarEvent): boolean {
+    if (event.isRecurring || !this.hasEditPermission()) {
+      return false;
+    }
+    const currentUserId = this.authService.user()?.id;
+    return this.isReferente() || (!!currentUserId && currentUserId === event.authorId);
   }
 
   // DatePipe (date: 'EEE') depende del LOCALE_ID de Angular, que en este proyecto no
@@ -174,15 +222,22 @@ export class CalendarComponent implements OnInit {
 
   // el autor lo debería completar el backend a partir del usuario autenticado (ver
   // comentario en calendar-event.interface.ts). Mientras ese backend no exista, o si
-  // alguna respuesta llega sin authorName, se completa con el usuario logueado para
-  // que nunca se vea vacío ni con un valor genérico.
+  // alguna respuesta llega sin authorName/authorId, se completa con el usuario
+  // logueado para que nunca se vea vacío ni con un valor genérico. LIMITACIÓN: esto
+  // hace que todo evento sin authorId "parezca" propio de quien esté mirando el
+  // calendario en ese momento — no reemplaza probar la regla de autorización del AC
+  // de SCRUM-16 contra un backend real.
   private withAuthorFallback(event: CalendarEvent): CalendarEvent {
-    if (event.authorName) {
+    if (event.authorName && event.authorId) {
       return event;
     }
     const user = this.authService.user();
     const fallbackName = user ? `${user.name} ${user.lastname}`.trim() : 'Usuario desconocido';
-    return { ...event, authorName: fallbackName };
+    return {
+      ...event,
+      authorName: event.authorName || fallbackName,
+      authorId: event.authorId || user?.id || '',
+    };
   }
 
   openCreateModal(date: Date = new Date()): void {
@@ -215,6 +270,7 @@ export class CalendarComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.showFormModal.set(false);
+        this.showSuccess(editing ? 'Evento actualizado correctamente.' : 'Evento creado correctamente.');
         this.loadEvents();
       },
       error: (err) => {
@@ -235,5 +291,39 @@ export class CalendarComponent implements OnInit {
   editFromDetail(event: CalendarEvent): void {
     this.viewingEvent.set(null);
     this.openEditModal(event);
+  }
+
+  // SCRUM-16/SCRUM-192 (AC): confirmación previa antes de eliminar un evento.
+  requestDelete(event: CalendarEvent): void {
+    this.viewingEvent.set(null);
+    this.errorMessage.set(null);
+    this.deletingEvent.set(event);
+  }
+
+  cancelDelete(): void {
+    this.deletingEvent.set(null);
+  }
+
+  confirmDelete(): void {
+    const event = this.deletingEvent();
+    if (!event) {
+      return;
+    }
+
+    this.deleting.set(true);
+
+    this.calendarEventsService.delete(event.id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.deletingEvent.set(null);
+        this.showSuccess('Evento eliminado correctamente.');
+        this.loadEvents();
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        this.deletingEvent.set(null);
+        this.errorMessage.set(err?.error?.message || 'No se pudo eliminar el evento.');
+      },
+    });
   }
 }

@@ -2,11 +2,12 @@ import { Component, computed, effect, inject, input, output } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
-import { CalendarEvent, CreateCalendarEventDto } from '../../interfaces/calendar-event.interface';
+import { CalendarEvent, CreateCalendarEventDto, RecurrenceFrequency } from '../../interfaces/calendar-event.interface';
 
 /**
- * SCRUM-186/SCRUM-187: alta y edición de un evento del calendario. No se usa para las
- * actividades recurrentes precargadas (no se pueden editar, ver AC de SCRUM-15).
+ * SCRUM-186/SCRUM-187/SCRUM-191: alta y edición de un evento del calendario,
+ * incluyendo si es recurrente (diario/semanal/mensual, AC de SCRUM-16). No se usa para
+ * las actividades recurrentes precargadas (no se pueden editar, ver AC de SCRUM-15).
  * Oculto para el rol Escucha (el padre decide si renderiza el botón que abre esto).
  */
 @Component({
@@ -33,12 +34,20 @@ export class EventFormModalComponent {
 
   submitted = false;
 
+  readonly recurrenceOptions: { value: RecurrenceFrequency; label: string }[] = [
+    { value: 'none', label: 'No se repite' },
+    { value: 'daily', label: 'Todos los días' },
+    { value: 'weekly', label: 'Todas las semanas' },
+    { value: 'monthly', label: 'Todos los meses' },
+  ];
+
   form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(150)]],
     date: [todayLocalIso(), [Validators.required]],
     startTime: ['09:00', [Validators.required]],
     endTime: ['10:00', [Validators.required]],
     description: ['', [Validators.maxLength(500)]],
+    recurrence: ['none' as RecurrenceFrequency],
   });
 
   constructor() {
@@ -53,6 +62,7 @@ export class EventFormModalComponent {
           startTime: startTime?.slice(0, 5) ?? '',
           endTime,
           description: event.description ?? '',
+          recurrence: event.recurrence ?? 'none',
         });
         return;
       }
@@ -73,6 +83,17 @@ export class EventFormModalComponent {
       return 'El título no puede superar los 150 caracteres.';
     }
     return null;
+  }
+
+  // SCRUM-16 (AC): "si se intenta guardar un evento sin título o sin fecha, el sistema
+  // muestra un error de validación claro" — faltaba este getter, el control ya era
+  // required pero no se mostraba ningún mensaje.
+  get dateError(): string | null {
+    const control = this.form.controls.date;
+    if (!this.submitted || !control.errors) {
+      return null;
+    }
+    return control.errors['required'] ? 'La fecha es obligatoria.' : null;
   }
 
   get timeRangeError(): string | null {
@@ -106,13 +127,14 @@ export class EventFormModalComponent {
       return;
     }
 
-    const { title, date, startTime, endTime, description } = this.form.getRawValue();
+    const { title, date, startTime, endTime, description, recurrence } = this.form.getRawValue();
 
     this.saved.emit({
       title: title.trim(),
       description: description.trim() || null,
       start: `${date}T${startTime}:00`,
       end: `${date}T${endTime}:00`,
+      recurrence,
     });
   }
 }

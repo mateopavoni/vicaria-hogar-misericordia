@@ -5,7 +5,10 @@ import { CalendarEvent } from '../../interfaces/calendar-event.interface';
 /**
  * SCRUM-187: detalle completo de un evento (título, horario, descripción y autor),
  * al hacer clic en un evento del calendario. Las actividades recurrentes precargadas
- * (isRecurring) no tienen botón "Editar": son fijas, no las creó ningún usuario.
+ * (isRecurring) no tienen botón "Editar"/"Eliminar": son fijas, no las creó ningún
+ * usuario. SCRUM-16 (AC): el autor del evento puede editarlo/eliminarlo, y cualquier
+ * Referente también — esa cuenta ya la hace el padre (CalendarComponent) evento por
+ * evento; `canEdit` acá es el resultado de esa cuenta, no solo el permiso de rol.
  */
 @Component({
   selector: 'app-event-detail-modal',
@@ -15,11 +18,13 @@ import { CalendarEvent } from '../../interfaces/calendar-event.interface';
 export class EventDetailModalComponent {
   event = input.required<CalendarEvent>();
 
-  // false si el rol actual (Escucha) no puede editar eventos
+  // false si el usuario actual no puede editar/eliminar ESTE evento puntual
+  // (ver CalendarComponent.canManageEvent)
   canEdit = input(false);
 
   closed = output<void>();
   editRequested = output<CalendarEvent>();
+  deleteRequested = output<CalendarEvent>();
 
   schedule = computed(() => {
     const e = this.event();
@@ -32,6 +37,10 @@ export class EventDetailModalComponent {
 
   onEdit(): void {
     this.editRequested.emit(this.event());
+  }
+
+  onDelete(): void {
+    this.deleteRequested.emit(this.event());
   }
 
   private formatDateTime(value: string): string {

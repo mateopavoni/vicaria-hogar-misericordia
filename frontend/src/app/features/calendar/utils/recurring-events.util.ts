@@ -54,6 +54,10 @@ const RECURRING_TEMPLATES: RecurringTemplate[] = [
 ];
 
 const RECURRING_AUTHOR = 'Actividad recurrente del hogar';
+// no las creó ningún usuario real, así que no tienen un id de autor — se usa un
+// valor fijo, nunca va a matchear con AuthService.user()?.id (ver canManageEvent en
+// CalendarComponent), que ya las excluye de todos modos por isRecurring.
+const RECURRING_AUTHOR_ID = 'recurring';
 
 export function generateRecurringEvents(rangeStart: Date, rangeEnd: Date): CalendarEvent[] {
   const events: CalendarEvent[] = [];
@@ -82,6 +86,7 @@ export function generateRecurringEvents(rangeStart: Date, rangeEnd: Date): Calen
         start,
         end: finish,
         authorName: RECURRING_AUTHOR,
+        authorId: RECURRING_AUTHOR_ID,
         isRecurring: true,
       });
     }

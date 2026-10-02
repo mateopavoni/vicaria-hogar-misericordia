@@ -24,4 +24,9 @@ export class CalendarEventsService {
   update(id: string, dto: UpdateCalendarEventDto): Observable<CalendarEvent> {
     return this.http.put<CalendarEvent>(`${this.apiUrl}/${id}`, dto);
   }
+
+  // SCRUM-16/SCRUM-192: eliminar un evento (con confirmación previa en la UI).
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }
