@@ -2,13 +2,17 @@ import { Component, computed, effect, inject, input, output } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
-import { CalendarEvent, CreateCalendarEventDto, RecurrenceFrequency } from '../../interfaces/calendar-event.interface';
+import { CalendarEvent, EventFormValue, RecurrenceFrequency } from '../../interfaces/calendar-event.interface';
 
 /**
  * SCRUM-186/SCRUM-187/SCRUM-191: alta y edición de un evento del calendario,
  * incluyendo si es recurrente (diario/semanal/mensual, AC de SCRUM-16). No se usa para
  * las actividades recurrentes precargadas (no se pueden editar, ver AC de SCRUM-15).
  * Oculto para el rol Escucha (el padre decide si renderiza el botón que abre esto).
+ * SCRUM-197 (AC): "los eventos personales siguen el mismo formulario de carga que los
+ * generales" — por eso este componente no sabe nada de `scope`: lo decide
+ * CalendarComponent (según la pestaña activa, o conservando el del evento original al
+ * editar), no un campo del formulario.
  */
 @Component({
   selector: 'app-event-form-modal',
@@ -27,7 +31,7 @@ export class EventFormModalComponent {
   saving = input(false);
   errorMessage = input<string | null>(null);
 
-  saved = output<CreateCalendarEventDto>();
+  saved = output<EventFormValue>();
   closed = output<void>();
 
   title = computed(() => (this.event() ? 'Editar evento' : 'Nuevo evento'));

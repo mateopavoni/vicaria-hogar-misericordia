@@ -5,14 +5,39 @@
     <div>
       <h1 class="text-[26px] font-bold text-slate-900">Calendario</h1>
       <p class="mt-1 text-[14px] text-slate-500">
-        Actividades del Centro Barrial: las recurrentes y las que carga el equipo.
+        @if (calendarTab() === 'personal') {
+          Tus eventos privados: solo vos los ves.
+        } @else if (calendarTab() === 'combined') {
+          Centro Barrial y tus eventos privados, juntos.
+        } @else {
+          Actividades del Centro Barrial: las recurrentes y las que carga el equipo.
+        }
       </p>
     </div>
 
-    @if (canCreate()) {
+    @if (canCreateHere()) {
       <button uiButton type="button" (click)="openCreateModal()">Nuevo evento</button>
     }
   </div>
+
+  <!-- SCRUM-196: General / Mi calendario / Combinado — solo para quien tiene calendario personal -->
+  @if (hasPersonalCalendar()) {
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+      <div class="inline-flex overflow-hidden rounded-lg border border-[#E3E8F5] bg-white">
+        <ui-tabs [tabs]="scopeTabs" [active]="calendarTab()" (tabChange)="changeScope($event)" />
+      </div>
+      @if (calendarTab() === 'combined') {
+        <div class="flex items-center gap-3 text-[12px] text-slate-500">
+          <span class="flex items-center gap-1">
+            <span class="h-2.5 w-2.5 rounded-full bg-[#4167D9]"></span> General
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]"></span> Personal
+          </span>
+        </div>
+      }
+    </div>
+  }
 
   <!-- CONTROLES: vista + navegación -->
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -85,7 +110,7 @@
             <button
               type="button"
               class="mb-2 flex items-center justify-between rounded-md px-1 text-left"
-              (click)="canCreate() && openCreateModal(day)"
+              (click)="canCreateHere() && openCreateModal(day)"
             >
               <span class="text-[12px] font-semibold uppercase text-slate-400">
                 {{ weekdayLabel(day) }}
@@ -105,7 +130,9 @@
                   class="rounded-md border px-2 py-1.5 text-left text-[12px] transition hover:shadow-sm"
                   [class]="event.isRecurring
                     ? 'border-[#E3E8F5] bg-[#F8F9FC] text-slate-600'
-                    : 'border-[#D5DDF3] bg-[#EEF2FF] text-[#4167D9]'"
+                    : event.scope === 'personal'
+                      ? 'border-[#E9D5FF] bg-[#F5F0FF] text-[#8B5CF6]'
+                      : 'border-[#D5DDF3] bg-[#EEF2FF] text-[#4167D9]'"
                   (click)="openDetail(event)"
                 >
                   <div class="font-semibold">{{ eventTime(event) }} · {{ event.title }}</div>
@@ -139,7 +166,7 @@
                 type="button"
                 class="mb-1 flex h-6 w-6 items-center justify-center self-end rounded-full text-[12px] font-semibold"
                 [class]="isToday(day) ? 'bg-[#6B8DF5] text-white' : 'text-slate-600'"
-                (click)="canCreate() && openCreateModal(day)"
+                (click)="canCreateHere() && openCreateModal(day)"
               >
                 {{ day | date: 'd' }}
               </button>
@@ -151,7 +178,9 @@
                     class="truncate rounded px-1.5 py-1 text-left text-[11px]"
                     [class]="event.isRecurring
                       ? 'bg-[#F8F9FC] text-slate-500'
-                      : 'bg-[#EEF2FF] text-[#4167D9]'"
+                      : event.scope === 'personal'
+                        ? 'bg-[#F5F0FF] text-[#8B5CF6]'
+                        : 'bg-[#EEF2FF] text-[#4167D9]'"
                     (click)="openDetail(event)"
                   >
                     {{ eventTime(event) }} {{ event.title }}
@@ -165,7 +194,7 @@
     }
   </div>
 
-  <!-- ALTA / EDICIÓN (oculto para Escucha) -->
+  <!-- ALTA / EDICIÓN (visibilidad según canCreateHere/canManageEvent) -->
   @if (showFormModal()) {
     <app-event-form-modal
       [event]="editingEvent()"
@@ -182,9 +211,11 @@
     <app-event-detail-modal
       [event]="event"
       [canEdit]="canManageEvent(event)"
+      [canConvert]="canConvertToGeneral(event)"
       (closed)="closeDetail()"
       (editRequested)="editFromDetail($event)"
       (deleteRequested)="requestDelete($event)"
+      (convertRequested)="requestConvert($event)"
     />
   }
 

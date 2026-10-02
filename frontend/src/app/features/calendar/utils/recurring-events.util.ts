@@ -88,6 +88,9 @@ export function generateRecurringEvents(rangeStart: Date, rangeEnd: Date): Calen
         authorName: RECURRING_AUTHOR,
         authorId: RECURRING_AUTHOR_ID,
         isRecurring: true,
+        // institucionales, siempre generales — nunca aparecen en "Mi calendario"
+        // (ver CalendarComponent.allEvents, que las excluye por completo ahí)
+        scope: 'general',
       });
     }
 

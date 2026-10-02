@@ -9,6 +9,9 @@ import { CalendarEvent } from '../../interfaces/calendar-event.interface';
  * usuario. SCRUM-16 (AC): el autor del evento puede editarlo/eliminarlo, y cualquier
  * Referente también — esa cuenta ya la hace el padre (CalendarComponent) evento por
  * evento; `canEdit` acá es el resultado de esa cuenta, no solo el permiso de rol.
+ * SCRUM-17/SCRUM-197 (AC): "el usuario puede convertir un evento personal en general
+ * si lo decide posteriormente" — botón "Hacer general", solo para eventos con
+ * scope 'personal' y cuando `canConvert` lo habilita (también lo decide el padre).
  */
 @Component({
   selector: 'app-event-detail-modal',
@@ -22,9 +25,14 @@ export class EventDetailModalComponent {
   // (ver CalendarComponent.canManageEvent)
   canEdit = input(false);
 
+  // false si no puede convertir ESTE evento personal en general
+  // (ver CalendarComponent.canConvertToGeneral)
+  canConvert = input(false);
+
   closed = output<void>();
   editRequested = output<CalendarEvent>();
   deleteRequested = output<CalendarEvent>();
+  convertRequested = output<CalendarEvent>();
 
   schedule = computed(() => {
     const e = this.event();
@@ -41,6 +49,10 @@ export class EventDetailModalComponent {
 
   onDelete(): void {
     this.deleteRequested.emit(this.event());
+  }
+
+  onConvert(): void {
+    this.convertRequested.emit(this.event());
   }
 
   private formatDateTime(value: string): string {
