@@ -6,7 +6,7 @@
     </ui-form-field>
 
     <ui-form-field label="Fecha" for="event-date" [required]="true" [error]="dateError">
-      <input id="event-date" uiInput type="date" formControlName="date" />
+      <input id="event-date" uiInput type="date" formControlName="date" [attr.min]="minDate" />
     </ui-form-field>
 
     <div class="grid grid-cols-2 gap-4">

@@ -27,7 +27,13 @@ export type Permission =
   // gestión de categorías de observaciones (crear/editar/activar/desactivar): el
   // backend restringe estos endpoints solo a Referente (ObservationCategoriesController),
   // así que acá se refleja igual — ningún otro rol tiene este permiso.
-  | 'categorias.manage';
+  | 'categorias.manage'
+  // SCRUM-74 (AC): "solo pueden ver y editar este calendario: referentes, Directora y
+  // Coordinador de la casona" — Escucha nunca tiene ninguno de estos tres, a
+  // diferencia de calendario.view (que sí tiene, de solo lectura).
+  | 'visitas.view'
+  | 'visitas.create'
+  | 'visitas.edit';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -72,7 +78,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.edit',
 
     // Configuración: categorías de observaciones (solo Referente, ver AC del SCRUM-181)
-    'categorias.manage'
+    'categorias.manage',
+
+    // Visitas de la Casa de Convivencia (SCRUM-74)
+    'visitas.view',
+    'visitas.create',
+    'visitas.edit'
   ],
 
 
@@ -126,7 +137,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Medicamentos Casa de Convivencia
     'medicamentos.view',
     'medicamentos.create',
-    'medicamentos.edit'
+    'medicamentos.edit',
+
+    // Visitas de la Casa de Convivencia (SCRUM-74)
+    'visitas.view',
+    'visitas.create',
+    'visitas.edit'
   ],
 
   // bug reportado 2026-09-23: faltaba este rol por completo. Los permisos granulares
@@ -141,7 +157,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.view',
     'observaciones.view',
     'observaciones.create',
-    'medicamentos.view'
+    'medicamentos.view',
+
+    // Visitas de la Casa de Convivencia (SCRUM-74 AC): el Coordinador está
+    // explícitamente incluido acá, a diferencia del resto de sus permisos (más
+    // acotados que Referente/DirectoraDeCasona, ver nota arriba).
+    'visitas.view',
+    'visitas.create',
+    'visitas.edit'
   ]
 
 };

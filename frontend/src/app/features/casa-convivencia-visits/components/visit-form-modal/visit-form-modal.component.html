@@ -1,0 +1,48 @@
+<ui-modal [title]="title()" size="sm" [closeOnBackdrop]="false" (closed)="onClose()">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+
+    <ui-form-field label="Residente" for="visit-resident" [required]="true" [error]="residentError">
+      <select id="visit-resident" uiInput formControlName="residentId">
+        <option value="" disabled>{{ residentsLoading() ? 'Cargando residentes...' : 'Elegí un residente' }}</option>
+        @for (resident of residents(); track resident.id) {
+          <option [value]="resident.id">{{ resident.fullName }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Visitante" for="visit-visitor" [required]="true" [error]="visitorError">
+      <input id="visit-visitor" uiInput type="text" formControlName="visitorName" placeholder="Nombre de quien visita" maxlength="150" />
+    </ui-form-field>
+
+    <ui-form-field label="Fecha" for="visit-date" [required]="true" [error]="dateError">
+      <input id="visit-date" uiInput type="date" formControlName="date" [attr.min]="minDate" />
+    </ui-form-field>
+
+    <div class="grid grid-cols-2 gap-4">
+      <ui-form-field label="Hora" for="visit-time" [required]="true">
+        <input id="visit-time" uiInput type="time" formControlName="time" />
+      </ui-form-field>
+
+      <ui-form-field label="Duración estimada (min)" for="visit-duration" [required]="true" [error]="durationError">
+        <input id="visit-duration" uiInput type="number" formControlName="durationMinutes" min="5" max="480" step="5" />
+      </ui-form-field>
+    </div>
+
+    @if (conflicts().length > 0) {
+      <div class="rounded-md bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-700" role="alert">
+        ⚠ Ya hay otra visita a este residente que se superpone en ese horario
+        ({{ conflicts()[0].visitorName }}, {{ conflictTime(conflicts()[0]) }} hs). Podés guardar igual, pero
+        revisá que no sea un error.
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <p class="text-[12px] font-semibold text-rose-500" role="alert">{{ errorMessage() }}</p>
+    }
+  </form>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" [disabled]="saving()" (click)="onClose()">Cancelar</button>
+    <button uiButton type="button" [loading]="saving()" [disabled]="saving()" (click)="submit()">Guardar</button>
+  </ng-container>
+</ui-modal>

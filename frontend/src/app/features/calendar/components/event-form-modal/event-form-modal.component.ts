@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
-import { todayLocalIso } from '../../../../shared/utils/date.util';
+import { isBeforeToday, todayLocalIso } from '../../../../shared/utils/date.util';
 import { CalendarEvent, EventFormValue, RecurrenceFrequency } from '../../interfaces/calendar-event.interface';
 
 /**
@@ -37,6 +37,11 @@ export class EventFormModalComponent {
   title = computed(() => (this.event() ? 'Editar evento' : 'Nuevo evento'));
 
   submitted = false;
+
+  // input[type=date] min, para que el selector nativo del navegador ya no deje elegir
+  // un día anterior a hoy (ver también isPastDateInvalid, que cubre el caso de
+  // escribir la fecha a mano o de pegarla).
+  readonly minDate = todayLocalIso();
 
   readonly recurrenceOptions: { value: RecurrenceFrequency; label: string }[] = [
     { value: 'none', label: 'No se repite' },
@@ -94,10 +99,26 @@ export class EventFormModalComponent {
   // required pero no se mostraba ningún mensaje.
   get dateError(): string | null {
     const control = this.form.controls.date;
-    if (!this.submitted || !control.errors) {
+    if (!this.submitted) {
       return null;
     }
-    return control.errors['required'] ? 'La fecha es obligatoria.' : null;
+    if (control.errors?.['required']) {
+      return 'La fecha es obligatoria.';
+    }
+    return this.isPastDateInvalid() ? 'La fecha no puede ser anterior a hoy.' : null;
+  }
+
+  // Regla pedida: ningún evento de calendario puede quedar con fecha anterior a hoy.
+  // Al EDITAR se permite mantener la fecha original si ya era pasada (por ej. corregir
+  // la descripción de una actividad que ya ocurrió) — lo que no se permite es poner
+  // una fecha nueva que sea pasada, sea alta o edición.
+  private isPastDateInvalid(): boolean {
+    const date = this.form.controls.date.value;
+    if (!isBeforeToday(date)) {
+      return false;
+    }
+    const originalDate = this.event()?.start.split('T')[0];
+    return date !== originalDate;
   }
 
   get timeRangeError(): string | null {
@@ -126,7 +147,7 @@ export class EventFormModalComponent {
   submit(): void {
     this.submitted = true;
 
-    if (this.form.invalid || this.timeRangeError) {
+    if (this.form.invalid || this.timeRangeError || this.isPastDateInvalid()) {
       this.form.markAllAsTouched();
       return;
     }

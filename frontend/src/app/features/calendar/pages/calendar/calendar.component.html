@@ -9,6 +9,8 @@
           Tus eventos privados: solo vos los ves.
         } @else if (calendarTab() === 'combined') {
           Centro Barrial y tus eventos privados, juntos.
+        } @else if (calendarTab() === 'visitas') {
+          Visitas de la Casa de Convivencia: alta, estado y alerta de conflicto de horario.
         } @else {
           Actividades del Centro Barrial: las recurrentes y las que carga el equipo.
         }
@@ -20,11 +22,13 @@
     }
   </div>
 
-  <!-- SCRUM-196: General / Mi calendario / Combinado — solo para quien tiene calendario personal -->
-  @if (hasPersonalCalendar()) {
+  <!-- SCRUM-196/SCRUM-74: General / Mi calendario / Combinado / Visitas Casa de Convivencia — la
+       fila solo se muestra si hay al menos una pestaña extra aparte de "General"
+       (calendario personal y/o permiso visitas.view, ver hasExtraTabs()). -->
+  @if (hasExtraTabs()) {
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <div class="inline-flex overflow-hidden rounded-lg border border-[#E3E8F5] bg-white">
-        <ui-tabs [tabs]="scopeTabs" [active]="calendarTab()" (tabChange)="changeScope($event)" />
+        <ui-tabs [tabs]="scopeTabs()" [active]="calendarTab()" (tabChange)="changeScope($event)" />
       </div>
       @if (calendarTab() === 'combined') {
         <div class="flex items-center gap-3 text-[12px] text-slate-500">
@@ -39,197 +43,208 @@
     </div>
   }
 
-  <!-- CONTROLES: vista + navegación -->
-  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-    <div class="overflow-hidden rounded-lg border border-[#E3E8F5] bg-white">
-      <ui-tabs [tabs]="viewTabs" [active]="viewMode()" (tabChange)="changeView($event)" />
-    </div>
+  @if (calendarTab() === 'visitas') {
 
-    <div class="flex items-center gap-2">
-      <button
-        type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5DDF3] bg-white text-slate-500 hover:bg-slate-50"
-        (click)="goPrev()"
-        aria-label="Anterior"
-      >
-        ‹
-      </button>
+    <!-- SCRUM-74/SCRUM-213/SCRUM-214: calendario de visitas de la Casa de Convivencia,
+         con sus propios datos/permisos/vistas (día/semana/mes) y modales — se monta
+         entero acá adentro, en vez de tener su propia ruta y link de sidebar. -->
+    <app-casa-convivencia-visits-calendar />
 
-      <button
-        type="button"
-        class="h-9 rounded-md border border-[#D5DDF3] bg-white px-3 text-[13px] font-semibold text-slate-600 hover:bg-slate-50"
-        (click)="goToday()"
-      >
-        Hoy
-      </button>
+  } @else {
 
-      <button
-        type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5DDF3] bg-white text-slate-500 hover:bg-slate-50"
-        (click)="goNext()"
-        aria-label="Siguiente"
-      >
-        ›
-      </button>
-
-      <span class="ml-2 text-[14px] font-semibold text-slate-700">{{ rangeLabel() }}</span>
-    </div>
-  </div>
-
-  <!-- ÉXITO (SCRUM-192): confirmación visible de crear/editar/eliminar, se oculta sola -->
-  @if (successMessage()) {
-    <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">
-      {{ successMessage() }}
-    </div>
-  }
-
-  <!-- ERROR -->
-  @if (errorMessage()) {
-    <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
-      {{ errorMessage() }}
-    </div>
-  }
-
-  <!-- CARD PRINCIPAL -->
-  <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
-
-    @if (loading()) {
-      <div class="flex items-center justify-center gap-2 px-6 py-16 text-[14px] text-slate-400">
-        <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
-        Cargando calendario...
-      </div>
-    } @else if (viewMode() === 'week') {
-
-      <!-- VISTA SEMANAL -->
-      <div class="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-7 md:divide-x md:divide-y-0">
-        @for (day of weekDays(); track day) {
-          <div
-            class="flex min-h-[220px] flex-col px-3 py-3"
-            [class]="isToday(day) ? 'bg-[#F5F8FF]' : ''"
-          >
-            <button
-              type="button"
-              class="mb-2 flex items-center justify-between rounded-md px-1 text-left"
-              (click)="canCreateHere() && openCreateModal(day)"
-            >
-              <span class="text-[12px] font-semibold uppercase text-slate-400">
-                {{ weekdayLabel(day) }}
-              </span>
-              <span
-                class="flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-bold"
-                [class]="isToday(day) ? 'bg-[#6B8DF5] text-white' : 'text-slate-700'"
-              >
-                {{ day | date: 'd' }}
-              </span>
-            </button>
-
-            <div class="flex flex-col gap-1.5 overflow-y-auto">
-              @for (event of eventsForDay(day); track event.id) {
-                <button
-                  type="button"
-                  class="rounded-md border px-2 py-1.5 text-left text-[12px] transition hover:shadow-sm"
-                  [class]="event.isRecurring
-                    ? 'border-[#E3E8F5] bg-[#F8F9FC] text-slate-600'
-                    : event.scope === 'personal'
-                      ? 'border-[#E9D5FF] bg-[#F5F0FF] text-[#8B5CF6]'
-                      : 'border-[#D5DDF3] bg-[#EEF2FF] text-[#4167D9]'"
-                  (click)="openDetail(event)"
-                >
-                  <div class="font-semibold">{{ eventTime(event) }} · {{ event.title }}</div>
-                  <div class="text-[11px] text-slate-400">{{ event.authorName }}</div>
-                </button>
-              } @empty {
-                <p class="text-[12px] text-slate-300">Sin eventos</p>
-              }
-            </div>
-          </div>
-        }
+    <!-- CONTROLES: vista + navegación -->
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="overflow-hidden rounded-lg border border-[#E3E8F5] bg-white">
+        <ui-tabs [tabs]="viewTabs" [active]="viewMode()" (tabChange)="changeView($event)" />
       </div>
 
-    } @else {
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5DDF3] bg-white text-slate-500 hover:bg-slate-50"
+          (click)="goPrev()"
+          aria-label="Anterior"
+        >
+          ‹
+        </button>
 
-      <!-- VISTA MENSUAL -->
-      <div class="grid grid-cols-7 border-b border-slate-100 bg-[#FAFAFB]">
-        @for (label of ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']; track label) {
-          <div class="px-2 py-2 text-center text-[12px] font-semibold text-slate-500">{{ label }}</div>
-        }
+        <button
+          type="button"
+          class="h-9 rounded-md border border-[#D5DDF3] bg-white px-3 text-[13px] font-semibold text-slate-600 hover:bg-slate-50"
+          (click)="goToday()"
+        >
+          Hoy
+        </button>
+
+        <button
+          type="button"
+          class="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5DDF3] bg-white text-slate-500 hover:bg-slate-50"
+          (click)="goNext()"
+          aria-label="Siguiente"
+        >
+          ›
+        </button>
+
+        <span class="ml-2 text-[14px] font-semibold text-slate-700">{{ rangeLabel() }}</span>
       </div>
+    </div>
 
-      @for (week of monthWeeks(); track week[0]) {
-        <div class="grid grid-cols-7 divide-x divide-slate-100 border-b border-slate-100">
-          @for (day of week; track day) {
+    <!-- ÉXITO (SCRUM-192): confirmación visible de crear/editar/eliminar, se oculta sola -->
+    @if (successMessage()) {
+      <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">
+        {{ successMessage() }}
+      </div>
+    }
+
+    <!-- ERROR -->
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- CARD PRINCIPAL -->
+    <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+
+      @if (loading()) {
+        <div class="flex items-center justify-center gap-2 px-6 py-16 text-[14px] text-slate-400">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
+          Cargando calendario...
+        </div>
+      } @else if (viewMode() === 'week') {
+
+        <!-- VISTA SEMANAL -->
+        <div class="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-7 md:divide-x md:divide-y-0">
+          @for (day of weekDays(); track day) {
             <div
-              class="flex min-h-[110px] flex-col gap-1 p-2"
-              [class]="(isToday(day) ? 'bg-[#F5F8FF] ' : '') + (!isCurrentMonth(day) ? 'opacity-40' : '')"
+              class="flex min-h-[220px] flex-col px-3 py-3"
+              [class]="isToday(day) ? 'bg-[#F5F8FF]' : ''"
             >
               <button
                 type="button"
-                class="mb-1 flex h-6 w-6 items-center justify-center self-end rounded-full text-[12px] font-semibold"
-                [class]="isToday(day) ? 'bg-[#6B8DF5] text-white' : 'text-slate-600'"
-                (click)="canCreateHere() && openCreateModal(day)"
+                class="mb-2 flex items-center justify-between rounded-md px-1 text-left"
+                (click)="canCreateHere() && !isPastDay(day) && openCreateModal(day)"
               >
-                {{ day | date: 'd' }}
+                <span class="text-[12px] font-semibold uppercase text-slate-400">
+                  {{ weekdayLabel(day) }}
+                </span>
+                <span
+                  class="flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-bold"
+                  [class]="isToday(day) ? 'bg-[#6B8DF5] text-white' : 'text-slate-700'"
+                >
+                  {{ day | date: 'd' }}
+                </span>
               </button>
 
-              <div class="flex flex-col gap-1 overflow-y-auto">
+              <div class="flex flex-col gap-1.5 overflow-y-auto">
                 @for (event of eventsForDay(day); track event.id) {
                   <button
                     type="button"
-                    class="truncate rounded px-1.5 py-1 text-left text-[11px]"
+                    class="rounded-md border px-2 py-1.5 text-left text-[12px] transition hover:shadow-sm"
                     [class]="event.isRecurring
-                      ? 'bg-[#F8F9FC] text-slate-500'
+                      ? 'border-[#E3E8F5] bg-[#F8F9FC] text-slate-600'
                       : event.scope === 'personal'
-                        ? 'bg-[#F5F0FF] text-[#8B5CF6]'
-                        : 'bg-[#EEF2FF] text-[#4167D9]'"
+                        ? 'border-[#E9D5FF] bg-[#F5F0FF] text-[#8B5CF6]'
+                        : 'border-[#D5DDF3] bg-[#EEF2FF] text-[#4167D9]'"
                     (click)="openDetail(event)"
                   >
-                    {{ eventTime(event) }} {{ event.title }}
+                    <div class="font-semibold">{{ eventTime(event) }} · {{ event.title }}</div>
+                    <div class="text-[11px] text-slate-400">{{ event.authorName }}</div>
                   </button>
+                } @empty {
+                  <p class="text-[12px] text-slate-300">Sin eventos</p>
                 }
               </div>
             </div>
           }
         </div>
+
+      } @else {
+
+        <!-- VISTA MENSUAL -->
+        <div class="grid grid-cols-7 border-b border-slate-100 bg-[#FAFAFB]">
+          @for (label of ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']; track label) {
+            <div class="px-2 py-2 text-center text-[12px] font-semibold text-slate-500">{{ label }}</div>
+          }
+        </div>
+
+        @for (week of monthWeeks(); track week[0]) {
+          <div class="grid grid-cols-7 divide-x divide-slate-100 border-b border-slate-100">
+            @for (day of week; track day) {
+              <div
+                class="flex min-h-[110px] flex-col gap-1 p-2"
+                [class]="(isToday(day) ? 'bg-[#F5F8FF] ' : '') + (!isCurrentMonth(day) ? 'opacity-40' : '')"
+              >
+                <button
+                  type="button"
+                  class="mb-1 flex h-6 w-6 items-center justify-center self-end rounded-full text-[12px] font-semibold"
+                  [class]="isToday(day) ? 'bg-[#6B8DF5] text-white' : 'text-slate-600'"
+                  (click)="canCreateHere() && !isPastDay(day) && openCreateModal(day)"
+                >
+                  {{ day | date: 'd' }}
+                </button>
+
+                <div class="flex flex-col gap-1 overflow-y-auto">
+                  @for (event of eventsForDay(day); track event.id) {
+                    <button
+                      type="button"
+                      class="truncate rounded px-1.5 py-1 text-left text-[11px]"
+                      [class]="event.isRecurring
+                        ? 'bg-[#F8F9FC] text-slate-500'
+                        : event.scope === 'personal'
+                          ? 'bg-[#F5F0FF] text-[#8B5CF6]'
+                          : 'bg-[#EEF2FF] text-[#4167D9]'"
+                      (click)="openDetail(event)"
+                    >
+                      {{ eventTime(event) }} {{ event.title }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
       }
+    </div>
+
+    <!-- ALTA / EDICIÓN (visibilidad según canCreateHere/canManageEvent) -->
+    @if (showFormModal()) {
+      <app-event-form-modal
+        [event]="editingEvent()"
+        [initialDate]="formInitialDate()"
+        [saving]="saving()"
+        [errorMessage]="formError()"
+        (saved)="saveEvent($event)"
+        (closed)="closeFormModal()"
+      />
     }
-  </div>
 
-  <!-- ALTA / EDICIÓN (visibilidad según canCreateHere/canManageEvent) -->
-  @if (showFormModal()) {
-    <app-event-form-modal
-      [event]="editingEvent()"
-      [initialDate]="formInitialDate()"
-      [saving]="saving()"
-      [errorMessage]="formError()"
-      (saved)="saveEvent($event)"
-      (closed)="closeFormModal()"
-    />
-  }
+    <!-- DETALLE DEL EVENTO -->
+    @if (viewingEvent(); as event) {
+      <app-event-detail-modal
+        [event]="event"
+        [canEdit]="canManageEvent(event)"
+        [canConvert]="canConvertToGeneral(event)"
+        (closed)="closeDetail()"
+        (editRequested)="editFromDetail($event)"
+        (deleteRequested)="requestDelete($event)"
+        (convertRequested)="requestConvert($event)"
+      />
+    }
 
-  <!-- DETALLE DEL EVENTO -->
-  @if (viewingEvent(); as event) {
-    <app-event-detail-modal
-      [event]="event"
-      [canEdit]="canManageEvent(event)"
-      [canConvert]="canConvertToGeneral(event)"
-      (closed)="closeDetail()"
-      (editRequested)="editFromDetail($event)"
-      (deleteRequested)="requestDelete($event)"
-      (convertRequested)="requestConvert($event)"
-    />
-  }
+    <!-- ELIMINAR (SCRUM-16/SCRUM-192): confirmación previa obligatoria -->
+    @if (deletingEvent(); as event) {
+      <ui-confirm-dialog
+        title="Eliminar evento"
+        [message]="'¿Estás seguro de que querés eliminar \'' + event.title + '\'? Esta acción no se puede deshacer.'"
+        confirmLabel="Eliminar"
+        confirmVariant="danger"
+        [loading]="deleting()"
+        (confirmed)="confirmDelete()"
+        (cancelled)="cancelDelete()"
+      />
+    }
 
-  <!-- ELIMINAR (SCRUM-16/SCRUM-192): confirmación previa obligatoria -->
-  @if (deletingEvent(); as event) {
-    <ui-confirm-dialog
-      title="Eliminar evento"
-      [message]="'¿Estás seguro de que querés eliminar \'' + event.title + '\'? Esta acción no se puede deshacer.'"
-      confirmLabel="Eliminar"
-      confirmVariant="danger"
-      [loading]="deleting()"
-      (confirmed)="confirmDelete()"
-      (cancelled)="cancelDelete()"
-    />
   }
 
 </div>

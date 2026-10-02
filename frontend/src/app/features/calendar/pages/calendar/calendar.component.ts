@@ -19,11 +19,15 @@ import {
   weekDays,
 } from '../../utils/calendar-date.util';
 import { generateRecurringEvents } from '../../utils/recurring-events.util';
+import { isBeforeToday } from '../../../../shared/utils/date.util';
+import { CasaConvivenciaVisitsCalendarComponent } from '../../../casa-convivencia-visits/pages/casa-convivencia-visits-calendar/casa-convivencia-visits-calendar.component';
 
 type ViewMode = 'week' | 'month';
 // 'combined' = SCRUM-17 (AC): "vista combinada que muestre ambos calendarios al mismo
-// tiempo con colores diferenciados"
-type CalendarTab = CalendarScope | 'combined';
+// tiempo con colores diferenciados". 'visitas' = SCRUM-74: el calendario de la Casa de
+// Convivencia, integrado como una pestaña más acá (ver comentario de la clase) en vez
+// de una pantalla aparte con link propio en el sidebar.
+type CalendarTab = CalendarScope | 'combined' | 'visitas';
 
 /**
  * SCRUM-28 (SCRUM-186/SCRUM-187) + SCRUM-16 (SCRUM-191/SCRUM-192) + SCRUM-17
@@ -37,6 +41,14 @@ type CalendarTab = CalendarScope | 'combined';
  * Referente — el selector General/Mi calendario/Combinado ni se muestra para los
  * demás roles, que solo ven el calendario general (Escucha, de solo lectura, ver AC
  * de SCRUM-15).
+ *
+ * SCRUM-74/SCRUM-213/SCRUM-214: el calendario de visitas de la Casa de Convivencia
+ * (CasaConvivenciaVisitsCalendarComponent) se integra acá como pestaña "Visitas Casa de Convivencia" —
+ * exclusiva de quien tenga el permiso visitas.view (Referente/DirectoraDeCasona/
+ * CoordinadorDeCasaConvivencia) — en vez de tener ruta y link de sidebar propios. Es
+ * un calendario con datos, permisos y vistas (día/semana/mes) totalmente distintos al
+ * general/personal, así que no comparte lógica interna con este componente: solo se
+ * monta su página completa dentro de esta pestaña (ver template).
  */
 @Component({
   selector: 'app-calendar',
@@ -47,6 +59,7 @@ type CalendarTab = CalendarScope | 'combined';
     UiConfirmDialogComponent,
     EventFormModalComponent,
     EventDetailModalComponent,
+    CasaConvivenciaVisitsCalendarComponent,
   ],
   templateUrl: './calendar.component.html',
 })
@@ -76,19 +89,33 @@ export class CalendarComponent implements OnInit, OnDestroy {
   // selector de pestañas General/Mi calendario/Combinado.
   hasPersonalCalendar = computed(() => this.isReferente());
 
+  // SCRUM-74 (AC): la pestaña "Visitas Casa de Convivencia" se muestra con el mismo permiso que
+  // guardaba la ruta propia que tenía antes (visitas.view) — Referente,
+  // DirectoraDeCasona y CoordinadorDeCasaConvivencia; Escucha no la ve.
+  hasVisitsCalendar = computed(() => this.permissionService.hasPermission('visitas.view'));
+
   viewTabs: UiTab<ViewMode>[] = [
     { id: 'week', label: 'Semana' },
     { id: 'month', label: 'Mes' },
   ];
 
   // SCRUM-196 (AC): alternar entre "Calendario general", "Mi calendario" y una vista
-  // combinada. Solo se muestra si hasPersonalCalendar() — ver calendar.component.html.
+  // combinada, más "Visitas Casa de Convivencia" (SCRUM-74) para quien tenga ese permiso. La fila
+  // de pestañas entera solo se muestra si hay al menos una pestaña extra por mostrar
+  // (ver hasExtraTabs() y calendar.component.html) — quien no tiene ninguno de los dos
+  // permisos solo ve el calendario general, sin selector.
   calendarTab = signal<CalendarTab>('general');
-  scopeTabs: UiTab<CalendarTab>[] = [
-    { id: 'general', label: 'General' },
-    { id: 'personal', label: 'Mi calendario' },
-    { id: 'combined', label: 'Combinado' },
-  ];
+  scopeTabs = computed<UiTab<CalendarTab>[]>(() => {
+    const tabs: UiTab<CalendarTab>[] = [{ id: 'general', label: 'General' }];
+    if (this.hasPersonalCalendar()) {
+      tabs.push({ id: 'personal', label: 'Mi calendario' }, { id: 'combined', label: 'Combinado' });
+    }
+    if (this.hasVisitsCalendar()) {
+      tabs.push({ id: 'visitas', label: 'Casa de Convivencia' });
+    }
+    return tabs;
+  });
+  hasExtraTabs = computed(() => this.hasPersonalCalendar() || this.hasVisitsCalendar());
 
   rangeStart = computed(() => {
     const ref = this.referenceDate();
@@ -129,7 +156,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
   // SCRUM-17 (AC): mismo formulario que el general, pero solo se puede dar de alta
   // desde "General" (si hay permiso) o "Mi calendario" (si hay calendario personal).
   // Desde "Combinado" no se da de alta: no hay forma no ambigua de saber a qué
-  // calendario pertenecería el evento nuevo.
+  // calendario pertenecería el evento nuevo. Desde "Visitas Casa de Convivencia" tampoco: esa
+  // pestaña tiene su propio botón "Nueva visita", lo gestiona CasaConvivenciaVisitsCalendarComponent.
   canCreateHere = computed(() => {
     switch (this.calendarTab()) {
       case 'general':
@@ -191,6 +219,14 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return date.getMonth() === this.referenceDate().getMonth();
   }
 
+  // Regla pedida: ningún evento de calendario puede quedar con fecha anterior a hoy —
+  // acá se usa para no ofrecer "crear evento" al clickear un día ya pasado en la
+  // grilla (el bloqueo real está en el formulario, ver event-form-modal; esto es solo
+  // para no abrir el modal con una fecha que de entrada ya va a rechazar).
+  isPastDay(date: Date): boolean {
+    return isBeforeToday(isoDate(date));
+  }
+
   eventsForDay(date: Date): CalendarEvent[] {
     return this.allEvents()
       .filter((e) => isSameDay(new Date(e.start), date))
@@ -246,7 +282,11 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   changeScope(tab: CalendarTab): void {
     this.calendarTab.set(tab);
-    this.loadEvents();
+    // "Visitas Casa de Convivencia" no usa events/loadEvents de este componente — tiene su propia
+    // carga de datos adentro de CasaConvivenciaVisitsCalendarComponent (ver template).
+    if (tab !== 'visitas') {
+      this.loadEvents();
+    }
   }
 
   goToday(): void {
@@ -269,12 +309,20 @@ export class CalendarComponent implements OnInit, OnDestroy {
   }
 
   loadEvents(): void {
+    const tab = this.calendarTab();
+    // "Visitas Casa de Convivencia" no tiene CalendarEvent/scope propios — los carga
+    // CasaConvivenciaVisitsCalendarComponent. No debería llegar acá (changeScope/ngOnInit lo
+    // evitan), pero se corta explícito para que el tipo de tab quede acotado a
+    // CalendarScope|'combined' debajo, igual que antes de agregar esa pestaña.
+    if (tab === 'visitas') {
+      return;
+    }
+
     this.loading.set(true);
     this.errorMessage.set(null);
 
     const desde = isoDate(this.rangeStart());
     const hasta = isoDate(this.rangeEnd());
-    const tab = this.calendarTab();
 
     // SCRUM-196 (AC): vista combinada = ambos calendarios a la vez. Se piden los dos
     // rangos en paralelo y se combinan acá — el backend sigue filtrando 'personal' por

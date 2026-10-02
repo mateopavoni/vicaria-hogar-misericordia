@@ -101,6 +101,13 @@ export const routes: Routes = [
           permissionGuard('calendario.view')
         ]
       },
+
+      // SCRUM-74/SCRUM-213/SCRUM-214: el calendario de visitas de la Casa de
+      // Convivencia no tiene ruta propia — se integró como una pestaña más adentro de
+      // /dashboard/calendario (CalendarComponent), junto a General/Mi calendario/
+      // Combinado, en vez de una pantalla aparte. visitas.view sigue controlando si esa
+      // pestaña se muestra (Referente/DirectoraDeCasona/CoordinadorDeCasaConvivencia;
+      // Escucha no la ve).
     ],
   },
 
