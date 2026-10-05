@@ -12,7 +12,7 @@ Actualizado al 2026-09-23 — ver [CURRENT_STATE.md](./CURRENT_STATE.md) para el
 ## ALTA
 
 - **El rename `Hogar` → `Centro Barrial` está incompleto.** Todo el dominio `LifeStory` (entidad, DTOs, rutas `before-hogar`/`in-hogar`/`after-hogar`, columnas de tabla) sigue usando `Hogar` como identificador de código. Es un rename que toca migración de DB — deliberadamente no se hizo el 2026-09-23 para no arriesgar un demo el mismo día. **Bloqueante para pasar `dev` a `main`**, no bloqueante para usar `dev` tal cual está. Ver [CURRENT_STATE.md](./CURRENT_STATE.md).
-- **Dos jobs de inactividad automática con lógica solapada y criterios distintos**, encontrado en QA manual del 2026-09-23: `PersonInactivityService` (pasa a Inactive por `UpdatedAt`/`CreatedAt` viejo) y `AttendanceInactivityService` (pasa a Inactive por falta de `Attendance` en 30 días, SCRUM-135) — ambos corren como hosted services independientes sobre el mismo campo `SocialRecord.Status`, sin coordinarse. Un residente de la Casa de Convivencia (vive ahí todos los días) puede pasar a Inactive solo por no tener un registro de `Attendance` explícito, aunque su estadía siga abierta — la lógica no distingue `PersonType`. No es un bug de código (ambos hacen lo que su propio ticket pedía, SCRUM aparte) sino un gap de diseño de producto: dos mecanismos automáticos pisándose. Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
+- **Resuelto (2026-10-05): jobs de inactividad.** Se decidió dejar solo `AttendanceInactivityService` (por asistencia, SCRUM-135); se eliminó `PersonInactivityService` (por `UpdatedAt`), su background service y sus tests.
 
 ## MEDIA
 

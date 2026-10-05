@@ -78,7 +78,7 @@ Vicaria.IntegrationTests  → Tests end-to-end contra la API completa (WebAppli
 
 - Nombres en inglés, PascalCase: `User`, `Role`, `AuditLog`
 - Enums en inglés, tipo y valores: `UserStatus { Pending, Active, Inactive, Rejected }`
-- Constantes de roles centralizadas en una clase estática en inglés: `RoleNames.Referente`, `RoleNames.DirectoraDeCasona`, `RoleNames.Escucha`, `RoleNames.CoordinadorDeCasaConvivencia` — usar siempre esta clase en `[Authorize(Roles = ...)]`, nunca strings sueltos. El nombre de la constante es PascalCase en inglés, el *valor* del string es el término real del negocio en español.
+- Constantes de roles centralizadas en una clase estática en inglés: `RoleNames.Referent`, `RoleNames.CasonaDirector`, `RoleNames.Listener`, `RoleNames.CasaConvivenciaCoordinator` — usar siempre esta clase en `[Authorize(Roles = ...)]`, nunca strings sueltos. El nombre de la constante es PascalCase en inglés, el *valor* del string es el término real del negocio en español.
 - Constantes de permisos en `PermissionNames` (códigos de permisos por rol): `ViewCasaConvivenciaResidentRecords`, `LoadResidentObservations`, `ViewMedicationSchedule`.
 
 ### DTOs y validadores (Application)

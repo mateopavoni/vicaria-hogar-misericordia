@@ -134,6 +134,9 @@ Sembrados automáticamente al arrancar la API en `Development` (`Program.cs`, `S
 | `directora@test.com` | Directora de Casona *(nombre del rol pendiente de decisión de equipo, ver `.ai/context/OPEN_QUESTIONS.md`)* |
 | `escucha@test.com` | Escucha |
 | `coordinador@test.com` | Coordinador de Casa de Convivencia |
+| `pendiente1@test.com`, `pendiente2@test.com` | Cuentas Pendientes (probar aprobar/rechazar) |
+| `inactivo@test.com` | Cuenta desactivada |
+| `bloqueable@test.com` | Escucha activa, para probar el bloqueo por 5 intentos fallidos |
 
 ### Personas de ejemplo
 
@@ -152,6 +155,5 @@ Sembrados automáticamente al arrancar la API en `Development` (`Program.cs`, `S
 
 ## Problemas conocidos (no bloquean, pero conviene saberlos)
 
-- **Dos jobs de inactividad con lógica solapada** (`PersonInactivityService` y `AttendanceInactivityService`) — ver `.ai/context/KNOWN_ISSUES.md`.
 - **CI no configurado** — los merges no corren build/tests automáticos todavía.
 - Ver `.ai/context/KNOWN_ISSUES.md` y `.ai/context/OPEN_QUESTIONS.md` para el resto del estado real verificado.
