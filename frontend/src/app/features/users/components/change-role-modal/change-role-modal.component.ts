@@ -16,13 +16,13 @@ export class ChangeRoleModalComponent implements OnInit {
 
   // bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia, no se le podía
   // reasignar ese rol a un usuario existente desde este modal.
-  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasona', 'Escucha', 'CoordinadorDeCasaConvivencia'];
+  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasaConvivencia', 'Escucha', 'CoordinadorDeCasaConvivencia'];
   selectedRole = signal<UserRole>('Escucha');
 
   // nombres lindos para mostrar en el select
   private roleLabels: Record<UserRole, string> = {
     Referente: 'Referente',
-    DirectoraDeCasona: 'Directora de Casona',
+    DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',
     Escucha: 'Escucha',
     CoordinadorDeCasaConvivencia: 'Coordinador de Casa de Convivencia',
   };

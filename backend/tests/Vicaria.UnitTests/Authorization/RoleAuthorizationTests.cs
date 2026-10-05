@@ -22,19 +22,19 @@ public class RoleAuthorizationTests
     [Fact]
     public async Task RolCoincideConElRequerido_Autoriza()
     {
-        Assert.True(await RolCumpleRequisitoAsync(RoleNames.CasonaDirector, RoleNames.CasonaDirector));
+        Assert.True(await RolCumpleRequisitoAsync(RoleNames.CasaConvivenciaDirector, RoleNames.CasaConvivenciaDirector));
     }
 
     [Fact]
     public async Task RolNoCoincideConElRequerido_NoAutoriza()
     {
-        Assert.False(await RolCumpleRequisitoAsync(RoleNames.Referent, RoleNames.CasonaDirector));
+        Assert.False(await RolCumpleRequisitoAsync(RoleNames.Referent, RoleNames.CasaConvivenciaDirector));
     }
 
     [Fact]
     public async Task RolEstaEntreVariosRequeridos_Autoriza()
     {
-        Assert.True(await RolCumpleRequisitoAsync(RoleNames.Listener, RoleNames.CasonaDirector, RoleNames.Listener));
+        Assert.True(await RolCumpleRequisitoAsync(RoleNames.Listener, RoleNames.CasaConvivenciaDirector, RoleNames.Listener));
     }
 
     [Fact]

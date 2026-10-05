@@ -24,7 +24,7 @@ public class LifeStoriesController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.Listener}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener}")]
     public async Task<ActionResult<LifeStoryResponseDto>> Get(Guid personId, CancellationToken cancellationToken)
     {
         var result = await _lifeStoryService.GetByPersonIdAsync(personId, cancellationToken);

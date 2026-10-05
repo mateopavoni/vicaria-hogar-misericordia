@@ -100,7 +100,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
     public async Task Approve_SinRolReferente_Retorna403()
     {
         var usuarioId = await RegistrarUsuarioPendienteAsync();
-        UsarToken(_client, RoleNames.CasonaDirector, await SembrarActorAsync(RoleNames.CasonaDirector));
+        UsarToken(_client, RoleNames.CasaConvivenciaDirector, await SembrarActorAsync(RoleNames.CasaConvivenciaDirector));
         var rolId = ObtenerRolIdSembrado();
 
         var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));

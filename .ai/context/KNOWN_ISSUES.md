@@ -19,7 +19,7 @@ Actualizado al 2026-09-23 — ver [CURRENT_STATE.md](./CURRENT_STATE.md) para el
 - **Expiración de sesión no es por inactividad real**, sino por TTL fijo de JWT (60 min) + refresh token (7 días). Existe `feature/SCRUM-96-inactivity-timeout` pero no está mergeada a ninguna rama. Sigue sin resolverse — ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
 - **Contradicción de versión de Angular** entre `/PROJECT.md` (16+) y el código real (`^22.1.0`) — sigue sin resolverse.
 - **RBAC documentado vs. real no coincide:** `/PROJECT.md` lista 3 roles; el código tiene un 4to (`CoordinadorDeCasaConvivencia`) y además un segundo nivel de permisos granulares (`Permission`/`RolePermission`) no descrito en ningún doc de negocio.
-- **`RoleNames.DirectoraDeCasona` sin renombrar**, a diferencia del resto de las referencias a "Casona" ya renombradas a "Casa de Convivencia". Es un valor persistido (rol en DB, claims de JWT, decenas de `[Authorize(Roles=...)]`), no un rename cosmético — requiere decisión de equipo antes de tocarlo. Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
+- **Resuelto (2026-10-05): rol `DirectoraDeCasaConvivencia`.** Se renombró el valor persistido; ya no queda "Casona" en roles.
 
 ## BAJA
 

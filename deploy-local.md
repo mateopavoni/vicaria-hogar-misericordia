@@ -131,7 +131,7 @@ Sembrados automáticamente al arrancar la API en `Development` (`Program.cs`, `S
 | Email | Rol |
 |---|---|
 | `referente@test.com` | Referente |
-| `directora@test.com` | Directora de Casona *(nombre del rol pendiente de decisión de equipo, ver `.ai/context/OPEN_QUESTIONS.md`)* |
+| `directora@test.com` | Directora de Casa de Convivencia |
 | `escucha@test.com` | Escucha |
 | `coordinador@test.com` | Coordinador de Casa de Convivencia |
 | `pendiente1@test.com`, `pendiente2@test.com` | Cuentas Pendientes (probar aprobar/rechazar) |

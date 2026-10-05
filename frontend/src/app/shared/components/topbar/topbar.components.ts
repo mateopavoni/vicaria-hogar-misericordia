@@ -8,7 +8,7 @@ import { SidebarStateService } from '../../layout/sidebar-state.service';
 // bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia
 const ROLE_LABELS: Record<UserRole, string> = {
   Referente: 'Referente',
-  DirectoraDeCasona: 'Directora de Casona',
+  DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',
   Escucha: 'Escucha',
   CoordinadorDeCasaConvivencia: 'Coordinador de Casa de Convivencia',
 };

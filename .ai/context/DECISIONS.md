@@ -25,7 +25,7 @@ El diseño técnico original (NestJS + PostgreSQL + Prisma) fue reemplazado por 
 
 - **`dev-backend` + `dev-frontend` se integran a `dev`**, sin borrar ninguna de las dos ramas fuente. `main` queda sin tocar hasta que se resuelva el rename pendiente de `Hogar`→`Centro Barrial` en `LifeStory` — ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
 - **Rename "Casona"→"Casa de Convivencia" confirmado y aplicado** en todo el código, rutas y DB (migración `RenameTable`, no drop+create). **Rename "Hogar"→"Centro Barrial" confirmado pero aplicado solo parcialmente** — el dominio `LifeStory` queda pendiente por ser un rename que toca migración de DB, decisión explícita de no arriesgarlo el mismo día de un demo.
-- **`RoleNames.DirectoraDeCasona` no se renombra** — es un valor persistido (rol en DB/JWT), requiere decisión de equipo aparte, no se asume unilateralmente. Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
+- **2026-10-05: el valor del rol `DirectoraDeCasona` se renombró a `DirectoraDeCasaConvivencia`** (DB, JWT y frontend), con migración de datos y bump de `TokenVersion` para forzar re-login.
 - **Seed de datos de demo** (`Program.cs`, `SeedDemoData`) se agrega como código de aplicación (no como script SQL aparte), mismo patrón que `SeedTestUsers` ya existente — corre solo en `Development`, es idempotente.
 
 ## Gate de RAG / subagente dedicado (Fase 3)

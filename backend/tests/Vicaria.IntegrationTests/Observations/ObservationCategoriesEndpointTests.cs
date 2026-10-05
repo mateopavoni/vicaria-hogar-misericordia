@@ -243,7 +243,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     public async Task ToggleStatus_AsDirectora_Returns403()
     {
         var categoryId = await CreateCategoryAsync("Salud");
-        await UseTokenAsync(RoleNames.CasonaDirector);
+        await UseTokenAsync(RoleNames.CasaConvivenciaDirector);
 
         var response = await _client.PatchAsJsonAsync($"/api/observation-categories/{categoryId}/status", new { isActive = false });
 

@@ -25,7 +25,7 @@ Decisión de equipo (confirmada): "Casona" → "Casa de Convivencia", "Hogar" �
 
 - ✅ **Completo:** entidades, DTOs, rutas, tablas y comentarios de "Casona" → "Casa de Convivencia" (`CasaConvivenciaStay`, `api/casa-convivencia-stays`, migración `RenameCasonaToCasaConvivencia`). `PersonType.Ambulatory` ya nace con el nombre correcto en inglés (no hubo que renombrarlo). UI del topbar ("Sede actual: Centro Barrial").
 - ❌ **Pendiente:** el dominio `LifeStory` completo usa `Hogar` como identificador de las 3 etapas (`BeforeHogar`/`InHogar`/`AfterHogar`, DTOs, rutas `before-hogar`/`in-hogar`/`after-hogar`, columnas de tabla). Es un rename profundo (toca migración de DB, no solo código) — deliberadamente **no** se tocó en esta sesión para no arriesgar el demo del día; queda como tarea explícita antes de pasar `dev` a `main`.
-- ❌ **Sin decidir:** `RoleNames.DirectoraDeCasona` — es un valor persistido (rol en DB, claims de JWT, decenas de `[Authorize(Roles=...)]`). Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), no renombrar sin decisión de equipo.
+- ✅ **Resuelto (2026-10-05):** el valor del rol pasó de `DirectoraDeCasona` a `DirectoraDeCasaConvivencia` (migración `RenameDirectorRoleToCasaConvivencia`, invalida sesiones viejas vía `TokenVersion`).
 
 ## QA manual end-to-end (2026-09-23)
 

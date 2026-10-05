@@ -28,7 +28,7 @@ Varias de estas (ej. `SCRUM-5-crear-ficha`, `SCRUM-80`, `SCRUM-86`, `SCRUM-94`, 
 
 ## (e) Tabla de roles de `/PROJECT.md` incompleta
 
-Lista 3 roles (Referente, DirectoraDeCasona, Escucha); el código (`RoleNames`) tiene un 4to, `CoordinadorDeCasaConvivencia`, más un segundo nivel de permisos granulares (`PermissionNames`) no descrito en ningún documento de negocio. ¿Se actualiza la tabla, o `CoordinadorDeCasaConvivencia` es un rol interno/técnico que no debería estar en la tabla de negocio?
+Lista 3 roles (Referente, DirectoraDeCasaConvivencia, Escucha); el código (`RoleNames`) tiene un 4to, `CoordinadorDeCasaConvivencia`, más un segundo nivel de permisos granulares (`PermissionNames`) no descrito en ningún documento de negocio. ¿Se actualiza la tabla, o `CoordinadorDeCasaConvivencia` es un rol interno/técnico que no debería estar en la tabla de negocio?
 
 ## (f) ¿El clúster de casona es EP-12 o merece épica propia?
 

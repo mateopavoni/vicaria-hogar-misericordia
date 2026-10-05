@@ -169,7 +169,7 @@ import { UserRole } from '../../../../core/auth/userRole';
           ]);
           break;
 
-        case 'DirectoraDeCasona':
+        case 'DirectoraDeCasaConvivencia':
 
           this.router.navigate([
             '/dashboard'

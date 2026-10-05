@@ -3,6 +3,6 @@
 // desde la UI de aprobación/asignación de roles.
 export type UserRole =
   | 'Referente'
-  | 'DirectoraDeCasona'
+  | 'DirectoraDeCasaConvivencia'
   | 'Escucha'
   | 'CoordinadorDeCasaConvivencia';

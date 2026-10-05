@@ -4,7 +4,7 @@ namespace Vicaria.Domain.Entities;
 public static class RoleNames
 {
     public const string Referent = "Referente";
-    public const string CasonaDirector = "DirectoraDeCasona";
+    public const string CasaConvivenciaDirector = "DirectoraDeCasaConvivencia";
     public const string Listener = "Escucha";
     public const string CasaConvivenciaCoordinator = "CoordinadorDeCasaConvivencia";
 }

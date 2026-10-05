@@ -16,9 +16,9 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
         // permisos de Coordinador de Casa de Convivencia (SCRUM-102): mismos 3 permisos que Directora,
         // según los criterios de aceptación de SCRUM-73 (ver fichas, cargar observaciones, ver agenda)
         builder.HasData(
-            new RolePermission { RoleId = RoleConfiguration.CasonaDirectorId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
-            new RolePermission { RoleId = RoleConfiguration.CasonaDirectorId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
-            new RolePermission { RoleId = RoleConfiguration.CasonaDirectorId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId },
+            new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaDirectorId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
+            new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaDirectorId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
+            new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaDirectorId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId },
             new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaCoordinatorId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
             new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaCoordinatorId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },
             new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaCoordinatorId, PermissionId = PermissionConfiguration.ViewMedicationScheduleId }

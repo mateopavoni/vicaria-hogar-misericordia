@@ -17,7 +17,7 @@ export interface UsersResponse {
 // a ese rol desde la UI mandaba roleId undefined.
 const ROLE_IDS: Record<UserRole, string> = {
   Referente: '11111111-1111-1111-1111-111111111111',
-  DirectoraDeCasona: '22222222-2222-2222-2222-222222222222',
+  DirectoraDeCasaConvivencia: '22222222-2222-2222-2222-222222222222',
   Escucha: '33333333-3333-3333-3333-333333333333',
   CoordinadorDeCasaConvivencia: '77777777-7777-7777-7777-777777777777',
 };

@@ -7,7 +7,7 @@ import {UserRole} from './../../../../core/auth/userRole';
 // una cuenta nueva con ese rol desde este modal.
 const ROLE_LABELS: Record<UserRole, string> = {
   Referente: 'Referente',
-  DirectoraDeCasona: 'Directora de Casona',
+  DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',
   Escucha: 'Escucha',
   CoordinadorDeCasaConvivencia: 'Coordinador de Casa de Convivencia',
 };
@@ -35,7 +35,7 @@ export class ApproveUserModalComponent {
 
   roles: UserRole[] = [
     'Referente',
-    'DirectoraDeCasona',
+    'DirectoraDeCasaConvivencia',
     'Escucha',
     'CoordinadorDeCasaConvivencia'
   ];

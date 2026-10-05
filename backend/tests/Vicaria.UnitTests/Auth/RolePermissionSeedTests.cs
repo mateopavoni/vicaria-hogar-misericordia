@@ -15,7 +15,7 @@ public class RolePermissionSeedTests
         using var db = new VicariaDbContext(options);
         db.Database.EnsureCreated();
 
-        var directora = await db.Roles.SingleAsync(r => r.Name == RoleNames.CasonaDirector);
+        var directora = await db.Roles.SingleAsync(r => r.Name == RoleNames.CasaConvivenciaDirector);
         var codes = await db.RolePermissions
             .Where(rp => rp.RoleId == directora.Id)
             .Join(db.Permissions, rp => rp.PermissionId, p => p.Id, (rp, p) => p.Code)

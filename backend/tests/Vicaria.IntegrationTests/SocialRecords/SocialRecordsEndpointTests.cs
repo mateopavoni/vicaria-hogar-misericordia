@@ -133,7 +133,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
         var nombreUnico = $"Nicolas{Guid.NewGuid():N}";
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreUnico });
 
-        await UsarTokenAsync(RoleNames.CasonaDirector);
+        await UsarTokenAsync(RoleNames.CasaConvivenciaDirector);
         var response = await _client.GetAsync($"/api/social-records/list?search={nombreUnico}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

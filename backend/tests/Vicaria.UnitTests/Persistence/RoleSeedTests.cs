@@ -26,7 +26,7 @@ public class RoleSeedTests
 
         Assert.Equal(4, names.Count);
         Assert.Contains(RoleNames.Referent, names);
-        Assert.Contains(RoleNames.CasonaDirector, names);
+        Assert.Contains(RoleNames.CasaConvivenciaDirector, names);
         Assert.Contains(RoleNames.Listener, names);
         Assert.Contains(RoleNames.CasaConvivenciaCoordinator, names);
     }
