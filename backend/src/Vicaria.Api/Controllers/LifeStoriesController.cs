@@ -24,7 +24,7 @@ public class LifeStoriesController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.Listener}")]
     public async Task<ActionResult<LifeStoryResponseDto>> Get(Guid personId, CancellationToken cancellationToken)
     {
         var result = await _lifeStoryService.GetByPersonIdAsync(personId, cancellationToken);
@@ -32,7 +32,7 @@ public class LifeStoriesController : ControllerBase
     }
 
     [HttpPut]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<ActionResult<LifeStoryResponseDto>> Update(
         Guid personId,
         [FromBody] UpdateLifeStoryDto dto,
@@ -47,7 +47,7 @@ public class LifeStoriesController : ControllerBase
     // edición de una sola etapa, de forma independiente (SCRUM-171): cada etapa se
     // edita por separado y en momentos distintos; autor y fecha quedan por etapa
     [HttpPut("{stage}")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<ActionResult<LifeStoryResponseDto>> UpdateStage(
         Guid personId,
         string stage,

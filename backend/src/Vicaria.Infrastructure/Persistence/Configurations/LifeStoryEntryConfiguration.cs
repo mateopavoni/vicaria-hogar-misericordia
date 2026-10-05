@@ -8,15 +8,15 @@ public class LifeStoryEntryConfiguration : IEntityTypeConfiguration<LifeStoryEnt
 {
     public void Configure(EntityTypeBuilder<LifeStoryEntry> builder)
     {
-        builder.ToTable("historia_vida_entradas");
+        builder.ToTable("life_story_entries");
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id).HasColumnName("id");
-        builder.Property(e => e.PersonId).HasColumnName("persona_id").IsRequired();
-        builder.Property(e => e.Stage).HasColumnName("etapa").IsRequired();
-        builder.Property(e => e.Content).HasColumnName("contenido").IsRequired();
-        builder.Property(e => e.CreatedByUserId).HasColumnName("usuario_id").IsRequired();
-        builder.Property(e => e.CreatedAt).HasColumnName("fecha_creacion").IsRequired();
+        builder.Property(e => e.PersonId).HasColumnName("person_id").IsRequired();
+        builder.Property(e => e.Stage).HasColumnName("stage").IsRequired();
+        builder.Property(e => e.Content).HasColumnName("content").IsRequired();
+        builder.Property(e => e.CreatedByUserId).HasColumnName("user_id").IsRequired();
+        builder.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();
 
         builder.HasOne(e => e.Person)
             .WithMany()

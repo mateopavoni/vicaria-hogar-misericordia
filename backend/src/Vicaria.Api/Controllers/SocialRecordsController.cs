@@ -30,7 +30,7 @@ public class SocialRecordsController : ControllerBase
 
     // Escucha no puede crear fichas (SCRUM-5), solo verlas y cargar observaciones
     [HttpPost]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> Create([FromBody] CreateSocialRecordDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _createValidator.ValidateAsync(dto, cancellationToken);
@@ -54,7 +54,7 @@ public class SocialRecordsController : ControllerBase
     {
         PersonType? personTypeFilter = null;
 
-        if (User.IsInRole(RoleNames.DirectoraDeCasona))
+        if (User.IsInRole(RoleNames.CasonaDirector))
         {
             personTypeFilter = PersonType.Resident;
         }
@@ -77,7 +77,7 @@ public class SocialRecordsController : ControllerBase
         [FromQuery] PersonType? personType = null,
         CancellationToken cancellationToken = default)
     {
-        PersonType? personTypeFilter = User.IsInRole(RoleNames.DirectoraDeCasona) ? PersonType.Resident : null;
+        PersonType? personTypeFilter = User.IsInRole(RoleNames.CasonaDirector) ? PersonType.Resident : null;
         var filter = new FilterSocialRecordsDto(entryDateFrom, entryDateTo, withoutObservationsDays, hasDni, hasAddress, status, personType);
 
         var result = await _socialRecordService.GetPagedAsync(page, search, filter, personTypeFilter, cancellationToken);
@@ -94,7 +94,7 @@ public class SocialRecordsController : ControllerBase
 
     // solo Referente y Directora pueden editar (SCRUM-7)
     [HttpPut("{id}")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSocialRecordDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);

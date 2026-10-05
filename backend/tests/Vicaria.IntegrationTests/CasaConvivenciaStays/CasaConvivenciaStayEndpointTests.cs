@@ -54,7 +54,7 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
 
     private async Task<Guid> CrearEstadiaActivaAsync()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
         var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         var personId = body!["personId"];
@@ -115,7 +115,7 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
     [Fact]
     public async Task Exit_ConEstadiaInexistente_Devuelve404()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{Guid.NewGuid()}/egreso", new { exitReason = 0 });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -136,7 +136,7 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
     public async Task Exit_ConEstadiaActiva_RegistraAuditLogConElActor()
     {
         var stayId = await CrearEstadiaActivaAsync();
-        var actorId = await UsarTokenAsync(RoleNames.Referente);
+        var actorId = await UsarTokenAsync(RoleNames.Referent);
         var beforeExit = DateTime.UtcNow;
 
         var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
@@ -153,7 +153,7 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
     public async Task Exit_ComoEscucha_Devuelve403()
     {
         var stayId = await CrearEstadiaActivaAsync();
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
         var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
 
@@ -172,7 +172,7 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
     public async Task Exit_ActualizaEstadoPersonAAmbulatorioYGeneraAuditorias_SCRUM147()
     {
         // Arrange
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var responseCreate = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Carlos" });
         var body = await responseCreate.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         var personId = body!["personId"];
@@ -226,7 +226,7 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
     [Fact]
     public async Task Exit_SinEspecificarNewStatus_PasaAAmbulatorioActivoPorDefecto_SCRUM147()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var responseCreate = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Martin" });
         var body = await responseCreate.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         var personId = body!["personId"];

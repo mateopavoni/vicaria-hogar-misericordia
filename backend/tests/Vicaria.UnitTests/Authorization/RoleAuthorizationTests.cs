@@ -22,25 +22,25 @@ public class RoleAuthorizationTests
     [Fact]
     public async Task RolCoincideConElRequerido_Autoriza()
     {
-        Assert.True(await RolCumpleRequisitoAsync(RoleNames.DirectoraDeCasona, RoleNames.DirectoraDeCasona));
+        Assert.True(await RolCumpleRequisitoAsync(RoleNames.CasonaDirector, RoleNames.CasonaDirector));
     }
 
     [Fact]
     public async Task RolNoCoincideConElRequerido_NoAutoriza()
     {
-        Assert.False(await RolCumpleRequisitoAsync(RoleNames.Referente, RoleNames.DirectoraDeCasona));
+        Assert.False(await RolCumpleRequisitoAsync(RoleNames.Referent, RoleNames.CasonaDirector));
     }
 
     [Fact]
     public async Task RolEstaEntreVariosRequeridos_Autoriza()
     {
-        Assert.True(await RolCumpleRequisitoAsync(RoleNames.Escucha, RoleNames.DirectoraDeCasona, RoleNames.Escucha));
+        Assert.True(await RolCumpleRequisitoAsync(RoleNames.Listener, RoleNames.CasonaDirector, RoleNames.Listener));
     }
 
     [Fact]
     public async Task UsuarioSinClaimDeRol_NoAutoriza()
     {
-        var requirement = new RolesAuthorizationRequirement([RoleNames.Referente]);
+        var requirement = new RolesAuthorizationRequirement([RoleNames.Referent]);
         var principal = new ClaimsPrincipal(new ClaimsIdentity("Test"));
         var context = new AuthorizationHandlerContext([requirement], principal, resource: null);
 

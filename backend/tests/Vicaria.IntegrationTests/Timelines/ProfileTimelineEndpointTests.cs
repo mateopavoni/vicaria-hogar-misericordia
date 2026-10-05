@@ -55,7 +55,7 @@ public class ProfileTimelineEndpointTests : IClassFixture<VicariaWebApplicationF
     [Fact]
     public async Task GetTimeline_ConObservacionesYEstadias_DevuelveEntradasCombinadasYOrdenadas()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
 
         Guid authorId;
@@ -111,7 +111,7 @@ public class ProfileTimelineEndpointTests : IClassFixture<VicariaWebApplicationF
     [Fact]
     public async Task GetTimeline_PersonaInexistente_DevuelveNotFound()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.GetAsync($"/api/persons/{Guid.NewGuid()}/timeline");
 
@@ -121,9 +121,9 @@ public class ProfileTimelineEndpointTests : IClassFixture<VicariaWebApplicationF
     [Fact]
     public async Task GetTimeline_EscuchaPuedeLeerTimeline()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
         var response = await _client.GetAsync($"/api/persons/{personId}/timeline");
 

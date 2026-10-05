@@ -7,16 +7,16 @@ namespace Vicaria.Infrastructure.Persistence.Configurations;
 public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
     // ids fijos para que el seed sea determinístico entre entornos
-    private static readonly Guid ReferenteId = new("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid ReferentId = new("11111111-1111-1111-1111-111111111111");
     // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos de Directora
-    internal static readonly Guid DirectoraDeCasonaId = new("22222222-2222-2222-2222-222222222222");
-    private static readonly Guid EscuchaId = new("33333333-3333-3333-3333-333333333333");
+    internal static readonly Guid CasonaDirectorId = new("22222222-2222-2222-2222-222222222222");
+    private static readonly Guid ListenerId = new("33333333-3333-3333-3333-333333333333");
     // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos del Coordinador (SCRUM-102)
-    internal static readonly Guid CoordinadorDeCasaConvivenciaId = new("77777777-7777-7777-7777-777777777777");
+    internal static readonly Guid CasaConvivenciaCoordinatorId = new("77777777-7777-7777-7777-777777777777");
 
     public void Configure(EntityTypeBuilder<Role> builder)
     {
-        builder.ToTable("rol");
+        builder.ToTable("roles");
 
         builder.HasKey(r => r.Id);
 
@@ -28,10 +28,10 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
             .IsUnique();
 
         builder.HasData(
-            new Role { Id = ReferenteId, Name = RoleNames.Referente },
-            new Role { Id = DirectoraDeCasonaId, Name = RoleNames.DirectoraDeCasona },
-            new Role { Id = EscuchaId, Name = RoleNames.Escucha },
-            new Role { Id = CoordinadorDeCasaConvivenciaId, Name = RoleNames.CoordinadorDeCasaConvivencia }
+            new Role { Id = ReferentId, Name = RoleNames.Referent },
+            new Role { Id = CasonaDirectorId, Name = RoleNames.CasonaDirector },
+            new Role { Id = ListenerId, Name = RoleNames.Listener },
+            new Role { Id = CasaConvivenciaCoordinatorId, Name = RoleNames.CasaConvivenciaCoordinator }
         );
     }
 }

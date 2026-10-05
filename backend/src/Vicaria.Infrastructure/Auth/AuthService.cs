@@ -47,7 +47,7 @@ public class AuthService : IAuthService
         _dbContext.Users.Add(user);
 
         // avisamos a los referentes que hay una cuenta nueva esperando aprobación
-        var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referente, cancellationToken);
+        var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
         if (hasReferents)
         {
             _dbContext.Notifications.Add(new Notification
@@ -58,7 +58,7 @@ public class AuthService : IAuthService
                 LinkUrl = "/usuarios/pendientes",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                TargetRole = RoleNames.Referente
+                TargetRole = RoleNames.Referent
             });
         }
 
@@ -265,7 +265,7 @@ public class AuthService : IAuthService
                 });
 
                 // avisamos a los referentes que esta cuenta quedó bloqueada (SCRUM-95)
-                var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referente, cancellationToken);
+                var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
                 if (hasReferents)
                 {
                     _dbContext.Notifications.Add(new Notification
@@ -276,7 +276,7 @@ public class AuthService : IAuthService
                         LinkUrl = "/usuarios",
                         IsRead = false,
                         CreatedAt = DateTime.UtcNow,
-                        TargetRole = RoleNames.Referente
+                        TargetRole = RoleNames.Referent
                     });
                 }
             }

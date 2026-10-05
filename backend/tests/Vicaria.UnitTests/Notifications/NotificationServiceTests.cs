@@ -38,7 +38,7 @@ public class NotificationServiceTests
     public async Task MarkAllAsReadAsync_MarcaTodasyRegistraAuditLogPorNotificacion()
     {
         using var db = CrearDbContext();
-        var role = RoleNames.Referente;
+        var role = RoleNames.Referent;
         var primera = await CrearNotificacion(db, role);
         var segunda = await CrearNotificacion(db, role);
         var actorId = Guid.NewGuid();
@@ -60,7 +60,7 @@ public class NotificationServiceTests
     public async Task MarkAllAsReadAsync_SinNotificacionesPendientes_NoRegistraAuditLog()
     {
         using var db = CrearDbContext();
-        var role = RoleNames.Referente;
+        var role = RoleNames.Referent;
         await CrearNotificacion(db, role, isRead: true);
         var service = new NotificationService(db);
 

@@ -18,7 +18,6 @@ using Vicaria.Infrastructure.CasaConvivenciaStays;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.Infrastructure.SocialRecords;
-using Vicaria.Infrastructure.Persons;
 using Vicaria.Application.Observations;
 using Vicaria.Infrastructure.Observations;
 using Vicaria.Application.LifeStories;
@@ -65,8 +64,6 @@ builder.Services.AddScoped<IValidator<CreateSocialRecordDto>, CreateSocialRecord
 builder.Services.AddScoped<IValidator<UpdateSocialRecordDto>, UpdateSocialRecordDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdatePersonProfileStatusDto>, UpdatePersonProfileStatusValidator>();
-builder.Services.AddScoped<IPersonInactivityService, PersonInactivityService>();
-builder.Services.AddHostedService<InactivityBackgroundService>();
 builder.Services.AddScoped<IValidator<CasaConvivenciaStayExitDto>, CasaConvivenciaStayExitDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoValidator>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
@@ -158,6 +155,7 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment())
     {
         SeedTestUsers(dbContext);
+        SeedExtraTestUsers(dbContext);
         SeedDemoData(dbContext);
     }
 }
@@ -206,6 +204,42 @@ static void SeedTestUsers(VicariaDbContext dbContext)
             Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test1234!"),
             Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
+    dbContext.SaveChanges();
+}
+
+// cuentas extra para probar aprobación, rechazo, baja y bloqueo sin tocar los 4 usuarios principales
+static void SeedExtraTestUsers(VicariaDbContext dbContext)
+{
+    var escuchaRoleId = new Guid("33333333-3333-3333-3333-333333333333");
+
+    var extraUsers = new (string Email, UserStatus Status, Guid? RoleId)[]
+    {
+        ("pendiente1@test.com", UserStatus.Pending, null),
+        ("pendiente2@test.com", UserStatus.Pending, null),
+        ("inactivo@test.com", UserStatus.Inactive, escuchaRoleId),
+        ("bloqueable@test.com", UserStatus.Active, escuchaRoleId),
+    };
+
+    foreach (var (email, status, roleId) in extraUsers)
+    {
+        if (dbContext.Users.Any(u => u.Email == email))
+        {
+            continue;
+        }
+
+        dbContext.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Test",
+            LastName = email.Split('@')[0],
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test1234!"),
+            Status = status,
             RoleId = roleId,
             CreatedAt = DateTime.UtcNow
         });

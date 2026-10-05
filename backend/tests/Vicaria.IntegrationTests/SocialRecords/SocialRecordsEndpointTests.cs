@@ -54,7 +54,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Create_ComoReferenteConSoloNombre_Devuelve201()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
 
@@ -64,7 +64,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Create_ComoEscucha_Devuelve403()
     {
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
 
@@ -74,7 +74,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Create_SinNombre_Devuelve400()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "" });
 
@@ -92,9 +92,9 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Search_ComoEscucha_Devuelve200()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ramón", lastName = "Gómez" });
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
         var response = await _client.GetAsync("/api/social-records?q=gomez");
 
@@ -114,7 +114,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task GetPaged_DevuelveListadoPaginado()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var nombreUnico = $"Valentina{Guid.NewGuid():N}";
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreUnico, lastName = "Ríos" });
 
@@ -129,11 +129,11 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task GetPaged_ComoDirectoraDeCasona_SoloTraeResidentes()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var nombreUnico = $"Nicolas{Guid.NewGuid():N}";
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreUnico });
 
-        await UsarTokenAsync(RoleNames.DirectoraDeCasona);
+        await UsarTokenAsync(RoleNames.CasonaDirector);
         var response = await _client.GetAsync($"/api/social-records/list?search={nombreUnico}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -144,7 +144,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task GetPaged_ConFiltroEstado_DevuelveSoloEsasFichas()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var nombreActiva = $"Carla{Guid.NewGuid():N}";
         var nombreInactiva = $"Diego{Guid.NewGuid():N}";
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreActiva });
@@ -175,7 +175,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task GetPaged_ConFiltroTipoPersona_DevuelveSoloEseTipo()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var nombreAmbulatorio = $"Elena{Guid.NewGuid():N}";
         var nombreResidente = $"Fabio{Guid.NewGuid():N}";
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreAmbulatorio });
@@ -201,7 +201,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task GetPaged_CombinaEstadoTipoYFecha_DevuelveSoloLaCoincidencia()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var nombreActivo = $"Gaston{Guid.NewGuid():N}";
         var nombreInactivo = $"Hector{Guid.NewGuid():N}";
         await _client.PostAsJsonAsync("/api/social-records", new { firstName = nombreActivo, entryDate = DateTime.UtcNow.AddDays(-2) });
@@ -227,7 +227,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ComoReferente_Devuelve204()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var creada = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
         var id = (await creada.Content.ReadFromJsonAsync<Dictionary<string, Guid>>())!["id"];
 
@@ -239,7 +239,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ComoEscucha_Devuelve403()
     {
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
 
@@ -250,7 +250,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     public async Task Update_ComoCoordinador_Devuelve403()
     {
         // SCRUM-117: solo Referente y Directora pueden editar, a diferencia de crear
-        await UsarTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+        await UsarTokenAsync(RoleNames.CasaConvivenciaCoordinator);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
 
@@ -260,7 +260,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ConFichaInexistente_Devuelve404()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
 
@@ -270,7 +270,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_SinNombre_Devuelve400()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "", hasDocumentation = false });
 

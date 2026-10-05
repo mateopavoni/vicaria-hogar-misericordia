@@ -47,7 +47,7 @@ public class PersonsController : ControllerBase
     // cambia el tipo de persona (SCRUM-134): para Residente exige evaluación
     // psiquiátrica vigente; sin ella responde 400 con el detalle
     [HttpPut("{id}/type")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> UpdateType(Guid id, [FromBody] UpdatePersonTypeDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updatePersonTypeValidator.ValidateAsync(dto, cancellationToken);
@@ -73,7 +73,7 @@ public class PersonsController : ControllerBase
     }
     // cambia el estado del perfil (ambulatorio activo/inactivo, residente) y audita el cambio (SCRUM-152/153)
     [HttpPut("{id}/status")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> UpdateProfileStatus(Guid id, [FromBody] UpdatePersonProfileStatusDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updateProfileStatusValidator.ValidateAsync(dto, cancellationToken);
@@ -97,7 +97,7 @@ public class PersonsController : ControllerBase
     // timeline unificado del perfil (SCRUM-159): hitos del expediente (estadías de
     // Casa de Convivencia) + observaciones, ordenados por fecha. Lectura para los roles con acceso al perfil.
     [HttpGet("{id}/timeline")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.Listener}")]
     public async Task<IActionResult> GetTimeline(Guid id, CancellationToken cancellationToken)
     {
         var result = await _profileTimelineService.GetTimelineAsync(id, cancellationToken);

@@ -56,13 +56,9 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
             // el propio Program.cs corre Database.Migrate() al armar el host (igual que en la VPS),
             // así que no hace falta EnsureCreated acá aparte
 
-            // bug encontrado 24/09/2026: los 2 jobs de inactividad automática (KNOWN_ISSUES.md,
-            // ya documentados como solapados entre sí) corrían igual durante los tests de
-            // integración, pisando en background el estado de SocialRecords que un test estaba
-            // asertando en paralelo (ej. PersonInactivityTests esperaba un registro "reciente" en
-            // Active y lo encontraba en Inactive, cambiado por el otro job). Se sacan los dos acá;
-            // el servicio subyacente (IPersonInactivityService) se sigue pudiendo testear
-            // directamente, como ya hacen los tests existentes.
+            // el job de inactividad por asistencia corre en background y pisaba el estado de
+            // SocialRecords que un test estaba asertando; se saca acá y su servicio
+            // (IAttendanceInactivityService) se sigue testeando directamente.
             services.RemoveAll<IHostedService>();
         });
     }

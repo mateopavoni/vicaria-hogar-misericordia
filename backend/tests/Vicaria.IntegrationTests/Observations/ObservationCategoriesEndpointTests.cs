@@ -54,7 +54,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
 
     private async Task<Guid> CreateCategoryAsync(string namePrefix)
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { name = $"{namePrefix}-{Guid.NewGuid():N}" });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<ObservationCategoryDto>();
@@ -81,7 +81,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Create_WithValidData_Returns201AndStoresDescription()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { name = "Vinculación", description = "Acompañamiento de vínculos" });
 
@@ -100,7 +100,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Create_WithoutName_Returns400()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { });
 
@@ -110,7 +110,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Create_WithDescriptionOver500Chars_Returns400()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { name = "Salud", description = new string('a', 501) });
 
@@ -120,7 +120,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Create_WithDuplicateName_Returns409()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
         await SeedCategoryAsync("Salud");
 
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { name = "salud" });
@@ -131,7 +131,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Create_AsEscucha_Returns403()
     {
-        await UseTokenAsync(RoleNames.Escucha);
+        await UseTokenAsync(RoleNames.Listener);
 
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { name = "Salud" });
 
@@ -151,7 +151,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Create_RegistersAuditLogWithActor()
     {
-        var actorId = await UseTokenAsync(RoleNames.Referente);
+        var actorId = await UseTokenAsync(RoleNames.Referent);
         var name = $"Salud-{Guid.NewGuid():N}";
 
         var response = await _client.PostAsJsonAsync("/api/observation-categories", new { name });
@@ -181,7 +181,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Update_WithUnknownId_Returns404()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PutAsJsonAsync($"/api/observation-categories/{Guid.NewGuid()}", new { name = "Salud" });
 
@@ -203,7 +203,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     public async Task Update_RegistersAuditLogWithActor()
     {
         var categoryId = await CreateCategoryAsync("Salud");
-        var actorId = await UseTokenAsync(RoleNames.Referente);
+        var actorId = await UseTokenAsync(RoleNames.Referent);
 
         await _client.PutAsJsonAsync($"/api/observation-categories/{categoryId}", new { name = $"Bienestar-{Guid.NewGuid():N}" });
 
@@ -232,7 +232,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task ToggleStatus_WithUnknownId_Returns404()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PatchAsJsonAsync($"/api/observation-categories/{Guid.NewGuid()}/status", new { isActive = false });
 
@@ -243,7 +243,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     public async Task ToggleStatus_AsDirectora_Returns403()
     {
         var categoryId = await CreateCategoryAsync("Salud");
-        await UseTokenAsync(RoleNames.DirectoraDeCasona);
+        await UseTokenAsync(RoleNames.CasonaDirector);
 
         var response = await _client.PatchAsJsonAsync($"/api/observation-categories/{categoryId}/status", new { isActive = false });
 
@@ -264,7 +264,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     public async Task ToggleStatus_RegistersAuditLogWithDeactivationAction()
     {
         var categoryId = await CreateCategoryAsync("Salud");
-        var actorId = await UseTokenAsync(RoleNames.Referente);
+        var actorId = await UseTokenAsync(RoleNames.Referent);
 
         await _client.PatchAsJsonAsync($"/api/observation-categories/{categoryId}/status", new { isActive = false });
 
@@ -292,7 +292,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Get_OnlyActiveTrue_ReturnsOnlyActiveCategories()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
         var active = await SeedCategoryAsync("Activa");
         await SeedCategoryAsync("Inactiva", isActive: false);
 
@@ -308,7 +308,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Get_OnlyActiveFalse_ReturnsAllCategories()
     {
-        await UseTokenAsync(RoleNames.Referente);
+        await UseTokenAsync(RoleNames.Referent);
         await SeedCategoryAsync("Activa");
         await SeedCategoryAsync("Inactiva", isActive: false);
 
@@ -334,7 +334,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     [Fact]
     public async Task Get_AsCoordinadorDeCasaConvivencia_Returns200()
     {
-        await UseTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+        await UseTokenAsync(RoleNames.CasaConvivenciaCoordinator);
         await SeedCategoryAsync("Salud");
 
         var response = await _client.GetAsync("/api/observation-categories");

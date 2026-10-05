@@ -28,7 +28,7 @@ public class AttendanceController : ControllerBase
     // registra la asistencia diaria de una persona (SCRUM-135) y reactiva su ficha si
     // estaba Inactiva; Escucha también puede cargarla en el día a día del Centro Barrial
     [HttpPost]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasonaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
     public async Task<IActionResult> Register([FromBody] CreateAttendanceDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(dto, cancellationToken);
