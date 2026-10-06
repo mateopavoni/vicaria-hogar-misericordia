@@ -49,8 +49,12 @@ export class SocialRecordsService {
     return this.http.get<SocialRecordDetail>(`${this.apiUrl}/${id}`);
   }
 
-  update(id: string, data: CreateSocialRecordRequest): Observable<SocialRecordDetail> {
-    return this.http.put<SocialRecordDetail>(`${this.apiUrl}/${id}`, data);
+  // bug reportado 2026-09-23: tipado como Observable<SocialRecordDetail>, pero el backend
+  // devuelve 204 No Content (SocialRecordsController.Update) — el body siempre llegaba
+  // vacío. Quien llame a este método debe volver a pedir el registro con getById si lo
+  // necesita actualizado, igual que ya hacen los flujos de ingreso/egreso.
+  update(id: string, data: CreateSocialRecordRequest): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, data);
   }
 
   // cambia el tipo de persona (ambulatorio/residente); el backend crea la estadía en la Casa de Convivencia

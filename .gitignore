@@ -15,6 +15,7 @@ npm-debug.log*
 # ── Secretos ─────────────────────────────────────────
 .env
 .env.*
+!.env.example
 *.local.json
 appsettings.*.local.json
 
@@ -23,3 +24,6 @@ appsettings.*.local.json
 !.vscode/extensions.json
 .idea/
 .DS_Store
+
+# ── Configuracion local de agentes de IA ──────────────────────────────────────
+opencode.json

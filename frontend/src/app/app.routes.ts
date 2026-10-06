@@ -23,7 +23,7 @@ export const routes: Routes = [
   // SISTEMA PRINCIPAL
   {
     path: 'dashboard',
-    // canActivate: [authGuard],
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./shared/layout/layout.component')
         .then(m => m.LayoutComponent),
@@ -36,9 +36,7 @@ export const routes: Routes = [
           import('./features/users/pages/user-management/user-management.component')
             .then(m => m.UserManagementComponent),
 
-        // canActivate: [
-        //   permissionGuard('users.view')
-        // ]
+        canActivate: [permissionGuard('users.view')]
       },
       // SCRUM-6 (listado)
       {
@@ -53,6 +51,13 @@ export const routes: Routes = [
             ),
       },
 
+      // Redirect por compatibilidad (URL vieja del botón "Nueva ficha")
+      {
+        path: 'ficha-nueva',
+        redirectTo: 'fichas/crear',
+        pathMatch: 'full',
+      },
+
       {
         path: 'fichas/crear',
 
@@ -60,9 +65,7 @@ export const routes: Routes = [
           import('./features/social-records/pages/new-social-record/new-social-record.component')
             .then(m => m.NewSocialRecordComponent),
 
-        // canActivate: [
-        //   permissionGuard('fichas.create')
-        // ]
+        canActivate: [permissionGuard('fichas.create')]
       },
 
       {
@@ -78,6 +81,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/social-records/pages/social-record-edit/social-record-edit.component')
             .then(m => m.SocialRecordEditComponent),
+        canActivate: [permissionGuard('fichas.edit')],
         canDeactivate: [pendingChangesGuard]
       }
     ],
@@ -90,11 +94,13 @@ export const routes: Routes = [
     import('./shared/components/access-denied/access-denied.component')
       .then(m => m.AccessDeniedComponent),
    },
-  // CUALQUIER RUTA DESCONOCIDA (Redirige al login de auth)
-  // {
-  //   path: '**',
-  //   redirectTo: 'auth/login',
-  // },
+  // CUALQUIER RUTA DESCONOCIDA (Página 404, para que links muertos no fallen en silencio)
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./shared/components/not-found/not-found.component')
+        .then(m => m.NotFoundComponent)
+  },
 
 ];
 

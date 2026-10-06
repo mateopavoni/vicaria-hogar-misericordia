@@ -1,3 +1,4 @@
+import { SensitiveContentNoticeComponent } from '../../../../shared/components/sensitive-content-notice/sensitive-content-notice.component';
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import {  CreateSocialRecordRequest, SocialRecordDetail, PersonType, PersonStatu
 
 @Component({
   selector: 'app-social-record-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SensitiveContentNoticeComponent],
   templateUrl: './social-record-form.component.html',
   styleUrl: './social-record-form.component.css'
 })
@@ -57,7 +58,11 @@ export class SocialRecordFormComponent {
 
     lastName: [''],
 
-    dni: [''],
+    // bug reportado 2026-09-23: se guardaba con puntos/espacios ("38.123.456") y la
+    // búsqueda comparaba solo dígitos, así que nunca matcheaba. El backend ya normaliza
+    // al guardar, pero evitar que se tipeen puntos/espacios de entrada es más claro para
+    // quien completa la ficha que depender solo de una limpieza silenciosa del servidor.
+    dni: ['', [Validators.pattern(/^\d*$/)]],
 
     dateOfBirth: [''],
 

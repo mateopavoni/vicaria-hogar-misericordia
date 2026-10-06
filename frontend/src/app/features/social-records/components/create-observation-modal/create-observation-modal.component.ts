@@ -1,3 +1,5 @@
+import { extractApiError } from '../../../../core/http/api-error';
+import { SensitiveContentNoticeComponent } from '../../../../shared/components/sensitive-content-notice/sensitive-content-notice.component';
 import { Component, inject, OnInit, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -9,7 +11,7 @@ import { Observation } from '../../interfaces/observation.interface';
 @Component({
   selector: 'app-create-observation-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SensitiveContentNoticeComponent],
   templateUrl: './create-observation-modal.component.html'
 })
 export class CreateObservationModalComponent implements OnInit {
@@ -63,7 +65,7 @@ export class CreateObservationModalComponent implements OnInit {
       },
       error: (err: unknown) => {
         this.submitting.set(false);
-        this.errorMessage.set('No se pudo guardar la observación. Intenta nuevamente.');
+        this.errorMessage.set(extractApiError(err, 'No se pudo guardar la observación. Intenta nuevamente.'));
         console.error('Error al guardar observación:', err);
       }
     });

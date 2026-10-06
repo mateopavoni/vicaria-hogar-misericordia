@@ -45,6 +45,13 @@ import { UserRole } from '../../../../core/auth/userRole';
     });
 
     constructor() {
+      // aviso de por qué se cerró la sesión (inactividad / sesión vencida)
+      const notice = sessionStorage.getItem('sessionNotice');
+      if (notice) {
+        sessionStorage.removeItem('sessionNotice');
+        this.credentialsError.set(notice);
+      }
+
       // si la vez pasada tildó "recordar usuario", precargamos el email guardado
       const savedEmail = localStorage.getItem('rememberedEmail');
       if (savedEmail) {
@@ -169,7 +176,7 @@ import { UserRole } from '../../../../core/auth/userRole';
           ]);
           break;
 
-        case 'DirectoraDeCasona':
+        case 'DirectoraDeCasaConvivencia':
 
           this.router.navigate([
             '/dashboard'
