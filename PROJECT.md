@@ -34,7 +34,7 @@ El nombre formal completo del dispositivo atendido por el sistema es "Parroquia 
 
 **Definitivo:**
 
-- **Frontend:** Angular 16+ (TypeScript, RxJS, Bootstrap/Tailwind CSS)
+- **Frontend:** Angular 22 (TypeScript, RxJS, Bootstrap/Tailwind CSS)
 - **Backend:** .NET 9.0 + C#
 - **Base de datos:** SQL Server + Entity Framework
 - **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (4 roles — ver sección Usuarios)
@@ -71,9 +71,9 @@ El sistema tiene 4 roles con permisos diferenciados (RBAC):
 | Rol - Permisos |
 |----|
 | **Referente** - Acceso completo (full) |
-| **DirectoraDeCasaConvivencia** - Fichas y medicación |
+| **DirectoraDeCasaConvivencia** - Fichas y medicación, solo de personas Residentes (en listado y en cualquier recurso de la persona) |
 | **Escucha** - Lectura y carga de observaciones únicamente |
-| **CoordinadorDeCasaConvivencia** - Gestión de residentes de la casa convivencial (Casona) |
+| **CoordinadorDeCasaConvivencia** - Gestión de residentes de la casa convivencial; igual que la Directora, solo ve y gestiona Residentes |
 
 Los 4 roles están definidos como constantes en `RoleNames` (Domain), y los permisos por rol en `Permission`/`RolePermission` con códigos en `PermissionNames`.
 
