@@ -8,7 +8,7 @@ public class PsychiatricEvaluationConfiguration : IEntityTypeConfiguration<Psych
 {
     public void Configure(EntityTypeBuilder<PsychiatricEvaluation> builder)
     {
-        builder.ToTable("psychiatric_evaluation");
+        builder.ToTable("psychiatric_evaluations");
 
         builder.HasKey(e => e.Id);
 

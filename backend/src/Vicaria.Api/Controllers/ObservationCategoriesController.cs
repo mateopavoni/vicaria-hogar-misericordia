@@ -25,12 +25,12 @@ public class ObservationCategoriesController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> GetAll([FromQuery] bool onlyActive = true, CancellationToken cancellationToken = default) =>
         Ok(await _categoryService.GetCategoriesAsync(onlyActive, cancellationToken));
 
     [HttpPost]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> Create([FromBody] CreateObservationCategoryDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _createValidator.ValidateAsync(dto, cancellationToken);
@@ -46,7 +46,7 @@ public class ObservationCategoriesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateObservationCategoryDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
@@ -67,7 +67,7 @@ public class ObservationCategoriesController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/status")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> ToggleStatus(Guid id, [FromBody] ToggleObservationCategoryStatusDto dto, CancellationToken cancellationToken)
     {
         var result = await _categoryService.ToggleStatusAsync(id, dto.IsActive, ActorId, cancellationToken);
@@ -75,7 +75,7 @@ public class ObservationCategoriesController : ControllerBase
         return NoContent();
     }
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await _categoryService.DeleteAsync(id, ActorId, cancellationToken);

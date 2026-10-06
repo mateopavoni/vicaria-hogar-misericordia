@@ -3,6 +3,7 @@ using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Api.Filters;
 using Vicaria.Application.Observations;
 using Vicaria.Domain.Entities;
 
@@ -10,6 +11,7 @@ namespace Vicaria.Api.Controllers;
 
 [ApiController]
 [Route("api/persons/{id:guid}/observations")]
+[DirectorResidentsOnly]
 public class PersonObservationsController : ControllerBase
 {
     private readonly IObservationService _observationService;
@@ -26,7 +28,7 @@ public class PersonObservationsController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpPost]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> Create(
         [FromRoute] Guid id,
         [FromBody] CreateObservationDto dto,
@@ -57,7 +59,7 @@ public class PersonObservationsController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result.Data);
     }
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<ActionResult<ObservationsTimelineResponseDto>> GetObservationsTimeline(
         Guid id,
         [FromQuery] GetObservationsFilterDto filters,
@@ -69,7 +71,7 @@ public class PersonObservationsController : ControllerBase
 
     // exportacion de las observaciones filtradas a CSV (SCRUM-166)
     [HttpGet("export")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> ExportObservations(
         Guid id,
         [FromQuery] GetObservationsFilterDto filters,

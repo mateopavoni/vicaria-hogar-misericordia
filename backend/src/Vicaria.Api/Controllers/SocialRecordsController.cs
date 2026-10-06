@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Api.Filters;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 
@@ -26,11 +27,15 @@ public class SocialRecordsController : ControllerBase
         _updateValidator = updateValidator;
     }
 
+    // SCRUM-137: Directora y Coordinador de Casa de Convivencia solo ven Residentes
+    private bool IsRestrictedToResidents =>
+        User.IsInRole(RoleNames.CasaConvivenciaDirector) || User.IsInRole(RoleNames.CasaConvivenciaCoordinator);
+
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     // Escucha no puede crear fichas (SCRUM-5), solo verlas y cargar observaciones
     [HttpPost]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> Create([FromBody] CreateSocialRecordDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _createValidator.ValidateAsync(dto, cancellationToken);
@@ -54,7 +59,7 @@ public class SocialRecordsController : ControllerBase
     {
         PersonType? personTypeFilter = null;
 
-        if (User.IsInRole(RoleNames.DirectoraDeCasona))
+        if (IsRestrictedToResidents)
         {
             personTypeFilter = PersonType.Resident;
         }
@@ -77,7 +82,7 @@ public class SocialRecordsController : ControllerBase
         [FromQuery] PersonType? personType = null,
         CancellationToken cancellationToken = default)
     {
-        PersonType? personTypeFilter = User.IsInRole(RoleNames.DirectoraDeCasona) ? PersonType.Resident : null;
+        PersonType? personTypeFilter = IsRestrictedToResidents ? PersonType.Resident : null;
         var filter = new FilterSocialRecordsDto(entryDateFrom, entryDateTo, withoutObservationsDays, hasDni, hasAddress, status, personType);
 
         var result = await _socialRecordService.GetPagedAsync(page, search, filter, personTypeFilter, cancellationToken);
@@ -86,6 +91,7 @@ public class SocialRecordsController : ControllerBase
 
     // perfil completo de una ficha (SCRUM-8/121)
     [HttpGet("{id:guid}")]
+    [DirectorResidentsOnly("id", isSocialRecordId: true)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var record = await _socialRecordService.GetByIdAsync(id, cancellationToken);
@@ -94,7 +100,8 @@ public class SocialRecordsController : ControllerBase
 
     // solo Referente y Directora pueden editar (SCRUM-7)
     [HttpPut("{id}")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona}")]
+    [DirectorResidentsOnly("id", isSocialRecordId: true)]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSocialRecordDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
@@ -108,11 +115,23 @@ public class SocialRecordsController : ControllerBase
         }
 
         var result = await _socialRecordService.UpdateAsync(id, dto, ActorId, cancellationToken);
-        return result.Success ? NoContent() : NotFound(new { message = result.ErrorMessage });
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdateSocialRecordError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdateSocialRecordError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
     }
     [HttpGet("filter/count")]
     public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)
     {
+        // el conteo no debe revelar cuántas fichas ambulatorias existen a quien solo gestiona Residentes
+        if (IsRestrictedToResidents)
+        {
+            filter = filter with { PersonType = PersonType.Resident };
+        }
+
         var count = await _socialRecordService.CountByFilterAsync(filter, cancellationToken);
         return Ok(new { count });
     }

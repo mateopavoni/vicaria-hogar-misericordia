@@ -35,10 +35,34 @@ public class NotificationServiceTests
     }
 
     [Fact]
+    public async Task MarkAsReadAsync_NotificacionDeOtroRol_DevuelveNotFoundYNoLaMarca()
+    {
+        using var db = CrearDbContext();
+        var id = await CrearNotificacion(db, "Referente");
+
+        var result = await new NotificationService(db).MarkAsReadAsync(id, "Escucha", Guid.NewGuid());
+
+        Assert.False(result.Success);
+        Assert.False((await db.Notifications.FindAsync(id))!.IsRead);
+    }
+
+    [Fact]
+    public async Task MarkAsReadAsync_NotificacionDelPropioRol_LaMarcaLeida()
+    {
+        using var db = CrearDbContext();
+        var id = await CrearNotificacion(db, "Referente");
+
+        var result = await new NotificationService(db).MarkAsReadAsync(id, "Referente", Guid.NewGuid());
+
+        Assert.True(result.Success);
+        Assert.True((await db.Notifications.FindAsync(id))!.IsRead);
+    }
+
+    [Fact]
     public async Task MarkAllAsReadAsync_MarcaTodasyRegistraAuditLogPorNotificacion()
     {
         using var db = CrearDbContext();
-        var role = RoleNames.Referente;
+        var role = RoleNames.Referent;
         var primera = await CrearNotificacion(db, role);
         var segunda = await CrearNotificacion(db, role);
         var actorId = Guid.NewGuid();
@@ -60,7 +84,7 @@ public class NotificationServiceTests
     public async Task MarkAllAsReadAsync_SinNotificacionesPendientes_NoRegistraAuditLog()
     {
         using var db = CrearDbContext();
-        var role = RoleNames.Referente;
+        var role = RoleNames.Referent;
         await CrearNotificacion(db, role, isRead: true);
         var service = new NotificationService(db);
 

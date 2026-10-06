@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -139,7 +140,7 @@ public class SocialRecordServiceTests
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
         var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
-        var dto = new UpdateSocialRecordDto("Ana", "Torres", "30111222", null, null, null, "Nuevo motivo", null, null, null, null, true, null);
+        var dto = new UpdateSocialRecordDto("Ana", "Torres", "30111222", null, null, null, "Nuevo motivo", null, null, null, null, true, null, null);
 
         var resultado = await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
 
@@ -155,7 +156,7 @@ public class SocialRecordServiceTests
     {
         using var db = CrearDbContext();
         var service = new SocialRecordService(db);
-        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null);
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
 
         var resultado = await service.UpdateAsync(Guid.NewGuid(), dto, Guid.NewGuid());
 
@@ -169,7 +170,7 @@ public class SocialRecordServiceTests
         var service = new SocialRecordService(db);
         var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
         var actorId = Guid.NewGuid();
-        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null);
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
 
         await service.UpdateAsync(creada.SocialRecordId, dto, actorId);
 
@@ -347,5 +348,128 @@ await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, nul
         var perfil = await service.GetByIdAsync(Guid.NewGuid());
 
         Assert.Null(perfil);
+    }
+
+    // bug reportado 2026-09-23: se guardaba el DNI con puntos/espacios y la búsqueda
+    // comparaba solo dígitos, así que nunca matcheaba.
+    [Fact]
+    public async Task CreateAsync_ConDniConPuntosYEspacios_LoGuardaSoloConDigitos()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ana", null, "38.123.456", null, null, null, null, null, null, null, null, false, null, null);
+
+        var creada = await service.CreateAsync(dto, Guid.NewGuid());
+
+        var persona = await db.People.FindAsync(creada.PersonId);
+        Assert.Equal("38123456", persona!.Dni);
+    }
+
+    [Fact]
+    public async Task SearchAsync_ConDniSinPuntos_EncuentraUnaFichaGuardadaConPuntos()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var dto = new CreateSocialRecordDto("Ana", null, "38.123.456", null, null, null, null, null, null, null, null, false, null, null);
+        await service.CreateAsync(dto, Guid.NewGuid());
+
+        var resultados = await service.SearchAsync("38123456");
+
+        Assert.Single(resultados);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ConDniConPuntos_LoNormalizaSoloADigitos()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var dto = new UpdateSocialRecordDto("Ana", null, "30.999.111", null, null, null, null, null, null, null, null, false, null, null);
+
+        await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        var persona = await db.People.FindAsync(creada.PersonId);
+        Assert.Equal("30999111", persona!.Dni);
+    }
+
+    // bug reportado 2026-09-23: UpdateSocialRecordDto no tenía Contact, así que editar el
+    // contacto de referencia se perdía en silencio
+    [Fact]
+    public async Task UpdateAsync_ConContactoNuevo_LoCrea()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var contacto = new ContactDto("Juan", "Perez", "3511112233", "Calle Falsa 123");
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, contacto);
+
+        await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        var contactoGuardado = await db.Contacts.SingleAsync(c => c.SocialRecordId == creada.SocialRecordId);
+        Assert.Equal("Juan", contactoGuardado.FirstName);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ConContactoExistente_LoActualiza()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var contactoInicial = new ContactDto("Juan", "Perez", "3511112233", "Calle Falsa 123");
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, contactoInicial), Guid.NewGuid());
+        var contactoNuevo = new ContactDto("Maria", "Lopez", "3519998888", "Otra calle 456");
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, contactoNuevo);
+
+        await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        var contactoGuardado = await db.Contacts.SingleAsync(c => c.SocialRecordId == creada.SocialRecordId);
+        Assert.Equal("Maria", contactoGuardado.FirstName);
+        Assert.Equal("Otra calle 456", contactoGuardado.Address);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_SinContactoYHabiaUno_LoElimina()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var contactoInicial = new ContactDto("Juan", "Perez", "3511112233", "Calle Falsa 123");
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, contactoInicial), Guid.NewGuid());
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, null, null, null, null, null, null, false, null, null);
+
+        await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        Assert.Empty(await db.Contacts.Where(c => c.SocialRecordId == creada.SocialRecordId).ToListAsync());
+    }
+
+    // bug reportado 2026-09-23: UpdateAsync (edición genérica de ficha) cambiaba
+    // PersonType sin la misma validación/side-effects que UpdatePersonTypeAsync
+    [Fact]
+    public async Task UpdateAsync_AResidenteSinEvaluacion_DevuelveMissingPsychiatricEvaluation()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, PersonType.Ambulatory, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, PersonType.Resident, null, null, null, null, null, false, null, null);
+
+        var resultado = await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        Assert.False(resultado.Success);
+        Assert.Equal(UpdateSocialRecordError.MissingPsychiatricEvaluation, resultado.Error);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_AAmbulatorioConEstadiaActiva_DevuelveActiveStayMustBeExitedFirst()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, null, PersonType.Ambulatory, null, null, null, null, null, false, null, null), Guid.NewGuid());
+        db.PsychiatricEvaluations.Add(new PsychiatricEvaluation { Id = Guid.NewGuid(), PersonId = creada.PersonId, Date = DateTime.UtcNow, IsValid = true });
+        await db.SaveChangesAsync();
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+
+        var dto = new UpdateSocialRecordDto("Ana", null, null, null, null, PersonType.Ambulatory, null, null, null, null, null, false, null, null);
+        var resultado = await service.UpdateAsync(creada.SocialRecordId, dto, Guid.NewGuid());
+
+        Assert.False(resultado.Success);
+        Assert.Equal(UpdateSocialRecordError.ActiveStayMustBeExitedFirst, resultado.Error);
     }
 }

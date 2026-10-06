@@ -126,7 +126,7 @@ public class AuthServiceLoginTests
         using var db = CrearDbContext();
 
         // creamos un referente para que exista alguien a quien notificar
-        var rolReferente = new Role { Id = Guid.NewGuid(), Name = RoleNames.Referente };
+        var rolReferente = new Role { Id = Guid.NewGuid(), Name = RoleNames.Referent };
         db.Roles.Add(rolReferente);
         var referente = await CrearUsuarioConEstado(db, UserStatus.Active, "otraPassword123");
         referente.RoleId = rolReferente.Id;
@@ -143,7 +143,7 @@ public class AuthServiceLoginTests
         var notificacion = await db.Notifications.SingleOrDefaultAsync(n => n.EventType == "CuentaBloqueada");
 
         Assert.NotNull(notificacion);
-        Assert.Equal(RoleNames.Referente, notificacion!.TargetRole);
+        Assert.Equal(RoleNames.Referent, notificacion!.TargetRole);
     }
 
     [Fact]
@@ -195,6 +195,22 @@ public class AuthServiceLoginTests
         var service = new AuthService(db, CrearConfiguracionJwt());
 
         var result = await service.RefreshTokenAsync(new RefreshTokenDto("token-que-no-existe"));
+
+        Assert.False(result.Success);
+        Assert.Equal(RefreshTokenError.InvalidRefreshToken, result.Error);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_ConPrefijoDeOtroUsuario_DevuelveInvalido()
+    {
+        using var db = CrearDbContext();
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
+        var service = new AuthService(db, CrearConfiguracionJwt());
+        var login = await service.LoginAsync(new LoginDto(user.Email, "password123"));
+        var randomPart = login.RefreshToken![(login.RefreshToken!.IndexOf('.') + 1)..];
+        var forged = $"{Guid.NewGuid():N}.{randomPart}";
+
+        var result = await service.RefreshTokenAsync(new RefreshTokenDto(forged));
 
         Assert.False(result.Success);
         Assert.Equal(RefreshTokenError.InvalidRefreshToken, result.Error);

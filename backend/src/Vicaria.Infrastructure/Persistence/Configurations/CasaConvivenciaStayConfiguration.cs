@@ -8,7 +8,7 @@ public class CasaConvivenciaStayConfiguration : IEntityTypeConfiguration<CasaCon
 {
     public void Configure(EntityTypeBuilder<CasaConvivenciaStay> builder)
     {
-        builder.ToTable("estadia_casa_convivencia");
+        builder.ToTable("casa_convivencia_stays");
 
         builder.HasKey(e => e.Id);
 
