@@ -300,7 +300,7 @@ public class AuthService : IAuthService
 
         var roleName = user.Role?.Name ?? string.Empty;
         var token = GenerateToken(user, roleName);
-        var refreshToken = GenerateRefreshToken();
+        var refreshToken = GenerateRefreshToken(user.Id);
 
         // guardamos el refresh token hasheado, igual que la password, nunca en texto plano
         user.RefreshToken = BCrypt.Net.BCrypt.HashPassword(refreshToken);
@@ -312,15 +312,18 @@ public class AuthService : IAuthService
 
     public async Task<RefreshTokenResult> RefreshTokenAsync(RefreshTokenDto dto, CancellationToken cancellationToken = default)
     {
-        // no hay forma de buscar por el token hasheado con un WHERE, así que traemos
-        // los usuarios con refresh token activo y comparamos uno por uno con BCrypt
-        var users = await _dbContext.Users
-            .Include(u => u.Role)
-            .Where(u => u.RefreshToken != null)
-            .ToListAsync(cancellationToken);
+        // el token lleva el id del usuario como prefijo ("{userId}.{aleatorio}"): lo usamos para
+        // traer un solo usuario y hacer una única verificación BCrypt, en vez de recorrer todos
+        if (!TryGetUserIdFromRefreshToken(dto.RefreshToken, out var userId))
+        {
+            return RefreshTokenResult.InvalidRefreshToken();
+        }
 
-        var user = users.FirstOrDefault(u => BCrypt.Net.BCrypt.Verify(dto.RefreshToken, u.RefreshToken!));
-        if (user is null)
+        var user = await _dbContext.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId && u.RefreshToken != null, cancellationToken);
+
+        if (user is null || !BCrypt.Net.BCrypt.Verify(dto.RefreshToken, user.RefreshToken!))
         {
             return RefreshTokenResult.InvalidRefreshToken();
         }
@@ -332,7 +335,7 @@ public class AuthService : IAuthService
 
         var roleName = user.Role?.Name ?? string.Empty;
         var newToken = GenerateToken(user, roleName);
-        var newRefreshToken = GenerateRefreshToken();
+        var newRefreshToken = GenerateRefreshToken(user.Id);
 
         user.RefreshToken = BCrypt.Net.BCrypt.HashPassword(newRefreshToken);
         user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_configuration?.GetValue("Jwt:RefreshTokenExpirationDays", 7) ?? 7);
@@ -356,12 +359,19 @@ public class AuthService : IAuthService
         return UserStatusResult.Ok();
     }
 
-    private static string GenerateRefreshToken()
+    private static string GenerateRefreshToken(Guid userId)
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
-        return Convert.ToBase64String(randomBytes);
+        return $"{userId:N}.{Convert.ToBase64String(randomBytes)}";
+    }
+
+    private static bool TryGetUserIdFromRefreshToken(string refreshToken, out Guid userId)
+    {
+        userId = Guid.Empty;
+        var separator = refreshToken.IndexOf('.');
+        return separator > 0 && Guid.TryParseExact(refreshToken[..separator], "N", out userId);
     }
 
     // arma el JWT con el mismo esquema que valida Program.cs

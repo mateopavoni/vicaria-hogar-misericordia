@@ -2,11 +2,11 @@
 
 Para que el equipo (Amanda, Emir, Belén, Santiago) resuelva — no se resuelven acá ni se asume una respuesta.
 
-## (a) Versión de Angular
+## (a) Versión de Angular — RESUELTA (ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md))
 
 `/PROJECT.md` dice "Angular 16+", `dev-frontend/frontend/package.json` usa `@angular/core ^22.1.0`. ¿Cuál es la versión real objetivo? Actualizar `/PROJECT.md` una vez decidido.
 
-## (b) Expiración de sesión por inactividad (SCRUM-96)
+## (b) Expiración de sesión por inactividad (SCRUM-96) — RESUELTA (ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md))
 
 Hoy la sesión expira por TTL fijo (JWT 60 min + refresh 7 días), no por inactividad real. La rama `feature/SCRUM-96-inactivity-timeout` existe pero no está mergeada a ninguna parte. Dado que el sistema maneja datos de personas en situación de vulnerabilidad y puede quedar abierto en equipos compartidos del hogar: **¿es un requisito de seguridad necesario para priorizar ahora, o puede esperar a un sprint posterior?**
 
@@ -26,7 +26,7 @@ Estas **no** muestran ancestry limpio en ninguna rama de larga vida (podrían ne
 
 Varias de estas (ej. `SCRUM-5-crear-ficha`, `SCRUM-80`, `SCRUM-86`, `SCRUM-94`, el refactor de postgres→sqlserver) **sí tienen su PR marcada como MERGED** en GitHub — el `git branch --merged` no las detecta probablemente porque la rama siguió recibiendo commits después del merge, o el merge se resolvió distinto a un fast-forward simple. Es decir: el estado "mergeada" de GitHub y el ancestry de git no siempre coinciden acá — antes de borrar cualquiera de estas, confirmar contra el historial real, no solo contra uno de los dos indicadores.
 
-## (e) Tabla de roles de `/PROJECT.md` incompleta
+## (e) Tabla de roles de `/PROJECT.md` incompleta — RESUELTA (ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md))
 
 Lista 3 roles (Referente, DirectoraDeCasaConvivencia, Escucha); el código (`RoleNames`) tiene un 4to, `CoordinadorDeCasaConvivencia`, más un segundo nivel de permisos granulares (`PermissionNames`) no descrito en ningún documento de negocio. ¿Se actualiza la tabla, o `CoordinadorDeCasaConvivencia` es un rol interno/técnico que no debería estar en la tabla de negocio?
 
@@ -34,10 +34,10 @@ Lista 3 roles (Referente, DirectoraDeCasaConvivencia, Escucha); el código (`Rol
 
 En esta pasada se documentó como parte de EP-12 por instrucción directa de Mateo al pedir este trabajo. Si el equipo prefiere una épica separada (tiene bastante entidad propia: estadías + evaluación psiquiátrica + egreso), es una corrección simple a `/PROJECT.md` y a [CURRENT_STATE.md](./CURRENT_STATE.md).
 
-## (g) Dos jobs de inactividad automática pisándose (encontrado 2026-09-23)
+## (g) Dos jobs de inactividad automática pisándose (encontrado 2026-09-23) — RESUELTA (ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md))
 
 `PersonInactivityService` y `AttendanceInactivityService` corren en paralelo sobre el mismo `SocialRecord.Status`, con criterios distintos (staleness de `UpdatedAt` vs. falta de `Attendance`). Ninguno distingue `PersonType` — un Residente de la Casa de Convivencia (presente físicamente todos los días) puede pasar a Inactive solo por no tener un registro de asistencia explícito. Preguntas para el equipo: **¿se unifican en un solo job?**, **¿un Residente con estadía abierta debería quedar exento del chequeo de asistencia?** Ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
 
-## (h) Rename `Hogar` → `Centro Barrial` en `LifeStory`: ¿cuándo?
+## (h) Rename `Hogar` → `Centro Barrial` en `LifeStory`: ¿cuándo? — RESUELTA (ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md))
 
 Confirmado por el equipo que corresponde (mismo criterio que "Casona" → "Casa de Convivencia", ya aplicado en el resto del código). Queda pendiente específicamente en el dominio `LifeStory` (entidad, DTOs, rutas, columnas de DB) porque es un rename que toca migración, no solo texto — no se hizo el 2026-09-23 para no arriesgar un demo el mismo día. ¿Se hace antes de pasar `dev` a `main` (como el resto de la revisión de convenciones), o se puede posponer a un sprint dedicado?

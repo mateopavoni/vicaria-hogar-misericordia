@@ -201,6 +201,22 @@ public class AuthServiceLoginTests
     }
 
     [Fact]
+    public async Task RefreshTokenAsync_ConPrefijoDeOtroUsuario_DevuelveInvalido()
+    {
+        using var db = CrearDbContext();
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
+        var service = new AuthService(db, CrearConfiguracionJwt());
+        var login = await service.LoginAsync(new LoginDto(user.Email, "password123"));
+        var randomPart = login.RefreshToken![(login.RefreshToken!.IndexOf('.') + 1)..];
+        var forged = $"{Guid.NewGuid():N}.{randomPart}";
+
+        var result = await service.RefreshTokenAsync(new RefreshTokenDto(forged));
+
+        Assert.False(result.Success);
+        Assert.Equal(RefreshTokenError.InvalidRefreshToken, result.Error);
+    }
+
+    [Fact]
     public async Task LogoutAsync_BorraElRefreshTokenDelUsuario()
     {
         using var db = CrearDbContext();

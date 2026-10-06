@@ -26,7 +26,7 @@ Actualizado al 2026-10-06 — ver [CURRENT_STATE.md](./CURRENT_STATE.md) para el
 - **~24 branches `feature/*`/`fix/*` en remoto sin PR abierta.** Decisión explícita del usuario: no tocar. Borrarlas es destructivo y queda como tarea manual del equipo, ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
 - **Tokens en `localStorage`.** Quedan ahí (riesgo si algún día entra XSS). Mitigado con CSP + `X-Frame-Options` en nginx, escape de Angular y rechazo de `<`/`>` en nombres. Pasarlos a cookie `HttpOnly` exige CSRF + cambios en backend y nginx; pendiente de decisión del equipo.
 - **Recuperación de contraseña sin correo.** `/auth/forgot-password` ahora explica que se resuelve con un Referente; no existe flujo de reseteo ni envío de mails. Requiere definir un flujo (reset por Referente o SMTP).
-- **Refresh token verificado contra todos los usuarios con BCrypt** (`AuthService.RefreshTokenAsync`): O(n) por refresh. Aceptable con pocos usuarios; si crece, identificar el refresh token con el id de usuario.
+- **Resuelto (2026-10-06): refresh token O(n).** El refresh token ahora es `{userId}.{aleatorio}`: `RefreshTokenAsync` trae un solo usuario por id y hace una única verificación BCrypt. Efecto único al desplegar: los refresh tokens emitidos antes del cambio quedan inválidos y esas sesiones piden login de nuevo.
 - **Evaluación psiquiátrica sin endpoint de carga** (EP-12, Sprint 5): hoy solo se inserta por seed/SQL; los TC que la requieren (TC-21) se prueban así.
 - **`docker-compose.yml` local:** sus dos bugs de 2026-09-23 siguen resueltos; si se edita el proxy o el Dockerfile de producción, revisar si el `.local` necesita el mismo cambio. El `nginx.conf` ahora tiene headers de seguridad y CSP: mantener ambos archivos sincronizados.
 
