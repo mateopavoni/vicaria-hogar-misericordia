@@ -31,7 +31,7 @@ Ver `PROJECT.md` para el contexto de negocio, historias de usuario y estado del 
 
 ### Lo que SÍ va en español
 
-- **Mensajes de validación y de error mostrados al usuario** (ya es el patrón actual con FluentValidation) — el usuario final del sistema (Referente, Directora de Casona, Escucha) trabaja en español.
+- **Mensajes de validación y de error mostrados al usuario** (ya es el patrón actual con FluentValidation) — el usuario final del sistema (Referente, Directora de Casa de Convivencia, Escucha) trabaja en español.
 - **Valores de datos que son términos reales del negocio en español**, no identificadores de código. Ejemplo: el *valor* de un rol puede seguir siendo el string `"Referente"` (así lo usa el cliente), pero la *constante que lo contiene* se llama `RoleNames.Referent`, no `RolNombres.Referente`.
 - **Mensajes de commit, documentación (`AGENTS.md`, `PROJECT.md`, PRs, Jira)**
 - Comentarios de código: permitido en español, no es obligatorio traducirlos.
@@ -78,7 +78,7 @@ Vicaria.IntegrationTests  → Tests end-to-end contra la API completa (WebAppli
 
 - Nombres en inglés, PascalCase: `User`, `Role`, `AuditLog`
 - Enums en inglés, tipo y valores: `UserStatus { Pending, Active, Inactive, Rejected }`
-- Constantes de roles centralizadas en una clase estática en inglés: `RoleNames.Referente`, `RoleNames.DirectoraDeCasona`, `RoleNames.Escucha`, `RoleNames.CoordinadorDeCasaConvivencia` — usar siempre esta clase en `[Authorize(Roles = ...)]`, nunca strings sueltos. El nombre de la constante es PascalCase en inglés, el *valor* del string es el término real del negocio en español.
+- Constantes de roles centralizadas en una clase estática en inglés: `RoleNames.Referent`, `RoleNames.CasaConvivenciaDirector`, `RoleNames.Listener`, `RoleNames.CasaConvivenciaCoordinator` — usar siempre esta clase en `[Authorize(Roles = ...)]`, nunca strings sueltos. El nombre de la constante es PascalCase en inglés, el *valor* del string es el término real del negocio en español.
 - Constantes de permisos en `PermissionNames` (códigos de permisos por rol): `ViewCasaConvivenciaResidentRecords`, `LoadResidentObservations`, `ViewMedicationSchedule`.
 
 ### DTOs y validadores (Application)

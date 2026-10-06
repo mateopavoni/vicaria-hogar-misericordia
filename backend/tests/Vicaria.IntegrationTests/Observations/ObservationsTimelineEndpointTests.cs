@@ -50,11 +50,20 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
             new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, actorId));
     }
 
-    private async Task<Guid> CrearPersonaAsync()
+    private async Task<Guid> CrearPersonaAsync(PersonType personType = PersonType.Ambulatory)
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "PersonaTest" });
         var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+
+        if (personType != PersonType.Ambulatory)
+        {
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            db.SocialRecords.First(r => r.Id == body!["id"]).PersonType = personType;
+            await db.SaveChangesAsync();
+        }
+
         return body!["personId"];
     }
 
@@ -85,7 +94,7 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
             await db.SaveChangesAsync();
         }
 
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.GetAsync($"/api/persons/{personId}/observations?categoryId={catSaludId}");
 
@@ -118,7 +127,7 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
             await db.SaveChangesAsync();
         }
 
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.GetAsync($"/api/persons/{personId}/observations");
 
@@ -133,8 +142,8 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
     [Fact]
     public async Task GetTimeline_AsCoordinadorDeCasaConvivencia_Returns200()
     {
-        var personId = await CrearPersonaAsync();
-        await UsarTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+        var personId = await CrearPersonaAsync(PersonType.Resident);
+        await UsarTokenAsync(RoleNames.CasaConvivenciaCoordinator);
 
         var response = await _client.GetAsync($"/api/persons/{personId}/observations");
 
@@ -147,8 +156,8 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
     [Fact]
     public async Task CreateObservation_AsCoordinadorDeCasaConvivencia_Returns201()
     {
-        var personId = await CrearPersonaAsync();
-        await UsarTokenAsync(RoleNames.CoordinadorDeCasaConvivencia);
+        var personId = await CrearPersonaAsync(PersonType.Resident);
+        await UsarTokenAsync(RoleNames.CasaConvivenciaCoordinator);
 
         var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/observations", new { content = "Observación del coordinador" });
 
@@ -175,7 +184,7 @@ public class ObservationsTimelineEndpointTests : IClassFixture<VicariaWebApplica
             await db.SaveChangesAsync();
         }
 
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.GetAsync($"/api/persons/{personId}/observations/export?categoryId={catSaludId}");
 

@@ -8,7 +8,7 @@ public class SocialRecordConfiguration : IEntityTypeConfiguration<SocialRecord>
 {
     public void Configure(EntityTypeBuilder<SocialRecord> builder)
     {
-        builder.ToTable("ficha_social");
+        builder.ToTable("social_records");
 
         builder.HasKey(r => r.Id);
 

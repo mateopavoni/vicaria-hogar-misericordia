@@ -122,8 +122,12 @@ public class ObservationService : IObservationService
 
     private IQueryable<Observation> ApplyFilters(Guid personId, GetObservationsFilterDto filters)
     {
+        // Include obligatorio: ToResponseDto lee o.Category/o.AuthorUser para armar
+        // CategoryName/AuthorName; sin esto quedan siempre null/vacío (bug encontrado en QA local)
         var query = _dbContext.Observations
             .AsNoTracking()
+            .Include(o => o.Category)
+            .Include(o => o.AuthorUser)
             .Where(o => o.PersonId == personId);
 
         if (filters.CategoryId.HasValue)
@@ -162,6 +166,12 @@ public class ObservationService : IObservationService
     // envuelve en comillas y escapa comillas internas si el valor tiene coma, comilla o salto de linea
     private static string CsvEscape(string value)
     {
+        // neutraliza inyección de fórmulas: Excel/Sheets ejecutan celdas que empiezan con = + - @
+        if (value.Length > 0 && "=+-@\t\r".Contains(value[0]))
+        {
+            value = "'" + value;
+        }
+
         if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
         {
             return $"\"{value.Replace("\"", "\"\"")}\"";

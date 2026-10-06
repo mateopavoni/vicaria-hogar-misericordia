@@ -22,7 +22,17 @@ public record SocialRecordDetailDto(
     ContactDto? Contact,
     SocialRecordStatus Status,
     DateTime LastModifiedAt,
-    IReadOnlyList<SocialRecordStayDto> StaysHistory);
+    IReadOnlyList<SocialRecordStayDto> StaysHistory,
+    IReadOnlyList<PersonTypeHistoryItemDto> PersonTypeHistory);
+
+// item de historial de cambio de tipo de persona, con la misma forma que espera
+// el ChangeHistoryItem del frontend (bug reportado 2026-09-23: nunca existió este campo)
+public record PersonTypeHistoryItemDto(
+    Guid Id,
+    string? PreviousValue,
+    string NewValue,
+    string ModifiedBy,
+    DateTime ModifiedAt);
 
 // estadia en la Casa de Convivencia, tal como la consume el timeline del perfil
 public record SocialRecordStayDto(

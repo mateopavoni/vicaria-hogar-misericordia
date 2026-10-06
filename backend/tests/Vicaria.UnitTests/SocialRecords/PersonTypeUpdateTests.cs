@@ -199,4 +199,71 @@ public class PersonTypeUpdateTests
             a.AffectedEntity == $"Person:{creada.PersonId}" && a.UserId == actorId);
         Assert.NotNull(log);
     }
+
+    // bug reportado 2026-09-23: se podía dejar de ser Residente (por este endpoint o por
+    // UpdateAsync/UpdatePersonProfileStatusAsync) con una estadía todavía abierta,
+    // desincronizando el botón de ingreso/egreso del frontend.
+    [Fact]
+    public async Task SetAmbulatory_ConEstadiaActiva_DevuelveActiveStayMustBeExitedFirst()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true);
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+
+        var resultado = await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Ambulatory), Guid.NewGuid());
+
+        Assert.False(resultado.Success);
+        Assert.Equal(UpdatePersonTypeError.ActiveStayMustBeExitedFirst, resultado.Error);
+        var ficha = await db.SocialRecords.FindAsync(creada.SocialRecordId);
+        Assert.Equal(PersonType.Resident, ficha!.PersonType);
+    }
+
+    [Fact]
+    public async Task SetAmbulatory_ConEstadiaYaCerrada_PermiteElCambio()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true);
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+        var estadia = await db.CasaConvivenciaStays.SingleAsync(s => s.PersonId == creada.PersonId);
+        estadia.ExitDate = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var resultado = await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Ambulatory), Guid.NewGuid());
+
+        Assert.True(resultado.Success);
+    }
+
+    // bug reportado 2026-09-23: el historial de tipo de persona nunca existió
+    [Fact]
+    public async Task CambioTipo_RegistraEntradaEnHistorial()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db, PersonType.Ambulatory);
+        await SeedEvaluation(db, creada.PersonId, isValid: true);
+        var actorId = Guid.NewGuid();
+
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), actorId);
+
+        var cambio = await db.PersonTypeChanges.SingleAsync(c => c.PersonId == creada.PersonId);
+        Assert.Equal(PersonType.Ambulatory, cambio.PreviousType);
+        Assert.Equal(PersonType.Resident, cambio.NewType);
+        Assert.Equal(actorId, cambio.ChangedByUserId);
+    }
+
+    [Fact]
+    public async Task CambioAlMismoTipo_NoRegistraEntradaEnHistorial()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db, PersonType.Ambulatory);
+
+        await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Ambulatory), Guid.NewGuid());
+
+        Assert.Empty(await db.PersonTypeChanges.Where(c => c.PersonId == creada.PersonId).ToListAsync());
+    }
 }

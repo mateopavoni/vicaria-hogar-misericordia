@@ -1,6 +1,6 @@
 # Índice de contexto — Vicaria
 
-Set de contexto para agentes de IA (y para el equipo: Amanda, Emir, Belén, Santiago) que trabajan sobre este repo. Generado por una pasada de Context Engineering el 2026-09-18, contra el código real de `main`, `dev`, `dev-backend` y `dev-frontend` (no contra otro documento).
+Set de contexto para agentes de IA (y para el equipo: Amanda, Emir, Belén, Santiago) que trabajan sobre este repo. Generado por una pasada de Context Engineering el 2026-09-18, con una actualización el 2026-09-23 (cierre de Sprint 2, merge de `dev-backend`+`dev-frontend`→`dev`, QA end-to-end), contra el código real de `main`, `dev`, `dev-backend` y `dev-frontend` (no contra otro documento).
 
 **No duplica lo que ya existe.** `AGENTS.md` y `/PROJECT.md` (raíz del repo) siguen siendo la fuente de verdad de convenciones de código y contexto de negocio respectivamente — este set los referencia en vez de repetirlos, y agrega lo que faltaba: estado real verificado, decisiones registradas, huecos conocidos y preguntas abiertas para el equipo.
 

@@ -126,7 +126,7 @@ public class AuthServiceLoginTests
         using var db = CrearDbContext();
 
         // creamos un referente para que exista alguien a quien notificar
-        var rolReferente = new Role { Id = Guid.NewGuid(), Name = RoleNames.Referente };
+        var rolReferente = new Role { Id = Guid.NewGuid(), Name = RoleNames.Referent };
         db.Roles.Add(rolReferente);
         var referente = await CrearUsuarioConEstado(db, UserStatus.Active, "otraPassword123");
         referente.RoleId = rolReferente.Id;
@@ -143,7 +143,7 @@ public class AuthServiceLoginTests
         var notificacion = await db.Notifications.SingleOrDefaultAsync(n => n.EventType == "CuentaBloqueada");
 
         Assert.NotNull(notificacion);
-        Assert.Equal(RoleNames.Referente, notificacion!.TargetRole);
+        Assert.Equal(RoleNames.Referent, notificacion!.TargetRole);
     }
 
     [Fact]

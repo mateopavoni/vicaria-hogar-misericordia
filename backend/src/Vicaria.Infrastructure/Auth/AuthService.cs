@@ -47,7 +47,7 @@ public class AuthService : IAuthService
         _dbContext.Users.Add(user);
 
         // avisamos a los referentes que hay una cuenta nueva esperando aprobación
-        var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referente, cancellationToken);
+        var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
         if (hasReferents)
         {
             _dbContext.Notifications.Add(new Notification
@@ -55,10 +55,10 @@ public class AuthService : IAuthService
                 Id = Guid.NewGuid(),
                 Description = $"{user.FirstName} {user.LastName} se registró y espera aprobación.",
                 EventType = "NuevoUsuarioPendiente",
-                LinkUrl = "/usuarios/pendientes",
+                LinkUrl = "/dashboard/users",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                TargetRole = RoleNames.Referente
+                TargetRole = RoleNames.Referent
             });
         }
 
@@ -80,7 +80,7 @@ public class AuthService : IAuthService
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .Skip((page - 1) * UsersPageSize)
+            .Skip((Math.Max(1, page) - 1) * UsersPageSize)
             .Take(UsersPageSize)
             .Select(u => new PendingUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.CreatedAt))
             .ToListAsync(cancellationToken);
@@ -109,7 +109,7 @@ public class AuthService : IAuthService
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .Skip((page - 1) * UsersPageSize)
+            .Skip((Math.Max(1, page) - 1) * UsersPageSize)
             .Take(UsersPageSize)
             .Select(u => new ManagedUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.Role != null ? u.Role.Name : null))
             .ToListAsync(cancellationToken);
@@ -265,7 +265,7 @@ public class AuthService : IAuthService
                 });
 
                 // avisamos a los referentes que esta cuenta quedó bloqueada (SCRUM-95)
-                var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referente, cancellationToken);
+                var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
                 if (hasReferents)
                 {
                     _dbContext.Notifications.Add(new Notification
@@ -273,10 +273,10 @@ public class AuthService : IAuthService
                         Id = Guid.NewGuid(),
                         Description = $"La cuenta de {user.FirstName} {user.LastName} quedó bloqueada por 5 intentos fallidos de login.",
                         EventType = "CuentaBloqueada",
-                        LinkUrl = "/usuarios",
+                        LinkUrl = "/dashboard/users",
                         IsRead = false,
                         CreatedAt = DateTime.UtcNow,
-                        TargetRole = RoleNames.Referente
+                        TargetRole = RoleNames.Referent
                     });
                 }
             }

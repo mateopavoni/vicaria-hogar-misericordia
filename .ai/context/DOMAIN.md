@@ -32,7 +32,7 @@ Entidades adicionales que existen en código y no están en las 18 originales: `
 `RoleNames` (`Vicaria.Domain.Entities`) define **4 roles**, no 3:
 
 - `Referente`
-- `DirectoraDeCasona`
+- `DirectoraDeCasaConvivencia`
 - `Escucha`
 - `CoordinadorDeCasaConvivencia` ← no está en la tabla de roles de `/PROJECT.md` (sección "Usuarios"). Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
 

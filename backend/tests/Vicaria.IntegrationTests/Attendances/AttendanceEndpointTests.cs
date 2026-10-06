@@ -53,7 +53,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
 
     private async Task<Guid> CrearPersonaAsync()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var response = await _client.PostAsJsonAsync("/api/social-records", new { firstName = "Ana" });
         var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
         return body!["personId"];
@@ -69,7 +69,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     public async Task Register_ComoEscucha_Devuelve204()
     {
         var personId = await CrearPersonaAsync();
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
         var response = await _client.PostAsJsonAsync("/api/attendance", new { personId });
 
@@ -117,7 +117,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Register_PersonaInexistente_Devuelve404()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/attendance", new { personId = Guid.NewGuid() });
 
@@ -127,7 +127,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Register_PersonaSinFicha_Devuelve404()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
@@ -143,7 +143,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Register_PersonIdVacio_Devuelve400()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync("/api/attendance", new { personId = Guid.Empty });
 
