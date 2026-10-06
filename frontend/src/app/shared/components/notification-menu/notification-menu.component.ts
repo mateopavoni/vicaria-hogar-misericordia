@@ -1,5 +1,7 @@
 import { Component, inject, signal, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { Notification } from './../../../core/notification/notification.interface';
 import { NotificationService } from './../../../core/notification/notification.service';
 
 @Component({
@@ -11,6 +13,7 @@ import { NotificationService } from './../../../core/notification/notification.s
 export class NotificationMenuComponent {
   public notificationService = inject(NotificationService);
   private elementRef = inject(ElementRef);
+  private router = inject(Router);
 
   isOpen = signal<boolean>(false);
 
@@ -20,6 +23,17 @@ export class NotificationMenuComponent {
 
   togglePanel() {
     this.isOpen.update(value => !value);
+  }
+
+  // al hacer clic: marca como leída y va al recurso (ej. la ficha sin observaciones)
+  open(notification: Notification) {
+    if (!notification.isRead) {
+      this.notificationService.markAsRead(notification.id);
+    }
+    if (notification.linkUrl) {
+      this.isOpen.set(false);
+      this.router.navigateByUrl(notification.linkUrl);
+    }
   }
 
   // convierte la fecha cruda del backend en algo legible, tipo "hace 5 min"

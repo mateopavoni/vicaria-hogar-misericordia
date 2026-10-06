@@ -34,18 +34,24 @@ import { UserRole } from '../../../../core/auth/userRole';
     // solo mostramos errores de validación después de intentar enviar el formulario
     submitted = signal(false);
 
-    private passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     // guarda el timer para poder cancelarlo si se muestra otro error antes de que pase el tiempo
     private credentialsErrorTimeout?: ReturnType<typeof setTimeout>;
 
     form = this.fb.nonNullable.group({
 
       email: [ '',[Validators.required, Validators.email]],
-      password: ['',[  Validators.required, Validators.minLength(6), Validators.pattern(this.passwordPattern)]],
+      password: ['',[Validators.required]],
       remember: [false]
     });
 
     constructor() {
+      // aviso de por qué se cerró la sesión (inactividad / sesión vencida)
+      const notice = sessionStorage.getItem('sessionNotice');
+      if (notice) {
+        sessionStorage.removeItem('sessionNotice');
+        this.credentialsError.set(notice);
+      }
+
       // si la vez pasada tildó "recordar usuario", precargamos el email guardado
       const savedEmail = localStorage.getItem('rememberedEmail');
       if (savedEmail) {
@@ -170,7 +176,7 @@ import { UserRole } from '../../../../core/auth/userRole';
           ]);
           break;
 
-        case 'DirectoraDeCasona':
+        case 'DirectoraDeCasaConvivencia':
 
           this.router.navigate([
             '/dashboard'

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable, of } from 'rxjs';
 import { ManagedUser, UserStatus, ApproveUserRequest, RejectUserRequest } from '../interfaces/user.interface';
 import { UsersFilters } from '../interfaces/UsersFilters.interface';
@@ -11,14 +11,18 @@ export interface UsersResponse {
   totalPages: number;
 }
 
-// id fijo de cada rol en la base (seed determinístico, ver RoleConfiguration en el backend)
+// id fijo de cada rol en la base (seed determinístico, ver RolConfiguration en el backend)
+// bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia (id real sembrado en
+// la migración AddCoordinadorRolePermissions) — sin esta entrada, aprobar o reasignar
+// a ese rol desde la UI mandaba roleId undefined.
 const ROLE_IDS: Record<UserRole, string> = {
   Referente: '11111111-1111-1111-1111-111111111111',
-  DirectoraDeCasona: '22222222-2222-2222-2222-222222222222',
+  DirectoraDeCasaConvivencia: '22222222-2222-2222-2222-222222222222',
   Escucha: '33333333-3333-3333-3333-333333333333',
+  CoordinadorDeCasaConvivencia: '77777777-7777-7777-7777-777777777777',
 };
 
-// forma cruda que devuelve GET /api/auth/users/pending
+// forma cruda que devuelve GET /api/auth/users/pending: { items, total, totalPages }
 interface BackendPendingUser {
   id: string;
   firstName: string;
@@ -27,13 +31,19 @@ interface BackendPendingUser {
   requestDate: string;
 }
 
-// forma cruda que devuelven GET /api/auth/users/active y /users/inactive
+// forma cruda que devuelven GET /api/auth/users/active y /users/inactive: { items, total, totalPages }
 interface BackendManagedUser {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   role: UserRole | null;
+}
+
+interface BackendPagedResult<T> {
+  items: T[];
+  total: number;
+  totalPages: number;
 }
 
 @Injectable({
@@ -46,30 +56,34 @@ export class UsersService {
   private readonly apiUrl = '/api/auth';
 
   getUsers(status: UserStatus, page: number, filters?: UsersFilters): Observable<UsersResponse> {
+    let params = new HttpParams().set('page', page);
+    if (filters?.dateFrom) params = params.set('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params = params.set('dateTo', filters.dateTo);
 
     if (status === 'Pending') {
-      return this.http.get<BackendPendingUser[]>(`${this.apiUrl}/users/pending`).pipe(
-        map((users) => {
-          const items: ManagedUser[] = users.map((u) => ({
+      return this.http.get<BackendPagedResult<BackendPendingUser>>(`${this.apiUrl}/users/pending`, { params }).pipe(
+        map((res) => ({
+          items: res.items.map((u) => ({
             id: u.id,
             name: u.firstName,
             lastname: u.lastName,
             email: u.email,
             requestDate: u.requestDate,
-            status: 'Pending',
+            status: 'Pending' as const,
             role: null,
-          }));
-          return { items, total: items.length, totalPages: 1 };
-        })
+          })),
+          total: res.total,
+          totalPages: res.totalPages,
+        }))
       );
     }
 
     // Approved -> activos, Suspended -> inactivos/desactivados
     const endpoint = status === 'Approved' ? 'active' : 'inactive';
 
-    return this.http.get<BackendManagedUser[]>(`${this.apiUrl}/users/${endpoint}`).pipe(
-      map((users) => {
-        const items: ManagedUser[] = users.map((u) => ({
+    return this.http.get<BackendPagedResult<BackendManagedUser>>(`${this.apiUrl}/users/${endpoint}`, { params }).pipe(
+      map((res) => ({
+        items: res.items.map((u) => ({
           id: u.id,
           name: u.firstName,
           lastname: u.lastName,
@@ -77,9 +91,10 @@ export class UsersService {
           requestDate: '',
           status,
           role: u.role,
-        }));
-        return { items, total: items.length, totalPages: 1 };
-      })
+        })),
+        total: res.total,
+        totalPages: res.totalPages,
+      }))
     );
   }
 

@@ -33,6 +33,13 @@ export const authRoutes: Routes = [
       },
 
       {
+        path: 'forgot-password',
+        loadComponent: () =>
+          import('./pages/forgot-password/forgot-password.component')
+            .then(m => m.ForgotPasswordComponent),
+      },
+
+      {
         path: 'pending-approval',
         loadComponent: () =>
           import('./pages/pending-approval/pending-approval.component')

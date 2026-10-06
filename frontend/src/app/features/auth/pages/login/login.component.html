@@ -218,11 +218,6 @@
         </p>
       }
 
-      @if (submitted() && form.controls.password.hasError('pattern')) {
-        <p class="mt-1 text-[12px] text-red-500">
-          Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.
-        </p>
-      }
 
         <!-- RECORDAR USUARIO + OLVIDÉ CONTRASEÑA (fila estándar arriba del botón) -->
         <div class="flex items-center justify-between pt-1">
@@ -260,14 +255,14 @@
            <button
             type="submit"
             class="h-[42px] w-full rounded-md
-                  bg-[#6B8DF5]
+                  bg-[#4167D9]
                   text-[15px]
                   font-semibold
                   text-white
                   shadow-sm
                   transition
-                  hover:bg-[#587BE8]
-                  active:bg-[#4F70D8]
+                  hover:bg-[#3556C0]
+                  active:bg-[#2F4DB0]
                   disabled:cursor-not-allowed
                   disabled:opacity-60"
             [disabled]="loading()"

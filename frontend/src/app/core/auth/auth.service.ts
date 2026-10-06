@@ -53,6 +53,7 @@ export class AuthService {
     }
   }
 
+  // pasa el usuario del backend (campos en español) al shape que usa el resto del front
   private mapUser(backendUser: BackendUser): User {
     return {
       id: backendUser.id,

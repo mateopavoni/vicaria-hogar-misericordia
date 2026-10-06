@@ -23,9 +23,10 @@ public class NotificationService : INotificationService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<MarkAsReadResult> MarkAsReadAsync(Guid id, Guid actorId, CancellationToken cancellationToken = default)
+    public async Task<MarkAsReadResult> MarkAsReadAsync(Guid id, string role, Guid actorId, CancellationToken cancellationToken = default)
     {
-        var notification = await _dbContext.Notifications.FindAsync([id], cancellationToken);
+        // solo se puede marcar una notificación dirigida al propio rol (misma regla que el listado)
+        var notification = await _dbContext.Notifications.FirstOrDefaultAsync(n => n.Id == id && n.TargetRole == role, cancellationToken);
         if (notification is null)
         {
             return MarkAsReadResult.NotFound();
@@ -46,7 +47,7 @@ public class NotificationService : INotificationService
         return MarkAsReadResult.Ok();
     }
 
-    public async Task MarkAllAsReadAsync(string role, CancellationToken cancellationToken = default)
+    public async Task MarkAllAsReadAsync(string role, Guid actorId, CancellationToken cancellationToken = default)
     {
         var notifications = await _dbContext.Notifications
             .Where(n => n.TargetRole == role && !n.IsRead)
@@ -55,6 +56,15 @@ public class NotificationService : INotificationService
         foreach (var notification in notifications)
         {
             notification.IsRead = true;
+
+            _dbContext.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = actorId,
+                Action = "MarcarNotificacionLeida",
+                AffectedEntity = $"Notificacion:{notification.Id}",
+                Date = DateTime.UtcNow
+            });
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

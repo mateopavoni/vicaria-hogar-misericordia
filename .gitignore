@@ -15,6 +15,7 @@ npm-debug.log*
 # ── Secretos ─────────────────────────────────────────
 .env
 .env.*
+!.env.example
 *.local.json
 appsettings.*.local.json
 

@@ -47,7 +47,7 @@ public class AuthService : IAuthService
         _dbContext.Users.Add(user);
 
         // avisamos a los referentes que hay una cuenta nueva esperando aprobación
-        var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referente, cancellationToken);
+        var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
         if (hasReferents)
         {
             _dbContext.Notifications.Add(new Notification
@@ -55,10 +55,10 @@ public class AuthService : IAuthService
                 Id = Guid.NewGuid(),
                 Description = $"{user.FirstName} {user.LastName} se registró y espera aprobación.",
                 EventType = "NuevoUsuarioPendiente",
-                LinkUrl = "/usuarios/pendientes",
+                LinkUrl = "/dashboard/users",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                TargetRole = RoleNames.Referente
+                TargetRole = RoleNames.Referent
             });
         }
 
@@ -67,7 +67,7 @@ public class AuthService : IAuthService
         return RegisterResult.Ok(user.Id);
     }
 
-    // ponytail: page size fijo, no lo pide el frontend; si hace falta configurable, exponerlo como query param
+    // page size fijo, no lo pide el frontend; si hace falta configurable, exponerlo como query param
     private const int UsersPageSize = 10;
 
     public async Task<PagedResult<PendingUserDto>> GetPendingUsersAsync(int page = 1, DateTime? dateFrom = null, DateTime? dateTo = null, CancellationToken cancellationToken = default)
@@ -75,12 +75,12 @@ public class AuthService : IAuthService
         var query = _dbContext.Users
             .Where(u => u.Status == UserStatus.Pending)
             .Where(u => dateFrom == null || u.CreatedAt >= dateFrom)
-            .Where(u => dateTo == null || u.CreatedAt <= dateTo)
+            .Where(u => dateTo == null || u.CreatedAt < dateTo.Value.AddDays(1))
             .OrderByDescending(u => u.CreatedAt);
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .Skip((page - 1) * UsersPageSize)
+            .Skip((Math.Max(1, page) - 1) * UsersPageSize)
             .Take(UsersPageSize)
             .Select(u => new PendingUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.CreatedAt))
             .ToListAsync(cancellationToken);
@@ -104,12 +104,12 @@ public class AuthService : IAuthService
             .Include(u => u.Role)
             .Where(u => u.Status == status)
             .Where(u => dateFrom == null || u.CreatedAt >= dateFrom)
-            .Where(u => dateTo == null || u.CreatedAt <= dateTo)
+            .Where(u => dateTo == null || u.CreatedAt < dateTo.Value.AddDays(1))
             .OrderByDescending(u => u.CreatedAt);
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .Skip((page - 1) * UsersPageSize)
+            .Skip((Math.Max(1, page) - 1) * UsersPageSize)
             .Take(UsersPageSize)
             .Select(u => new ManagedUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.Role != null ? u.Role.Name : null))
             .ToListAsync(cancellationToken);
@@ -119,6 +119,11 @@ public class AuthService : IAuthService
 
     public async Task<UserStatusResult> UpdateUserRoleAsync(Guid userId, Guid roleId, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return UserStatusResult.CannotActOnSelf("No podés cambiar tu propio rol.");
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -132,6 +137,7 @@ public class AuthService : IAuthService
         }
 
         user.RoleId = roleId;
+        user.TokenVersion++;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -148,6 +154,11 @@ public class AuthService : IAuthService
 
     public async Task<ApproveUserResult> ApproveUserAsync(Guid userId, ApproveUserDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return ApproveUserResult.CannotActOnSelf();
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -184,6 +195,11 @@ public class AuthService : IAuthService
 
     public async Task<RejectUserResult> RejectUserAsync(Guid userId, RejectUserDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return RejectUserResult.CannotActOnSelf();
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -249,7 +265,7 @@ public class AuthService : IAuthService
                 });
 
                 // avisamos a los referentes que esta cuenta quedó bloqueada (SCRUM-95)
-                var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referente, cancellationToken);
+                var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
                 if (hasReferents)
                 {
                     _dbContext.Notifications.Add(new Notification
@@ -257,10 +273,10 @@ public class AuthService : IAuthService
                         Id = Guid.NewGuid(),
                         Description = $"La cuenta de {user.FirstName} {user.LastName} quedó bloqueada por 5 intentos fallidos de login.",
                         EventType = "CuentaBloqueada",
-                        LinkUrl = "/usuarios",
+                        LinkUrl = "/dashboard/users",
                         IsRead = false,
                         CreatedAt = DateTime.UtcNow,
-                        TargetRole = RoleNames.Referente
+                        TargetRole = RoleNames.Referent
                     });
                 }
             }
@@ -284,7 +300,7 @@ public class AuthService : IAuthService
 
         var roleName = user.Role?.Name ?? string.Empty;
         var token = GenerateToken(user, roleName);
-        var refreshToken = GenerateRefreshToken();
+        var refreshToken = GenerateRefreshToken(user.Id);
 
         // guardamos el refresh token hasheado, igual que la password, nunca en texto plano
         user.RefreshToken = BCrypt.Net.BCrypt.HashPassword(refreshToken);
@@ -296,15 +312,18 @@ public class AuthService : IAuthService
 
     public async Task<RefreshTokenResult> RefreshTokenAsync(RefreshTokenDto dto, CancellationToken cancellationToken = default)
     {
-        // no hay forma de buscar por el token hasheado con un WHERE, así que traemos
-        // los usuarios con refresh token activo y comparamos uno por uno con BCrypt
-        var users = await _dbContext.Users
-            .Include(u => u.Role)
-            .Where(u => u.RefreshToken != null)
-            .ToListAsync(cancellationToken);
+        // el token lleva el id del usuario como prefijo ("{userId}.{aleatorio}"): lo usamos para
+        // traer un solo usuario y hacer una única verificación BCrypt, en vez de recorrer todos
+        if (!TryGetUserIdFromRefreshToken(dto.RefreshToken, out var userId))
+        {
+            return RefreshTokenResult.InvalidRefreshToken();
+        }
 
-        var user = users.FirstOrDefault(u => BCrypt.Net.BCrypt.Verify(dto.RefreshToken, u.RefreshToken!));
-        if (user is null)
+        var user = await _dbContext.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId && u.RefreshToken != null, cancellationToken);
+
+        if (user is null || !BCrypt.Net.BCrypt.Verify(dto.RefreshToken, user.RefreshToken!))
         {
             return RefreshTokenResult.InvalidRefreshToken();
         }
@@ -316,7 +335,7 @@ public class AuthService : IAuthService
 
         var roleName = user.Role?.Name ?? string.Empty;
         var newToken = GenerateToken(user, roleName);
-        var newRefreshToken = GenerateRefreshToken();
+        var newRefreshToken = GenerateRefreshToken(user.Id);
 
         user.RefreshToken = BCrypt.Net.BCrypt.HashPassword(newRefreshToken);
         user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_configuration?.GetValue("Jwt:RefreshTokenExpirationDays", 7) ?? 7);
@@ -340,12 +359,19 @@ public class AuthService : IAuthService
         return UserStatusResult.Ok();
     }
 
-    private static string GenerateRefreshToken()
+    private static string GenerateRefreshToken(Guid userId)
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
-        return Convert.ToBase64String(randomBytes);
+        return $"{userId:N}.{Convert.ToBase64String(randomBytes)}";
+    }
+
+    private static bool TryGetUserIdFromRefreshToken(string refreshToken, out Guid userId)
+    {
+        userId = Guid.Empty;
+        var separator = refreshToken.IndexOf('.');
+        return separator > 0 && Guid.TryParseExact(refreshToken[..separator], "N", out userId);
     }
 
     // arma el JWT con el mismo esquema que valida Program.cs
@@ -361,7 +387,8 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}".Trim()),
             new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, role)
+            new Claim(ClaimTypes.Role, role),
+            new Claim("token_version", user.TokenVersion.ToString())
         ];
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? string.Empty));
@@ -380,6 +407,11 @@ public class AuthService : IAuthService
 
     public async Task<UserStatusResult> DeactivateUserAsync(Guid userId, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return UserStatusResult.CannotActOnSelf("No podés desactivar tu propia cuenta.");
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {
@@ -392,6 +424,7 @@ public class AuthService : IAuthService
         }
 
         user.Status = UserStatus.Inactive;
+        user.TokenVersion++;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -408,6 +441,11 @@ public class AuthService : IAuthService
 
     public async Task<UserStatusResult> ReactivateUserAsync(Guid userId, Guid actorId, CancellationToken cancellationToken = default)
     {
+        if (userId == actorId)
+        {
+            return UserStatusResult.CannotActOnSelf("No podés reactivar tu propia cuenta.");
+        }
+
         var user = await _dbContext.Users.FindAsync([userId], cancellationToken);
         if (user is null)
         {

@@ -3,6 +3,6 @@ namespace Vicaria.Application.Notifications;
 public interface INotificationService
 {
     Task<IReadOnlyList<NotificationDto>> GetByRoleAsync(string role, CancellationToken cancellationToken = default);
-    Task<MarkAsReadResult> MarkAsReadAsync(Guid id, Guid actorId, CancellationToken cancellationToken = default);
-    Task MarkAllAsReadAsync(string role, CancellationToken cancellationToken = default);
+    Task<MarkAsReadResult> MarkAsReadAsync(Guid id, string role, Guid actorId, CancellationToken cancellationToken = default);
+    Task MarkAllAsReadAsync(string role, Guid actorId, CancellationToken cancellationToken = default);
 }

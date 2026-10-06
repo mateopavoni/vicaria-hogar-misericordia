@@ -3,7 +3,8 @@ namespace Vicaria.Application.Auth;
 public enum RejectUserError
 {
     UserNotFound,
-    InvalidState
+    InvalidState,
+    CannotActOnSelf
 }
 
 public class RejectUserResult
@@ -19,4 +20,7 @@ public class RejectUserResult
 
     public static RejectUserResult InvalidState() =>
         new() { Success = false, Error = RejectUserError.InvalidState, ErrorMessage = "El usuario no está pendiente de aprobación." };
+
+    public static RejectUserResult CannotActOnSelf() =>
+        new() { Success = false, Error = RejectUserError.CannotActOnSelf, ErrorMessage = "No podés realizar esta acción sobre tu propia cuenta." };
 }

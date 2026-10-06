@@ -7,13 +7,36 @@ services:
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
       MSSQL_PID: "Express"
     ports:
-      - "1433:1433"
-    volumes:
-      - sqlserverdata:/var/opt/mssql
-volumes:
-  sqlserverdata:
-# Comandos parar levantar y eliminar contenedor:
-# Levatnar el contenedor en segundo plano
-# docker compose -f backend/docker-compose.yml up -d
-# Eliminar el contenedor (no borra volumenes)
-# docker-compose down
+      - "1434:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vicaria-api
+    depends_on:
+      sql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:5000"
+      ConnectionStrings__VicariaDb: "Server=sql,1433;Database=VicariaDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      Jwt__Key: "${JWT_KEY}"
+    ports:
+      - "5000:5000"
+
+  # FRONTEND_PATH: carpeta frontend/ del checkout local (ver .env.example)
+  web:
+    build:
+      context: "${FRONTEND_PATH}"
+      dockerfile: Dockerfile.local
+    container_name: vicaria-web
+    depends_on:
+      - api
+    ports:
+      - "4200:80"

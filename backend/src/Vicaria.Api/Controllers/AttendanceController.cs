@@ -1,0 +1,63 @@
+using System.Security.Claims;
+using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Vicaria.Application.Persons;
+using Vicaria.Application.Attendances;
+using Vicaria.Domain.Entities;
+
+namespace Vicaria.Api.Controllers;
+
+[ApiController]
+[Route("api/attendance")]
+[Authorize]
+public class AttendanceController : ControllerBase
+{
+    private readonly IAttendanceService _attendanceService;
+    private readonly IPersonAccessService _personAccessService;
+    private readonly IValidator<CreateAttendanceDto> _validator;
+
+    public AttendanceController(
+        IAttendanceService attendanceService,
+        IPersonAccessService personAccessService,
+        IValidator<CreateAttendanceDto> validator)
+    {
+        _attendanceService = attendanceService;
+        _personAccessService = personAccessService;
+        _validator = validator;
+    }
+
+    private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    // registra la asistencia diaria de una persona (SCRUM-135) y reactiva su ficha si
+    // estaba Inactiva; Escucha también puede cargarla en el día a día del Centro Barrial
+    [HttpPost]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> Register([FromBody] CreateAttendanceDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _validator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        if (!await _personAccessService.CanAccessPersonAsync(dto.PersonId, User.FindFirstValue(ClaimTypes.Role), cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var result = await _attendanceService.RegisterAsync(dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            RegisterAttendanceError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            RegisterAttendanceError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+}

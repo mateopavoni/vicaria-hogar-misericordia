@@ -1,18 +1,28 @@
 
+<!-- backdrop del drawer en mobile: bug reportado 2026-09-23, sidebar sin breakpoints -->
+@if (sidebarState.isOpenOnMobile()) {
+  <div
+    class="fixed inset-0 z-30 bg-slate-900/50 md:hidden"
+    (click)="closeOnMobile()"
+  ></div>
+}
+
 <aside
+  [class.translate-x-0]="sidebarState.isOpenOnMobile()"
+  [class.-translate-x-full]="!sidebarState.isOpenOnMobile()"
   class="fixed left-0 top-0 z-40 flex h-screen w-[218px] flex-col
-         border-r border-slate-100 bg-white"
+         border-r border-slate-100 bg-white
+         transition-transform duration-200 md:translate-x-0"
 >
   <!-- Logo -->
 <div class="flex h-[110px] items-center justify-center px-4">
   <div class="mt-4 flex items-center gap-3">
 
-    <div
-      class="whitespace-nowrap text-center font-serif text-[18px] leading-tight text-blue-600"
-    >
-      <span class="block">Nuestra Señora de</span>
-      <span class="block">la Misericordia</span>
-    </div>
+    <img
+      src="assets/Logo.png"
+      alt="Nuestra Señora de la Misericordia"
+      class="h-[130px] w-auto object-contain mt-10 mb-2"
+    />
 
   </div>
 </div>
@@ -23,6 +33,7 @@
     <a
       routerLink="/inicio"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
             border border-transparent
@@ -48,9 +59,11 @@
     </a>
 
     <!-- Fichas -->
+    @if (permissionService.hasPermission('fichas.view')) {
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/fichas"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
              border border-transparent
@@ -75,11 +88,13 @@
 
       <span>Fichas</span>
     </a>
+    }
 
     <!-- Asistencia -->
     <a
       routerLink="/inicio"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
              border border-transparent
@@ -108,6 +123,7 @@
     <a
       routerLink="/inicio"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
             border border-transparent
@@ -136,6 +152,7 @@
     <a
       routerLink="/inicio"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
             border border-transparent
@@ -166,6 +183,7 @@
     <a
       routerLink="/inicio"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
             border border-transparent
@@ -198,6 +216,7 @@
     <a
       routerLink="/dashboard/users"
       routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
             border border-transparent
@@ -229,7 +248,7 @@
   <div class="px-4 pb-5">
     <button
       type="button"
-      (click)="onLogout()";
+      (click)="onLogout()"
       class="flex h-[42px] w-full items-center gap-4 rounded-lg
              px-6 text-sm font-semibold text-slate-700
              transition-colors hover:bg-slate-50"

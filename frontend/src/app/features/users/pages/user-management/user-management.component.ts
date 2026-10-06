@@ -1,4 +1,4 @@
-import {Component,inject,signal, OnInit} from '@angular/core';
+import {Component,inject,signal,computed, OnInit} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ManagedUser,UserStatus} from '../../interfaces/user.interface';
 import { UserRole } from '../../../../core/auth/userRole';
@@ -6,6 +6,7 @@ import { UsersService } from '../../services/users.service';
 import { ApproveUserModalComponent } from '../../components/approve-user-modal/approve-user-modal.component';
 import {  RejectUserModalComponent } from '../../components/reject-user-modal/reject-user-modal.component';
 import { ChangeRoleModalComponent } from "../../components/change-role-modal/change-role-modal.component";
+import { AuthService } from '../../../../core/auth/auth.service';
 
 
 @Component({
@@ -17,6 +18,7 @@ import { ChangeRoleModalComponent } from "../../components/change-role-modal/cha
 export class UserManagementComponent implements OnInit {
 
       private usersService = inject(UsersService);
+      private authService = inject(AuthService);
 
 
       // users = signal<ManagedUser[]>([]);
@@ -31,6 +33,8 @@ export class UserManagementComponent implements OnInit {
 
       totalPages = signal(1);
 
+      pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
+
       selectedUser = signal<ManagedUser | null>(null);
 
       showApproveModal = signal(false);
@@ -42,6 +46,9 @@ export class UserManagementComponent implements OnInit {
       dateFrom = signal('');
 
       dateTo = signal('');
+
+      // tope para los filtros de fecha, no tiene sentido filtrar por fechas futuras
+      today = new Date().toISOString().split('T')[0];
 
       // cantidad real de cada tab, para mostrar en el contador
       pendingTotal = signal(0);
@@ -104,6 +111,7 @@ export class UserManagementComponent implements OnInit {
 
 
       applyFilters(): void {
+        if (!this.dateFrom() && !this.dateTo()) return; // nada cargado en los calendarios, no hay nada que filtrar
 
         this.currentPage.set(1);
         this.loadUsers();
@@ -111,6 +119,7 @@ export class UserManagementComponent implements OnInit {
         }
 
       clearFilters(): void {
+        if (!this.dateFrom() && !this.dateTo()) return; // ya estaba limpio, no hay nada que limpiar
 
         this.dateFrom.set('');
         this.dateTo.set('');
@@ -150,6 +159,7 @@ export class UserManagementComponent implements OnInit {
 
 
       openApproveModal( user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
 
         this.selectedUser.set(user);
 
@@ -159,6 +169,7 @@ export class UserManagementComponent implements OnInit {
 
 
       openRejectModal(user: ManagedUser): void {
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
 
         this.selectedUser.set(user);
 
@@ -172,6 +183,8 @@ export class UserManagementComponent implements OnInit {
         this.showApproveModal.set(false);
 
         this.showRejectModal.set(false);
+
+        this.showChangeRoleModal.set(false);
 
         this.selectedUser.set(null);
 
@@ -224,17 +237,25 @@ export class UserManagementComponent implements OnInit {
         });
     }
 
+      esUsuarioActual(user: ManagedUser): boolean {
+        return user.id === this.authService.user()?.id;
+      }
+
       // INACTIVAR, ACTIVAR Y REASIGNAR ROL
-    
+
       deactivateUser(user: ManagedUser): void {
+        if (user.id === this.authService.user()?.id) {
+          this.error.set('No podés desactivar tu propia cuenta.');
+          return;
+        }
         if (confirm(`¿Estás seguro de que deseas inhabilitar/desactivar la cuenta de ${user.name} ${user.lastname}?`)) {
           // Llama a tu endpoint en el servicio para desactivar
           this.usersService.deactivateUser(user.id).subscribe({
             next: () => {
               this.loadUsers();
             },
-            error: () => {
-              this.error.set('No se pudo desactivar el usuario.');
+            error: (err) => {
+              this.error.set(err?.error?.message || 'No se pudo desactivar el usuario.');
             }
           });
         }
@@ -247,14 +268,19 @@ export class UserManagementComponent implements OnInit {
             next: () => {
               this.loadUsers();
             },
-            error: () => {
-              this.error.set('No se pudo reactivar el usuario.');
+            error: (err) => {
+              this.error.set(err?.error?.message || 'No se pudo reactivar el usuario.');
             }
           });
         }
       }
 
       openChangeRoleModal(user: ManagedUser): void {
+        if (user.id === this.authService.user()?.id) {
+          this.error.set('No podés cambiar tu propio rol.');
+          return;
+        }
+        this.closeModals(); // por si había otro modal abierto, que no se pisen
         this.selectedUser.set(user);
         this.showChangeRoleModal.set(true);
       }
@@ -268,7 +294,7 @@ export class UserManagementComponent implements OnInit {
             this.closeModals();
             this.loadUsers();
           },
-          error: () => this.error.set('No se pudo cambiar el rol.'),
+          error: (err) => this.error.set(err?.error?.message || 'No se pudo cambiar el rol.'),
         });
       }
 }

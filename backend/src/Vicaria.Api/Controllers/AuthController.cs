@@ -145,7 +145,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users/pending")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> GetPendingUsers([FromQuery] int page, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, CancellationToken cancellationToken)
     {
         var users = await _authService.GetPendingUsersAsync(page < 1 ? 1 : page, dateFrom, dateTo, cancellationToken);
@@ -153,7 +153,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users/active")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> GetActiveUsers([FromQuery] int page, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, CancellationToken cancellationToken)
     {
         var users = await _authService.GetActiveUsersAsync(page < 1 ? 1 : page, dateFrom, dateTo, cancellationToken);
@@ -161,7 +161,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users/inactive")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> GetInactiveUsers([FromQuery] int page, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, CancellationToken cancellationToken)
     {
         var users = await _authService.GetInactiveUsersAsync(page < 1 ? 1 : page, dateFrom, dateTo, cancellationToken);
@@ -169,7 +169,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPatch("users/{id}/role")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateRoleDto dto, CancellationToken cancellationToken)
     {
         var result = await _authService.UpdateUserRoleAsync(id, dto.RoleId, ActorId, cancellationToken);
@@ -177,12 +177,13 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            UserStatusError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
 
     [HttpPost("users/{id}/approve")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> ApproveUser(Guid id, [FromBody] ApproveUserDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _approveValidator.ValidateAsync(dto, cancellationToken);
@@ -201,12 +202,13 @@ public class AuthController : ControllerBase
             null => NoContent(),
             ApproveUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
             ApproveUserError.InvalidRole => BadRequest(new { message = result.ErrorMessage }),
+            ApproveUserError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
 
     [HttpPost("users/{id}/reject")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> RejectUser(Guid id, [FromBody] RejectUserDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _rejectValidator.ValidateAsync(dto, cancellationToken);
@@ -224,12 +226,13 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             RejectUserError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            RejectUserError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
 
     [HttpPatch("users/{id}/deactivate")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> DeactivateUser(Guid id, CancellationToken cancellationToken)
     {
         var result = await _authService.DeactivateUserAsync(id, ActorId, cancellationToken);
@@ -237,12 +240,13 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            UserStatusError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }
 
     [HttpPatch("users/{id}/reactivate")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> ReactivateUser(Guid id, CancellationToken cancellationToken)
     {
         var result = await _authService.ReactivateUserAsync(id, ActorId, cancellationToken);
@@ -250,6 +254,7 @@ public class AuthController : ControllerBase
         {
             null => NoContent(),
             UserStatusError.UserNotFound => NotFound(new { message = result.ErrorMessage }),
+            UserStatusError.CannotActOnSelf => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
             _ => Conflict(new { message = result.ErrorMessage })
         };
     }

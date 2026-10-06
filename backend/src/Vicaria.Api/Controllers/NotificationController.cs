@@ -36,7 +36,13 @@ public class NotificationController : ControllerBase
     [Authorize]
     public async Task<IActionResult> MarkAsRead(Guid id, CancellationToken cancellationToken)
     {
-        var result = await _notificationService.MarkAsReadAsync(id, ActorId, cancellationToken);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (string.IsNullOrEmpty(role))
+        {
+            return Forbid();
+        }
+
+        var result = await _notificationService.MarkAsReadAsync(id, role, ActorId, cancellationToken);
         if (!result.Success)
         {
             return NotFound(new { message = result.ErrorMessage });
@@ -54,7 +60,7 @@ public class NotificationController : ControllerBase
             return Forbid();
         }
 
-        await _notificationService.MarkAllAsReadAsync(role, cancellationToken);
+        await _notificationService.MarkAllAsReadAsync(role, ActorId, cancellationToken);
         return NoContent();
     }
 }
