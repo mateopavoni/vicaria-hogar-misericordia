@@ -103,10 +103,10 @@ export class AuthService {
     }
     const body = error.error as LoginErrorBody | undefined;
     // el backend manda "Bloqueada" (bloqueo por intentos fallidos), no "Blocked"
-    if (error.status === 403 && body?.estado === 'Bloqueada') {
+    if (error.status === 403 && body?.status === 'Bloqueada') {
       return 'blocked';
     }
-    if (error.status === 403 && body?.estado === 'Pending') {
+    if (error.status === 403 && body?.status === 'Pending') {
       return 'pending';
     }
     return 'unknown';

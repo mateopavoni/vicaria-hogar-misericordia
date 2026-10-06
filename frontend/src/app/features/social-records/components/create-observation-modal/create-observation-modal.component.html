@@ -44,6 +44,7 @@
               placeholder="Escribe aquí los detalles del seguimiento..."
               class="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
             ></textarea>
+            <app-sensitive-content-notice />
 
             @if (observationForm.controls.content.invalid && observationForm.controls.content.touched) {
               <p class="mt-1 text-xs text-rose-500">

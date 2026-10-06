@@ -1,7 +1,7 @@
 import {Component, inject, OnInit,signal,viewChild} from '@angular/core';
 import { ActivatedRoute,  Router} from '@angular/router';
 import {  SocialRecordsService} from '../../services/social-records.service';
-import { SocialRecordDetail, CreateSocialRecordRequest,PersonType} from '../../interfaces/social-record.interface';
+import { SocialRecordDetail, CreateSocialRecordRequest} from '../../interfaces/social-record.interface';
 import { SocialRecordFormComponent} from '../../components/social-record-form/social-record-form.component';
 import { ComponentCanDeactivate } from '../../../../core/guards/pending-changes.guard';
 
@@ -71,89 +71,60 @@ export class SocialRecordEditComponent
     return this.formComponent()?.canDeactivate() ?? true;
   }
 
+  // bug reportado 2026-09-23: esta pantalla cargaba datos mockeados ("María Belén
+  // González" hardcodeada) en vez de la ficha real del backend.
   private loadRecord(id: string): void {
 
     this.loading.set(true);
 
     this.errorMessage.set(null);
 
+    this.socialRecordsService
+      .getById(id)
+      .subscribe({
 
-    // this.socialRecordsService
-    //   .getById(id)
-    //   .subscribe({
+        next: (record) => {
 
-    //     next: (record) => {
+          this.record.set(record);
 
-    //       this.record.set(record);
+          this.loading.set(false);
 
-    //       this.loading.set(false);
+        },
 
-    //     },
+        error: (err) => {
 
+          console.error(
+            'Error al cargar la ficha:',
+            err
+          );
 
-    //     error: (err) => {
+          this.loading.set(false);
 
-    //       console.error(
-    //         'Error al cargar la ficha:',
-    //         err
-    //       );
+          this.errorMessage.set(
+            'No se pudo cargar la ficha.'
+          );
 
-    //       this.loading.set(false);
+        }
 
-    //       this.errorMessage.set(
-    //         'No se pudo cargar la ficha.'
-    //       );
+      });
+  }
 
-    //     }
-
-    //   });
-
-    // --- MOCK TEMPORAL DE DATOS PARA EDICIÓN ---
-  setTimeout(() => {
-    this.record.set({
-      id: id || '123',
-      firstName: 'María Belén',
-      lastName: 'González',
-      dni: '38123456',
-      dateOfBirth: '1995-04-12T00:00:00.000Z',
-      phone: '3519876543',
-      personType: PersonType.Resident,
-      reasonForEntry: 'Acompañamiento e ingreso por situación habitacional.',
-      entryDate: '2026-01-15T00:00:00.000Z',
-      housingSituation: 'Parador / Casa de Convivencia',
-      overnightLocation: 'Casa de Convivencia',
-      occupation: 'Estudiante',
-      hasDocumentation: true,
-      generalNotes: 'Observaciones generales ficticias cargadas en modo edición.',
-      contact: {
-        firstName: 'Juan',
-        lastName: 'González',
-        phone: '3511112233',
-        address: 'Av. Colón 1234'
-      }
-    } as SocialRecordDetail);
-
-    this.loading.set(false); // Apagamos el estado de carga
-  }, 200); // Pequeño delay opcional para simular la carga
-}
-  
 
   updateRecord(data: CreateSocialRecordRequest): void {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.saving.set(true);
 
+    // bug reportado 2026-09-23: el backend devuelve 204 No Content, no la ficha
+    // actualizada — antes se esperaba un body que nunca llegaba.
     this.socialRecordsService
       .update(this.recordId, data)
       .subscribe({
-        next: (updatedRecord) => {
+        next: () => {
           this.saving.set(false);
           this.successMessage.set('Ficha actualizada correctamente.');
-          
-          // Actualizamos la signal record para refrescar la instancia si fuera necesario
-          this.record.set(updatedRecord);
 
-          // Opción A: Redirigir al detalle de la ficha pasados 1.5 segundos
+          // Redirigir al detalle de la ficha pasados 1.5 segundos
           setTimeout(() => {
             this.router.navigate(['/dashboard/fichas', this.recordId]);
           }, 1500);

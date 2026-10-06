@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ObservationCategoriesService } from '../../services/observation-categories.service';
+import { ObservationsService } from '../../services/observations.service';
 import { ObservationCategory } from '../../interfaces/observation-category.interface';
 import { Observation } from '../../interfaces/observation.interface';
 import { PermissionService } from '../../../../core/auth/permission.service';
@@ -8,18 +9,20 @@ import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-fi
 import { CreateObservationModalComponent } from '../create-observation-modal/create-observation-modal.component';
 import { ObservationFilters } from '../../interfaces/observation-filter.interface';
 import { ObservationFiltersComponent } from '../observation-filters/observation-filters.component';
+import { SuccessModalComponent } from '../../../../shared/components/success-modal/success-modal.component';
 
 
 
 @Component({
   selector: 'app-observations',
   standalone: true,
-  imports: [DatePipe, EmptyFieldBadgeComponent, CreateObservationModalComponent, ObservationFiltersComponent],
+  imports: [DatePipe, EmptyFieldBadgeComponent, CreateObservationModalComponent, ObservationFiltersComponent, SuccessModalComponent],
   templateUrl: './observations.component.html',
   styleUrl: './observations.component.css'
 })
 export class ObservationsComponent implements OnInit {
   private categoriesService = inject(ObservationCategoriesService);
+  private observationsService = inject(ObservationsService);
   public permissionService = inject(PermissionService);
 
   // Recibe ID de la ficha social y lista inicial de observaciones
@@ -32,6 +35,10 @@ export class ObservationsComponent implements OnInit {
   activeTabId = signal<string>('all');
   loading = signal<boolean>(true);
   showCreateModal = signal<boolean>(false);
+  // bug reportado 2026-09-23: no había ningún feedback al guardar una observación
+  showSuccessModal = signal<boolean>(false);
+  exporting = signal<boolean>(false);
+  exportError = signal<string | null>(null);
 
 
   // Estado del filtro actual recibido del hijo
@@ -113,10 +120,36 @@ export class ObservationsComponent implements OnInit {
     onObservationSaved(newObservation: Observation): void {
     this.observationsList.update(current => [newObservation, ...current]);
     this.showCreateModal.set(false);
+    this.showSuccessModal.set(true);
   }
- 
+
+  // bug reportado 2026-09-23: el botón "Exportar" no llamaba al endpoint (ya existente),
+  // solo hacía console.log. El filtro por autor no se manda: es por nombre en el front,
+  // el backend filtra por id de usuario.
   exportReport(): void {
-    console.log('Exportando observaciones:', this.filteredObservations());
+    const f = this.activeFilters();
+    this.exportError.set(null);
+    this.exporting.set(true);
+
+    this.observationsService.exportCsv(this.socialRecordId(), {
+      categoryId: f.categoryId && f.categoryId !== 'all' ? f.categoryId : null,
+      dateFrom: f.dateFrom || null,
+      dateTo: f.dateTo || null,
+    }).subscribe({
+      next: (blob) => {
+        this.exporting.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `observaciones_${this.socialRecordId()}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.exporting.set(false);
+        this.exportError.set('No se pudo exportar el reporte. Intentá nuevamente.');
+      }
+    });
   }
- 
+
 }

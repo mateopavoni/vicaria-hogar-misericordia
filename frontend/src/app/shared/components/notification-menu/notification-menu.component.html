@@ -39,6 +39,8 @@
             @for (notification of notificationService.notifications(); track notification.id) {
               <div 
                 [class.bg-blue-50]="!notification.isRead"
+                [class.cursor-pointer]="notification.linkUrl"
+                (click)="open(notification)"
                 class="p-3.5 hover:bg-gray-100 transition-colors flex justify-between items-start gap-2">
                 
                 <div class="flex-1">
@@ -49,7 +51,7 @@
 
                 @if (!notification.isRead) {
                   <button 
-                    (click)="notificationService.markAsRead(notification.id)"
+                    (click)="$event.stopPropagation(); notificationService.markAsRead(notification.id)"
                     title="Marcar como leída"
                     class="p-1 text-gray-400 hover:text-indigo-600">
                     <span class="h-2 w-2 bg-indigo-600 rounded-full inline-block"></span>

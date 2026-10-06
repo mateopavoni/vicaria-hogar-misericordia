@@ -6,6 +6,7 @@ import { Notification } from './notification.interface';
 const EVENT_TITLES: Record<string, string> = {
   NuevoUsuarioPendiente: 'Nueva solicitud de cuenta',
   CuentaBloqueada: 'Cuenta bloqueada',
+  FichaSinObservaciones: 'Ficha sin seguimiento',
 };
 
 // forma cruda que devuelve GET /api/notifications
@@ -27,6 +28,7 @@ export class NotificationService {
       id: n.id,
       title: EVENT_TITLES[n.eventType] ?? n.eventType,
       message: n.description,
+      linkUrl: n.linkUrl,
       isRead: n.isRead,
       createdAt: n.createdAt,
     };

@@ -3,10 +3,13 @@ import {ManagedUser} from '../../interfaces/user.interface';
 import {UserRole} from './../../../../core/auth/userRole';
 
 // nombres lindos para mostrar en pantalla
+// bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia, no se podía aprobar
+// una cuenta nueva con ese rol desde este modal.
 const ROLE_LABELS: Record<UserRole, string> = {
   Referente: 'Referente',
-  DirectoraDeCasona: 'Directora de Casona',
+  DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',
   Escucha: 'Escucha',
+  CoordinadorDeCasaConvivencia: 'Coordinador de Casa de Convivencia',
 };
 
 @Component({
@@ -32,8 +35,9 @@ export class ApproveUserModalComponent {
 
   roles: UserRole[] = [
     'Referente',
-    'DirectoraDeCasona',
-    'Escucha'
+    'DirectoraDeCasaConvivencia',
+    'Escucha',
+    'CoordinadorDeCasaConvivencia'
   ];
 
 
