@@ -55,7 +55,7 @@ public class AuthService : IAuthService
                 Id = Guid.NewGuid(),
                 Description = $"{user.FirstName} {user.LastName} se registró y espera aprobación.",
                 EventType = "NuevoUsuarioPendiente",
-                LinkUrl = "/usuarios/pendientes",
+                LinkUrl = "/dashboard/users",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                 TargetRole = RoleNames.Referent
@@ -80,7 +80,7 @@ public class AuthService : IAuthService
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .Skip((page - 1) * UsersPageSize)
+            .Skip((Math.Max(1, page) - 1) * UsersPageSize)
             .Take(UsersPageSize)
             .Select(u => new PendingUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.CreatedAt))
             .ToListAsync(cancellationToken);
@@ -109,7 +109,7 @@ public class AuthService : IAuthService
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
-            .Skip((page - 1) * UsersPageSize)
+            .Skip((Math.Max(1, page) - 1) * UsersPageSize)
             .Take(UsersPageSize)
             .Select(u => new ManagedUserDto(u.Id, u.FirstName, u.LastName, u.Email, u.Role != null ? u.Role.Name : null))
             .ToListAsync(cancellationToken);
@@ -273,7 +273,7 @@ public class AuthService : IAuthService
                         Id = Guid.NewGuid(),
                         Description = $"La cuenta de {user.FirstName} {user.LastName} quedó bloqueada por 5 intentos fallidos de login.",
                         EventType = "CuentaBloqueada",
-                        LinkUrl = "/usuarios",
+                        LinkUrl = "/dashboard/users",
                         IsRead = false,
                         CreatedAt = DateTime.UtcNow,
                         TargetRole = RoleNames.Referent

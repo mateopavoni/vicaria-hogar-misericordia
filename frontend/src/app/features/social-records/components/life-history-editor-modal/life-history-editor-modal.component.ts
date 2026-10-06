@@ -1,7 +1,8 @@
+import { SensitiveContentNoticeComponent } from '../../../../shared/components/sensitive-content-notice/sensitive-content-notice.component';
 import { Component, input, output, signal, effect } from '@angular/core';
 @Component({
   selector: 'app-life-history-editor-modal',
-  imports: [],
+  imports: [SensitiveContentNoticeComponent],
   templateUrl: './life-history-editor-modal.component.html',
   styleUrl: './life-history-editor-modal.component.css',
 })

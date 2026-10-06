@@ -16,6 +16,7 @@ using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.CasaConvivenciaStays;
 using Vicaria.Infrastructure.Notifications;
+using Vicaria.Infrastructure.Persons;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.Infrastructure.SocialRecords;
 using Vicaria.Application.Observations;
@@ -69,6 +70,9 @@ builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoV
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
+builder.Services.AddScoped<IStaleRecordAlertService, StaleRecordAlertService>();
+builder.Services.AddScoped<IPersonAccessService, PersonAccessService>();
+builder.Services.AddHostedService<StaleRecordAlertBackgroundService>();
 builder.Services.AddScoped<IObservationService, ObservationService>();
 builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDtoValidator>();
 builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
@@ -310,6 +314,10 @@ static void SeedDemoData(VicariaDbContext dbContext)
     var (personLucia, recordLucia) = MakePerson(
         "Lucía", "Fernández", null, PersonType.Resident, SocialRecordStatus.Active,
         "Ingreso voluntario a la Casa de Convivencia", "Sin vivienda", null, 10);
+    // ficha activa con seguimiento vencido: dispara la alerta de 30 días sin observaciones (SCRUM-22)
+    var (personPedro, recordPedro) = MakePerson(
+        "Pedro", "Almada", "27111222", PersonType.Ambulatory, SocialRecordStatus.Active,
+        "Asiste al comedor, sin seguimiento reciente", "Calle", "Changas", 60);
     var (personRoberto, recordRoberto) = MakePerson(
         "Roberto", "Sánchez", "22334455", PersonType.Resident, SocialRecordStatus.Inactive,
         "Estadía finalizada, alta del equipo", "Sin vivienda", "Changas", 90);
@@ -317,8 +325,8 @@ static void SeedDemoData(VicariaDbContext dbContext)
         "Ana", "Torres", null, PersonType.Ambulatory, SocialRecordStatus.Inactive,
         "Dejó de asistir al Centro Barrial", "Familiar", null, 120);
 
-    dbContext.People.AddRange(personJuan, personMaria, personCarlos, personLucia, personRoberto, personAna);
-    dbContext.SocialRecords.AddRange(recordJuan, recordMaria, recordCarlos, recordLucia, recordRoberto, recordAna);
+    dbContext.People.AddRange(personJuan, personMaria, personCarlos, personLucia, personPedro, personRoberto, personAna);
+    dbContext.SocialRecords.AddRange(recordJuan, recordMaria, recordCarlos, recordLucia, recordPedro, recordRoberto, recordAna);
 
     dbContext.Contacts.AddRange(
         new Contact
@@ -449,6 +457,15 @@ static void SeedDemoData(VicariaDbContext dbContext)
             CategoryId = categoriaGeneral,
             AuthorUserId = directora.Id,
             CreatedAt = now.AddDays(-3)
+        },
+        new Observation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personPedro.Id,
+            Content = "Primer contacto en el comedor, se registró la situación general.",
+            CategoryId = categoriaGeneral,
+            AuthorUserId = escucha.Id,
+            CreatedAt = now.AddDays(-45)
         }
     );
 
@@ -459,7 +476,8 @@ static void SeedDemoData(VicariaDbContext dbContext)
         new Attendance { Id = Guid.NewGuid(), PersonId = personJuan.Id, Date = now.AddDays(-2), CreatedByUserId = referente.Id },
         new Attendance { Id = Guid.NewGuid(), PersonId = personMaria.Id, Date = now.AddDays(-5), CreatedByUserId = escucha.Id },
         new Attendance { Id = Guid.NewGuid(), PersonId = personCarlos.Id, Date = now.AddDays(-1), CreatedByUserId = directora.Id },
-        new Attendance { Id = Guid.NewGuid(), PersonId = personLucia.Id, Date = now, CreatedByUserId = directora.Id }
+        new Attendance { Id = Guid.NewGuid(), PersonId = personLucia.Id, Date = now, CreatedByUserId = directora.Id },
+        new Attendance { Id = Guid.NewGuid(), PersonId = personPedro.Id, Date = now.AddDays(-4), CreatedByUserId = escucha.Id }
     );
 
     dbContext.SaveChanges();

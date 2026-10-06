@@ -1,3 +1,4 @@
+import { SensitiveContentNoticeComponent } from '../../../../shared/components/sensitive-content-notice/sensitive-content-notice.component';
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import {  CreateSocialRecordRequest, SocialRecordDetail, PersonType, PersonStatu
 
 @Component({
   selector: 'app-social-record-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SensitiveContentNoticeComponent],
   templateUrl: './social-record-form.component.html',
   styleUrl: './social-record-form.component.css'
 })

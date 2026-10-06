@@ -274,6 +274,7 @@ public class SocialRecordService : ISocialRecordService
     public async Task<PagedResult<SocialRecordListItemDto>> GetPagedAsync(int page, string? search, FilterSocialRecordsDto? filter, PersonType? personTypeFilter = null, CancellationToken cancellationToken = default)
     {
         const int pageSize = 10;
+        page = Math.Max(1, page);
 
         var query = _dbContext.SocialRecords.Include(r => r.Person).AsQueryable();
 

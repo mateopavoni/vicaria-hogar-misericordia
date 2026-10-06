@@ -1,1 +1,15 @@
 @import "tailwindcss";
+/* "Exportar ficha": se imprime/guarda como PDF desde el navegador, sin menú lateral ni barra superior */
+@media print {
+  app-sidebar,
+  app-topbar,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    margin-left: 0 !important;
+    padding-top: 0 !important;
+    background: #fff !important;
+  }
+}

@@ -20,6 +20,23 @@ public class ObservationServiceTests
     }
 
     [Fact]
+    public async Task ExportToCsvAsync_ContenidoQueEmpiezaConFormula_LoNeutralizaConApostrofe()
+    {
+        using var db = CrearDbContext();
+        var personId = Guid.NewGuid();
+        var authorId = Guid.NewGuid();
+        db.Users.Add(new User { Id = authorId, FirstName = "Autor", LastName = "Prueba", Email = "autor@test.com" });
+        db.Observations.Add(new Observation { Id = Guid.NewGuid(), PersonId = personId, AuthorUserId = authorId, Content = "=HYPERLINK(\"http://x\")", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var csv = await new ObservationService(db).ExportToCsvAsync(personId, new GetObservationsFilterDto());
+
+        Assert.DoesNotContain(",=HYPERLINK", csv);
+        Assert.DoesNotContain(",\"=HYPERLINK", csv);
+        Assert.Contains("'=HYPERLINK", csv);
+    }
+
+    [Fact]
     public async Task ExportToCsvAsync_DevuelveSoloLasObservacionesQueCoincidenConElFiltro()
     {
         using var db = CrearDbContext();

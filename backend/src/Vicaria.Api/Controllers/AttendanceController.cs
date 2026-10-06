@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Application.Persons;
 using Vicaria.Application.Attendances;
 using Vicaria.Domain.Entities;
 
@@ -13,13 +14,16 @@ namespace Vicaria.Api.Controllers;
 public class AttendanceController : ControllerBase
 {
     private readonly IAttendanceService _attendanceService;
+    private readonly IPersonAccessService _personAccessService;
     private readonly IValidator<CreateAttendanceDto> _validator;
 
     public AttendanceController(
         IAttendanceService attendanceService,
+        IPersonAccessService personAccessService,
         IValidator<CreateAttendanceDto> validator)
     {
         _attendanceService = attendanceService;
+        _personAccessService = personAccessService;
         _validator = validator;
     }
 
@@ -39,6 +43,11 @@ public class AttendanceController : ControllerBase
                 ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             }
             return ValidationProblem(ModelState);
+        }
+
+        if (!await _personAccessService.CanAccessPersonAsync(dto.PersonId, User.FindFirstValue(ClaimTypes.Role), cancellationToken))
+        {
+            return NotFound();
         }
 
         var result = await _attendanceService.RegisterAsync(dto, ActorId, cancellationToken);

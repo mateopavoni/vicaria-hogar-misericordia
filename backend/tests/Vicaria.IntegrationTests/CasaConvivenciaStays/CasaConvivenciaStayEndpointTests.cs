@@ -149,6 +149,19 @@ public class CasaConvivenciaStayEndpointTests : IClassFixture<VicariaWebApplicat
         Assert.True(log.Date >= beforeExit);
     }
 
+    [Theory]
+    [InlineData(RoleNames.CasaConvivenciaDirector)]
+    [InlineData(RoleNames.CasaConvivenciaCoordinator)]
+    public async Task Exit_ComoDirectoraOCoordinador_Devuelve204(string rol)
+    {
+        var stayId = await CrearEstadiaActivaAsync();
+        await UsarTokenAsync(rol);
+
+        var response = await _client.PutAsJsonAsync($"/api/casa-convivencia-stays/{stayId}/egreso", new { exitReason = 0 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
     [Fact]
     public async Task Exit_ComoEscucha_Devuelve403()
     {

@@ -2,6 +2,8 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Api.Filters;
+using Vicaria.Application.Common;
 using Vicaria.Application.LifeStories;
 using Vicaria.Domain.Entities;
 
@@ -9,6 +11,7 @@ namespace Vicaria.Api.Controllers;
 
 [ApiController]
 [Route("api/persons/{personId:guid}/life-story")]
+[DirectorResidentsOnly("personId")]
 [Authorize]
 public class LifeStoriesController : ControllerBase
 {
@@ -38,6 +41,12 @@ public class LifeStoriesController : ControllerBase
         [FromBody] UpdateLifeStoryDto dto,
         CancellationToken cancellationToken)
     {
+        if (new[] { dto.BeforeCentroBarrial, dto.InCentroBarrial, dto.AfterCentroBarrial }.Any(SensitiveContentRules.ContainsSensitiveContent))
+        {
+            ModelState.AddModelError("content", SensitiveContentRules.Message);
+            return ValidationProblem(ModelState);
+        }
+
         var result = await _lifeStoryService.UpdateAsync(personId, dto, ActorId, cancellationToken);
         if (result is null) return NotFound(new { message = "La persona especificada no existe." });
 
@@ -64,7 +73,7 @@ public class LifeStoriesController : ControllerBase
         var stageEnum = ParseStage(stage);
         if (stageEnum is null)
         {
-            ModelState.AddModelError("stage", "La etapa no es válida. Valores admitidos: before-hogar, in-hogar, after-hogar.");
+            ModelState.AddModelError("stage", "La etapa no es válida. Valores admitidos: before-centro-barrial, in-centro-barrial, after-centro-barrial.");
             return ValidationProblem(ModelState);
         }
 
@@ -76,9 +85,9 @@ public class LifeStoriesController : ControllerBase
 
     private static LifeStoryStage? ParseStage(string stage) => stage switch
     {
-        "before-hogar" => LifeStoryStage.BeforeHogar,
-        "in-hogar" => LifeStoryStage.InHogar,
-        "after-hogar" => LifeStoryStage.AfterHogar,
+        "before-centro-barrial" => LifeStoryStage.BeforeCentroBarrial,
+        "in-centro-barrial" => LifeStoryStage.InCentroBarrial,
+        "after-centro-barrial" => LifeStoryStage.AfterCentroBarrial,
         _ => null
     };
 }

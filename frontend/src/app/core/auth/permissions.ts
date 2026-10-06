@@ -105,12 +105,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'stock.create',
     'stock.edit',
 
-    // Usuarios Casa de Convivencia
-    'users.view',
-    'users.approve',
-    'users.reject',
-    'users.change-role',
-    'users.disable',
+    // la gestión de usuarios es solo del Referente (el backend autoriza solo ese rol)
 
     // Medicamentos Casa de Convivencia
     'medicamentos.view',

@@ -14,36 +14,36 @@ public class LifeStoryConfiguration : IEntityTypeConfiguration<LifeStory>
         builder.Property(l => l.Id).HasColumnName("id");
         builder.Property(l => l.PersonId).HasColumnName("person_id").IsRequired();
 
-        builder.Property(l => l.BeforeHogar).HasColumnName("before_hogar");
-        builder.Property(l => l.BeforeHogarUpdatedByUserId).HasColumnName("before_hogar_updated_by_user_id");
-        builder.Property(l => l.BeforeHogarUpdatedAt).HasColumnName("before_hogar_updated_at");
+        builder.Property(l => l.BeforeCentroBarrial).HasColumnName("before_centro_barrial");
+        builder.Property(l => l.BeforeCentroBarrialUpdatedByUserId).HasColumnName("before_centro_barrial_updated_by_user_id");
+        builder.Property(l => l.BeforeCentroBarrialUpdatedAt).HasColumnName("before_centro_barrial_updated_at");
 
-        builder.Property(l => l.InHogar).HasColumnName("in_hogar");
-        builder.Property(l => l.InHogarUpdatedByUserId).HasColumnName("in_hogar_updated_by_user_id");
-        builder.Property(l => l.InHogarUpdatedAt).HasColumnName("in_hogar_updated_at");
+        builder.Property(l => l.InCentroBarrial).HasColumnName("in_centro_barrial");
+        builder.Property(l => l.InCentroBarrialUpdatedByUserId).HasColumnName("in_centro_barrial_updated_by_user_id");
+        builder.Property(l => l.InCentroBarrialUpdatedAt).HasColumnName("in_centro_barrial_updated_at");
 
-        builder.Property(l => l.AfterHogar).HasColumnName("after_hogar");
-        builder.Property(l => l.AfterHogarUpdatedByUserId).HasColumnName("after_hogar_updated_by_user_id");
-        builder.Property(l => l.AfterHogarUpdatedAt).HasColumnName("after_hogar_updated_at");
+        builder.Property(l => l.AfterCentroBarrial).HasColumnName("after_centro_barrial");
+        builder.Property(l => l.AfterCentroBarrialUpdatedByUserId).HasColumnName("after_centro_barrial_updated_by_user_id");
+        builder.Property(l => l.AfterCentroBarrialUpdatedAt).HasColumnName("after_centro_barrial_updated_at");
 
         builder.HasOne(l => l.Person)
             .WithOne()
             .HasForeignKey<LifeStory>(l => l.PersonId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(l => l.BeforeHogarUpdatedByUser)
+        builder.HasOne(l => l.BeforeCentroBarrialUpdatedByUser)
             .WithMany()
-            .HasForeignKey(l => l.BeforeHogarUpdatedByUserId)
+            .HasForeignKey(l => l.BeforeCentroBarrialUpdatedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(l => l.InHogarUpdatedByUser)
+        builder.HasOne(l => l.InCentroBarrialUpdatedByUser)
             .WithMany()
-            .HasForeignKey(l => l.InHogarUpdatedByUserId)
+            .HasForeignKey(l => l.InCentroBarrialUpdatedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(l => l.AfterHogarUpdatedByUser)
+        builder.HasOne(l => l.AfterCentroBarrialUpdatedByUser)
             .WithMany()
-            .HasForeignKey(l => l.AfterHogarUpdatedByUserId)
+            .HasForeignKey(l => l.AfterCentroBarrialUpdatedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -166,6 +166,12 @@ public class ObservationService : IObservationService
     // envuelve en comillas y escapa comillas internas si el valor tiene coma, comilla o salto de linea
     private static string CsvEscape(string value)
     {
+        // neutraliza inyección de fórmulas: Excel/Sheets ejecutan celdas que empiezan con = + - @
+        if (value.Length > 0 && "=+-@\t\r".Contains(value[0]))
+        {
+            value = "'" + value;
+        }
+
         if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
         {
             return $"\"{value.Replace("\"", "\"\"")}\"";

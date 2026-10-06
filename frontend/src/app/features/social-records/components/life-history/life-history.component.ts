@@ -22,9 +22,9 @@ export class LifeHistoryComponent {
   }>();
 
   stages: { id: LifeHistoryStage; title: string; colorClass: string; textClass: string }[] = [
-    { id: 'beforeHome', title: 'Antes del hogar', colorClass: 'bg-emerald-400', textClass: 'text-emerald-600' },
-    { id: 'duringHome', title: 'En el hogar', colorClass: 'bg-orange-400', textClass: 'text-orange-500' },
-    { id: 'afterHome', title: 'Después del hogar', colorClass: 'bg-purple-500', textClass: 'text-purple-600' }
+    { id: 'beforeHome', title: 'Antes del Centro Barrial', colorClass: 'bg-emerald-400', textClass: 'text-emerald-600' },
+    { id: 'duringHome', title: 'En el Centro Barrial', colorClass: 'bg-orange-400', textClass: 'text-orange-500' },
+    { id: 'afterHome', title: 'Después del Centro Barrial', colorClass: 'bg-purple-500', textClass: 'text-purple-600' }
   ];
 
   // por etapa: si se está mostrando el historial completo de entradas anteriores

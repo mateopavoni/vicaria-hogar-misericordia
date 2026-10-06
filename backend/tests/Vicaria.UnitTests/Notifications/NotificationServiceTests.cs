@@ -35,6 +35,30 @@ public class NotificationServiceTests
     }
 
     [Fact]
+    public async Task MarkAsReadAsync_NotificacionDeOtroRol_DevuelveNotFoundYNoLaMarca()
+    {
+        using var db = CrearDbContext();
+        var id = await CrearNotificacion(db, "Referente");
+
+        var result = await new NotificationService(db).MarkAsReadAsync(id, "Escucha", Guid.NewGuid());
+
+        Assert.False(result.Success);
+        Assert.False((await db.Notifications.FindAsync(id))!.IsRead);
+    }
+
+    [Fact]
+    public async Task MarkAsReadAsync_NotificacionDelPropioRol_LaMarcaLeida()
+    {
+        using var db = CrearDbContext();
+        var id = await CrearNotificacion(db, "Referente");
+
+        var result = await new NotificationService(db).MarkAsReadAsync(id, "Referente", Guid.NewGuid());
+
+        Assert.True(result.Success);
+        Assert.True((await db.Notifications.FindAsync(id))!.IsRead);
+    }
+
+    [Fact]
     public async Task MarkAllAsReadAsync_MarcaTodasyRegistraAuditLogPorNotificacion()
     {
         using var db = CrearDbContext();

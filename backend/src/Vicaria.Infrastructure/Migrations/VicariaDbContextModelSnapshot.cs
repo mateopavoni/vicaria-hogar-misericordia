@@ -141,41 +141,41 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<string>("AfterHogar")
+                    b.Property<string>("AfterCentroBarrial")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("after_hogar");
+                        .HasColumnName("after_centro_barrial");
 
-                    b.Property<DateTime?>("AfterHogarUpdatedAt")
+                    b.Property<DateTime?>("AfterCentroBarrialUpdatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("after_hogar_updated_at");
+                        .HasColumnName("after_centro_barrial_updated_at");
 
-                    b.Property<Guid?>("AfterHogarUpdatedByUserId")
+                    b.Property<Guid?>("AfterCentroBarrialUpdatedByUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("after_hogar_updated_by_user_id");
+                        .HasColumnName("after_centro_barrial_updated_by_user_id");
 
-                    b.Property<string>("BeforeHogar")
+                    b.Property<string>("BeforeCentroBarrial")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("before_hogar");
+                        .HasColumnName("before_centro_barrial");
 
-                    b.Property<DateTime?>("BeforeHogarUpdatedAt")
+                    b.Property<DateTime?>("BeforeCentroBarrialUpdatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("before_hogar_updated_at");
+                        .HasColumnName("before_centro_barrial_updated_at");
 
-                    b.Property<Guid?>("BeforeHogarUpdatedByUserId")
+                    b.Property<Guid?>("BeforeCentroBarrialUpdatedByUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("before_hogar_updated_by_user_id");
+                        .HasColumnName("before_centro_barrial_updated_by_user_id");
 
-                    b.Property<string>("InHogar")
+                    b.Property<string>("InCentroBarrial")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("in_hogar");
+                        .HasColumnName("in_centro_barrial");
 
-                    b.Property<DateTime?>("InHogarUpdatedAt")
+                    b.Property<DateTime?>("InCentroBarrialUpdatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("in_hogar_updated_at");
+                        .HasColumnName("in_centro_barrial_updated_at");
 
-                    b.Property<Guid?>("InHogarUpdatedByUserId")
+                    b.Property<Guid?>("InCentroBarrialUpdatedByUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("in_hogar_updated_by_user_id");
+                        .HasColumnName("in_centro_barrial_updated_by_user_id");
 
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier")
@@ -183,11 +183,11 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AfterHogarUpdatedByUserId");
+                    b.HasIndex("AfterCentroBarrialUpdatedByUserId");
 
-                    b.HasIndex("BeforeHogarUpdatedByUserId");
+                    b.HasIndex("BeforeCentroBarrialUpdatedByUserId");
 
-                    b.HasIndex("InHogarUpdatedByUserId");
+                    b.HasIndex("InCentroBarrialUpdatedByUserId");
 
                     b.HasIndex("PersonId")
                         .IsUnique();
@@ -761,19 +761,19 @@ namespace Vicaria.Infrastructure.Migrations
 
             modelBuilder.Entity("Vicaria.Domain.Entities.LifeStory", b =>
                 {
-                    b.HasOne("Vicaria.Domain.Entities.User", "AfterHogarUpdatedByUser")
+                    b.HasOne("Vicaria.Domain.Entities.User", "AfterCentroBarrialUpdatedByUser")
                         .WithMany()
-                        .HasForeignKey("AfterHogarUpdatedByUserId")
+                        .HasForeignKey("AfterCentroBarrialUpdatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Vicaria.Domain.Entities.User", "BeforeHogarUpdatedByUser")
+                    b.HasOne("Vicaria.Domain.Entities.User", "BeforeCentroBarrialUpdatedByUser")
                         .WithMany()
-                        .HasForeignKey("BeforeHogarUpdatedByUserId")
+                        .HasForeignKey("BeforeCentroBarrialUpdatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Vicaria.Domain.Entities.User", "InHogarUpdatedByUser")
+                    b.HasOne("Vicaria.Domain.Entities.User", "InCentroBarrialUpdatedByUser")
                         .WithMany()
-                        .HasForeignKey("InHogarUpdatedByUserId")
+                        .HasForeignKey("InCentroBarrialUpdatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Vicaria.Domain.Entities.Person", "Person")
@@ -782,11 +782,11 @@ namespace Vicaria.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AfterHogarUpdatedByUser");
+                    b.Navigation("AfterCentroBarrialUpdatedByUser");
 
-                    b.Navigation("BeforeHogarUpdatedByUser");
+                    b.Navigation("BeforeCentroBarrialUpdatedByUser");
 
-                    b.Navigation("InHogarUpdatedByUser");
+                    b.Navigation("InCentroBarrialUpdatedByUser");
 
                     b.Navigation("Person");
                 });

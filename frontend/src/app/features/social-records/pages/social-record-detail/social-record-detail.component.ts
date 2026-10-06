@@ -1,3 +1,4 @@
+import { extractApiError } from '../../../../core/http/api-error';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -144,11 +145,22 @@ export class SocialRecordDetailComponent implements OnInit {
   // agrega una entrada nueva a una etapa de la historia de vida (SCRUM-11/171).
   // Bug reportado 2026-09-23: faltaba el modal de éxito acá (sí existía para
   // ingreso/egreso) — se reusa el mismo patrón de signals.
+  // error al guardar la historia de vida: se muestra como aviso, sin reemplazar la ficha entera
+  lifeHistoryError = signal<string | null>(null);
+
+  // abre el diálogo de impresión del navegador (imprimir o guardar como PDF); los estilos
+  // de impresión ocultan el menú y la barra superior
+  exportRecord(): void {
+    window.print();
+  }
+
   handleLifeHistorySaved(event: { stage: LifeHistoryStage; text: string }): void {
     const personId = this.record()?.personId;
     if (!personId) {
       return;
     }
+
+    this.lifeHistoryError.set(null);
 
     this.lifeStoryService.updateStage(personId, event.stage, event.text).subscribe({
       next: (updated) => {
@@ -158,7 +170,7 @@ export class SocialRecordDetailComponent implements OnInit {
         this.showSuccessModal.set(true);
       },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message || 'No se pudo guardar la historia de vida.');
+        this.lifeHistoryError.set(extractApiError(err, 'No se pudo guardar la historia de vida.'));
       }
     });
   }

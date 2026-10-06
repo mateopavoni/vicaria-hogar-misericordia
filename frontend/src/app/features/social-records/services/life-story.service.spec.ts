@@ -29,7 +29,7 @@ describe('LifeStoryService', () => {
     req.flush({
       id: 'ls-1',
       personId: 'person-1',
-      beforeHogar: {
+      beforeCentroBarrial: {
         content: 'segunda entrada',
         isCompleted: true,
         updatedByUserId: 'u1',
@@ -40,8 +40,8 @@ describe('LifeStoryService', () => {
           { id: 'e1', content: 'primera entrada', createdByUserId: 'u1', createdByName: 'Ana Perez', createdAt: '2026-09-20T10:00:00Z' },
         ],
       },
-      inHogar: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
-      afterHogar: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
+      inCentroBarrial: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
+      afterCentroBarrial: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
     });
 
     const history = result as any;
@@ -54,15 +54,15 @@ describe('LifeStoryService', () => {
   it('updateStage() manda el content al segmento de ruta correcto (no pisa, el backend suma una entrada)', () => {
     service.updateStage('person-1', 'duringHome', 'nueva entrada').subscribe();
 
-    const req = httpMock.expectOne('/api/persons/person-1/life-story/in-hogar');
+    const req = httpMock.expectOne('/api/persons/person-1/life-story/in-centro-barrial');
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual({ content: 'nueva entrada' });
     req.flush({
       id: 'ls-1',
       personId: 'person-1',
-      beforeHogar: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
-      inHogar: { content: 'nueva entrada', isCompleted: true, updatedByUserId: 'u1', updatedByName: 'Ana', updatedAt: '2026-09-23T10:00:00Z', entries: [] },
-      afterHogar: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
+      beforeCentroBarrial: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
+      inCentroBarrial: { content: 'nueva entrada', isCompleted: true, updatedByUserId: 'u1', updatedByName: 'Ana', updatedAt: '2026-09-23T10:00:00Z', entries: [] },
+      afterCentroBarrial: { content: null, isCompleted: false, updatedByUserId: null, updatedByName: null, updatedAt: null, entries: [] },
     });
   });
 });

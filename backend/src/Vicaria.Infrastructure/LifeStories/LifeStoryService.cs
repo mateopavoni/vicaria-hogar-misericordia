@@ -18,9 +18,9 @@ public class LifeStoryService : ILifeStoryService
     {
         var entity = await _dbContext.LifeStories
             .AsNoTracking()
-            .Include(l => l.BeforeHogarUpdatedByUser)
-            .Include(l => l.InHogarUpdatedByUser)
-            .Include(l => l.AfterHogarUpdatedByUser)
+            .Include(l => l.BeforeCentroBarrialUpdatedByUser)
+            .Include(l => l.InCentroBarrialUpdatedByUser)
+            .Include(l => l.AfterCentroBarrialUpdatedByUser)
             .FirstOrDefaultAsync(l => l.PersonId == personId, cancellationToken);
 
         var entriesByStage = await GetEntriesByStageAsync(personId, cancellationToken);
@@ -30,9 +30,9 @@ public class LifeStoryService : ILifeStoryService
             return new LifeStoryResponseDto(
                 Guid.Empty,
                 personId,
-                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.BeforeHogar]),
-                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.InHogar]),
-                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.AfterHogar])
+                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.BeforeCentroBarrial]),
+                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.InCentroBarrial]),
+                new LifeStorySectionDto(null, false, null, null, null, entriesByStage[LifeStoryStage.AfterCentroBarrial])
             );
         }
 
@@ -45,9 +45,9 @@ public class LifeStoryService : ILifeStoryService
         if (!personExists) return null;
 
         var entity = await _dbContext.LifeStories
-            .Include(l => l.BeforeHogarUpdatedByUser)
-            .Include(l => l.InHogarUpdatedByUser)
-            .Include(l => l.AfterHogarUpdatedByUser)
+            .Include(l => l.BeforeCentroBarrialUpdatedByUser)
+            .Include(l => l.InCentroBarrialUpdatedByUser)
+            .Include(l => l.AfterCentroBarrialUpdatedByUser)
             .FirstOrDefaultAsync(l => l.PersonId == personId, cancellationToken);
 
         var now = DateTime.UtcNow;
@@ -61,30 +61,30 @@ public class LifeStoryService : ILifeStoryService
         // Auditoría automática por etapa (SCRUM-172) — este endpoint (PUT masivo de las 3
         // etapas) también suma una entrada nueva al historial de cada etapa que cambió,
         // igual que UpdateStageAsync, para no dejar un camino que siga pisando contenido.
-        if (dto.BeforeHogar is not null && dto.BeforeHogar != entity.BeforeHogar)
+        if (dto.BeforeCentroBarrial is not null && dto.BeforeCentroBarrial != entity.BeforeCentroBarrial)
         {
-            ApplyStageContent(entity, LifeStoryStage.BeforeHogar, dto.BeforeHogar, actorUserId, now);
-            AddEntry(personId, LifeStoryStage.BeforeHogar, dto.BeforeHogar, actorUserId, now);
+            ApplyStageContent(entity, LifeStoryStage.BeforeCentroBarrial, dto.BeforeCentroBarrial, actorUserId, now);
+            AddEntry(personId, LifeStoryStage.BeforeCentroBarrial, dto.BeforeCentroBarrial, actorUserId, now);
         }
 
-        if (dto.InHogar is not null && dto.InHogar != entity.InHogar)
+        if (dto.InCentroBarrial is not null && dto.InCentroBarrial != entity.InCentroBarrial)
         {
-            ApplyStageContent(entity, LifeStoryStage.InHogar, dto.InHogar, actorUserId, now);
-            AddEntry(personId, LifeStoryStage.InHogar, dto.InHogar, actorUserId, now);
+            ApplyStageContent(entity, LifeStoryStage.InCentroBarrial, dto.InCentroBarrial, actorUserId, now);
+            AddEntry(personId, LifeStoryStage.InCentroBarrial, dto.InCentroBarrial, actorUserId, now);
         }
 
-        if (dto.AfterHogar is not null && dto.AfterHogar != entity.AfterHogar)
+        if (dto.AfterCentroBarrial is not null && dto.AfterCentroBarrial != entity.AfterCentroBarrial)
         {
-            ApplyStageContent(entity, LifeStoryStage.AfterHogar, dto.AfterHogar, actorUserId, now);
-            AddEntry(personId, LifeStoryStage.AfterHogar, dto.AfterHogar, actorUserId, now);
+            ApplyStageContent(entity, LifeStoryStage.AfterCentroBarrial, dto.AfterCentroBarrial, actorUserId, now);
+            AddEntry(personId, LifeStoryStage.AfterCentroBarrial, dto.AfterCentroBarrial, actorUserId, now);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         // Recargar entidades de navegación de usuario para reflejar nombres actualizados
-        await _dbContext.Entry(entity).Reference(l => l.BeforeHogarUpdatedByUser).LoadAsync(cancellationToken);
-        await _dbContext.Entry(entity).Reference(l => l.InHogarUpdatedByUser).LoadAsync(cancellationToken);
-        await _dbContext.Entry(entity).Reference(l => l.AfterHogarUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.BeforeCentroBarrialUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.InCentroBarrialUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.AfterCentroBarrialUpdatedByUser).LoadAsync(cancellationToken);
 
         var entriesByStage = await GetEntriesByStageAsync(personId, cancellationToken);
         return MapToDto(entity, entriesByStage);
@@ -100,9 +100,9 @@ public class LifeStoryService : ILifeStoryService
         if (!personExists) return null;
 
         var entity = await _dbContext.LifeStories
-            .Include(l => l.BeforeHogarUpdatedByUser)
-            .Include(l => l.InHogarUpdatedByUser)
-            .Include(l => l.AfterHogarUpdatedByUser)
+            .Include(l => l.BeforeCentroBarrialUpdatedByUser)
+            .Include(l => l.InCentroBarrialUpdatedByUser)
+            .Include(l => l.AfterCentroBarrialUpdatedByUser)
             .FirstOrDefaultAsync(l => l.PersonId == personId, cancellationToken);
 
         if (entity is null)
@@ -124,9 +124,9 @@ public class LifeStoryService : ILifeStoryService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         // Recargar entidades de navegación de usuario para reflejar nombres actualizados
-        await _dbContext.Entry(entity).Reference(l => l.BeforeHogarUpdatedByUser).LoadAsync(cancellationToken);
-        await _dbContext.Entry(entity).Reference(l => l.InHogarUpdatedByUser).LoadAsync(cancellationToken);
-        await _dbContext.Entry(entity).Reference(l => l.AfterHogarUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.BeforeCentroBarrialUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.InCentroBarrialUpdatedByUser).LoadAsync(cancellationToken);
+        await _dbContext.Entry(entity).Reference(l => l.AfterCentroBarrialUpdatedByUser).LoadAsync(cancellationToken);
 
         var entriesByStage = await GetEntriesByStageAsync(personId, cancellationToken);
         return MapToDto(entity, entriesByStage);
@@ -166,9 +166,9 @@ public class LifeStoryService : ILifeStoryService
 
         var result = new Dictionary<LifeStoryStage, IReadOnlyList<LifeStoryEntryDto>>
         {
-            [LifeStoryStage.BeforeHogar] = [],
-            [LifeStoryStage.InHogar] = [],
-            [LifeStoryStage.AfterHogar] = []
+            [LifeStoryStage.BeforeCentroBarrial] = [],
+            [LifeStoryStage.InCentroBarrial] = [],
+            [LifeStoryStage.AfterCentroBarrial] = []
         };
 
         foreach (var group in entries.GroupBy(e => e.Stage))
@@ -193,23 +193,23 @@ public class LifeStoryService : ILifeStoryService
 
         switch (stage)
         {
-            case LifeStoryStage.BeforeHogar:
-                if (entity.BeforeHogar == trimmed) return;
-                entity.BeforeHogar = trimmed;
-                entity.BeforeHogarUpdatedByUserId = actorUserId;
-                entity.BeforeHogarUpdatedAt = now;
+            case LifeStoryStage.BeforeCentroBarrial:
+                if (entity.BeforeCentroBarrial == trimmed) return;
+                entity.BeforeCentroBarrial = trimmed;
+                entity.BeforeCentroBarrialUpdatedByUserId = actorUserId;
+                entity.BeforeCentroBarrialUpdatedAt = now;
                 break;
-            case LifeStoryStage.InHogar:
-                if (entity.InHogar == trimmed) return;
-                entity.InHogar = trimmed;
-                entity.InHogarUpdatedByUserId = actorUserId;
-                entity.InHogarUpdatedAt = now;
+            case LifeStoryStage.InCentroBarrial:
+                if (entity.InCentroBarrial == trimmed) return;
+                entity.InCentroBarrial = trimmed;
+                entity.InCentroBarrialUpdatedByUserId = actorUserId;
+                entity.InCentroBarrialUpdatedAt = now;
                 break;
-            case LifeStoryStage.AfterHogar:
-                if (entity.AfterHogar == trimmed) return;
-                entity.AfterHogar = trimmed;
-                entity.AfterHogarUpdatedByUserId = actorUserId;
-                entity.AfterHogarUpdatedAt = now;
+            case LifeStoryStage.AfterCentroBarrial:
+                if (entity.AfterCentroBarrial == trimmed) return;
+                entity.AfterCentroBarrial = trimmed;
+                entity.AfterCentroBarrialUpdatedByUserId = actorUserId;
+                entity.AfterCentroBarrialUpdatedAt = now;
                 break;
         }
     }
@@ -222,28 +222,28 @@ public class LifeStoryService : ILifeStoryService
             entity.Id,
             entity.PersonId,
             new LifeStorySectionDto(
-                entity.BeforeHogar,
-                !string.IsNullOrWhiteSpace(entity.BeforeHogar),
-                entity.BeforeHogarUpdatedByUserId,
-                FormatAuthor(entity.BeforeHogarUpdatedByUser),
-                entity.BeforeHogarUpdatedAt,
-                entriesByStage[LifeStoryStage.BeforeHogar]
+                entity.BeforeCentroBarrial,
+                !string.IsNullOrWhiteSpace(entity.BeforeCentroBarrial),
+                entity.BeforeCentroBarrialUpdatedByUserId,
+                FormatAuthor(entity.BeforeCentroBarrialUpdatedByUser),
+                entity.BeforeCentroBarrialUpdatedAt,
+                entriesByStage[LifeStoryStage.BeforeCentroBarrial]
             ),
             new LifeStorySectionDto(
-                entity.InHogar,
-                !string.IsNullOrWhiteSpace(entity.InHogar),
-                entity.InHogarUpdatedByUserId,
-                FormatAuthor(entity.InHogarUpdatedByUser),
-                entity.InHogarUpdatedAt,
-                entriesByStage[LifeStoryStage.InHogar]
+                entity.InCentroBarrial,
+                !string.IsNullOrWhiteSpace(entity.InCentroBarrial),
+                entity.InCentroBarrialUpdatedByUserId,
+                FormatAuthor(entity.InCentroBarrialUpdatedByUser),
+                entity.InCentroBarrialUpdatedAt,
+                entriesByStage[LifeStoryStage.InCentroBarrial]
             ),
             new LifeStorySectionDto(
-                entity.AfterHogar,
-                !string.IsNullOrWhiteSpace(entity.AfterHogar),
-                entity.AfterHogarUpdatedByUserId,
-                FormatAuthor(entity.AfterHogarUpdatedByUser),
-                entity.AfterHogarUpdatedAt,
-                entriesByStage[LifeStoryStage.AfterHogar]
+                entity.AfterCentroBarrial,
+                !string.IsNullOrWhiteSpace(entity.AfterCentroBarrial),
+                entity.AfterCentroBarrialUpdatedByUserId,
+                FormatAuthor(entity.AfterCentroBarrialUpdatedByUser),
+                entity.AfterCentroBarrialUpdatedAt,
+                entriesByStage[LifeStoryStage.AfterCentroBarrial]
             )
         );
     }

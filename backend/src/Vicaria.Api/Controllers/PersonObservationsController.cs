@@ -3,6 +3,7 @@ using System.Text;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Api.Filters;
 using Vicaria.Application.Observations;
 using Vicaria.Domain.Entities;
 
@@ -10,6 +11,7 @@ namespace Vicaria.Api.Controllers;
 
 [ApiController]
 [Route("api/persons/{id:guid}/observations")]
+[DirectorResidentsOnly]
 public class PersonObservationsController : ControllerBase
 {
     private readonly IObservationService _observationService;

@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { LifeHistory, LifeHistoryEntry, LifeHistoryStage } from '../interfaces/life-history.interface';
 
 // forma real de la respuesta del backend (LifeStoryResponseDto): nombres de etapa distintos
-// a los del frontend (beforeHogar/inHogar/afterHogar vs beforeHome/duringHome/afterHome)
+// a los del frontend (beforeCentroBarrial/inCentroBarrial/afterCentroBarrial vs beforeHome/duringHome/afterHome)
 interface LifeStoryEntryResponse {
   id: string;
   content: string;
@@ -25,16 +25,16 @@ interface LifeStorySectionResponse {
 interface LifeStoryResponse {
   id: string;
   personId: string;
-  beforeHogar: LifeStorySectionResponse;
-  inHogar: LifeStorySectionResponse;
-  afterHogar: LifeStorySectionResponse;
+  beforeCentroBarrial: LifeStorySectionResponse;
+  inCentroBarrial: LifeStorySectionResponse;
+  afterCentroBarrial: LifeStorySectionResponse;
 }
 
 // mapeo etapa frontend -> segmento de ruta que espera el backend
 const STAGE_TO_BACKEND_PATH: Record<LifeHistoryStage, string> = {
-  beforeHome: 'before-hogar',
-  duringHome: 'in-hogar',
-  afterHome: 'after-hogar',
+  beforeHome: 'before-centro-barrial',
+  duringHome: 'in-centro-barrial',
+  afterHome: 'after-centro-barrial',
 };
 
 function toEntry(entry: LifeStoryEntryResponse): LifeHistoryEntry {
@@ -57,9 +57,9 @@ function toSection(section: LifeStorySectionResponse) {
 
 function toLifeHistory(response: LifeStoryResponse): LifeHistory {
   return {
-    beforeHome: toSection(response.beforeHogar),
-    duringHome: toSection(response.inHogar),
-    afterHome: toSection(response.afterHogar),
+    beforeHome: toSection(response.beforeCentroBarrial),
+    duringHome: toSection(response.inCentroBarrial),
+    afterHome: toSection(response.afterCentroBarrial),
   };
 }
 

@@ -22,13 +22,13 @@ public record LifeStorySectionDto(
 public record LifeStoryResponseDto(
     Guid Id,
     Guid PersonId,
-    LifeStorySectionDto BeforeHogar,
-    LifeStorySectionDto InHogar,
-    LifeStorySectionDto AfterHogar
+    LifeStorySectionDto BeforeCentroBarrial,
+    LifeStorySectionDto InCentroBarrial,
+    LifeStorySectionDto AfterCentroBarrial
 );
 
 public record UpdateLifeStoryDto(
-    string? BeforeHogar = null,
-    string? InHogar = null,
-    string? AfterHogar = null
+    string? BeforeCentroBarrial = null,
+    string? InCentroBarrial = null,
+    string? AfterCentroBarrial = null
 );

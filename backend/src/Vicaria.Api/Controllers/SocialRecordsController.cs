@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Api.Filters;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 
@@ -25,6 +26,10 @@ public class SocialRecordsController : ControllerBase
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
+
+    // SCRUM-137: Directora y Coordinador de Casa de Convivencia solo ven Residentes
+    private bool IsRestrictedToResidents =>
+        User.IsInRole(RoleNames.CasaConvivenciaDirector) || User.IsInRole(RoleNames.CasaConvivenciaCoordinator);
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -54,7 +59,7 @@ public class SocialRecordsController : ControllerBase
     {
         PersonType? personTypeFilter = null;
 
-        if (User.IsInRole(RoleNames.CasaConvivenciaDirector))
+        if (IsRestrictedToResidents)
         {
             personTypeFilter = PersonType.Resident;
         }
@@ -77,7 +82,7 @@ public class SocialRecordsController : ControllerBase
         [FromQuery] PersonType? personType = null,
         CancellationToken cancellationToken = default)
     {
-        PersonType? personTypeFilter = User.IsInRole(RoleNames.CasaConvivenciaDirector) ? PersonType.Resident : null;
+        PersonType? personTypeFilter = IsRestrictedToResidents ? PersonType.Resident : null;
         var filter = new FilterSocialRecordsDto(entryDateFrom, entryDateTo, withoutObservationsDays, hasDni, hasAddress, status, personType);
 
         var result = await _socialRecordService.GetPagedAsync(page, search, filter, personTypeFilter, cancellationToken);
@@ -86,6 +91,7 @@ public class SocialRecordsController : ControllerBase
 
     // perfil completo de una ficha (SCRUM-8/121)
     [HttpGet("{id:guid}")]
+    [DirectorResidentsOnly("id", isSocialRecordId: true)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var record = await _socialRecordService.GetByIdAsync(id, cancellationToken);
@@ -94,6 +100,7 @@ public class SocialRecordsController : ControllerBase
 
     // solo Referente y Directora pueden editar (SCRUM-7)
     [HttpPut("{id}")]
+    [DirectorResidentsOnly("id", isSocialRecordId: true)]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSocialRecordDto dto, CancellationToken cancellationToken)
     {
@@ -119,6 +126,12 @@ public class SocialRecordsController : ControllerBase
     [HttpGet("filter/count")]
     public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)
     {
+        // el conteo no debe revelar cuántas fichas ambulatorias existen a quien solo gestiona Residentes
+        if (IsRestrictedToResidents)
+        {
+            filter = filter with { PersonType = PersonType.Resident };
+        }
+
         var count = await _socialRecordService.CountByFilterAsync(filter, cancellationToken);
         return Ok(new { count });
     }
