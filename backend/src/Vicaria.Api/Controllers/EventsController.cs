@@ -10,12 +10,17 @@ namespace Vicaria.Api.Controllers;
 [Authorize]
 public class EventsController : ControllerBase
 {
+    private const string CalendarViewRoles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener}";
+
     private readonly IEventService _eventService;
 
-    public EventsController(IEventService eventService) => _eventService = eventService;
+    public EventsController(IEventService eventService)
+    {
+        _eventService = eventService;
+    }
 
     [HttpGet]
-    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener}")]
+    [Authorize(Roles = CalendarViewRoles)]
     public async Task<ActionResult<IReadOnlyList<EventOccurrenceDto>>> GetByRange(
         [FromQuery] DateTime desde,
         [FromQuery] DateTime hasta,
@@ -31,11 +36,14 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    [Authorize(Roles = CalendarViewRoles)]
     public async Task<ActionResult<EventDetailDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var ev = await _eventService.GetEventByIdAsync(id, cancellationToken);
-        if (ev is null) return NotFound(new { message = "El evento especificado no existe." });
+        if (ev is null)
+        {
+            return NotFound(new { message = "El evento especificado no existe." });
+        }
 
         return Ok(ev);
     }
