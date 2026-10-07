@@ -12,8 +12,11 @@ public class CollaboratorConfiguration : IEntityTypeConfiguration<Collaborator>
         builder.HasKey(c => c.Id);
 
         builder.Property(c => c.Id).HasColumnName("id");
-        builder.Property(c => c.FirstName).HasColumnName("first_name").HasMaxLength(100).IsRequired();
-        builder.Property(c => c.LastName).HasColumnName("last_name").HasMaxLength(100);
+        builder.Property(c => c.FirstName).HasColumnName("first_name").HasMaxLength(100).IsRequired()
+            .UseCollation("Modern_Spanish_CI_AI");
+
+        builder.Property(c => c.LastName).HasColumnName("last_name").HasMaxLength(100)
+            .UseCollation("Modern_Spanish_CI_AI");
         builder.Property(c => c.Dni).HasColumnName("dni").HasMaxLength(20);
         builder.Property(c => c.Phone).HasColumnName("phone").HasMaxLength(30);
         builder.Property(c => c.Email).HasColumnName("email").HasMaxLength(255);
@@ -22,7 +25,8 @@ public class CollaboratorConfiguration : IEntityTypeConfiguration<Collaborator>
             .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
-        builder.Property(c => c.WorkArea).HasColumnName("work_area").HasMaxLength(100);
+        builder.Property(c => c.WorkArea).HasColumnName("work_area").HasMaxLength(100)
+            .UseCollation("Modern_Spanish_CI_AI");
         builder.Property(c => c.RegisteredByUserId).HasColumnName("registered_by_user_id").IsRequired();
         builder.Property(c => c.RegisteredAt).HasColumnName("registered_at").IsRequired();
 

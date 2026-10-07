@@ -1,0 +1,88 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Vicaria.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddCollaboratorNameCollation : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<string>(
+                name: "work_area",
+                table: "collaborators",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                collation: "Modern_Spanish_CI_AI",
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "last_name",
+                table: "collaborators",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                collation: "Modern_Spanish_CI_AI",
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "first_name",
+                table: "collaborators",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: false,
+                collation: "Modern_Spanish_CI_AI",
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<string>(
+                name: "work_area",
+                table: "collaborators",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true,
+                oldCollation: "Modern_Spanish_CI_AI");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "last_name",
+                table: "collaborators",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldNullable: true,
+                oldCollation: "Modern_Spanish_CI_AI");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "first_name",
+                table: "collaborators",
+                type: "nvarchar(100)",
+                maxLength: 100,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(100)",
+                oldMaxLength: 100,
+                oldCollation: "Modern_Spanish_CI_AI");
+        }
+    }
+}
