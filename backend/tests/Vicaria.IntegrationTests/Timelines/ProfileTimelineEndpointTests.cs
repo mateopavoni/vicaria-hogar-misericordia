@@ -42,7 +42,7 @@ public class ProfileTimelineEndpointTests : IClassFixture<VicariaWebApplicationF
         await db.SaveChangesAsync();
 
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, actor.Id));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CreateToken("Test", "test@mail.com", rol, actor.Id));
     }
 
     private async Task<Guid> CrearPersonaAsync()

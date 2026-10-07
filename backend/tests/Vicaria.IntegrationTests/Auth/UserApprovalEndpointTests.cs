@@ -22,7 +22,7 @@ public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFact
 
     private static void UsarToken(HttpClient client, string rol, Guid? usuarioId = null) =>
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, usuarioId));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CreateToken("Test", "test@mail.com", rol, usuarioId));
 
     // el token ahora se valida contra un usuario real en la base (chequeo de sesion activa)
     private async Task<Guid> SembrarActorAsync(string rol)
