@@ -25,6 +25,8 @@ using Vicaria.Application.LifeStories;
 using Vicaria.Infrastructure.LifeStories;
 using Vicaria.Application.Timelines;
 using Vicaria.Infrastructure.Timelines;
+using Vicaria.Application.CalendarEvents;
+using Vicaria.Infrastructure.CalendarEvents;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +83,8 @@ builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObser
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
+builder.Services.AddScoped<IGeneralCalendarEventService, GeneralCalendarEventService>();
+builder.Services.AddScoped<IValidator<CreateGeneralCalendarEventDto>, CreateGeneralCalendarEventDtoValidator>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
