@@ -14,16 +14,40 @@ public class CollaboratorsController : ControllerBase
 {
     private readonly ICollaboratorService _collaboratorService;
     private readonly IValidator<CreateCollaboratorDto> _createValidator;
+    private readonly IValidator<SearchCollaboratorsDto> _searchValidator;
 
     public CollaboratorsController(
         ICollaboratorService collaboratorService,
-        IValidator<CreateCollaboratorDto> createValidator)
+        IValidator<CreateCollaboratorDto> createValidator,
+        IValidator<SearchCollaboratorsDto> searchValidator)
     {
         _collaboratorService = collaboratorService;
         _createValidator = createValidator;
+        _searchValidator = searchValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    // búsqueda por nombre, apellido o área, con filtro opcional por tipo (SCRUM-204).
+    // cualquier rol autenticado puede buscar, mismo criterio que la búsqueda de fichas
+    [HttpGet("search")]
+    public async Task<IActionResult> Search(
+        [FromQuery] SearchCollaboratorsDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _searchValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var results = await _collaboratorService.SearchAsync(dto.Q, dto.Type, cancellationToken);
+        return Ok(results);
+    }
 
     // alta solo para Referente (SCRUM-199)
     [HttpPost]

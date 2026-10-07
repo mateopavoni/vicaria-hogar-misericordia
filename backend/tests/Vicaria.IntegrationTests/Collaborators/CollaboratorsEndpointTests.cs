@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Vicaria.Application.Collaborators;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.IntegrationTests.Auth;
@@ -199,6 +200,181 @@ public class CollaboratorsEndpointTests : IClassFixture<VicariaWebApplicationFac
         var log = db.AuditLogs.Single(l => l.AffectedEntity == $"Collaborator:{id}");
         Assert.Equal(actorId, log.UserId);
         Assert.Equal("Colaborador creado", log.Action);
+    }
+
+    [Fact]
+    public async Task Search_WithToken_Returns200WithMatch()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Busca{unique}", lastName: "Gómez");
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=busca{unique}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        var result = Assert.Single(results!);
+        Assert.Equal($"Busca{unique} Gómez", result.FullName);
+        Assert.Equal(CollaboratorType.Volunteer, result.Type);
+    }
+
+    [Fact]
+    public async Task Search_IgnoresAccentsAndCase()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Joaquín{unique}");
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=JOAQUIN{unique}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        Assert.Single(results!);
+    }
+
+    [Fact]
+    public async Task Search_ByLastNameWithoutAccents_FindsCollaborator()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Apellido{unique}", lastName: "Pérez");
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=perez");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        Assert.Contains(results!, r => r.FullName == $"Apellido{unique} Pérez");
+    }
+
+    [Fact]
+    public async Task Search_ByWorkArea_FindsCollaborator()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Area{unique}", workArea: $"Comedor{unique}");
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=comedor{unique}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        var result = Assert.Single(results!);
+        Assert.Equal($"Comedor{unique}", result.WorkArea);
+    }
+
+    [Fact]
+    public async Task Search_WithTypeFilter_ReturnsOnlyThatType()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Tipo{unique}A", type: CollaboratorType.Volunteer);
+        await SeedSearchCollaboratorAsync(firstName: $"Tipo{unique}B", type: CollaboratorType.Employee);
+
+        var volunteers = await _client.GetAsync($"{Endpoint}/search?q=tipo{unique}&type=0");
+        var employees = await _client.GetAsync($"{Endpoint}/search?q=tipo{unique}&type=1");
+
+        var volunteerResults = await volunteers.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        var employeeResults = await employees.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        Assert.Equal(CollaboratorType.Volunteer, Assert.Single(volunteerResults!).Type);
+        Assert.Equal(CollaboratorType.Employee, Assert.Single(employeeResults!).Type);
+    }
+
+    [Fact]
+    public async Task Search_WithoutToken_Returns401()
+    {
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=ana");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Search_WithEmptyOrNullQuery_Returns200WithEmptyList()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var empty = await _client.GetAsync($"{Endpoint}/search?q=");
+        var absent = await _client.GetAsync($"{Endpoint}/search");
+
+        Assert.Equal(HttpStatusCode.OK, empty.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, absent.StatusCode);
+        Assert.Empty((await empty.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>())!);
+        Assert.Empty((await absent.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>())!);
+    }
+
+    [Fact]
+    public async Task Search_WithTooLongQuery_Returns400WithSpanishMessage()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q={new string('a', 101)}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("100 caracteres", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Search_WithInvalidTypeValue_Returns400()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=ana&type=voluntario");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Search_WithNullLastName_ComposesFullNameWithFirstNameOnly()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Sinapellido{unique}", lastName: null);
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=sinapellido{unique}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        var result = Assert.Single(results!);
+        Assert.Equal($"Sinapellido{unique}", result.FullName);
+    }
+
+    [Fact]
+    public async Task Search_WithPercentWildcard_MatchesOnlyLiteralPercent()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        var literal = await SeedSearchCollaboratorAsync(firstName: $"Pct{unique}%Lit");
+
+        var response = await _client.GetAsync($"{Endpoint}/search?q=%25");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorSearchResultDto>>();
+        var result = Assert.Single(results!);
+        Assert.Equal(literal.Id, result.Id);
+    }
+
+    private async Task<Collaborator> SeedSearchCollaboratorAsync(
+        string firstName,
+        string? lastName = "Test",
+        CollaboratorType type = CollaboratorType.Volunteer,
+        string? workArea = null)
+    {
+        var actorId = await SeedActorAsync(RoleNames.Referent);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var collaborator = new Collaborator
+        {
+            Id = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
+            Type = type,
+            WorkArea = workArea,
+            RegisteredByUserId = actorId,
+            RegisteredAt = DateTime.UtcNow
+        };
+        db.Collaborators.Add(collaborator);
+        await db.SaveChangesAsync();
+        return collaborator;
     }
 
     private async Task SeedCollaboratorAsync(Guid registeredByUserId, string? dni)

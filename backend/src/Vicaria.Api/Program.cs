@@ -96,6 +96,7 @@ builder.Services.AddScoped<IValidator<CreateCasonaVisitDto>, CreateCasonaVisitDt
 builder.Services.AddScoped<IValidator<UpdateCasonaVisitDto>, UpdateCasonaVisitDtoValidator>();
 builder.Services.AddScoped<ICollaboratorService, CollaboratorService>();
 builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaboratorDtoValidator>();
+builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaboratorsDtoValidator>();
 
 
 
