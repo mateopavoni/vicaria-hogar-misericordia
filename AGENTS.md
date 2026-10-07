@@ -154,8 +154,9 @@ Estado del código real (rama `dev`). Antes de tocar un dominio, verificar si ya
 | **Notificaciones internas** (pendiente, bloqueo, marcado leído) | Api `NotificationController`, Application `Notifications/`, Infrastructure `NotificationService` | `api/notifications` |
 | **Fichas de personas (Social Records)** | Api `SocialRecordsController`, Application `SocialRecords/`, Infrastructure `SocialRecordService` | `api/social-records` |
 | **Personas - tipo (SCRUM-134)** | Api `PersonsController`, Application `Persons/` + `SocialRecords/`, Infrastructure `SocialRecordService` | `api/persons/{id}/type` |
+| **Colaboradores - alta (SCRUM-199)** | Api `CollaboratorsController`, Application `Collaborators/`, Infrastructure `CollaboratorService` | `api/collaborators` (POST, solo Referente) |
 
-Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`, `CasonaStay`, `PsychiatricEvaluation`.
+Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`, `CasonaStay`, `PsychiatricEvaluation`, `Collaborator`.
 
 ---
 

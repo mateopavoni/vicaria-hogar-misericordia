@@ -29,6 +29,8 @@ using Vicaria.Application.CalendarEvents;
 using Vicaria.Infrastructure.CalendarEvents;
 using Vicaria.Application.CasonaVisits;
 using Vicaria.Infrastructure.CasonaVisits;
+using Vicaria.Application.Collaborators;
+using Vicaria.Infrastructure.Collaborators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +93,8 @@ builder.Services.AddScoped<IValidator<CreateGeneralCalendarEventDto>, CreateGene
 builder.Services.AddScoped<ICasonaVisitService, CasonaVisitService>();
 builder.Services.AddScoped<IValidator<CreateCasonaVisitDto>, CreateCasonaVisitDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCasonaVisitDto>, UpdateCasonaVisitDtoValidator>();
+builder.Services.AddScoped<ICollaboratorService, CollaboratorService>();
+builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaboratorDtoValidator>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

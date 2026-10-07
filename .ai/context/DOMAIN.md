@@ -23,7 +23,7 @@ El diseño lógico original (`/PROJECT.md`, sección "Modelo de datos conceptual
 | 15 | InformeCaritas | — | ❌ no existe |
 | 16 | EventoCalendarioPersonal | — | ❌ no existe |
 | 17 | EventoCalendarioGeneral | — | ❌ no existe |
-| 18 | Colaborador | — | ❌ no existe |
+| 18 | Colaborador | `Collaborator` | ✅ implementada (SCRUM-199: alta `POST /api/collaborators`, índice único sobre DNI cargado) |
 
 Entidades adicionales que existen en código y no están en las 18 originales: `AuditLog`, `Notification`, `Role`, `RolePermission`, `Permission`, `PersonType`, `SocialRecordStatus`, `UserStatus` — soporte de auth/RBAC/auditoría, no del dominio de negocio "atención a personas" en sí.
 
