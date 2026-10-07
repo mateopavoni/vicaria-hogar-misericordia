@@ -46,7 +46,7 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     {
         var actorId = await SembrarActorAsync(rol);
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", rol, actorId));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CreateToken("Test", "test@mail.com", rol, actorId));
     }
 
     private async Task<Guid> CrearPersonaAsync()

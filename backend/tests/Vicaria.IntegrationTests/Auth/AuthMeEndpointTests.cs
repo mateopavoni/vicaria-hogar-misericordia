@@ -62,7 +62,7 @@ public class AuthMeEndpointTests : IClassFixture<VicariaWebApplicationFactory>
     public async Task Me_ConTokenValido_Retorna200ConLasClaims()
     {
         var actorId = await SembrarActorAsync(RoleNames.CasaConvivenciaDirector);
-        var token = TestJwtFactory.CrearToken("Ana", "ana@mail.com", RoleNames.CasaConvivenciaDirector, actorId);
+        var token = TestJwtFactory.CreateToken("Ana", "ana@mail.com", RoleNames.CasaConvivenciaDirector, actorId);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await _client.GetAsync("/api/auth/me");

@@ -21,4 +21,5 @@ Formato: severidad explícita, no párrafos narrativos. Severidad = impacto real
 
 ## BAJA
 
+- **La descripción de SCRUM-194 en Jira menciona el campo `es_personal` de una entidad `Evento` que nunca existió en el código.** La resolución real (SCRUM-183, merge PR #74) fue el split en dos tablas — `general_calendar_events` y `personal_calendar_events` — sin flag de privacidad: la privacidad se resuelve por ownership sobre `author_user_id`. Error de descripción anterior a la resolución en código, **deprecado y no corregido en Jira**; queda registrado para no reabrirlo como duda de modelo (ver DECISIONS del equipo en SCRUM-194: el split es el modelo definitivo).
 - **~24 branches `feature/*`/`fix/*` en remoto sin PR abierta**, con estado de merge ambiguo (algunas parecen ya integradas por otro camino que no deja rastro de ancestry git limpio). Sin proceso de limpieza. Inventario en [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), sin tocar por ahora (decisión explícita del usuario).
