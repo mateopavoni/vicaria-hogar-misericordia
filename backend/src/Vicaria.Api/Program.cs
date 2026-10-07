@@ -30,6 +30,7 @@ using Vicaria.Infrastructure.CalendarEvents;
 using Vicaria.Application.CasonaVisits;
 using Vicaria.Infrastructure.CasonaVisits;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // secretos locales (connection string real, etc.), no versionado
@@ -91,6 +92,7 @@ builder.Services.AddScoped<IValidator<CreateGeneralCalendarEventDto>, CreateGene
 builder.Services.AddScoped<ICasonaVisitService, CasonaVisitService>();
 builder.Services.AddScoped<IValidator<CreateCasonaVisitDto>, CreateCasonaVisitDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCasonaVisitDto>, UpdateCasonaVisitDtoValidator>();
+
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
