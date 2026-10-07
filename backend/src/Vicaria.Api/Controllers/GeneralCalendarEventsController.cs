@@ -46,4 +46,35 @@ public class GeneralCalendarEventsController : ControllerBase
         var result = await _calendarEventService.CreateAsync(dto, ActorId, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, new { id = result.GeneralCalendarEventId });
     }
+
+    // listado de eventos generales con ocurrencias recurrentes expandidas y paginado (SCRUM-194)
+    [HttpGet]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetOccurrences(
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        var fromDate = from?.Date ?? DateTime.UtcNow.Date;
+        var toDate = to?.Date ?? fromDate.AddDays(6);
+        if (fromDate > toDate)
+        {
+            return BadRequest(new { message = "El parámetro 'from' no puede ser posterior a 'to'." });
+        }
+
+        var result = await _calendarEventService.GetOccurrencesAsync(fromDate, toDate, page, cancellationToken);
+        return Ok(result);
+    }
+
+    // detalle de un evento general sin expandir; 404 si no existe (SCRUM-194)
+    [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var calendarEvent = await _calendarEventService.GetByIdAsync(id, cancellationToken);
+        return calendarEvent is null
+            ? NotFound(new { message = "El evento especificado no existe." })
+            : Ok(calendarEvent);
+    }
 }

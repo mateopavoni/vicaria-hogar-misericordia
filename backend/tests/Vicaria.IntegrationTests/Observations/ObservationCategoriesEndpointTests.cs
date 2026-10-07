@@ -48,7 +48,7 @@ public class ObservationCategoriesEndpointTests : IClassFixture<VicariaWebApplic
     {
         var actorId = await SeedActorAsync(role);
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", "test@mail.com", role, actorId));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CreateToken("Test", "test@mail.com", role, actorId));
         return actorId;
     }
 
