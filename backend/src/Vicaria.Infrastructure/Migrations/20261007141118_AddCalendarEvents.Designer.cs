@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Vicaria.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    partial class VicariaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007141118_AddCalendarEvents")]
+    partial class AddCalendarEvents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,35 +175,6 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("AuthorUserId");
 
                     b.ToTable("evento_general", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("88888888-8888-8888-8888-888888888801"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndTime = new TimeSpan(0, 11, 0, 0, 0),
-                            RecurrenceDays = 31,
-                            StartTime = new TimeSpan(0, 9, 30, 0, 0),
-                            Title = "Desayuno"
-                        },
-                        new
-                        {
-                            Id = new Guid("88888888-8888-8888-8888-888888888802"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndTime = new TimeSpan(0, 14, 30, 0, 0),
-                            RecurrenceDays = 31,
-                            StartTime = new TimeSpan(0, 13, 30, 0, 0),
-                            Title = "Almuerzo"
-                        },
-                        new
-                        {
-                            Id = new Guid("88888888-8888-8888-8888-888888888803"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            EndTime = new TimeSpan(0, 18, 0, 0, 0),
-                            RecurrenceDays = 2,
-                            StartTime = new TimeSpan(0, 16, 0, 0, 0),
-                            Title = "Merendero"
-                        });
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.LifeStory", b =>
