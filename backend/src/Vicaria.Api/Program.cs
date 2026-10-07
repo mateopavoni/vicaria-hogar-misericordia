@@ -84,6 +84,7 @@ builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
 builder.Services.AddScoped<IGeneralCalendarEventService, GeneralCalendarEventService>();
+builder.Services.AddScoped<IPersonalCalendarEventService, PersonalCalendarEventService>();
 builder.Services.AddScoped<IValidator<CreateGeneralCalendarEventDto>, CreateGeneralCalendarEventDtoValidator>();
 
 
