@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
@@ -38,6 +39,7 @@ public class PersonsController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet("{id}/casa-convivencia-stays")]
+    [DirectorResidentsOnly]
     public async Task<ActionResult<IEnumerable<CasaConvivenciaStayDto>>> GetCasaConvivenciaStays(Guid id, CancellationToken cancellationToken)
     {
         var stays = await _casaConvivenciaStayService.GetByPersonIdAsync(id, cancellationToken);
@@ -47,7 +49,8 @@ public class PersonsController : ControllerBase
     // cambia el tipo de persona (SCRUM-134): para Residente exige evaluación
     // psiquiátrica vigente; sin ella responde 400 con el detalle
     [HttpPut("{id}/type")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> UpdateType(Guid id, [FromBody] UpdatePersonTypeDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updatePersonTypeValidator.ValidateAsync(dto, cancellationToken);
@@ -67,12 +70,14 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonTypeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonTypeError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonTypeError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
     // cambia el estado del perfil (ambulatorio activo/inactivo, residente) y audita el cambio (SCRUM-152/153)
     [HttpPut("{id}/status")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia}")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> UpdateProfileStatus(Guid id, [FromBody] UpdatePersonProfileStatusDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _updateProfileStatusValidator.ValidateAsync(dto, cancellationToken);
@@ -89,13 +94,15 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             UpdatePersonProfileStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonProfileStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonProfileStatusError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
     // timeline unificado del perfil (SCRUM-159): hitos del expediente (estadías de
     // Casa de Convivencia) + observaciones, ordenados por fecha. Lectura para los roles con acceso al perfil.
     [HttpGet("{id}/timeline")]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.Escucha}")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener}")]
     public async Task<IActionResult> GetTimeline(Guid id, CancellationToken cancellationToken)
     {
         var result = await _profileTimelineService.GetTimelineAsync(id, cancellationToken);

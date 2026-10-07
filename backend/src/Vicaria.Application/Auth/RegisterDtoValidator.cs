@@ -1,4 +1,5 @@
 using FluentValidation;
+using Vicaria.Application.Common;
 
 namespace Vicaria.Application.Auth;
 
@@ -8,11 +9,13 @@ public class RegisterDtoValidator : AbstractValidator<RegisterDto>
     {
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("El nombre es requerido.")
-            .MaximumLength(100);
+            .MaximumLength(100)
+            .MustBeAPlainName();
 
         RuleFor(x => x.LastName)
             .NotEmpty().WithMessage("El apellido es requerido.")
-            .MaximumLength(100);
+            .MaximumLength(100)
+            .MustBeAPlainName();
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El email es requerido.")

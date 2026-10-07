@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vicaria.Application.Persons;
 using Vicaria.Application.Attendances;
 using Vicaria.Domain.Entities;
 
@@ -13,13 +14,16 @@ namespace Vicaria.Api.Controllers;
 public class AttendanceController : ControllerBase
 {
     private readonly IAttendanceService _attendanceService;
+    private readonly IPersonAccessService _personAccessService;
     private readonly IValidator<CreateAttendanceDto> _validator;
 
     public AttendanceController(
         IAttendanceService attendanceService,
+        IPersonAccessService personAccessService,
         IValidator<CreateAttendanceDto> validator)
     {
         _attendanceService = attendanceService;
+        _personAccessService = personAccessService;
         _validator = validator;
     }
 
@@ -28,7 +32,7 @@ public class AttendanceController : ControllerBase
     // registra la asistencia diaria de una persona (SCRUM-135) y reactiva su ficha si
     // estaba Inactiva; Escucha también puede cargarla en el día a día del Centro Barrial
     [HttpPost]
-    [Authorize(Roles = $"{RoleNames.Referente},{RoleNames.DirectoraDeCasona},{RoleNames.CoordinadorDeCasaConvivencia},{RoleNames.Escucha}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
     public async Task<IActionResult> Register([FromBody] CreateAttendanceDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateAsync(dto, cancellationToken);
@@ -39,6 +43,11 @@ public class AttendanceController : ControllerBase
                 ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
             }
             return ValidationProblem(ModelState);
+        }
+
+        if (!await _personAccessService.CanAccessPersonAsync(dto.PersonId, User.FindFirstValue(ClaimTypes.Role), cancellationToken))
+        {
+            return NotFound();
         }
 
         var result = await _attendanceService.RegisterAsync(dto, ActorId, cancellationToken);

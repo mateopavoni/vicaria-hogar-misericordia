@@ -8,28 +8,28 @@ public class ObservationConfiguration : IEntityTypeConfiguration<Observation>
 {
     public void Configure(EntityTypeBuilder<Observation> builder)
     {
-        builder.ToTable("observacion");
+        builder.ToTable("observations");
 
         builder.HasKey(o => o.Id);
 
         builder.Property(o => o.PersonId)
-            .HasColumnName("persona_id")
+            .HasColumnName("person_id")
             .IsRequired();
 
         builder.Property(o => o.Content)
-            .HasColumnName("contenido")
+            .HasColumnName("content")
             .IsRequired();
 
         builder.Property(o => o.CategoryId)
-            .HasColumnName("categoria_id")
+            .HasColumnName("category_id")
             .IsRequired(false);
 
         builder.Property(o => o.AuthorUserId)
-            .HasColumnName("usuario_id")
+            .HasColumnName("user_id")
             .IsRequired();
 
         builder.Property(o => o.CreatedAt)
-            .HasColumnName("fecha_creacion")
+            .HasColumnName("created_at")
             .IsRequired();
 
         builder.HasOne(o => o.Person)

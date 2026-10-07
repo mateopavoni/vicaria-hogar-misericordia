@@ -28,7 +28,7 @@ public class CasaConvivenciaStayController : ControllerBase
     // registra el egreso de una estadía (SCRUM-146): fecha/hora automática server-side +
     // motivo opcional (enum) + texto libre solo si motivo = otro
     [HttpPut("{id}/egreso")]
-    [Authorize(Roles = RoleNames.Referente)]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> Exit(Guid id, [FromBody] CasaConvivenciaStayExitDto dto, CancellationToken cancellationToken)
     {
         var validationResult = await _exitValidator.ValidateAsync(dto, cancellationToken);

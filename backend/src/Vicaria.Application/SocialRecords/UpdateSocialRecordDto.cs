@@ -2,7 +2,9 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Application.SocialRecords;
 
-// mismos campos editables que la creación (SCRUM-7); Contact no se edita acá
+// mismos campos editables que la creación (SCRUM-7). Contact se agrega acá porque el
+// formulario de edición del frontend ya lo enviaba y se perdía en silencio (bug reportado
+// 2026-09-23: UpdateAsync no tenía este campo, a diferencia de CreateAsync).
 public record UpdateSocialRecordDto(
     string FirstName,
     string? LastName,
@@ -16,4 +18,5 @@ public record UpdateSocialRecordDto(
     string? OvernightLocation,
     string? Occupation,
     bool HasDocumentation,
-    string? GeneralNotes);
+    string? GeneralNotes,
+    ContactDto? Contact);

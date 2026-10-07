@@ -12,8 +12,8 @@ using Vicaria.Infrastructure.Persistence;
 namespace Vicaria.Infrastructure.Migrations
 {
     [DbContext(typeof(VicariaDbContext))]
-    [Migration("20261007141118_AddCalendarEvents")]
-    partial class AddCalendarEvents
+    [Migration("20261005093132_RenameDirectorRoleToCasaConvivencia")]
+    partial class RenameDirectorRoleToCasaConvivencia
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,7 +44,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("asistencia", (string)null);
+                    b.ToTable("attendances", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.AuditLog", b =>
@@ -100,7 +100,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("estadia_casa_convivencia", (string)null);
+                    b.ToTable("casa_convivencia_stays", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Contact", b =>
@@ -134,47 +134,7 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("SocialRecordId")
                         .IsUnique();
 
-                    b.ToTable("contacto", (string)null);
-                });
-
-            modelBuilder.Entity("Vicaria.Domain.Entities.GeneralCalendarEvent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("AuthorUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<TimeSpan?>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("RecurrenceDays")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan?>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorUserId");
-
-                    b.ToTable("evento_general", (string)null);
+                    b.ToTable("contacts", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.LifeStory", b =>
@@ -186,43 +146,43 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.Property<string>("AfterHogar")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("despues_hogar");
+                        .HasColumnName("after_hogar");
 
                     b.Property<DateTime?>("AfterHogarUpdatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("despues_hogar_fecha_edicion");
+                        .HasColumnName("after_hogar_updated_at");
 
                     b.Property<Guid?>("AfterHogarUpdatedByUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("despues_hogar_usuario_id");
+                        .HasColumnName("after_hogar_updated_by_user_id");
 
                     b.Property<string>("BeforeHogar")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("antes_hogar");
+                        .HasColumnName("before_hogar");
 
                     b.Property<DateTime?>("BeforeHogarUpdatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("antes_hogar_fecha_edicion");
+                        .HasColumnName("before_hogar_updated_at");
 
                     b.Property<Guid?>("BeforeHogarUpdatedByUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("antes_hogar_usuario_id");
+                        .HasColumnName("before_hogar_updated_by_user_id");
 
                     b.Property<string>("InHogar")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("en_hogar");
+                        .HasColumnName("in_hogar");
 
                     b.Property<DateTime?>("InHogarUpdatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("en_hogar_fecha_edicion");
+                        .HasColumnName("in_hogar_updated_at");
 
                     b.Property<Guid?>("InHogarUpdatedByUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("en_hogar_usuario_id");
+                        .HasColumnName("in_hogar_updated_by_user_id");
 
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("persona_id");
+                        .HasColumnName("person_id");
 
                     b.HasKey("Id");
 
@@ -235,7 +195,44 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("PersonId")
                         .IsUnique();
 
-                    b.ToTable("historia_vida", (string)null);
+                    b.ToTable("life_stories", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.LifeStoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("person_id");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("int")
+                        .HasColumnName("stage");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PersonId", "Stage");
+
+                    b.ToTable("life_story_entries", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Notification", b =>
@@ -283,24 +280,24 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.Property<Guid>("AuthorUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("usuario_id");
+                        .HasColumnName("user_id");
 
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("categoria_id");
+                        .HasColumnName("category_id");
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("contenido");
+                        .HasColumnName("content");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("fecha_creacion");
+                        .HasColumnName("created_at");
 
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("persona_id");
+                        .HasColumnName("person_id");
 
                     b.HasKey("Id");
 
@@ -310,7 +307,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("observacion", (string)null);
+                    b.ToTable("observations", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.ObservationCategory", b =>
@@ -336,7 +333,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("categoria_observacion", (string)null);
+                    b.ToTable("observation_categories", (string)null);
 
                     b.HasData(
                         new
@@ -399,7 +396,7 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("permission", (string)null);
+                    b.ToTable("permissions", (string)null);
 
                     b.HasData(
                         new
@@ -452,47 +449,43 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("persona", (string)null);
+                    b.ToTable("people", (string)null);
                 });
 
-            modelBuilder.Entity("Vicaria.Domain.Entities.PersonalCalendarEvent", b =>
+            modelBuilder.Entity("Vicaria.Domain.Entities.PersonTypeChange", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
-                    b.Property<Guid>("AuthorUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("changed_at");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
 
-                    b.Property<DateTime?>("Date")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("NewType")
+                        .HasColumnType("int")
+                        .HasColumnName("new_type");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("person_id");
 
-                    b.Property<TimeSpan?>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("RecurrenceDays")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan?>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int?>("PreviousType")
+                        .HasColumnType("int")
+                        .HasColumnName("previous_type");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorUserId");
+                    b.HasIndex("ChangedByUserId");
 
-                    b.ToTable("evento_personal", (string)null);
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("person_type_changes", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.PsychiatricEvaluation", b =>
@@ -526,7 +519,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasIndex("RegisteredByUserId");
 
-                    b.ToTable("psychiatric_evaluation", (string)null);
+                    b.ToTable("psychiatric_evaluations", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Role", b =>
@@ -545,7 +538,7 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("rol", (string)null);
+                    b.ToTable("roles", (string)null);
 
                     b.HasData(
                         new
@@ -556,7 +549,7 @@ namespace Vicaria.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            Name = "DirectoraDeCasona"
+                            Name = "DirectoraDeCasaConvivencia"
                         },
                         new
                         {
@@ -580,7 +573,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasKey("RoleId", "PermissionId");
 
-                    b.ToTable("rol_permission", (string)null);
+                    b.ToTable("role_permissions", (string)null);
 
                     b.HasData(
                         new
@@ -672,7 +665,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("ficha_social", (string)null);
+                    b.ToTable("social_records", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.User", b =>
@@ -733,7 +726,7 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("usuario", (string)null);
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Attendance", b =>
@@ -769,16 +762,6 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("SocialRecord");
                 });
 
-            modelBuilder.Entity("Vicaria.Domain.Entities.GeneralCalendarEvent", b =>
-                {
-                    b.HasOne("Vicaria.Domain.Entities.User", "AuthorUser")
-                        .WithMany()
-                        .HasForeignKey("AuthorUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("AuthorUser");
-                });
-
             modelBuilder.Entity("Vicaria.Domain.Entities.LifeStory", b =>
                 {
                     b.HasOne("Vicaria.Domain.Entities.User", "AfterHogarUpdatedByUser")
@@ -811,6 +794,25 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.LifeStoryEntry", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Person");
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.Observation", b =>
                 {
                     b.HasOne("Vicaria.Domain.Entities.User", "AuthorUser")
@@ -837,15 +839,23 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("Vicaria.Domain.Entities.PersonalCalendarEvent", b =>
+            modelBuilder.Entity("Vicaria.Domain.Entities.PersonTypeChange", b =>
                 {
-                    b.HasOne("Vicaria.Domain.Entities.User", "AuthorUser")
+                    b.HasOne("Vicaria.Domain.Entities.User", "ChangedByUser")
                         .WithMany()
-                        .HasForeignKey("AuthorUserId")
+                        .HasForeignKey("ChangedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AuthorUser");
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.PsychiatricEvaluation", b =>

@@ -17,34 +17,43 @@ public class GeneralCalendarEventConfiguration : IEntityTypeConfiguration<Genera
 
     public void Configure(EntityTypeBuilder<GeneralCalendarEvent> builder)
     {
-        builder.ToTable("evento_general");
+        builder.ToTable("general_calendar_events");
 
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id");
 
         builder.Property(e => e.Title)
+            .HasColumnName("title")
             .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(e => e.Description)
+            .HasColumnName("description")
             .HasMaxLength(500)
             .IsRequired(false);
 
         builder.Property(e => e.Date)
+            .HasColumnName("date")
             .IsRequired(false);
 
         builder.Property(e => e.StartTime)
+            .HasColumnName("start_time")
             .IsRequired(false);
 
         builder.Property(e => e.EndTime)
+            .HasColumnName("end_time")
             .IsRequired(false);
 
         builder.Property(e => e.RecurrenceDays)
+            .HasColumnName("recurrence_days")
             .IsRequired();
 
         builder.Property(e => e.AuthorUserId)
+            .HasColumnName("author_user_id")
             .IsRequired(false);
 
         builder.Property(e => e.CreatedAt)
+            .HasColumnName("created_at")
             .IsRequired();
 
         builder.HasOne(e => e.AuthorUser)

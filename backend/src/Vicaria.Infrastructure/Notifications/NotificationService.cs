@@ -23,9 +23,10 @@ public class NotificationService : INotificationService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<MarkAsReadResult> MarkAsReadAsync(Guid id, Guid actorId, CancellationToken cancellationToken = default)
+    public async Task<MarkAsReadResult> MarkAsReadAsync(Guid id, string role, Guid actorId, CancellationToken cancellationToken = default)
     {
-        var notification = await _dbContext.Notifications.FindAsync([id], cancellationToken);
+        // solo se puede marcar una notificación dirigida al propio rol (misma regla que el listado)
+        var notification = await _dbContext.Notifications.FirstOrDefaultAsync(n => n.Id == id && n.TargetRole == role, cancellationToken);
         if (notification is null)
         {
             return MarkAsReadResult.NotFound();

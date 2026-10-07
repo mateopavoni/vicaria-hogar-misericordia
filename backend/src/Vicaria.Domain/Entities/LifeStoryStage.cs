@@ -4,7 +4,7 @@ namespace Vicaria.Domain.Entities;
 // independiente y en momentos distintos, cada una con su propio autor/fecha
 public enum LifeStoryStage
 {
-    BeforeHogar,
-    InHogar,
-    AfterHogar
+    BeforeCentroBarrial,
+    InCentroBarrial,
+    AfterCentroBarrial
 }

@@ -14,8 +14,8 @@ namespace Vicaria.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.InsertData(
-                table: "evento_general",
-                columns: new[] { "Id", "AuthorUserId", "CreatedAt", "Date", "Description", "EndTime", "RecurrenceDays", "StartTime", "Title" },
+                table: "general_calendar_events",
+                columns: new[] { "id", "author_user_id", "created_at", "date", "description", "end_time", "recurrence_days", "start_time", "title" },
                 values: new object[,]
                 {
                     { new Guid("88888888-8888-8888-8888-888888888801"), null, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, null, new TimeSpan(0, 11, 0, 0, 0), 31, new TimeSpan(0, 9, 30, 0, 0), "Desayuno" },
@@ -28,18 +28,18 @@ namespace Vicaria.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DeleteData(
-                table: "evento_general",
-                keyColumn: "Id",
+                table: "general_calendar_events",
+                keyColumn: "id",
                 keyValue: new Guid("88888888-8888-8888-8888-888888888801"));
 
             migrationBuilder.DeleteData(
-                table: "evento_general",
-                keyColumn: "Id",
+                table: "general_calendar_events",
+                keyColumn: "id",
                 keyValue: new Guid("88888888-8888-8888-8888-888888888802"));
 
             migrationBuilder.DeleteData(
-                table: "evento_general",
-                keyColumn: "Id",
+                table: "general_calendar_events",
+                keyColumn: "id",
                 keyValue: new Guid("88888888-8888-8888-8888-888888888803"));
         }
     }

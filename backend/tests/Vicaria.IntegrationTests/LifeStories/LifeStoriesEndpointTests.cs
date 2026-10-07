@@ -59,22 +59,22 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     [Fact]
     public async Task PutStage_ComoReferente_Devuelve200YEditaEtapa()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/in-hogar", new { content = "En el hogar" });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/in-centro-barrial", new { content = "En el hogar" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var resultado = await response.Content.ReadFromJsonAsync<LifeStoryResponseDto>();
         Assert.NotNull(resultado);
-        Assert.Equal("En el hogar", resultado!.InHogar.Content);
-        Assert.True(resultado.InHogar.IsCompleted);
+        Assert.Equal("En el hogar", resultado!.InCentroBarrial.Content);
+        Assert.True(resultado.InCentroBarrial.IsCompleted);
     }
 
     [Fact]
     public async Task PutStage_EtapaInvalida_Devuelve400()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
 
         var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/etapa-inventada", new { content = "x" });
@@ -85,10 +85,10 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     [Fact]
     public async Task PutStage_ContentVacio_Devuelve400()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/before-hogar", new { content = " " });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/before-centro-barrial", new { content = " " });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -96,9 +96,9 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     [Fact]
     public async Task PutStage_PersonaInexistente_Devuelve404()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
 
-        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/life-story/before-hogar", new { content = "x" });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/life-story/before-centro-barrial", new { content = "x" });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -106,11 +106,11 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     [Fact]
     public async Task PutStage_ComoEscucha_Devuelve403()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
-        await UsarTokenAsync(RoleNames.Escucha);
+        await UsarTokenAsync(RoleNames.Listener);
 
-        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/before-hogar", new { content = "x" });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{personId}/life-story/before-centro-barrial", new { content = "x" });
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -118,7 +118,7 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     [Fact]
     public async Task PutStage_SinToken_Devuelve401()
     {
-        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/life-story/before-hogar", new { content = "x" });
+        var response = await _client.PutAsJsonAsync($"/api/persons/{Guid.NewGuid()}/life-story/before-centro-barrial", new { content = "x" });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -126,7 +126,7 @@ public class LifeStoriesEndpointTests : IClassFixture<VicariaWebApplicationFacto
     [Fact]
     public async Task Get_ComoReferente_Devuelve200()
     {
-        await UsarTokenAsync(RoleNames.Referente);
+        await UsarTokenAsync(RoleNames.Referent);
         var personId = await CrearPersonaAsync();
 
         var response = await _client.GetAsync($"/api/persons/{personId}/life-story");

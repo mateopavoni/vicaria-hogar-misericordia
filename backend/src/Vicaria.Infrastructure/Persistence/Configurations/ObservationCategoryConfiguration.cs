@@ -8,7 +8,7 @@ public class ObservationCategoryConfiguration : IEntityTypeConfiguration<Observa
 {
     public void Configure(EntityTypeBuilder<ObservationCategory> builder)
     {
-        builder.ToTable("categoria_observacion");
+        builder.ToTable("observation_categories");
 
         builder.HasKey(c => c.Id);
 
