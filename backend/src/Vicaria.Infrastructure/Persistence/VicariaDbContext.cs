@@ -28,6 +28,7 @@ public class VicariaDbContext : DbContext
     public DbSet<PersonTypeChange> PersonTypeChanges => Set<PersonTypeChange>();
     public DbSet<GeneralCalendarEvent> GeneralCalendarEvents => Set<GeneralCalendarEvent>();
     public DbSet<PersonalCalendarEvent> PersonalCalendarEvents => Set<PersonalCalendarEvent>();
+    public DbSet<CasonaVisit> CasonaVisits => Set<CasonaVisit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
