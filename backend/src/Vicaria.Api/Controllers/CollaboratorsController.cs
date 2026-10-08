@@ -104,4 +104,19 @@ public class CollaboratorsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _collaboratorService.GetByIdAsync(id, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new { message = result.ErrorMessage });
+        }
+
+        return Ok(result.Collaborator);
+    }
 }
