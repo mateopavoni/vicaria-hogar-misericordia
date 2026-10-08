@@ -6,6 +6,12 @@ namespace Vicaria.Application.CalendarEvents;
 // los eventos de otro usuario no son consultables por nadie más, sin excepción de rol
 public interface IPersonalCalendarEventService
 {
+    // alta de evento propio: mismo cuerpo que el general; el autor es siempre el actor
+    Task<Guid> CreateAsync(
+        CreateGeneralCalendarEventDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken);
+
     Task<PagedResult<CalendarEventOccurrenceDto>> GetOccurrencesAsync(
         DateTime from,
         DateTime to,

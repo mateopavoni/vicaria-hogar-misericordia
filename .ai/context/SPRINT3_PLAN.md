@@ -22,17 +22,20 @@ Historias: SCRUM-15, 16, 17 (calendario general/personal), 18, 19 (colaboradores
 | 211 cambio de estado de visita + solapamiento | Pendiente (el POST/PUT ya devuelven 409 por solapamiento) | Emir |
 | 212 permisos por rol en visitas | Pendiente (hoy: Ref/Dir/Coo escriben, Esc lee) | Emir |
 
-Sin endpoint ni subtarea: **alta de evento personal**.
+Alta de evento personal: agregada el 2026-10-08 (`POST api/personal-calendar-events`, solo Referente), sin subtarea en Jira.
 
-## Frontend (Belén, rama `dev-frontend-belen`, sin PR)
-Pantallas hechas (SCRUM-186/187/191/192/196/197, 201/202/206/207, 213/214), pero contra rutas asumidas
-(`/api/eventos`, `/api/casa-convivencia-visitas`, `GET /api/collaborators`) que no existen en el backend.
-La rama es previa a Sprint 1/2 y tiene 25 conflictos con `dev-frontend`: hay que rebasear y adaptar rutas y DTOs.
+## Frontend (Belén) — integrado en `dev` el 2026-10-08
+Las pantallas de `dev-frontend-belen` (calendario, colaboradores, visitas) se trajeron a `dev` sobre la estructura actual
+(su rama era previa a Sprint 1/2 y tenía 25 conflictos) y los servicios se adaptaron al backend real
+(`api/general-calendar-events`, `api/personal-calendar-events`, `api/casona-visits`, `api/collaborators`).
+Probado en navegador: ver `docs/qa/QA_SPRINT3.md` (TC-84 a TC-99). Falta el backend de edición/baja (ver tabla de arriba).
+En el backend se agregó `POST api/personal-calendar-events`, `GET api/collaborators` y autor/`isPreloaded` en las ocurrencias.
 
 ## QA (Mateo)
 SCRUM-188, 193, 198, 203, 208, 215 → casos en `docs/qa/QA_SPRINT3.md` (nivel API).
 Sprint 4: SCRUM-219, 223 (asistencia), sin código todavía.
 
 ## Decisiones/preguntas abiertas
-- ¿Se agrega `POST api/personal-calendar-events`? El frontend (SCRUM-197) lo necesita.
-- Contrato de rutas: ¿se adapta el frontend al backend (recomendado) o al revés?
+- Solapamiento de visitas: ¿advertencia o bloqueo? (frontend permite "guardar igual", backend responde 409).
+- Motivo de cancelación de visita: ¿obligatorio (backend) u opcional (frontend)?
+- Recurrencia mensual: no existe en el backend.

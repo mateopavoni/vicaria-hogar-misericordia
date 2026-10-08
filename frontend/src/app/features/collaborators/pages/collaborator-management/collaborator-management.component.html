@@ -1,0 +1,221 @@
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+
+  <!-- ENCABEZADO -->
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-[26px] font-bold text-slate-900">Colaboradores</h1>
+      <p class="mt-1 text-[14px] text-slate-500">
+        Registrá, editá y dá de baja a los voluntarios y empleados que apoyan al hogar.
+      </p>
+    </div>
+
+    <button uiButton type="button" (click)="openCreateModal()">Nuevo colaborador</button>
+  </div>
+
+  <!-- BUSCADOR (SCRUM-19/SCRUM-206): mismo look&feel que el buscador de fichas -->
+  <div class="mb-5 flex items-center gap-3">
+    <div class="relative flex-1">
+      <svg
+        class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+
+      <input
+        #searchInput
+        type="search"
+        placeholder="Buscar por nombre, apellido o área de trabajo"
+        class="h-[42px] w-full rounded-md border border-[#D5DDF3] bg-white pl-12 pr-4 text-[13px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
+        (input)="onSearchInput(searchInput.value)"
+        (keydown.enter)="searchNow(searchInput.value)"
+      />
+    </div>
+
+    <button
+      type="button"
+      class="h-[42px] rounded-md border border-[#D5DDF3] bg-white px-5 text-[13px] font-semibold text-slate-600 hover:bg-slate-50"
+      (click)="searchNow(searchInput.value)"
+    >
+      Buscar
+    </button>
+  </div>
+
+  <!-- FILTROS (SCRUM-206): mismo patrón que el panel de filtros de fichas -->
+  <div class="mb-4">
+    <app-collaborator-filters
+      (filtersApplied)="applyFilters($event)"
+      (filtersCleared)="clearFilters()"
+    />
+  </div>
+
+  <!-- CHIP FILTROS ACTIVOS -->
+  @if (hasActiveFilters()) {
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <span class="text-[12px] font-semibold text-slate-500">Filtros:</span>
+
+      @if (filters().type) {
+        <span class="text-[12px] text-slate-500">
+          {{ filters().type === CollaboratorType.Volunteer ? 'Solo voluntarios' : 'Solo empleados' }}
+          <button type="button" (click)="removeTypeFilter()">×</button>
+        </span>
+      }
+    </div>
+  }
+
+  <!-- CARD PRINCIPAL -->
+  <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+
+    <ui-tabs [tabs]="tabs()" [active]="activeTab()" (tabChange)="changeTab($event)" />
+
+    <!-- ERROR -->
+    @if (errorMessage()) {
+      <div class="mx-6 mt-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- ESTADO VACÍO DE BÚSQUEDA (SCRUM-207): sin resultados para lo tipeado -->
+    @if (showEmptySearchState()) {
+      <div class="flex min-h-[260px] flex-col items-center justify-center px-6 py-10 text-center">
+        <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#EEF2FF]">
+          <svg class="h-7 w-7 text-[#6B8DF5]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
+        </div>
+
+        <h3 class="mb-2 text-[16px] font-semibold text-slate-800">
+          No encontramos colaboradores
+        </h3>
+
+        <p class="mb-5 max-w-md text-[13px] text-slate-500">
+          No hay nadie que coincida con "{{ searchTerm() }}". Probá con otro nombre, apellido o área, o registralo como nuevo colaborador.
+        </p>
+
+        <button uiButton type="button" (click)="openCreateModalFromSearch()">
+          + Registrar colaborador
+        </button>
+      </div>
+    } @else {
+      <!-- TABLA -->
+      <ui-data-table
+        [columns]="columns"
+        [rows]="visibleCollaborators()"
+        [loading]="loading()"
+        loadingText="Cargando colaboradores..."
+        [emptyMessage]="activeTab() === 'active' ? 'No hay colaboradores activos.' : 'No hay colaboradores inactivos.'"
+      >
+        <ng-template uiCell="name" let-collaborator>
+          <button
+            type="button"
+            class="text-left font-semibold text-slate-700 underline-offset-2 hover:text-[#6B8DF5] hover:underline"
+            (click)="openDetail(collaborator)"
+          >
+            {{ collaborator.firstName }} {{ collaborator.lastName }}
+          </button>
+          @if (collaborator.dni) {
+            <div class="text-[12px] text-slate-400">DNI {{ collaborator.dni }}</div>
+          }
+        </ng-template>
+
+        <ng-template uiCell="contact" let-collaborator>
+          @if (collaborator.phone || collaborator.email) {
+            @if (collaborator.phone) {
+              <div>{{ collaborator.phone }}</div>
+            }
+            @if (collaborator.email) {
+              <div class="text-slate-500">{{ collaborator.email }}</div>
+            }
+          } @else {
+            <span class="text-slate-400">—</span>
+          }
+        </ng-template>
+
+        <ng-template uiCell="type" let-collaborator>
+          {{ typeLabel(collaborator.type) }}
+        </ng-template>
+
+        <ng-template uiCell="workArea" let-collaborator>
+          @if (collaborator.workArea) {
+            {{ collaborator.workArea }}
+          } @else {
+            <span class="text-slate-400">—</span>
+          }
+        </ng-template>
+
+        <ng-template uiCell="status" let-collaborator>
+          @if (collaborator.isActive) {
+            <span class="rounded-full bg-green-100 px-3 py-1 text-[11px] font-semibold text-green-700">Activo</span>
+          } @else {
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-500">Inactivo</span>
+          }
+        </ng-template>
+
+        <ng-template uiCell="createdAt" let-collaborator>
+          <div>{{ collaborator.createdAt | date: 'dd/MM/yy' }}</div>
+          <div class="text-[12px] text-slate-400">por {{ collaborator.createdByName }}</div>
+        </ng-template>
+
+        <ng-template uiCell="actions" let-collaborator>
+          <div class="flex justify-center gap-2">
+            <button uiButton size="sm" variant="secondary" type="button" (click)="openEditModal(collaborator)">
+              Editar
+            </button>
+
+            @if (collaborator.isActive) {
+              <button uiButton size="sm" variant="warning" type="button" (click)="requestToggle(collaborator)">
+                Dar de baja
+              </button>
+            } @else {
+              <button uiButton size="sm" variant="info" type="button" (click)="requestToggle(collaborator)">
+                Reactivar
+              </button>
+            }
+          </div>
+        </ng-template>
+      </ui-data-table>
+    }
+  </div>
+
+  <!-- ALTA / EDICIÓN -->
+  @if (showFormModal()) {
+    <app-collaborator-form-modal
+      [collaborator]="editingCollaborator()"
+      [prefillFirstName]="createPrefillName()"
+      [saving]="saving()"
+      [errorMessage]="formError()"
+      (saved)="saveCollaborator($event)"
+      (closed)="closeFormModal()"
+    />
+  }
+
+  <!-- FICHA COMPLETA DE SOLO LECTURA (SCRUM-207) -->
+  @if (viewingCollaborator(); as collaborator) {
+    <app-collaborator-detail-modal
+      [collaborator]="collaborator"
+      (closed)="closeDetail()"
+      (editRequested)="editFromDetail($event)"
+    />
+  }
+
+  <!-- confirmación de baja/reactivación -->
+  @if (pendingToggle(); as collaborator) {
+    <ui-confirm-dialog
+      [title]="collaborator.isActive ? 'Dar de baja colaborador' : 'Reactivar colaborador'"
+      [message]="collaborator.isActive
+        ? ('¿Estás seguro de que querés dar de baja a ' + collaborator.firstName + ' ' + (collaborator.lastName ?? '') + '? No se elimina del historial, podés reactivarlo cuando quieras.')
+        : ('¿Querés reactivar a ' + collaborator.firstName + ' ' + (collaborator.lastName ?? '') + '?')"
+      [confirmLabel]="collaborator.isActive ? 'Dar de baja' : 'Reactivar'"
+      [confirmVariant]="collaborator.isActive ? 'warning' : 'info'"
+      [loading]="togglingStatus()"
+      (confirmed)="confirmToggle()"
+      (cancelled)="cancelToggle()"
+    />
+  }
+
+</div>

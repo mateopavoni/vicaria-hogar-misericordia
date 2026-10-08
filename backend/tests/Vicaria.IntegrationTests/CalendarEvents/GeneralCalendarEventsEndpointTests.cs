@@ -208,4 +208,31 @@ public class GeneralCalendarEventsEndpointTests : IClassFixture<VicariaWebApplic
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+
+    [Fact]
+    public async Task Get_ForUserCreatedEvent_IncludesAuthorAndIsNotPreloaded()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var title = $"Con autor {Guid.NewGuid():N}";
+        var payload = new { title, date = "2026-11-03T00:00:00Z", startTime = "10:00:00", endTime = "11:00:00", recurrenceDays = 0 };
+        var created = await (await _client.PostAsJsonAsync("/api/general-calendar-events", payload))
+            .Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+
+        var body = await _client.GetFromJsonAsync<JsonElement>("/api/general-calendar-events?from=2026-11-03&to=2026-11-03");
+
+        var item = body.GetProperty("items").EnumerateArray().Single(i => i.GetProperty("eventId").GetGuid() == created!["id"]);
+        Assert.NotEqual(Guid.Empty, item.GetProperty("authorUserId").GetGuid());
+        Assert.False(item.GetProperty("isPreloaded").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Get_ForSeedTemplates_AreMarkedAsPreloaded()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var body = await _client.GetFromJsonAsync<JsonElement>("/api/general-calendar-events?from=2026-10-12&to=2026-10-12");
+
+        Assert.Contains(body.GetProperty("items").EnumerateArray(), i => i.GetProperty("isPreloaded").GetBoolean());
+    }
 }

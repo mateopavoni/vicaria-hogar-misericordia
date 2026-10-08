@@ -392,4 +392,30 @@ public class CollaboratorsEndpointTests : IClassFixture<VicariaWebApplicationFac
         });
         await db.SaveChangesAsync();
     }
+
+
+    [Fact]
+    public async Task List_ReturnsCollaboratorsWithRegisteredByName()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var unique = Guid.NewGuid().ToString("N");
+        await SeedSearchCollaboratorAsync(firstName: $"Lista{unique}", lastName: "Ruiz");
+
+        var response = await _client.GetAsync(Endpoint);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var results = await response.Content.ReadFromJsonAsync<List<CollaboratorListItemDto>>();
+        var item = Assert.Single(results!, r => r.FirstName == $"Lista{unique}");
+        Assert.Equal("Ruiz", item.LastName);
+    }
+
+    [Fact]
+    public async Task List_WithoutToken_Returns401()
+    {
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await _client.GetAsync(Endpoint);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }

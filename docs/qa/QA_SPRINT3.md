@@ -81,9 +81,37 @@ Bloqueado: detalle de colaborador (SCRUM-205); listado completo (el frontend usa
 
 Bloqueado: cambio de estado dedicado y alerta de solapamiento (SCRUM-211), permisos por rol (SCRUM-212), `GET /residentes` que usa el frontend.
 
+## QA de UI — frontend integrado (2026-10-08)
+El frontend de Belén se integró en `dev` apuntando a las rutas reales del backend. Se probó en un navegador real
+(Playwright/Chromium) contra el stack local (`docker compose`), con los usuarios de prueba. Script reproducible:
+`docs/qa/e2e/sprint3-ui-flows.mjs`.
+
+| TC | Caso | Resultado |
+|---|---|---|
+| TC-84 | Calendario general: ver semana con actividades precargadas (desayuno, almuerzo, merendero) | OK |
+| TC-85 | Crear evento general desde la UI (Referente) | OK |
+| TC-86 | Crear evento semanal recurrente | OK |
+| TC-87 | Crear evento personal en "Mi calendario" | OK |
+| TC-88 | El evento personal no aparece en "General"; "Combinado" muestra ambos | OK |
+| TC-89 | Detalle de evento con autor y descripción | OK |
+| TC-90 | Crear colaborador desde la UI | OK |
+| TC-91 | DNI duplicado: la UI informa "Ya existe un colaborador con ese DNI." | OK |
+| TC-92 | Búsqueda de colaboradores por área | OK |
+| TC-93 | Dar de baja un colaborador | **FALLA (404)**: falta SCRUM-200 |
+| TC-94 | Crear visita desde la UI (selector de residentes reales) | OK |
+| TC-95 | Visita solapada: la UI avisa y el backend responde 409 | OK (ver nota 2 abajo) |
+| TC-96 | Marcar visita como realizada | OK |
+| TC-97 | Cancelar visita con motivo | OK |
+| TC-98 | Escucha: ve el calendario, sin "Nuevo evento", sin pestaña Casa de Convivencia, sin Colaboradores, `/colaboradores` bloqueado | OK |
+| TC-99 | Directora: ve el calendario sin crear eventos; puede crear visitas | OK |
+
+Bloqueados por backend pendiente (no probables todavía): editar/eliminar evento (SCRUM-190), convertir personal → general
+(SCRUM-195), editar/baja de colaborador (SCRUM-200), detalle de colaborador (SCRUM-205).
+
 ## Pendientes y desajustes a comunicar
-1. **Frontend ↔ backend:** `dev-frontend-belen` llama a `/api/eventos`, `/api/casa-convivencia-visitas` y `GET /api/collaborators`; el backend real expone `/api/general-calendar-events`, `/api/personal-calendar-events`, `/api/casona-visits` y `/api/collaborators/search`. La rama además tiene 25 conflictos con `dev-frontend` actual.
-2. **Alta de evento personal:** no hay endpoint ni subtarea en Jira (el frontend lo usa en SCRUM-197).
-3. **Endpoints que faltan:** edición/eliminación de evento (SCRUM-190), conversión (SCRUM-195), edición/baja de colaborador (SCRUM-200), detalle (SCRUM-205), estado de visita + solapamiento (SCRUM-211), permisos (SCRUM-212).
-4. **Jira SCRUM-204** figura "Por hacer" pero su PR #80 ya está mergeado.
-5. Estos casos son de nivel API. El QA de UI queda para cuando el frontend apunte a las rutas reales.
+1. **Resuelto 2026-10-08:** el frontend ahora usa `/api/general-calendar-events`, `/api/personal-calendar-events`, `/api/casona-visits` y `/api/collaborators`. Se agregó en el backend `POST api/personal-calendar-events`, `GET api/collaborators` (listado completo) y autor/`isPreloaded` en las ocurrencias de calendario.
+2. **Visitas solapadas:** el frontend avisa del solapamiento y ofrece "Guardar igual", pero el backend rechaza con 409 siempre. Hay que decidir si el solapamiento es advertencia (SCRUM-211) o bloqueo.
+3. **Cancelar visita:** el backend exige motivo; el criterio del frontend lo da por opcional. Hoy el servicio manda "Sin motivo indicado" si queda vacío.
+4. **Recurrencia mensual:** el backend solo modela días de la semana; "mensual" del formulario se guarda como evento único.
+5. **Endpoints que faltan (Emir):** edición/eliminación de evento (SCRUM-190), conversión (SCRUM-195), edición/baja de colaborador (SCRUM-200), detalle (SCRUM-205), cambio de estado dedicado y alerta (SCRUM-211), permisos (SCRUM-212). El frontend ya llama a rutas tentativas para esos casos: `PUT/DELETE api/general-calendar-events/{id}`, `POST api/personal-calendar-events/{id}/convert-to-general`, `PUT/PATCH api/collaborators/{id}[/status]`; ajustar cuando se publiquen los contratos reales.
+6. **Jira SCRUM-204** figura "Por hacer" pero su PR #80 ya está mergeado.

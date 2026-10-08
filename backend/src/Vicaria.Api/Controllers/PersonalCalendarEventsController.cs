@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Application.CalendarEvents;
@@ -12,13 +13,39 @@ namespace Vicaria.Api.Controllers;
 public class PersonalCalendarEventsController : ControllerBase
 {
     private readonly IPersonalCalendarEventService _personalCalendarEventService;
+    private readonly IValidator<CreateGeneralCalendarEventDto> _validator;
 
-    public PersonalCalendarEventsController(IPersonalCalendarEventService personalCalendarEventService)
+    public PersonalCalendarEventsController(
+        IPersonalCalendarEventService personalCalendarEventService,
+        IValidator<CreateGeneralCalendarEventDto> validator)
     {
         _personalCalendarEventService = personalCalendarEventService;
+        _validator = validator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    // alta de evento propio (solo Referente, igual que el calendario personal del frontend);
+    // el autor es el actor del JWT, así que nadie puede crear eventos a nombre de otro
+    [HttpPost]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateGeneralCalendarEventDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _validator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var id = await _personalCalendarEventService.CreateAsync(dto, ActorId, cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, new { id });
+    }
 
     // los eventos personales solo los ve su creador (SCRUM-194): la protección es por
     // ownership, no por rol, por eso el filtrado va siempre contra el usuario del JWT

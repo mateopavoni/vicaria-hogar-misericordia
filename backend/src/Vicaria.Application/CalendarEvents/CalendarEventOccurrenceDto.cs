@@ -8,4 +8,8 @@ public record CalendarEventOccurrenceDto(
     TimeSpan? StartTime,
     TimeSpan? EndTime,
     string Title,
-    string? Description);
+    string? Description,
+    Guid? AuthorUserId = null,
+    string? AuthorName = null,
+    // plantillas precargadas del sistema (Date null): el calendario no las deja editar
+    bool IsPreloaded = false);

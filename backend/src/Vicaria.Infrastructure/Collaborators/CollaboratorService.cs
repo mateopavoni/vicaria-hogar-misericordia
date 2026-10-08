@@ -59,6 +59,25 @@ public class CollaboratorService : ICollaboratorService
         return CreateCollaboratorResult.Ok(collaborator.Id);
     }
 
+    public async Task<List<CollaboratorListItemDto>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await _dbContext.Collaborators
+            .AsNoTracking()
+            .Include(c => c.RegisteredByUser)
+            .OrderBy(c => c.FirstName)
+            .ThenBy(c => c.LastName)
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .Select(c => new CollaboratorListItemDto(
+                c.Id, c.FirstName, c.LastName, c.Dni, c.Phone, c.Email, c.Type, c.WorkArea,
+                c.RegisteredAt,
+                c.RegisteredByUser is null
+                    ? null
+                    : $"{c.RegisteredByUser.FirstName} {c.RegisteredByUser.LastName}".Trim()))
+            .ToList();
+    }
+
     // búsqueda por nombre, apellido o área, con filtro opcional por tipo (SCRUM-204).
     // mismo patrón que SocialRecordService.SearchAsync: en SQL Server la insensibilidad a
     // tildes/mayúsculas la dan la collation Modern_Spanish_CI_AI de las columnas + ToUpper(),

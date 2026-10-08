@@ -15,6 +15,29 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
         _dbContext = dbContext;
     }
 
+    public async Task<Guid> CreateAsync(
+        CreateGeneralCalendarEventDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        // el autor sale del JWT, nunca del cliente: es lo que hace privado el evento (SCRUM-194)
+        var calendarEvent = new PersonalCalendarEvent
+        {
+            Id = Guid.NewGuid(),
+            Title = dto.Title.Trim(),
+            Date = dto.Date,
+            StartTime = dto.StartTime,
+            EndTime = dto.EndTime,
+            Description = dto.Description?.Trim(),
+            RecurrenceDays = dto.RecurrenceDays,
+            AuthorUserId = actorId,
+            CreatedAt = DateTime.UtcNow
+        };
+        _dbContext.PersonalCalendarEvents.Add(calendarEvent);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return calendarEvent.Id;
+    }
+
     public async Task<PagedResult<CalendarEventOccurrenceDto>> GetOccurrencesAsync(
         DateTime from,
         DateTime to,
@@ -39,7 +62,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             .SelectMany(e => CalendarEventOccurrenceExpander
                 .Expand(e.Date, e.RecurrenceDays, fromDate, toDate)
                 .Select(d => new CalendarEventOccurrenceDto(
-                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description)))
+                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description, e.AuthorUserId)))
             .OrderBy(o => o.Date)
             .ThenBy(o => o.StartTime)
             .ToList();

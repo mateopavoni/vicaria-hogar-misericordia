@@ -63,6 +63,7 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
         // y el rango las acota durante la expansion
         var calendarEvents = await _dbContext.GeneralCalendarEvents
             .AsNoTracking()
+            .Include(e => e.AuthorUser)
             .Where(e => e.Date == null || (e.Date >= fromDate && e.Date <= toDate))
             .ToListAsync(cancellationToken);
 
@@ -70,7 +71,10 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
             .SelectMany(e => CalendarEventOccurrenceExpander
                 .Expand(e.Date, e.RecurrenceDays, fromDate, toDate)
                 .Select(d => new CalendarEventOccurrenceDto(
-                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description)))
+                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description,
+                    e.AuthorUserId,
+                    e.AuthorUser is null ? null : $"{e.AuthorUser.FirstName} {e.AuthorUser.LastName}".Trim(),
+                    e.Date is null)))
             .OrderBy(o => o.Date)
             .ThenBy(o => o.StartTime)
             .ToList();

@@ -1,0 +1,54 @@
+<ui-modal title="Detalle de la visita" size="sm" (closed)="onClose()">
+  <div class="flex flex-col gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <p class="text-[18px] font-bold text-slate-800">{{ visit().visitorName }}</p>
+        <span
+          class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+          [class]="visit().status === 'done'
+            ? 'bg-emerald-50 text-emerald-600'
+            : visit().status === 'cancelled'
+              ? 'bg-slate-100 text-slate-500'
+              : 'bg-amber-50 text-amber-600'"
+        >
+          {{ statusLabel() }}
+        </span>
+      </div>
+      <p class="mt-1 text-[13px] font-semibold text-[#6B8DF5]">{{ schedule() }}</p>
+    </div>
+
+    <div class="border-t border-slate-100 pt-3">
+      <p class="text-[12px] font-semibold text-slate-500">Visita a</p>
+      <p class="text-[13px] text-slate-700">{{ visit().residentName }}</p>
+    </div>
+
+    @if (visit().status === 'cancelled') {
+      <div class="border-t border-slate-100 pt-3">
+        <p class="text-[12px] font-semibold text-slate-500">Motivo de la cancelación</p>
+        <p class="text-[13px] text-slate-700">{{ visit().cancellationReason || 'No se registró un motivo.' }}</p>
+      </div>
+    }
+
+    @if (canChangeStatus()) {
+      <div class="border-t border-slate-100 pt-3">
+        <p class="mb-2 text-[12px] font-semibold text-slate-500">Cambiar estado</p>
+        <div class="flex flex-wrap gap-2">
+          @if (visit().status !== 'pending') {
+            <button uiButton variant="secondary" type="button" (click)="markPending()">Marcar pendiente</button>
+          }
+          @if (visit().status !== 'done') {
+            <button uiButton variant="success" type="button" (click)="markDone()">Marcar realizada</button>
+          }
+          <button uiButton variant="danger" type="button" (click)="onCancel()">Cancelar visita</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" (click)="onClose()">Cerrar</button>
+    @if (canEdit() && visit().status !== 'cancelled') {
+      <button uiButton type="button" (click)="onEdit()">Editar</button>
+    }
+  </ng-container>
+</ui-modal>

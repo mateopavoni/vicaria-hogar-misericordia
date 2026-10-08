@@ -28,6 +28,14 @@ public class CollaboratorsController : ControllerBase
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+    // listado completo para la pantalla de gestión; mismo criterio de acceso que la búsqueda
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+    {
+        var results = await _collaboratorService.ListAsync(cancellationToken);
+        return Ok(results);
+    }
+
     // búsqueda por nombre, apellido o área, con filtro opcional por tipo (SCRUM-204).
     // cualquier rol autenticado puede buscar, mismo criterio que la búsqueda de fichas
     [HttpGet("search")]
