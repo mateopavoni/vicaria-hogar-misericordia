@@ -15,15 +15,18 @@ public class CollaboratorsController : ControllerBase
     private readonly ICollaboratorService _collaboratorService;
     private readonly IValidator<CreateCollaboratorDto> _createValidator;
     private readonly IValidator<SearchCollaboratorsDto> _searchValidator;
+    private readonly IValidator<UpdateCollaboratorDto> _updateValidator;
 
     public CollaboratorsController(
         ICollaboratorService collaboratorService,
         IValidator<CreateCollaboratorDto> createValidator,
-        IValidator<SearchCollaboratorsDto> searchValidator)
+        IValidator<SearchCollaboratorsDto> searchValidator,
+        IValidator<UpdateCollaboratorDto> updateValidator)
     {
         _collaboratorService = collaboratorService;
         _createValidator = createValidator;
         _searchValidator = searchValidator;
+        _updateValidator = updateValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -71,6 +74,33 @@ public class CollaboratorsController : ControllerBase
         {
             null => StatusCode(StatusCodes.Status201Created, new { id = result.CollaboratorId }),
             CreateCollaboratorError.DuplicateDni => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdateCollaboratorDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _collaboratorService.UpdateAsync(id, dto, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdateCollaboratorError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdateCollaboratorError.DuplicateDni => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
