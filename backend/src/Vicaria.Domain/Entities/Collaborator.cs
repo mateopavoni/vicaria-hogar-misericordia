@@ -13,6 +13,7 @@ public class Collaborator
     public string? Email { get; set; }
     public CollaboratorType Type { get; set; }
     public string? WorkArea { get; set; }
+    public bool IsActive { get; set; } = true;
     public Guid RegisteredByUserId { get; set; }
     public User? RegisteredByUser { get; set; }
     public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;

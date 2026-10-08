@@ -59,6 +59,62 @@ public class CollaboratorService : ICollaboratorService
         return CreateCollaboratorResult.Ok(collaborator.Id);
     }
 
+    public async Task<UpdateCollaboratorResult> UpdateAsync(
+        Guid id,
+        UpdateCollaboratorDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var collaborator = await _dbContext.Collaborators
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (collaborator is null)
+        {
+            return UpdateCollaboratorResult.NotFound();
+        }
+
+        var dni = NormalizeDni(dto.Dni);
+
+        if (dni is not null && await _dbContext.Collaborators
+                .AsNoTracking()
+                .AnyAsync(c => c.Dni == dni && c.Id != id, cancellationToken))
+        {
+            return UpdateCollaboratorResult.DuplicateDni();
+        }
+
+        var wasActive = collaborator.IsActive;
+
+        // Actualizar datos
+        collaborator.FirstName = dto.FirstName.Trim();
+        collaborator.LastName = dto.LastName?.Trim();
+        collaborator.Dni = dni;
+        collaborator.Phone = dto.Phone?.Trim();
+        collaborator.Email = dto.Email?.Trim();
+        collaborator.Type = dto.Type;
+        collaborator.WorkArea = dto.WorkArea?.Trim();
+        collaborator.IsActive = dto.IsActive;
+
+        var auditAction = (wasActive, dto.IsActive) switch
+        {
+            (true, false) => "Colaborador dado de baja",
+            (false, true) => "Colaborador reactivado",
+            _ => "Colaborador modificado"
+        };
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = auditAction,
+            AffectedEntity = $"Collaborator:{collaborator.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdateCollaboratorResult.Ok();
+    }
+
     // búsqueda por nombre, apellido o área, con filtro opcional por tipo (SCRUM-204).
     // mismo patrón que SocialRecordService.SearchAsync: en SQL Server la insensibilidad a
     // tildes/mayúsculas la dan la collation Modern_Spanish_CI_AI de las columnas + ToUpper(),
