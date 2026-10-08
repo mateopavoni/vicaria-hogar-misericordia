@@ -18,4 +18,17 @@ public interface IGeneralCalendarEventService
     Task<GeneralCalendarEventDetailDto?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken);
+
+        Task<CalendarEventOperationResult> UpdateAsync(
+        Guid id,
+        UpdateGeneralCalendarEventDto dto,
+        Guid actorId,
+        bool isReferent,
+        CancellationToken cancellationToken);
+
+    Task<CalendarEventOperationResult> DeleteAsync(
+        Guid id,
+        Guid actorId,
+        bool isReferent,
+        CancellationToken cancellationToken);
 }
