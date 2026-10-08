@@ -17,4 +17,9 @@ public interface IPersonalCalendarEventService
         Guid id,
         Guid actorId,
         CancellationToken cancellationToken);
+
+        Task<PublishPersonalCalendarEventResult> PublishAsync(
+        Guid id,
+        Guid actorId,
+        CancellationToken cancellationToken);
 }
