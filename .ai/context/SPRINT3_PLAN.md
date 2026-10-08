@@ -1,56 +1,38 @@
-# Plan Sprint 3 (EP-04 Calendario + EP-05 Colaboradores)
+# Sprint 3 — Calendario (EP-04) y Colaboradores (EP-05)
 
-Borrador del 2026-10-06, armado **solo desde el repo** (`PROJECT.md`, `AGENTS.md`). No se pudo leer Jira (extensión de Chrome desconectada), así que:
+Estado al 2026-10-08, cruzado con Jira (SCRUM Sprint 3: 28/09 – 07/10). Reemplaza el borrador del 06/10.
+Historias: SCRUM-15, 16, 17 (calendario general/personal), 18, 19 (colaboradores), 74 (visitas Casa de Convivencia).
 
-- **Pendiente de cruzar con Jira:** historias reales, IDs SCRUM, criterios de aceptación y qué tareas tiene asignadas Mateo Pavoni. Nada de esto está inventado acá.
-- Las entidades y épicas sí vienen de `PROJECT.md` (tabla de entidades, filas 16-18).
-
-## Punto de partida
-
-Sprint 1 y 2 están en `main` (CI verde). Entidades pendientes según `PROJECT.md`:
-
-| # | Entidad | Épica |
+## Backend (rutas reales en `dev-backend`)
+| Controller | Ruta | Hecho |
 |---|---|---|
-| 16 | `PersonalCalendarEvent` | EP-04 |
-| 17 | `GeneralCalendarEvent` | EP-04 |
-| 18 | `Collaborator` | EP-05 |
+| `GeneralCalendarEventsController` | `api/general-calendar-events` | POST (Referente), GET por rango, GET detalle |
+| `PersonalCalendarEventsController` | `api/personal-calendar-events` | GET por rango y detalle (privados del dueño) |
+| `CollaboratorsController` | `api/collaborators` | POST (Referente), GET `search` |
+| `CasonaVisitsController` | `api/casona-visits` | POST, PUT (visita Pendiente), GET por rango |
 
-Estas dos épicas no dependen una de otra, así que pueden avanzar en paralelo.
+| Subtarea | Estado | Responsable |
+|---|---|---|
+| 183, 184, 185, 189, 194, 199, 209, 210 | Finalizado | Santiago / Emir |
+| 204 búsqueda de colaboradores | PR #80 mergeado (Jira dice "Por hacer") | Santiago |
+| 190 edición/eliminación de evento + auditoría | Pendiente | Emir |
+| 195 conversión personal → general | Pendiente | Emir |
+| 200 edición/baja lógica de colaborador | En curso | Emir |
+| 205 detalle de colaborador | Pendiente | Emir |
+| 211 cambio de estado de visita + solapamiento | Pendiente (el POST/PUT ya devuelven 409 por solapamiento) | Emir |
+| 212 permisos por rol en visitas | Pendiente (hoy: Ref/Dir/Coo escriben, Esc lee) | Emir |
 
-## EP-04 — Calendario compartido y personal
+Sin endpoint ni subtarea: **alta de evento personal**.
 
-Orden sugerido (cada paso entrega algo testeable):
+## Frontend (Belén, rama `dev-frontend-belen`, sin PR)
+Pantallas hechas (SCRUM-186/187/191/192/196/197, 201/202/206/207, 213/214), pero contra rutas asumidas
+(`/api/eventos`, `/api/casa-convivencia-visitas`, `GET /api/collaborators`) que no existen en el backend.
+La rama es previa a Sprint 1/2 y tiene 25 conflictos con `dev-frontend`: hay que rebasear y adaptar rutas y DTOs.
 
-1. **Domain/Infra:** `GeneralCalendarEvent` y `PersonalCalendarEvent` + `*Configuration` + migración (`AddCalendarEvents`). Recordar que el destino final es SQL Server.
-2. **Application:** DTOs `record`, validadores FluentValidation (mensajes en español), `Result` con enum de errores, `ICalendarService`.
-3. **Api:** `CalendarController` (`api/calendar`). Permisos con `RoleNames`/`PermissionNames`, nunca strings sueltos. `AuditLog` en crear/editar/borrar eventos generales.
-4. **Tests:** unitarios (InMemory) + integración siguiendo `AuthControllerTests`.
-5. **Frontend:** vista de calendario (mes/semana), alta/edición, distinción visual evento general vs personal, `permissionGuard` en la ruta.
+## QA (Mateo)
+SCRUM-188, 193, 198, 203, 208, 215 → casos en `docs/qa/QA_SPRINT3.md` (nivel API).
+Sprint 4: SCRUM-219, 223 (asistencia), sin código todavía.
 
-Regla a respetar: el evento personal es privado de su dueño (el servicio filtra por el `userId` del token; ningún otro rol lo ve).
-
-## EP-05 — Gestión de colaboradores
-
-1. **Domain/Infra:** `Collaborator` (voluntario/empleado) + configuración + migración (`AddCollaborator`).
-2. **Application/Api:** CRUD con baja lógica, `CollaboratorsController` (`api/collaborators`), validadores, `AuditLog`.
-3. **Tests** unitarios + integración.
-4. **Frontend:** listado con búsqueda/filtro, formulario, baja/reactivación.
-
-## Preguntas de producto (no resolver por cuenta propia; ver `AGENTS.md` regla 7)
-
-- ¿Qué roles pueden crear/editar eventos **generales** del calendario? ¿Todos los roles pueden verlos?
-- ¿Los eventos admiten recurrencia, recordatorios o notificaciones internas?
-- ¿Qué datos exactos lleva un `Collaborator` (documento, contacto, tipo, horarios)? Ojo con datos sensibles, ver `CONSTRAINTS.md`.
-- ¿Quién gestiona colaboradores: solo Referente o también Directora/Coordinador?
-- ¿Se vincula un colaborador con un `User` del sistema o son registros independientes?
-
-## Qué se puede adelantar ya (sin esperar respuestas)
-
-- Esqueleto de entidades + migraciones + tests de configuración (pasos 1 de ambas épicas).
-- Estructura de módulos y rutas del frontend (feature `calendar` y `collaborators`) con guards.
-
-## Para completar mañana
-
-1. Abrir el backlog de Jira, anotar las historias del Sprint 3 y cuáles están asignadas a Mateo.
-2. Contrastar con este borrador y ajustar IDs SCRUM y criterios de aceptación.
-3. Resolver las preguntas de arriba con el equipo antes de implementar permisos.
+## Decisiones/preguntas abiertas
+- ¿Se agrega `POST api/personal-calendar-events`? El frontend (SCRUM-197) lo necesita.
+- Contrato de rutas: ¿se adapta el frontend al backend (recomendado) o al revés?
