@@ -169,6 +169,41 @@ public class CollaboratorService : ICollaboratorService
             .ToList();
     }
 
+    public async Task<GetCollaboratorByIdResult> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var collaborator = await _dbContext.Collaborators
+            .AsNoTracking()
+            .Include(c => c.RegisteredByUser)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (collaborator is null)
+        {
+            return GetCollaboratorByIdResult.NotFound();
+        }
+
+        var registeredByName = collaborator.RegisteredByUser is not null
+            ? $"{collaborator.RegisteredByUser.FirstName} {collaborator.RegisteredByUser.LastName}".Trim()
+            : string.Empty;
+
+        var dto = new CollaboratorDetailDto(
+            collaborator.Id,
+            collaborator.FirstName,
+            collaborator.LastName,
+            collaborator.Dni,
+            collaborator.Phone,
+            collaborator.Email,
+            collaborator.Type,
+            collaborator.WorkArea,
+            collaborator.IsActive,
+            collaborator.RegisteredAt,
+            collaborator.RegisteredByUserId,
+            registeredByName);
+
+        return GetCollaboratorByIdResult.Ok(dto);
+    }
+
     private static CollaboratorSearchResultDto ToResultDto(
         Guid id,
         string firstName,

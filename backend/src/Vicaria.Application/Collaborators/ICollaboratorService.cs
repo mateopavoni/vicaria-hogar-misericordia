@@ -20,4 +20,8 @@ public interface ICollaboratorService
         string? query,
         CollaboratorType? typeFilter = null,
         CancellationToken cancellationToken = default);
+
+        Task<GetCollaboratorByIdResult> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
 }
