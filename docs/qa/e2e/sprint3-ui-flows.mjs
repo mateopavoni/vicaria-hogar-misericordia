@@ -56,6 +56,23 @@ await step('Evento semanal recurrente', async () => {
   log('Evento semanal recurrente', (await body(p)).includes('UI Semanal') && !bad.length, bad.join(' | '));
 });
 
+await step('Evento mensual', async () => {
+  const MONTHLY = `UI Mensual ${RND}`;
+  await p.goto(BASE + '/dashboard/calendario'); await p.waitForTimeout(1500);
+  await p.getByRole('button', { name: 'Nuevo evento' }).click();
+  await p.fill('[formControlName="title"]', MONTHLY);
+  await p.fill('[formControlName="date"]', TOMORROW);
+  await p.fill('[formControlName="startTime"]', '19:00'); await p.fill('[formControlName="endTime"]', '20:00');
+  await p.selectOption('[formControlName="recurrence"]', 'monthly');
+  await p.getByRole('button', { name: 'Guardar' }).click(); await p.waitForTimeout(2000);
+  log('Evento mensual: crear (repeatsMonthly)', (await body(p)).includes(MONTHLY) && !bad.length, bad.join(' | '));
+  await p.getByText('Mes', { exact: true }).first().click(); await p.waitForTimeout(1000);
+  await p.getByRole('button', { name: '›' }).first().click(); await p.waitForTimeout(1500);
+  await p.screenshot({ path: `${out}/15-evento-mensual-mes-siguiente.png` });
+  log('Evento mensual: aparece el mismo día del mes siguiente', (await body(p)).includes(MONTHLY));
+  await p.getByText('Semana', { exact: true }).first().click(); await p.waitForTimeout(500);
+});
+
 await step('Evento personal en Mi calendario', async () => {
   await p.getByText('Mi calendario', { exact: true }).first().click(); await p.waitForTimeout(1200);
   await p.getByRole('button', { name: 'Nuevo evento' }).click();
@@ -186,8 +203,10 @@ await step('Visita: solapamiento', async () => {
   await p.getByRole('button', { name: 'Guardar' }).click(); await p.waitForTimeout(1500);
   const txt = await body(p);
   await p.screenshot({ path: `${out}/31-visita-solapada.png` });
-  log('Visita: solapamiento rechazado con mensaje', /superpone|solap|conflicto/i.test(txt), txt.slice(-220));
-  await p.getByRole('button', { name: 'Cancelar', exact: true }).click().catch(() => {});
+  log('Visita: solapamiento avisa con mensaje (409)', /superpone|solap|conflicto/i.test(txt) && bad.some(b => b.startsWith('409')), txt.slice(-220));
+  bad = [];
+  await p.getByRole('button', { name: 'Guardar' }).click(); await p.waitForTimeout(2000);
+  log('Visita: guardar igual tras la advertencia (allowOverlap)', (await body(p)).includes('Pisada') && !bad.length, bad.join(' | '));
 });
 
 await step('Visita: marcar realizada', async () => {

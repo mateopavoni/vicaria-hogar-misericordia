@@ -1,3 +1,5 @@
+using Vicaria.Domain.Entities;
+
 namespace Vicaria.Application.CalendarEvents;
 
 // una ocurrencia concreta de un evento en el calendario (SCRUM-194): los eventos
