@@ -62,8 +62,18 @@ describe('CasaConvivenciaVisitsService', () => {
       date: '2026-10-12',
       startTime: '16:00:00',
       estimatedDurationMinutes: 45,
+      allowOverlap: false,
     });
     req.flush({ id: 'v2' });
+  });
+
+  it('create() con confirmación de solapamiento manda allowOverlap en true', () => {
+    service
+      .create({ residentId: 'p1', visitorName: 'Madre', start: '2026-10-12T16:00:00', durationMinutes: 45, allowOverlap: true })
+      .subscribe();
+    const req = httpMock.expectOne('/api/casona-visits');
+    expect(req.request.body.allowOverlap).toBe(true);
+    req.flush({ id: 'v3' });
   });
 
   it('updateStatus() usa PATCH /status con el estado numérico', () => {
@@ -77,12 +87,12 @@ describe('CasaConvivenciaVisitsService', () => {
     expect(status).toBe('done');
   });
 
-  it('cancelar sin motivo manda un motivo por defecto (el backend lo exige)', () => {
+  it('cancelar sin motivo manda el motivo vacío (es opcional)', () => {
     load();
     service.updateStatus('v1', 'cancelled', '  ').subscribe();
     const req = httpMock.expectOne('/api/casona-visits/v1/status');
     expect(req.request.body.status).toBe(2);
-    expect(req.request.body.cancellationReason).toBe('Sin motivo indicado');
+    expect(req.request.body.cancellationReason).toBeNull();
     req.flush(null);
   });
 
