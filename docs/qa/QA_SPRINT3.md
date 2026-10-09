@@ -1,6 +1,6 @@
 # QA Sprint 3 — Calendario, Colaboradores y Visitas (EP-04 / EP-05)
 
-Fecha: 2026-10-08. Base: `dev-backend` @ `58fee98`. Alcance: **API** (el frontend de Belén aún apunta a rutas asumidas, ver `Pendientes`).
+Fecha: 2026-10-08 (actualizado 2026-10-09 con el backend de Emir integrado). Base: `dev-backend` @ `f2d2875` + ajustes propios en `dev`. Alcance: **API** (TC-41 a TC-83, TC-100 a TC-129) y **UI** en navegador real (TC-84 a TC-99 y TC-130 a TC-136).
 Roles: **Ref** = Referente, **Dir** = Directora de Casa de Convivencia, **Esc** = Escucha, **Coo** = Coordinador de Casa de Convivencia.
 Cada caso cita el test automatizado de integración que lo respalda (`tests/Vicaria.IntegrationTests/...`).
 
@@ -23,7 +23,15 @@ Cada caso cita el test automatizado de integración que lo respalda (`tests/Vica
 | TC-50 | Hora fin ≤ inicio | `endTime <= startTime` | 400 "La hora de fin debe ser posterior a la hora de inicio." | `Post_WithEndTimeNotAfterStartTime_Returns400` |
 | TC-51 | Evento recurrente | POST con `recurrenceDays` (flags de día) y listar el rango | Aparecen ocurrencias en cada día marcado | `CalendarEventOccurrenceExpanderTests` (unit) |
 
-Bloqueado (backend pendiente): edición y eliminación con auditoría → SCRUM-190.
+### Edición y eliminación de eventos generales (SCRUM-190)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-100 | Editar evento (Referente) | `PUT /api/general-calendar-events/{id}` con nuevos datos | 204; el detalle refleja el cambio; `AuditLog` "Evento general modificado" | `Put_ByReferent_Returns204AndChangesDetail`, `UpdateAsync_WhenAuthorUpdates_SucceedsAndLogsAudit` |
+| TC-101 | Referente edita evento ajeno | PUT de un Referente sobre evento de otro autor | 204 | `UpdateAsync_WhenReferentUpdatesOtherUsersEvent_SucceedsAndLogsAudit` |
+| TC-102 | Sin permiso sobre evento ajeno | PUT / DELETE de un no-autor y no-Referente | 403 | `Put_ByNonAuthorNonReferent_Returns403`, `Delete_ByNonAuthorNonReferent_Returns403` |
+| TC-103 | Título vacío al editar | PUT con `title` vacío | 400 | `Put_WithEmptyTitle_Returns400` |
+| TC-104 | Evento inexistente | PUT / DELETE con id desconocido | 404 | `Put_UnknownEvent_Returns404`, `Delete_UnknownEvent_Returns404` |
+| TC-105 | Eliminar evento | `DELETE /api/general-calendar-events/{id}` | 204; el detalle pasa a 404; `AuditLog` "Evento general eliminado" | `Delete_ByReferent_Returns204ThenDetailIs404`, `DeleteAsync_WhenAuthorDeletes_SucceedsRemovesEntityAndLogsAudit` |
 
 ## SCRUM-198 — QA calendario personal (historia SCRUM-17)
 | TC | Caso | Pasos | Esperado | Respaldo |
@@ -33,7 +41,18 @@ Bloqueado (backend pendiente): edición y eliminación con auditoría → SCRUM-
 | TC-54 | Detalle propio | `GET /{id}` propio | 200 | `GetById_OwnEvent_Returns200` |
 | TC-55 | Roles / sesión / rango | Rol autorizado, sin token, `from>to` | 200 / 401 / 400 | `Get_WithEachAuthorizedRole_Returns200`, `Get_WithoutToken_Returns401`, `Get_WithFromAfterTo_Returns400` |
 
-Bloqueado: **alta** de evento personal (no existe `POST` en `PersonalCalendarEventsController` ni subtarea en Jira), conversión personal→general (SCRUM-195).
+### Alta, edición, baja y conversión de eventos personales (SCRUM-195 y SCRUM-17)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-106 | Alta de evento personal | `POST /api/personal-calendar-events` con Ref | 201; solo el dueño lo ve | `Post_WithReferent_Returns201AndOnlyOwnerSeesIt` |
+| TC-107 | Alta solo Referente | POST con Dir / Esc / Coo; sin token; sin título | 403 / 401 / 400 | `Post_WithNonReferentRoles_Returns403`, `Post_WithoutToken_Returns401`, `Post_WithMissingTitle_Returns400` |
+| TC-108 | Editar evento propio | `PUT /api/personal-calendar-events/{id}` | 204; `AuditLog` "Evento personal modificado" | `Put_ByOwnerReferent_Returns204AndChangesTitle`, `UpdateAsync_WhenAuthor_UpdatesFieldsAndLogsAudit` |
+| TC-109 | Editar o borrar evento ajeno | PUT / DELETE de otro usuario | 404 (no revela existencia) | `Put_OnOtherUsersEvent_Returns404`, `Delete_OnOtherUsersEvent_Returns404`, `UpdateAsync_WhenNotAuthor_ReturnsNotFoundAndKeepsEvent` |
+| TC-110 | Validación al editar | PUT con título vacío | 400 | `Put_WithEmptyTitle_Returns400` |
+| TC-111 | Eliminar evento propio | `DELETE /api/personal-calendar-events/{id}` | 204; detalle 404; `AuditLog` "Evento personal eliminado" | `Delete_ByOwnerReferent_Returns204ThenDetailIs404`, `DeleteAsync_WhenAuthor_RemovesEventAndLogsAudit` |
+| TC-112 | Borrar con rol no permitido | DELETE con Esc / Dir | 403 | `Delete_WithNonReferentRoles_Returns403` |
+| TC-113 | Convertir personal a general | `PUT /api/personal-calendar-events/{id}/publish` | 200 con `id` del evento general; el personal desaparece; `AuditLog` | `Publish_ByOwner_Returns200MovesEventToGeneral`, `PublishAsync_WhenAuthorPublishes_MovesEventToGeneralAndLogsAudit` |
+| TC-114 | Convertir evento ajeno o inexistente | PUT /publish de otro usuario / id desconocido | 404 | `Publish_OnOtherUsersEvent_Returns404`, `PublishAsync_WhenEventBelongsToAnotherUser_ReturnsNotFoundAndDoesNotPublish` |
 
 ## SCRUM-203 — QA alta de colaborador (historia SCRUM-18)
 | TC | Caso | Pasos | Esperado | Respaldo |
@@ -48,7 +67,15 @@ Bloqueado: **alta** de evento personal (no existe `POST` en `PersonalCalendarEve
 | TC-63 | DNI duplicado | Dos altas con igual DNI | 409 | `Post_WithDuplicateDni_Returns409` |
 | TC-64 | Auditoría y autor | Alta y revisar BD | Se guarda el actor y se escribe `AuditLog` | `Post_PersistsCollaboratorWithActorAndWritesAuditLog` |
 
-Bloqueado: edición, baja lógica y auditoría de cambios → SCRUM-200.
+### Edición y baja lógica de colaboradores (SCRUM-200)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-115 | Editar colaborador | `PUT /api/collaborators/{id}` con Ref | 204; el detalle refleja los cambios; `AuditLog` "Colaborador modificado" | `Put_ByReferent_Returns204AndDetailReflectsChanges`, `UpdateAsync_WithValidDto_UpdatesFieldsAndTrimsValues` |
+| TC-116 | Baja lógica | PUT con `isActive: false` | 204; el listado lo marca inactivo; `AuditLog` "Colaborador dado de baja" | `Put_WithIsActiveFalse_DeactivatesAndListShowsIt`, `UpdateAsync_WhenDeactivating_WritesDeactivatedAuditLog` |
+| TC-117 | Reactivación | PUT con `isActive: true` sobre uno inactivo | 204; `AuditLog` "Colaborador reactivado" | `UpdateAsync_WhenReactivating_WritesReactivatedAuditLog` |
+| TC-118 | DNI duplicado al editar | PUT con DNI de otro colaborador | 409; conservar el propio DNI es válido | `Put_WithDuplicateDni_Returns409`, `UpdateAsync_WhenKeepingSameDni_Succeeds` |
+| TC-119 | Validaciones al editar | `firstName` vacío; id inexistente | 400 / 404 | `Put_WithEmptyFirstName_Returns400`, `Put_UnknownCollaborator_Returns404` |
+| TC-120 | Edición solo Referente | PUT con Dir / Esc / Coo | 403 | `Put_WithUnauthorizedRole_Returns403` |
 
 ## SCRUM-208 — QA búsqueda de colaboradores (historia SCRUM-19)
 | TC | Caso | Pasos | Esperado | Respaldo |
@@ -62,7 +89,12 @@ Bloqueado: edición, baja lógica y auditoría de cambios → SCRUM-200.
 | TC-71 | Comodín `%` literal | `q=%` | Solo coincide con `%` literal | `Search_WithPercentWildcard_MatchesOnlyLiteralPercent` |
 | TC-72 | Sin sesión | GET sin token | 401 | `Search_WithoutToken_Returns401` |
 
-Bloqueado: detalle de colaborador (SCRUM-205); listado completo (el frontend usa `GET /api/collaborators`, que no existe).
+### Detalle y listado de colaboradores (SCRUM-205)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-121 | Detalle de colaborador | `GET /api/collaborators/{id}` con cualquier rol autenticado | 200 con datos completos, estado y quién lo registró | `GetById_WithAnyAuthenticatedRole_Returns200WithRegistrar`, `GetByIdAsync_WhenCollaboratorExists_ReturnsAllDetailsAndRegistrarName` |
+| TC-122 | Detalle inexistente / sin sesión | id desconocido; sin token | 404 / 401 | `GetById_Unknown_Returns404`, `GetById_WithoutToken_Returns401` |
+| TC-123 | Listado completo | `GET /api/collaborators` | 200 ordenado por nombre, con `isActive` y quién lo registró | `List_ReturnsCollaboratorsWithRegisteredByName`, `List_WithoutToken_Returns401` |
 
 ## SCRUM-215 — QA calendario de visitas (historia SCRUM-74)
 | TC | Caso | Pasos | Esperado | Respaldo |
@@ -79,7 +111,15 @@ Bloqueado: detalle de colaborador (SCRUM-205); listado completo (el frontend usa
 | TC-82 | Consulta por rango | `GET /api/casona-visits?from&to` con los 4 roles | 200 paginado, solo visitas del rango | `Get_ReturnsOnlyVisitsInRangeWithPagedShape`, `Get_WithEachAuthorizedRole_Returns200` |
 | TC-83 | Sin sesión / rango inválido | Sin token; `from>to` | 401 / 400 | `Get_WithoutToken_Returns401`, `Get_WithFromAfterTo_Returns400` |
 
-Bloqueado: cambio de estado dedicado y alerta de solapamiento (SCRUM-211), permisos por rol (SCRUM-212), `GET /residentes` que usa el frontend.
+### Cambio de estado, solapamiento y permisos (SCRUM-211 y SCRUM-212)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-124 | Marcar visita realizada | `PATCH /api/casona-visits/{id}/status` `{status: 1}` | 204; queda Completed; `AuditLog` "Visita marcada como realizada" | `Patch_ToCompleted_Returns204AndPersistsStatus`, `ChangeStatusAsync_WhenChangingToCompleted_UpdatesStatusAndLogsAudit` |
+| TC-125 | Cancelar con motivo | PATCH `{status: 2, cancellationReason}` | 204; guarda el motivo; `AuditLog` "Visita cancelada" | `Patch_ToCancelled_StoresReason`, `ChangeStatusAsync_WhenChangingToCancelled_SavesReasonAndLogsAudit` |
+| TC-126 | Estado inválido / visita inexistente | PATCH `{status: 9}`; id desconocido | 400 / 404 | `Patch_WithInvalidStatusValue_Returns400`, `Patch_UnknownVisit_Returns404`, `ChangeStatusAsync_WhenVisitNotFound_ReturnsNotFound` |
+| TC-127 | Horario liberado por una cancelada | Alta en el horario de una visita Cancelada | 201 (no hay conflicto) | `CreateAsync_WhenSlotWasOccupiedByCancelledVisit_DoesNotConflict` |
+| TC-128 | Escucha sin acceso a visitas | GET / PATCH con Esc | 403 | `Get_WithListenerRole_Returns403`, `Patch_WithListenerRole_Returns403`, `Controller_HasAuthorizeAttribute_RestrictedToExpectedRoles`, `GetByRange_DoesNotAllowListenerRole` |
+| TC-129 | Roles con acceso | GET con Ref / Dir / Coo | 200 | `Get_WithEachAuthorizedRole_Returns200` |
 
 ## QA de UI — frontend integrado (2026-10-08)
 El frontend de Belén se integró en `dev` apuntando a las rutas reales del backend. Se probó en un navegador real
@@ -97,7 +137,7 @@ El frontend de Belén se integró en `dev` apuntando a las rutas reales del back
 | TC-90 | Crear colaborador desde la UI | OK |
 | TC-91 | DNI duplicado: la UI informa "Ya existe un colaborador con ese DNI." | OK |
 | TC-92 | Búsqueda de colaboradores por área | OK |
-| TC-93 | Dar de baja un colaborador | **FALLA (404)**: falta SCRUM-200 |
+| TC-93 | Dar de baja un colaborador | OK (re-ejecutado 2026-10-09; el 2026-10-08 fallaba con 404 por falta de SCRUM-200) |
 | TC-94 | Crear visita desde la UI (selector de residentes reales) | OK |
 | TC-95 | Visita solapada: la UI avisa y el backend responde 409 | OK (ver nota 2 abajo) |
 | TC-96 | Marcar visita como realizada | OK |
@@ -105,13 +145,25 @@ El frontend de Belén se integró en `dev` apuntando a las rutas reales del back
 | TC-98 | Escucha: ve el calendario, sin "Nuevo evento", sin pestaña Casa de Convivencia, sin Colaboradores, `/colaboradores` bloqueado | OK |
 | TC-99 | Directora: ve el calendario sin crear eventos; puede crear visitas | OK |
 
-Bloqueados por backend pendiente (no probables todavía): editar/eliminar evento (SCRUM-190), convertir personal → general
-(SCRUM-195), editar/baja de colaborador (SCRUM-200), detalle de colaborador (SCRUM-205).
+Re-ejecución del 2026-10-09 con el backend de Emir integrado (30 verificaciones, 30 OK):
+
+| TC | Caso | Resultado |
+|---|---|---|
+| TC-130 | Editar un evento general desde el detalle (PUT 204) | OK |
+| TC-131 | Eliminar un evento general con confirmación (DELETE 204) | OK |
+| TC-132 | Convertir un evento personal en general: sale de "Mi calendario" y aparece en "General" (PUT /publish) | OK |
+| TC-133 | Editar un colaborador desde la UI (PUT 204) | OK |
+| TC-134 | Dar de baja: pasa a la pestaña "Inactivos" y la baja persiste al recargar | OK |
+| TC-135 | Reactivar un colaborador: vuelve a "Activos" | OK |
+| TC-136 | Marcar visita realizada y cancelar con motivo vía `PATCH /status` | OK |
 
 ## Pendientes y desajustes a comunicar
-1. **Resuelto 2026-10-08:** el frontend ahora usa `/api/general-calendar-events`, `/api/personal-calendar-events`, `/api/casona-visits` y `/api/collaborators`. Se agregó en el backend `POST api/personal-calendar-events`, `GET api/collaborators` (listado completo) y autor/`isPreloaded` en las ocurrencias de calendario.
-2. **Visitas solapadas:** el frontend avisa del solapamiento y ofrece "Guardar igual", pero el backend rechaza con 409 siempre. Hay que decidir si el solapamiento es advertencia (SCRUM-211) o bloqueo.
-3. **Cancelar visita:** el backend exige motivo; el criterio del frontend lo da por opcional. Hoy el servicio manda "Sin motivo indicado" si queda vacío.
-4. **Recurrencia mensual:** el backend solo modela días de la semana; "mensual" del formulario se guarda como evento único.
-5. **Endpoints que faltan (Emir):** edición/eliminación de evento (SCRUM-190), conversión (SCRUM-195), edición/baja de colaborador (SCRUM-200), detalle (SCRUM-205), cambio de estado dedicado y alerta (SCRUM-211), permisos (SCRUM-212). El frontend ya llama a rutas tentativas para esos casos: `PUT/DELETE api/general-calendar-events/{id}`, `POST api/personal-calendar-events/{id}/convert-to-general`, `PUT/PATCH api/collaborators/{id}[/status]`; ajustar cuando se publiquen los contratos reales.
-6. **Jira SCRUM-204** figura "Por hacer" pero su PR #80 ya está mergeado.
+1. **Resuelto 2026-10-08:** el frontend usa `/api/general-calendar-events`, `/api/personal-calendar-events`, `/api/casona-visits` y `/api/collaborators`. Se agregó `POST api/personal-calendar-events`, `GET api/collaborators` (listado) y autor/`isPreloaded` en las ocurrencias.
+2. **Resuelto 2026-10-09:** contratos reales de Emir integrados: `PUT/DELETE api/general-calendar-events/{id}`, `PUT api/personal-calendar-events/{id}/publish`, `PUT api/collaborators/{id}` (la baja es `isActive` dentro del PUT), `GET api/collaborators/{id}` y `PATCH api/casona-visits/{id}/status`. El listado de colaboradores ahora devuelve `isActive`. Se agregaron `PUT/DELETE api/personal-calendar-events/{id}` (edición y borrado de eventos propios), que no estaban en el backend.
+3. **Defecto hallado en `dev-backend` (Emir):** `UpdateGeneralCalendarEventDtoValidator`, `UpdateCollaboratorDtoValidator` y `ChangeCasonaVisitStatusDtoValidator` no estaban registrados en `Program.cs`; los endpoints que los usan respondían 500. Sus tests eran todos unitarios y no lo detectaron. Corregido en `dev`; hay que llevarlo a `dev-backend`. Se agregaron tests HTTP para esos endpoints.
+4. **Visitas solapadas:** el frontend avisa del solapamiento y ofrece "Guardar igual", pero el backend rechaza con 409 siempre. Decisión de producto abierta: advertencia o bloqueo.
+5. **Cancelar visita:** `PUT` exige motivo y `PATCH /status` no. El frontend manda "Sin motivo indicado" si queda vacío. Decisión abierta: motivo obligatorio u opcional.
+6. **Recurrencia mensual:** el backend solo modela días de la semana; "mensual" del formulario se guarda como evento único.
+7. **Escucha y visitas:** desde SCRUM-212 el rol Escucha no puede consultar visitas (403). Coincide con la UI, que le oculta la pestaña.
+8. **Defecto preexistente (main):** los ítems Inicio, Asistencia, Medicación e Informes del menú apuntan a `/inicio`, una ruta sin pantalla. Prueba de humo por rol 2026-10-09: 11 de 15 pantallas OK, las 4 restantes son `/inicio`.
+9. **Jira:** SCRUM-198 y SCRUM-215 (QA) siguen "En curso".
