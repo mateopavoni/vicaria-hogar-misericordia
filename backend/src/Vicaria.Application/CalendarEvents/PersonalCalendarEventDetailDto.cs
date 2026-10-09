@@ -13,4 +13,5 @@ public record PersonalCalendarEventDetailDto(
     TimeSpan? EndTime,
     WeekDays RecurrenceDays,
     Guid AuthorUserId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    bool RepeatsMonthly = false);

@@ -10,4 +10,5 @@ public record CreateGeneralCalendarEventDto(
     TimeSpan? StartTime = null,
     TimeSpan? EndTime = null,
     string? Description = null,
-    WeekDays RecurrenceDays = WeekDays.None);
+    WeekDays RecurrenceDays = WeekDays.None,
+    bool RepeatsMonthly = false);

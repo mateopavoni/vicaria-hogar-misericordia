@@ -20,6 +20,8 @@ interface OccurrenceDto {
   authorUserId: string | null;
   authorName: string | null;
   isPreloaded: boolean;
+  recurrenceDays: number;
+  repeatsMonthly: boolean;
 }
 
 interface PagedResult<T> {
@@ -70,6 +72,7 @@ export class CalendarEventsService {
       startTime,
       endTime,
       recurrenceDays: this.toRecurrenceDays(dto.recurrence, date),
+      repeatsMonthly: dto.recurrence === 'monthly',
     };
     return this.http
       .post<{ id: string }>(this.baseUrl(dto.scope), body)
@@ -87,6 +90,7 @@ export class CalendarEventsService {
       startTime,
       endTime,
       recurrenceDays: this.toRecurrenceDays(dto.recurrence, date),
+      repeatsMonthly: dto.recurrence === 'monthly',
     };
     return this.http
       .put<void>(`${this.baseUrl(dto.scope)}/${id}`, body)
@@ -117,12 +121,22 @@ export class CalendarEventsService {
       authorId: o.authorUserId ?? '',
       // las plantillas precargadas (desayuno, almuerzo...) las crea el sistema y no se editan
       isRecurring: o.isPreloaded,
-      recurrence: 'none',
+      recurrence: this.toRecurrence(o),
       scope,
     };
   }
 
-  // el backend solo modela recurrencia por días de la semana; "mensual" no existe todavía
+  // el backend guarda la repetición como flags de días de la semana o como "mensual" (mismo día de cada mes)
+  private toRecurrence(o: OccurrenceDto): RecurrenceFrequency {
+    if (o.repeatsMonthly) {
+      return 'monthly';
+    }
+    if (o.isPreloaded || !o.recurrenceDays) {
+      return 'none';
+    }
+    return o.recurrenceDays === ALL_WEEK_DAYS ? 'daily' : 'weekly';
+  }
+
   private toRecurrenceDays(recurrence: RecurrenceFrequency, date: string): number {
     if (recurrence === 'daily') {
       return ALL_WEEK_DAYS;

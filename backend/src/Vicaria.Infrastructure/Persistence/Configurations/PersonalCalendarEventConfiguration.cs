@@ -39,6 +39,11 @@ public class PersonalCalendarEventConfiguration : IEntityTypeConfiguration<Perso
             .HasColumnName("recurrence_days")
             .IsRequired();
 
+        builder.Property(e => e.RepeatsMonthly)
+            .HasColumnName("repeats_monthly")
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(e => e.AuthorUserId)
             .HasColumnName("author_user_id")
             .IsRequired();

@@ -33,9 +33,6 @@ interface SocialRecordListItem {
 const STATUS_FROM_API: VisitStatus[] = ['pending', 'done', 'cancelled'];
 const STATUS_TO_API: Record<VisitStatus, number> = { pending: 0, done: 1, cancelled: 2 };
 
-// el backend exige motivo al cancelar; el AC del frontend lo da por opcional
-const DEFAULT_CANCELLATION_REASON = 'Sin motivo indicado';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -93,6 +90,7 @@ export class CasaConvivenciaVisitsService {
       date,
       startTime,
       estimatedDurationMinutes: dto.durationMinutes,
+      allowOverlap: dto.allowOverlap ?? false,
     };
     return this.http
       .post<{ id: string }>(this.apiUrl, body)
@@ -108,7 +106,7 @@ export class CasaConvivenciaVisitsService {
       durationMinutes: dto.durationMinutes,
       status: current?.status ?? 'pending',
       cancellationReason: current?.cancellationReason ?? null,
-    });
+    }, dto.allowOverlap ?? false);
   }
 
   // SCRUM-74 (AC): se puede marcar una visita como realizada, cancelada o pendiente.
@@ -118,7 +116,7 @@ export class CasaConvivenciaVisitsService {
       return throwError(() => new Error('Visita desconocida: recargá el calendario.'));
     }
     const cancellationReason =
-      status === 'cancelled' ? cancellationReasonInput?.trim() || DEFAULT_CANCELLATION_REASON : null;
+      status === 'cancelled' ? cancellationReasonInput?.trim() || null : null;
     // PATCH api/casona-visits/{id}/status responde 204 sin cuerpo (SCRUM-211)
     return this.http
       .patch<void>(`${this.apiUrl}/${id}/status`, { status: STATUS_TO_API[status], cancellationReason })
@@ -134,6 +132,7 @@ export class CasaConvivenciaVisitsService {
   private put(
     id: string,
     v: Pick<Visit, 'residentId' | 'visitorName' | 'start' | 'durationMinutes' | 'status' | 'cancellationReason'>,
+    allowOverlap = false,
   ): Observable<Visit> {
     const [date, startTime] = v.start.split('T');
     const body = {
@@ -144,6 +143,7 @@ export class CasaConvivenciaVisitsService {
       estimatedDurationMinutes: v.durationMinutes,
       status: STATUS_TO_API[v.status],
       cancellationReason: v.cancellationReason ?? null,
+      allowOverlap,
     };
     // el PUT responde 204 sin cuerpo
     return this.http.put<void>(`${this.apiUrl}/${id}`, body).pipe(

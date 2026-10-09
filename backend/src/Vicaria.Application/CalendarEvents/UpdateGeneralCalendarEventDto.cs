@@ -8,4 +8,5 @@ public record UpdateGeneralCalendarEventDto(
     DateTime? Date,
     TimeSpan? StartTime,
     TimeSpan? EndTime,
-    WeekDays RecurrenceDays);
+    WeekDays RecurrenceDays,
+    bool RepeatsMonthly = false);

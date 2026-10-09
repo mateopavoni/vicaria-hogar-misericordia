@@ -30,7 +30,8 @@ public class CasonaVisitService : ICasonaVisitService
             return MapCreatePersonIssue(personIssue);
         }
 
-        if (await HasOverlappingVisitAsync(date, dto.StartTime, dto.EstimatedDurationMinutes, null, cancellationToken))
+        if (!dto.AllowOverlap
+            && await HasOverlappingVisitAsync(date, dto.StartTime, dto.EstimatedDurationMinutes, null, cancellationToken))
         {
             return CreateCasonaVisitResult.TimeOverlap();
         }
@@ -99,7 +100,8 @@ public class CasonaVisitService : ICasonaVisitService
             return UpdateCasonaVisitResult.VisitInPast();
         }
 
-        if (await HasOverlappingVisitAsync(date, dto.StartTime, dto.EstimatedDurationMinutes, visit.Id, cancellationToken))
+        if (!dto.AllowOverlap
+            && await HasOverlappingVisitAsync(date, dto.StartTime, dto.EstimatedDurationMinutes, visit.Id, cancellationToken))
         {
             return UpdateCasonaVisitResult.TimeOverlap();
         }

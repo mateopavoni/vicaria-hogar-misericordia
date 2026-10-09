@@ -6,13 +6,16 @@ namespace Vicaria.Infrastructure.CalendarEvents;
 // - Date null (plantillas institucionales del seed) → cada día del rango que matchee RecurrenceDays
 // - Date con valor → la serie arranca en Date (primera ocurrencia siempre en Date) y desde ahí
 //   se repite semanalmente los días marcados en RecurrenceDays; RecurrenceDays.None = fecha única
+// - Date con valor y repeatsMonthly → se repite el mismo día de cada mes (en meses más cortos,
+//   el último día del mes: un evento del 31 cae el 30 o el 28/29)
 public static class CalendarEventOccurrenceExpander
 {
     public static IReadOnlyList<DateTime> Expand(
         DateTime? date,
         WeekDays recurrenceDays,
         DateTime from,
-        DateTime to)
+        DateTime to,
+        bool repeatsMonthly = false)
     {
         var fromDate = from.Date;
         var toDate = to.Date;
@@ -39,6 +42,21 @@ public static class CalendarEventOccurrenceExpander
         var startDate = date.Value.Date;
         if (startDate > toDate)
         {
+            return dates;
+        }
+
+        if (repeatsMonthly)
+        {
+            for (var month = new DateTime(startDate.Year, startDate.Month, 1); month <= toDate; month = month.AddMonths(1))
+            {
+                var day = Math.Min(startDate.Day, DateTime.DaysInMonth(month.Year, month.Month));
+                var occurrence = new DateTime(month.Year, month.Month, day);
+                if (occurrence >= startDate && occurrence >= fromDate && occurrence <= toDate)
+                {
+                    dates.Add(occurrence);
+                }
+            }
+
             return dates;
         }
 

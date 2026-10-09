@@ -1,3 +1,4 @@
+using Vicaria.Domain.Entities;
 using FluentValidation;
 
 namespace Vicaria.Application.CalendarEvents;
@@ -15,6 +16,10 @@ public class CreateGeneralCalendarEventDtoValidator : AbstractValidator<CreateGe
 
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("La descripción no puede superar los 500 caracteres.");
+
+        RuleFor(x => x)
+            .Must(x => !x.RepeatsMonthly || x.RecurrenceDays == WeekDays.None)
+            .WithMessage("La repetición mensual no se combina con días de la semana.");
 
         // StartTime y EndTime son opcionales e independientes; solo se comparan si vienen ambos
         When(x => x.StartTime.HasValue && x.EndTime.HasValue, () =>

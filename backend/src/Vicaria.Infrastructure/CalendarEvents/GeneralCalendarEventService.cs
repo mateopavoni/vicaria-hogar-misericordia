@@ -29,6 +29,7 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
             EndTime = dto.EndTime,
             Description = dto.Description?.Trim(),
             RecurrenceDays = dto.RecurrenceDays,
+            RepeatsMonthly = dto.RepeatsMonthly,
             AuthorUserId = actorId,
             CreatedAt = DateTime.UtcNow
         };
@@ -64,17 +65,20 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
         var calendarEvents = await _dbContext.GeneralCalendarEvents
             .AsNoTracking()
             .Include(e => e.AuthorUser)
-            .Where(e => e.Date == null || (e.Date >= fromDate && e.Date <= toDate))
+            // las series que arrancaron antes del rango también cuentan: se expanden hacia adelante
+            .Where(e => e.Date == null
+                || (e.Date <= toDate
+                    && (e.Date >= fromDate || e.RecurrenceDays != WeekDays.None || e.RepeatsMonthly)))
             .ToListAsync(cancellationToken);
 
         var occurrences = calendarEvents
             .SelectMany(e => CalendarEventOccurrenceExpander
-                .Expand(e.Date, e.RecurrenceDays, fromDate, toDate)
+                .Expand(e.Date, e.RecurrenceDays, fromDate, toDate, e.RepeatsMonthly)
                 .Select(d => new CalendarEventOccurrenceDto(
                     e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description,
                     e.AuthorUserId,
                     e.AuthorUser is null ? null : $"{e.AuthorUser.FirstName} {e.AuthorUser.LastName}".Trim(),
-                    e.Date is null)))
+                    e.Date is null, e.RecurrenceDays, e.RepeatsMonthly)))
             .OrderBy(o => o.Date)
             .ThenBy(o => o.StartTime)
             .ToList();
@@ -109,7 +113,8 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
             calendarEvent.AuthorUser is null
                 ? null
                 : $"{calendarEvent.AuthorUser.FirstName} {calendarEvent.AuthorUser.LastName}".Trim(),
-            calendarEvent.CreatedAt);
+            calendarEvent.CreatedAt,
+            calendarEvent.RepeatsMonthly);
     }
 
     public async Task<CalendarEventOperationResult> UpdateAsync(
@@ -138,6 +143,7 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
         calendarEvent.StartTime = dto.StartTime;
         calendarEvent.EndTime = dto.EndTime;
         calendarEvent.RecurrenceDays = dto.RecurrenceDays;
+        calendarEvent.RepeatsMonthly = dto.RepeatsMonthly;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {

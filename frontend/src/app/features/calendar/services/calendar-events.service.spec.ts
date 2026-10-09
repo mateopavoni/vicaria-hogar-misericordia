@@ -84,6 +84,7 @@ describe('CalendarEventsService', () => {
       startTime: '11:00:00',
       endTime: '12:00:00',
       recurrenceDays: 1,
+      repeatsMonthly: false,
     });
     req.flush({ id: 'new' });
   });
@@ -145,5 +146,38 @@ describe('CalendarEventsService', () => {
     expect(req.request.method).toBe('PUT');
     req.flush({ id: 'g9' });
     expect(newId).toBe('g9');
+  });
+
+  it('create() mensual manda repeatsMonthly y ningún día de la semana', () => {
+    service
+      .create({ title: 'T', start: '2026-10-12T11:00:00', end: '2026-10-12T12:00:00', recurrence: 'monthly', scope: 'general' })
+      .subscribe();
+    const req = httpMock.expectOne('/api/general-calendar-events');
+    expect(req.request.body.repeatsMonthly).toBe(true);
+    expect(req.request.body.recurrenceDays).toBe(0);
+    req.flush({ id: 'e9' });
+  });
+
+  it('update() semanal manda repeatsMonthly en false', () => {
+    service.update('e1', sampleDto('general')).subscribe();
+    const req = httpMock.expectOne('/api/general-calendar-events/e1');
+    expect(req.request.body.repeatsMonthly).toBe(false);
+    req.flush(null);
+  });
+
+  it('las ocurrencias traducen la regla de repetición del backend para poder editarlas', () => {
+    let result: CalendarEvent[] = [];
+    service.getByRange('2026-10-12', '2026-10-18', 'general').subscribe((r) => (result = r));
+    httpMock.expectOne((r) => r.url === '/api/general-calendar-events').flush({
+      items: [
+        occ(1, { recurrenceDays: 0, repeatsMonthly: true }),
+        occ(2, { recurrenceDays: 1, repeatsMonthly: false }),
+        occ(3, { recurrenceDays: 127, repeatsMonthly: false }),
+        occ(4, { recurrenceDays: 0, repeatsMonthly: false }),
+      ],
+      total: 4,
+      totalPages: 1,
+    });
+    expect(result.map((e) => e.recurrence)).toEqual(['monthly', 'weekly', 'daily', 'none']);
   });
 });

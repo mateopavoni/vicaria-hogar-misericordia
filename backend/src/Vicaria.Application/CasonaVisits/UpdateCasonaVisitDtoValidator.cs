@@ -28,11 +28,5 @@ public class UpdateCasonaVisitDtoValidator : AbstractValidator<UpdateCasonaVisit
 
         RuleFor(x => x.CancellationReason)
             .MaximumLength(500).WithMessage("El motivo de cancelación no puede superar los 500 caracteres.");
-
-        When(x => x.Status == VisitStatus.Cancelled, () =>
-        {
-            RuleFor(x => x.CancellationReason)
-                .NotEmpty().WithMessage("El motivo de cancelación es obligatorio cuando la visita se cancela.");
-        });
     }
 }
