@@ -33,4 +33,4 @@ export interface CreateCollaboratorDto {
   workArea?: string | null;
 }
 
-export type UpdateCollaboratorDto = CreateCollaboratorDto;
+export type UpdateCollaboratorDto = CreateCollaboratorDto & { isActive?: boolean };

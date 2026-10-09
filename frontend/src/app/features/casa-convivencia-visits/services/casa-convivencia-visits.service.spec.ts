@@ -66,25 +66,21 @@ describe('CasaConvivenciaVisitsService', () => {
     req.flush({ id: 'v2' });
   });
 
-  it('updateStatus() reenvía la visita completa con el estado numérico', () => {
+  it('updateStatus() usa PATCH /status con el estado numérico', () => {
     load();
-    service.updateStatus('v1', 'done').subscribe();
-    const req = httpMock.expectOne('/api/casona-visits/v1');
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toMatchObject({
-      personId: 'p1',
-      date: '2026-10-12',
-      startTime: '16:00:00',
-      status: 1,
-      cancellationReason: null,
-    });
+    let status = '';
+    service.updateStatus('v1', 'done').subscribe((v) => (status = v.status));
+    const req = httpMock.expectOne('/api/casona-visits/v1/status');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ status: 1, cancellationReason: null });
     req.flush(null);
+    expect(status).toBe('done');
   });
 
   it('cancelar sin motivo manda un motivo por defecto (el backend lo exige)', () => {
     load();
     service.updateStatus('v1', 'cancelled', '  ').subscribe();
-    const req = httpMock.expectOne('/api/casona-visits/v1');
+    const req = httpMock.expectOne('/api/casona-visits/v1/status');
     expect(req.request.body.status).toBe(2);
     expect(req.request.body.cancellationReason).toBe('Sin motivo indicado');
     req.flush(null);

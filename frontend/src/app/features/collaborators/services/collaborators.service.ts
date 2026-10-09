@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, tap, throwError } from 'rxjs';
 import {
   Collaborator,
   CollaboratorType,
@@ -18,6 +18,7 @@ interface CollaboratorListItem {
   email: string | null;
   type: number;
   workArea: string | null;
+  isActive: boolean;
   registeredAt: string;
   registeredByName: string | null;
 }
@@ -32,12 +33,18 @@ export class CollaboratorsService {
   private http = inject(HttpClient);
   private apiUrl = '/api/collaborators';
 
+  // último listado consultado: el PUT es una edición completa y responde 204, así que la baja
+  // reenvía los demás campos y devuelve el colaborador actualizado a partir de esto.
+  private known = new Map<string, Collaborator>();
+
   // listado completo; la búsqueda por texto y el filtro por tipo se resuelven en pantalla.
-  // El backend todavía no modela baja lógica (SCRUM-200), por eso todos se muestran activos.
   getAll(): Observable<Collaborator[]> {
     return this.http
       .get<CollaboratorListItem[]>(this.apiUrl)
-      .pipe(map((rows) => rows.map((r) => this.toCollaborator(r))));
+      .pipe(
+        map((rows) => rows.map((r) => this.toCollaborator(r))),
+        tap((list) => list.forEach((c) => this.known.set(c.id, c))),
+      );
   }
 
   create(dto: CreateCollaboratorDto): Observable<Collaborator> {
@@ -50,13 +57,28 @@ export class CollaboratorsService {
     );
   }
 
-  // PENDIENTE backend SCRUM-200 (edición y baja lógica): hasta entonces responden 404/405
+  // PUT api/collaborators/{id} (SCRUM-200): edición completa; incluye isActive, que registra
+  // la baja o reactivación en la auditoría. Responde 204 sin cuerpo.
   update(id: string, dto: UpdateCollaboratorDto): Observable<Collaborator> {
-    return this.http.put<Collaborator>(`${this.apiUrl}/${id}`, dto);
+    const current = this.known.get(id);
+    const isActive = dto.isActive ?? current?.isActive ?? true;
+    const body = { ...dto, isActive, type: dto.type === CollaboratorType.Employee ? 1 : 0 };
+    return this.http.put<void>(`${this.apiUrl}/${id}`, body).pipe(
+      map(() => {
+        const updated = { ...(current ?? { id }), ...dto, isActive } as Collaborator;
+        this.known.set(id, updated);
+        return updated;
+      }),
+    );
   }
 
+  // la baja lógica es un PUT con isActive; se reenvían los demás campos del colaborador
   toggleActive(id: string, isActive: boolean): Observable<Collaborator> {
-    return this.http.patch<Collaborator>(`${this.apiUrl}/${id}/status`, { isActive });
+    const current = this.known.get(id);
+    if (!current) {
+      return throwError(() => new Error('Colaborador desconocido: recargá el listado.'));
+    }
+    return this.update(id, { ...current, isActive } as UpdateCollaboratorDto);
   }
 
   private toCollaborator(r: CollaboratorListItem): Collaborator {
@@ -69,7 +91,7 @@ export class CollaboratorsService {
       email: r.email,
       type: TYPE_BY_NUMBER[r.type] ?? null,
       workArea: r.workArea,
-      isActive: true,
+      isActive: r.isActive,
       createdAt: r.registeredAt,
       createdByName: r.registeredByName ?? '',
     };

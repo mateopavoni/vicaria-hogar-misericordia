@@ -96,4 +96,54 @@ describe('CalendarEventsService', () => {
     expect(req.request.body.recurrenceDays).toBe(127);
     req.flush({ id: 'new' });
   });
+
+  const sampleDto = (scope: 'general' | 'personal') => ({
+    title: 'Reunión',
+    description: 'Detalle',
+    start: '2026-10-12T09:00:00',
+    end: '2026-10-12T10:30:00',
+    recurrence: 'weekly' as const,
+    scope,
+  });
+
+  it('update() hace PUT al endpoint del ámbito con el cuerpo del backend y responde 204', () => {
+    let id = '';
+    service.update('e1', sampleDto('general')).subscribe((e) => (id = e.id));
+    const req = httpMock.expectOne('/api/general-calendar-events/e1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toMatchObject({
+      title: 'Reunión',
+      date: '2026-10-12',
+      startTime: '09:00:00',
+      endTime: '10:30:00',
+      recurrenceDays: 1,
+    });
+    req.flush(null);
+    expect(id).toBe('e1');
+  });
+
+  it('update() de un evento personal va al endpoint personal', () => {
+    service.update('e2', sampleDto('personal')).subscribe();
+    const req = httpMock.expectOne('/api/personal-calendar-events/e2');
+    expect(req.request.method).toBe('PUT');
+    req.flush(null);
+  });
+
+  it('delete() usa el endpoint del ámbito (general por defecto)', () => {
+    service.delete('e1').subscribe();
+    httpMock.expectOne('/api/general-calendar-events/e1').flush(null);
+    service.delete('e2', 'personal').subscribe();
+    const req = httpMock.expectOne('/api/personal-calendar-events/e2');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+
+  it('convertToGeneral() hace PUT /publish y devuelve el id del evento general', () => {
+    let newId = '';
+    service.convertToGeneral('e3').subscribe((r) => (newId = r.id));
+    const req = httpMock.expectOne('/api/personal-calendar-events/e3/publish');
+    expect(req.request.method).toBe('PUT');
+    req.flush({ id: 'g9' });
+    expect(newId).toBe('g9');
+  });
 });

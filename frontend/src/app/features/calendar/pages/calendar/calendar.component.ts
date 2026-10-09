@@ -447,7 +447,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
     this.deleting.set(true);
 
-    this.calendarEventsService.delete(event.id).subscribe({
+    this.calendarEventsService.delete(event.id, event.scope).subscribe({
       next: () => {
         this.deleting.set(false);
         this.deletingEvent.set(null);

@@ -43,8 +43,8 @@ export class CasaConvivenciaVisitsService {
   private http = inject(HttpClient);
   private apiUrl = '/api/casona-visits';
 
-  // el PUT del backend es una edición completa; el cambio de estado necesita reenviar los
-  // demás campos, así que se recuerdan las visitas del último rango consultado.
+  // se recuerdan las visitas del último rango consultado para devolver la visita actualizada
+  // (el PUT y el PATCH de estado responden 204 sin cuerpo).
   private known = new Map<string, Visit>();
 
   // rango visible (día, semana o mes); fechas YYYY-MM-DD. El backend pagina de a 10.
@@ -112,19 +112,23 @@ export class CasaConvivenciaVisitsService {
   }
 
   // SCRUM-74 (AC): se puede marcar una visita como realizada, cancelada o pendiente.
-  updateStatus(id: string, status: VisitStatus, cancellationReason?: string | null): Observable<Visit> {
+  updateStatus(id: string, status: VisitStatus, cancellationReasonInput?: string | null): Observable<Visit> {
     const current = this.known.get(id);
     if (!current) {
       return throwError(() => new Error('Visita desconocida: recargá el calendario.'));
     }
-    return this.put(id, {
-      residentId: current.residentId,
-      visitorName: current.visitorName,
-      start: current.start,
-      durationMinutes: current.durationMinutes,
-      status,
-      cancellationReason: status === 'cancelled' ? cancellationReason?.trim() || DEFAULT_CANCELLATION_REASON : null,
-    });
+    const cancellationReason =
+      status === 'cancelled' ? cancellationReasonInput?.trim() || DEFAULT_CANCELLATION_REASON : null;
+    // PATCH api/casona-visits/{id}/status responde 204 sin cuerpo (SCRUM-211)
+    return this.http
+      .patch<void>(`${this.apiUrl}/${id}/status`, { status: STATUS_TO_API[status], cancellationReason })
+      .pipe(
+        map(() => {
+          const updated = { ...current, status, cancellationReason } as Visit;
+          this.known.set(id, updated);
+          return updated;
+        }),
+      );
   }
 
   private put(

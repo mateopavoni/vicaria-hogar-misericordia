@@ -76,18 +76,31 @@ export class CalendarEventsService {
       .pipe(map(({ id }) => ({ ...dto, id, authorName: '', authorId: '' }) as CalendarEvent));
   }
 
-  // PENDIENTE backend SCRUM-190 (edición/eliminación con auditoría) y SCRUM-195 (conversión
-  // personal -> general): hasta que existan estas rutas, el backend responde 404/405.
+  // PUT api/{general|personal}-calendar-events/{id} (SCRUM-190): edición completa, responde 204
   update(id: string, dto: UpdateCalendarEventDto): Observable<CalendarEvent> {
-    return this.http.put<CalendarEvent>(`${this.baseUrl(dto.scope)}/${id}`, dto);
+    const [date, startTime] = dto.start.split('T');
+    const endTime = dto.end.split('T')[1];
+    const body = {
+      title: dto.title,
+      description: dto.description ?? null,
+      date,
+      startTime,
+      endTime,
+      recurrenceDays: this.toRecurrenceDays(dto.recurrence, date),
+    };
+    return this.http
+      .put<void>(`${this.baseUrl(dto.scope)}/${id}`, body)
+      .pipe(map(() => ({ ...dto, id, authorName: '', authorId: '' }) as CalendarEvent));
   }
 
-  delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl('general')}/${id}`);
+  delete(id: string, scope: CalendarScope = 'general'): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl(scope)}/${id}`);
   }
 
-  convertToGeneral(id: string): Observable<CalendarEvent> {
-    return this.http.post<CalendarEvent>(`${this.baseUrl('personal')}/${id}/convert-to-general`, {});
+  // PUT api/personal-calendar-events/{id}/publish (SCRUM-195): crea el evento general y
+  // elimina el personal; responde { id } del evento general nuevo
+  convertToGeneral(id: string): Observable<{ id: string }> {
+    return this.http.put<{ id: string }>(`${this.baseUrl('personal')}/${id}/publish`, {});
   }
 
   private toEvent(o: OccurrenceDto, scope: CalendarScope): CalendarEvent {
