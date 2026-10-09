@@ -198,7 +198,7 @@ def main():
     cases = parse_docx(docx)
     manual = [c for c in cases if c["id"].startswith("TC-")]
     auto = [c for c in cases if c["id"].startswith("TA-")]
-    s3 = parse_sprint3_md(QA_MD)
+    s3 = sorted(parse_sprint3_md(QA_MD), key=lambda t: int(t["id"][3:]))
     s3_tests = parse_sprint3_tests()
 
     wb = Workbook()
@@ -308,9 +308,9 @@ def main():
     wr.append(["Última ejecución (2026-10-09, rama dev)"])
     wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
     for line in [
-        "Backend: 239 tests unitarios y 234 de integración, todos OK (473).",
-        "Frontend: 20 archivos / 47 tests y build de producción, OK.",
-        "UI en navegador real (Playwright): 30 de 30 verificaciones OK en el flujo de Sprint 3.",
+        "Backend: 246 pruebas unitarias y 240 de integración, todas OK.",
+        "Frontend: 20 archivos / 51 pruebas y build de producción, OK.",
+        "UI en navegador real (Playwright): 33 de 33 verificaciones OK en el flujo de Sprint 3.",
         "Prueba de humo por rol (Referente, Directora, Escucha, Coordinador): 11 de 15 pantallas OK; las 4 restantes son /inicio (ver Defectos y pendientes).",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK el 2026-10-06.",
     ]:
@@ -351,12 +351,18 @@ def main():
          "SCRUM-212", "Corregido", "Se quitó Escucha de los roles autorizados del test."),
         ("Defecto preexistente", "Los ítems del menú Inicio, Asistencia, Medicación e Informes apuntan a /inicio, una ruta sin pantalla (página vacía). Está en main.",
          "Frontend (Sprint 1-2)", "Abierta", "Detectado en la prueba de humo por rol: 4 de 15 pantallas; las demás cargan sin errores de API ni de consola."),
-        ("Decisión abierta", "Solapamiento de visitas: el frontend ofrece 'Guardar igual' pero el backend rechaza con 409.",
-         "SCRUM-211", "Abierta", "Definir si es advertencia o bloqueo."),
-        ("Decisión abierta", "Motivo de cancelación de visita: PUT lo exige, PATCH /status no; el frontend manda un valor por defecto.",
-         "SCRUM-74", "Abierta", "Definir si es obligatorio u opcional."),
-        ("Limitación", "Recurrencia mensual: el backend solo modela días de la semana.",
-         "SCRUM-16 / 189", "Abierta", "El formulario guarda 'mensual' como evento único."),
+        ("Defecto", "Las series recurrentes con fecha de inicio anterior al rango consultado no se expandían: un evento semanal solo aparecía en su semana de inicio.",
+         "SCRUM-189 / 194", "Corregido en dev", "La consulta incluye las series iniciadas antes del rango; hay tests unitarios y de integración."),
+        ("Decisión resuelta", "Solapamiento de visitas: es una advertencia. El backend responde 409 con el aviso y acepta allowOverlap para guardar igual.",
+         "SCRUM-211", "Resuelta 2026-10-09", "El frontend reenvía con allowOverlap cuando la persona vuelve a tocar Guardar."),
+        ("Decisión resuelta", "Motivo de cancelación de visita: es opcional.",
+         "SCRUM-74", "Resuelta 2026-10-09", "El PUT ya no lo exige y el frontend no manda un texto por defecto."),
+        ("Mejora", "Recurrencia mensual de eventos (mismo día de cada mes; en meses cortos, el último día).",
+         "SCRUM-16 / 189", "Implementada", "Columna repeats_monthly y migración AddCalendarEventMonthlyRecurrence."),
+        ("Limitación", "Al editar una ocurrencia de una serie, la fecha del formulario es la de esa ocurrencia y la serie pasa a empezar ese día.",
+         "SCRUM-190", "Abierta", "Una mejora posible es exponer la fecha de inicio de la serie en la ocurrencia."),
+        ("Pendiente", "VPS de Dokku: SSH (puerto 22) y HTTP no responden, por lo que no se pudo borrar la aplicación ni sus datos en el servidor.",
+         "Infraestructura", "Abierta", "En el repositorio se eliminaron el Dockerfile y el nginx.conf de producción del frontend y las referencias en la documentación."),
         ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
          "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
         ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",

@@ -41,6 +41,15 @@ Cada caso cita el test automatizado de integración que lo respalda (`tests/Vica
 | TC-54 | Detalle propio | `GET /{id}` propio | 200 | `GetById_OwnEvent_Returns200` |
 | TC-55 | Roles / sesión / rango | Rol autorizado, sin token, `from>to` | 200 / 401 / 400 | `Get_WithEachAuthorizedRole_Returns200`, `Get_WithoutToken_Returns401`, `Get_WithFromAfterTo_Returns400` |
 
+### Recurrencia mensual y series recurrentes (SCRUM-189)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-137 | Evento mensual | `POST /api/general-calendar-events` con `repeatsMonthly: true` y consultar el mismo día de meses posteriores | Aparece el mismo día de cada mes; no aparece otros días ni antes de su fecha | `Post_MonthlyEvent_AppearsOnSameDayOfLaterMonths`, `Expand_MonthlyEvent_ReturnsSameDayEachMonth` |
+| TC-138 | Mes más corto | Evento mensual del día 31 | Cae el último día de los meses de 30 días y de febrero (28 o 29) | `Expand_MonthlyEventOnDay31_FallsOnLastDayOfShorterMonths`, `Expand_MonthlyEventOnDay31_UsesLeapDayInLeapYear` |
+| TC-139 | Serie iniciada antes del rango | Evento semanal creado en octubre, consultar una semana de diciembre | Se muestra (antes solo aparecía en su semana de inicio) | `Post_WeeklyEventStartedBeforeRange_AppearsInLaterWeeks`, `Expand_MonthlyEventStartingBeforeRange_ShowsOccurrenceInsideRange` |
+| TC-140 | Mensual combinado con días | `repeatsMonthly: true` y `recurrenceDays` con valor | 400 | `Post_MonthlyCombinedWithWeekDays_Returns400` |
+| TC-141 | Pasar un evento a mensual | `PUT` con `repeatsMonthly: true` | 204; el detalle informa `repeatsMonthly` | `Put_TurnsEventIntoMonthly_AndDetailReportsIt` |
+
 ### Alta, edición, baja y conversión de eventos personales (SCRUM-195 y SCRUM-17)
 | TC | Caso | Pasos | Esperado | Respaldo |
 |---|---|---|---|---|
@@ -103,10 +112,10 @@ Cada caso cita el test automatizado de integración que lo respalda (`tests/Vica
 | TC-74 | Escucha no puede escribir | POST / PUT con Esc | 403 | `Post_WithListenerRole_Returns403`, `Put_WithListenerRole_Returns403` |
 | TC-75 | Validaciones de alta | Campos faltantes, fecha pasada, duración 0 | 400 con mensajes en español | `Post_WithMissingFields_Returns400`, `Post_WithPastDate_Returns400`, `Post_WithZeroDuration_Returns400` |
 | TC-76 | Persona inválida | Persona inexistente / ambulatoria / sin estadía abierta | 400 | `Post_WithUnknownPerson_Returns400`, `Post_WithAmbulatoryPerson_Returns400`, `Post_WithoutOpenStay_Returns400` |
-| TC-77 | Solapamiento de horario | Dos visitas pisadas | 409 | `Post_OverlappingVisit_Returns409` |
+| TC-77 | Solapamiento de horario (advertencia) | Dos visitas pisadas, sin confirmar | 409 con el aviso | `Post_OverlappingVisit_Returns409` |
 | TC-78 | Editar visita Pendiente | `PUT /api/casona-visits/{id}` | 204 | `Put_OnPendingVisit_Returns204` |
 | TC-79 | Editar visita cerrada | PUT sobre Realizada / Cancelada | 409 | `Put_OnCompletedVisit_Returns409` |
-| TC-80 | Cancelar sin motivo | PUT estado Cancelada sin motivo | 400 | `Put_CancelledWithoutReason_Returns400` |
+| TC-80 | Cancelar sin motivo | PUT estado Cancelada sin motivo | 204 (el motivo es opcional, decisión del 2026-10-09) | `Put_CancelledWithoutReason_Returns204` |
 | TC-81 | PUT inválidos | Estado inválido, mover al pasado, id inexistente | 400 / 400 / 404 | `Put_WithInvalidStatusValue_Returns400`, `Put_MovingVisitToPast_Returns400`, `Put_UnknownVisit_Returns404` |
 | TC-82 | Consulta por rango | `GET /api/casona-visits?from&to` con los 4 roles | 200 paginado, solo visitas del rango | `Get_ReturnsOnlyVisitsInRangeWithPagedShape`, `Get_WithEachAuthorizedRole_Returns200` |
 | TC-83 | Sin sesión / rango inválido | Sin token; `from>to` | 401 / 400 | `Get_WithoutToken_Returns401`, `Get_WithFromAfterTo_Returns400` |
@@ -120,6 +129,13 @@ Cada caso cita el test automatizado de integración que lo respalda (`tests/Vica
 | TC-127 | Horario liberado por una cancelada | Alta en el horario de una visita Cancelada | 201 (no hay conflicto) | `CreateAsync_WhenSlotWasOccupiedByCancelledVisit_DoesNotConflict` |
 | TC-128 | Escucha sin acceso a visitas | GET / PATCH con Esc | 403 | `Get_WithListenerRole_Returns403`, `Patch_WithListenerRole_Returns403`, `Controller_HasAuthorizeAttribute_RestrictedToExpectedRoles`, `GetByRange_DoesNotAllowListenerRole` |
 | TC-129 | Roles con acceso | GET con Ref / Dir / Coo | 200 | `Get_WithEachAuthorizedRole_Returns200` |
+
+### Solapamiento como advertencia y motivo opcional (decisión del 2026-10-09)
+| TC | Caso | Pasos | Esperado | Respaldo |
+|---|---|---|---|---|
+| TC-142 | Guardar igual en el alta | `POST /api/casona-visits` solapada con `allowOverlap: true` | 201 | `Post_OverlappingVisitWithAllowOverlap_Returns201` |
+| TC-143 | Guardar igual en la edición | `PUT` solapado: sin confirmar 409, con `allowOverlap: true` 204 | 409 y luego 204 | `Put_OverlappingVisitWithAllowOverlap_Returns204` |
+| TC-144 | Cancelar sin motivo | `PUT` con estado Cancelada y sin motivo | 204 | `Put_CancelledWithoutReason_Returns204` |
 
 ## QA de UI — frontend integrado (2026-10-08)
 El frontend de Belén se integró en `dev` apuntando a las rutas reales del backend. Se probó en un navegador real
@@ -145,7 +161,7 @@ El frontend de Belén se integró en `dev` apuntando a las rutas reales del back
 | TC-98 | Escucha: ve el calendario, sin "Nuevo evento", sin pestaña Casa de Convivencia, sin Colaboradores, `/colaboradores` bloqueado | OK |
 | TC-99 | Directora: ve el calendario sin crear eventos; puede crear visitas | OK |
 
-Re-ejecución del 2026-10-09 con el backend de Emir integrado (30 verificaciones, 30 OK):
+Re-ejecución del 2026-10-09 con el backend de Emir integrado y las decisiones de producto aplicadas (33 verificaciones, 33 OK):
 
 | TC | Caso | Resultado |
 |---|---|---|
@@ -156,14 +172,16 @@ Re-ejecución del 2026-10-09 con el backend de Emir integrado (30 verificaciones
 | TC-134 | Dar de baja: pasa a la pestaña "Inactivos" y la baja persiste al recargar | OK |
 | TC-135 | Reactivar un colaborador: vuelve a "Activos" | OK |
 | TC-136 | Marcar visita realizada y cancelar con motivo vía `PATCH /status` | OK |
+| TC-145 | Crear un evento mensual y verlo el mismo día del mes siguiente | OK |
+| TC-146 | Solapamiento de visitas: la UI avisa (409) y al tocar Guardar de nuevo la guarda igual | OK |
 
 ## Pendientes y desajustes a comunicar
 1. **Resuelto 2026-10-08:** el frontend usa `/api/general-calendar-events`, `/api/personal-calendar-events`, `/api/casona-visits` y `/api/collaborators`. Se agregó `POST api/personal-calendar-events`, `GET api/collaborators` (listado) y autor/`isPreloaded` en las ocurrencias.
 2. **Resuelto 2026-10-09:** contratos reales de Emir integrados: `PUT/DELETE api/general-calendar-events/{id}`, `PUT api/personal-calendar-events/{id}/publish`, `PUT api/collaborators/{id}` (la baja es `isActive` dentro del PUT), `GET api/collaborators/{id}` y `PATCH api/casona-visits/{id}/status`. El listado de colaboradores ahora devuelve `isActive`. Se agregaron `PUT/DELETE api/personal-calendar-events/{id}` (edición y borrado de eventos propios), que no estaban en el backend.
 3. **Defecto hallado en `dev-backend` (Emir):** `UpdateGeneralCalendarEventDtoValidator`, `UpdateCollaboratorDtoValidator` y `ChangeCasonaVisitStatusDtoValidator` no estaban registrados en `Program.cs`; los endpoints que los usan respondían 500. Sus tests eran todos unitarios y no lo detectaron. Corregido en `dev`; hay que llevarlo a `dev-backend`. Se agregaron tests HTTP para esos endpoints.
-4. **Visitas solapadas:** el frontend avisa del solapamiento y ofrece "Guardar igual", pero el backend rechaza con 409 siempre. Decisión de producto abierta: advertencia o bloqueo.
-5. **Cancelar visita:** `PUT` exige motivo y `PATCH /status` no. El frontend manda "Sin motivo indicado" si queda vacío. Decisión abierta: motivo obligatorio u opcional.
-6. **Recurrencia mensual:** el backend solo modela días de la semana; "mensual" del formulario se guarda como evento único.
+4. **Resuelto 2026-10-09 (decisión de producto):** el solapamiento de visitas es una advertencia. El backend responde 409 con el aviso y el alta y la edición aceptan `allowOverlap: true` para guardar igual; el frontend reenvía con ese valor cuando la persona vuelve a tocar Guardar.
+5. **Resuelto 2026-10-09 (decisión de producto):** el motivo de cancelación de una visita es opcional; el `PUT` ya no lo exige y el frontend deja de mandar un texto por defecto.
+6. **Resuelto 2026-10-09:** recurrencia mensual. Los eventos tienen `repeatsMonthly` (columnas `repeats_monthly`, migración `AddCalendarEventMonthlyRecurrence`): se repiten el mismo día de cada mes y, en meses más cortos, el último día. No se combina con repetición por días de la semana. Además se corrigió que las series con fecha de inicio anterior al rango consultado no se expandían. Limitación: al editar una ocurrencia de una serie, la fecha del formulario es la de esa ocurrencia, por lo que la serie pasa a empezar ese día.
 7. **Escucha y visitas:** desde SCRUM-212 el rol Escucha no puede consultar visitas (403). Coincide con la UI, que le oculta la pestaña.
 8. **Defecto preexistente (main):** los ítems Inicio, Asistencia, Medicación e Informes del menú apuntan a `/inicio`, una ruta sin pantalla. Prueba de humo por rol 2026-10-09: 11 de 15 pantallas OK, las 4 restantes son `/inicio`.
 9. **Jira:** SCRUM-198 y SCRUM-215 (QA) siguen "En curso".
