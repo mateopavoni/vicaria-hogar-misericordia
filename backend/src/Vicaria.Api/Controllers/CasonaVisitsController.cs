@@ -15,15 +15,18 @@ public class CasonaVisitsController : ControllerBase
     private readonly ICasonaVisitService _casonaVisitService;
     private readonly IValidator<CreateCasonaVisitDto> _createValidator;
     private readonly IValidator<UpdateCasonaVisitDto> _updateValidator;
+    private readonly IValidator<ChangeCasonaVisitStatusDto> _statusValidator;
 
     public CasonaVisitsController(
         ICasonaVisitService casonaVisitService,
         IValidator<CreateCasonaVisitDto> createValidator,
-        IValidator<UpdateCasonaVisitDto> updateValidator)
+        IValidator<UpdateCasonaVisitDto> updateValidator,
+        IValidator<ChangeCasonaVisitStatusDto> statusValidator)
     {
         _casonaVisitService = casonaVisitService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _statusValidator = statusValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -79,6 +82,33 @@ public class CasonaVisitsController : ControllerBase
             UpdateCasonaVisitError.NotFound => NotFound(new { message = result.ErrorMessage }),
             UpdateCasonaVisitError.InvalidState => Conflict(new { message = result.ErrorMessage }),
             UpdateCasonaVisitError.TimeOverlap => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> ChangeStatus(
+        Guid id,
+        [FromBody] ChangeCasonaVisitStatusDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _statusValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _casonaVisitService.ChangeStatusAsync(id, dto, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            ChangeCasonaVisitStatusError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            ChangeCasonaVisitStatusError.InvalidState => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
