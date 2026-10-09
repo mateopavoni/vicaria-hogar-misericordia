@@ -67,10 +67,11 @@ await step('Evento mensual', async () => {
   await p.getByRole('button', { name: 'Guardar' }).click(); await p.waitForTimeout(2000);
   log('Evento mensual: crear (repeatsMonthly)', (await body(p)).includes(MONTHLY) && !bad.length, bad.join(' | '));
   await p.getByText('Mes', { exact: true }).first().click(); await p.waitForTimeout(1000);
-  await p.getByRole('button', { name: '›' }).first().click(); await p.waitForTimeout(1500);
+  await p.getByRole('button', { name: 'Siguiente' }).first().click(); await p.waitForTimeout(1500);
   await p.screenshot({ path: `${out}/15-evento-mensual-mes-siguiente.png` });
   log('Evento mensual: aparece el mismo día del mes siguiente', (await body(p)).includes(MONTHLY));
   await p.getByText('Semana', { exact: true }).first().click(); await p.waitForTimeout(500);
+  await p.getByRole('button', { name: 'Hoy' }).click(); await p.waitForTimeout(800);
 });
 
 await step('Evento personal en Mi calendario', async () => {
