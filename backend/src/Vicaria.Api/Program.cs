@@ -25,6 +25,13 @@ using Vicaria.Application.LifeStories;
 using Vicaria.Infrastructure.LifeStories;
 using Vicaria.Application.Timelines;
 using Vicaria.Infrastructure.Timelines;
+using Vicaria.Application.CalendarEvents;
+using Vicaria.Infrastructure.CalendarEvents;
+using Vicaria.Application.CasonaVisits;
+using Vicaria.Infrastructure.CasonaVisits;
+using Vicaria.Application.Collaborators;
+using Vicaria.Infrastructure.Collaborators;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +88,19 @@ builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObser
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
+builder.Services.AddScoped<IGeneralCalendarEventService, GeneralCalendarEventService>();
+builder.Services.AddScoped<IPersonalCalendarEventService, PersonalCalendarEventService>();
+builder.Services.AddScoped<IValidator<CreateGeneralCalendarEventDto>, CreateGeneralCalendarEventDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateGeneralCalendarEventDto>, UpdateGeneralCalendarEventDtoValidator>();
+builder.Services.AddScoped<ICasonaVisitService, CasonaVisitService>();
+builder.Services.AddScoped<IValidator<CreateCasonaVisitDto>, CreateCasonaVisitDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateCasonaVisitDto>, UpdateCasonaVisitDtoValidator>();
+builder.Services.AddScoped<IValidator<ChangeCasonaVisitStatusDto>, ChangeCasonaVisitStatusDtoValidator>();
+builder.Services.AddScoped<ICollaboratorService, CollaboratorService>();
+builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaboratorDtoValidator>();
+builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaboratorsDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
+
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

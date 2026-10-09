@@ -39,7 +39,7 @@ public class DirectorResidentsOnlyTests : IClassFixture<VicariaWebApplicationFac
         db.Users.Add(actor);
         await db.SaveChangesAsync();
         _client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CrearToken("Test", actor.Email, rol, actor.Id));
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CreateToken("Test", actor.Email, rol, actor.Id));
     }
 
     private async Task<(Guid RecordId, Guid PersonId)> CrearFichaAsync(PersonType type)
