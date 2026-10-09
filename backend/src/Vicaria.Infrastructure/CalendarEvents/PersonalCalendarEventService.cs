@@ -100,4 +100,47 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             calendarEvent.AuthorUserId,
             calendarEvent.CreatedAt);
     }
+
+    public async Task<PublishPersonalCalendarEventResult> PublishAsync(
+        Guid id,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var personalEvent = await _dbContext.PersonalCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id && e.AuthorUserId == actorId, cancellationToken);
+
+        if (personalEvent is null)
+        {
+            return PublishPersonalCalendarEventResult.NotFound();
+        }
+
+        var generalEvent = new GeneralCalendarEvent
+        {
+            Id = Guid.NewGuid(),
+            Title = personalEvent.Title,
+            Description = personalEvent.Description,
+            Date = personalEvent.Date,
+            StartTime = personalEvent.StartTime,
+            EndTime = personalEvent.EndTime,
+            RecurrenceDays = personalEvent.RecurrenceDays,
+            AuthorUserId = actorId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _dbContext.GeneralCalendarEvents.Add(generalEvent);
+        _dbContext.PersonalCalendarEvents.Remove(personalEvent);
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento personal publicado como general",
+            AffectedEntity = $"GeneralCalendarEvent:{generalEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return PublishPersonalCalendarEventResult.Ok(generalEvent.Id);
+    }
 }

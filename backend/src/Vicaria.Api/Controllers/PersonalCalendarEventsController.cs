@@ -79,4 +79,18 @@ public class PersonalCalendarEventsController : ControllerBase
             ? NotFound(new { message = "El evento especificado no existe." })
             : Ok(calendarEvent);
     }
+
+    [HttpPut("{id:guid}/publish")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> Publish(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _personalCalendarEventService.PublishAsync(id, ActorId, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new { message = result.ErrorMessage });
+        }
+
+        return Ok(new { id = result.GeneralCalendarEventId });
+    }
 }

@@ -27,6 +27,7 @@ public class CollaboratorConfiguration : IEntityTypeConfiguration<Collaborator>
             .IsRequired();
         builder.Property(c => c.WorkArea).HasColumnName("work_area").HasMaxLength(100)
             .UseCollation("Modern_Spanish_CI_AI");
+            builder.Property(c => c.IsActive).HasColumnName("is_active").HasDefaultValue(true).IsRequired();
         builder.Property(c => c.RegisteredByUserId).HasColumnName("registered_by_user_id").IsRequired();
         builder.Property(c => c.RegisteredAt).HasColumnName("registered_at").IsRequired();
 

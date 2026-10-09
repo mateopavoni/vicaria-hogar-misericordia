@@ -165,6 +165,46 @@ public class CasonaVisitService : ICasonaVisitService
         return new PagedResult<CasonaVisitListItemDto>(items, total, (int)Math.Ceiling(total / (double)PageSize));
     }
 
+    public async Task<ChangeCasonaVisitStatusResult> ChangeStatusAsync(
+        Guid casonaVisitId,
+        ChangeCasonaVisitStatusDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var visit = await _dbContext.CasonaVisits
+            .FirstOrDefaultAsync(v => v.Id == casonaVisitId, cancellationToken);
+
+        if (visit is null)
+        {
+            return ChangeCasonaVisitStatusResult.NotFound();
+        }
+
+        visit.Status = dto.Status;
+        visit.CancellationReason = dto.Status == VisitStatus.Cancelled 
+            ? dto.CancellationReason?.Trim() 
+            : null;
+
+        var actionText = dto.Status switch
+        {
+            VisitStatus.Completed => "Visita marcada como realizada",
+            VisitStatus.Cancelled => "Visita cancelada",
+            _ => "Visita marcada como pendiente"
+        };
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = actionText,
+            AffectedEntity = $"CasonaVisit:{visit.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return ChangeCasonaVisitStatusResult.Ok();
+    }
+    
     private enum PersonIssue
     {
         None,
@@ -212,7 +252,7 @@ public class CasonaVisitService : ICasonaVisitService
     {
         var visits = _dbContext.CasonaVisits
             .AsNoTracking()
-            .Where(v => v.Date == date);
+            .Where(v => v.Date == date && v.Status != VisitStatus.Cancelled);
 
         if (excludeVisitId.HasValue)
         {

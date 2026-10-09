@@ -14,16 +14,20 @@ public class GeneralCalendarEventsController : ControllerBase
 {
     private readonly IGeneralCalendarEventService _calendarEventService;
     private readonly IValidator<CreateGeneralCalendarEventDto> _validator;
+    private readonly IValidator<UpdateGeneralCalendarEventDto> _updateValidator;
 
     public GeneralCalendarEventsController(
         IGeneralCalendarEventService calendarEventService,
-        IValidator<CreateGeneralCalendarEventDto> validator)
+        IValidator<CreateGeneralCalendarEventDto> validator,
+        IValidator<UpdateGeneralCalendarEventDto> updateValidator)
     {
         _calendarEventService = calendarEventService;
         _validator = validator;
+        _updateValidator = updateValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private bool IsReferent => User.IsInRole(RoleNames.Referent);
 
     // alta solo para Referente (SCRUM-189); la visibilidad para todos los usuarios
     // la resuelve el listado/consulta del calendario, que es otra tarea
@@ -65,6 +69,47 @@ public class GeneralCalendarEventsController : ControllerBase
 
         var result = await _calendarEventService.GetOccurrencesAsync(fromDate, toDate, page, cancellationToken);
         return Ok(result);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdateGeneralCalendarEventDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _calendarEventService.UpdateAsync(id, dto, ActorId, IsReferent, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            CalendarEventOperationError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            CalendarEventOperationError.Forbidden => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _calendarEventService.DeleteAsync(id, ActorId, IsReferent, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            CalendarEventOperationError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            CalendarEventOperationError.Forbidden => StatusCode(StatusCodes.Status403Forbidden, new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
     }
 
     // detalle de un evento general sin expandir; 404 si no existe (SCRUM-194)

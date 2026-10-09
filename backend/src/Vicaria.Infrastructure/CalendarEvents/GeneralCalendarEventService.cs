@@ -111,4 +111,80 @@ public class GeneralCalendarEventService : IGeneralCalendarEventService
                 : $"{calendarEvent.AuthorUser.FirstName} {calendarEvent.AuthorUser.LastName}".Trim(),
             calendarEvent.CreatedAt);
     }
+
+    public async Task<CalendarEventOperationResult> UpdateAsync(
+        Guid id,
+        UpdateGeneralCalendarEventDto dto,
+        Guid actorId,
+        bool isReferent,
+        CancellationToken cancellationToken)
+    {
+        var calendarEvent = await _dbContext.GeneralCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
+        if (calendarEvent is null)
+        {
+            return CalendarEventOperationResult.NotFound();
+        }
+
+        if (calendarEvent.AuthorUserId != actorId && !isReferent)
+        {
+            return CalendarEventOperationResult.Forbidden();
+        }
+
+        calendarEvent.Title = dto.Title.Trim();
+        calendarEvent.Description = dto.Description?.Trim();
+        calendarEvent.Date = dto.Date;
+        calendarEvent.StartTime = dto.StartTime;
+        calendarEvent.EndTime = dto.EndTime;
+        calendarEvent.RecurrenceDays = dto.RecurrenceDays;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento general modificado",
+            AffectedEntity = $"GeneralCalendarEvent:{calendarEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CalendarEventOperationResult.Ok();
+    }
+
+    public async Task<CalendarEventOperationResult> DeleteAsync(
+        Guid id,
+        Guid actorId,
+        bool isReferent,
+        CancellationToken cancellationToken)
+    {
+        var calendarEvent = await _dbContext.GeneralCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
+        if (calendarEvent is null)
+        {
+            return CalendarEventOperationResult.NotFound();
+        }
+
+        if (calendarEvent.AuthorUserId != actorId && !isReferent)
+        {
+            return CalendarEventOperationResult.Forbidden();
+        }
+
+        _dbContext.GeneralCalendarEvents.Remove(calendarEvent);
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento general eliminado",
+            AffectedEntity = $"GeneralCalendarEvent:{calendarEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CalendarEventOperationResult.Ok();
+    }
 }
