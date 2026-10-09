@@ -3,7 +3,7 @@ using Vicaria.Domain.Entities;
 namespace Vicaria.Application.CasonaVisits;
 
 // edición completa de una visita (SCRUM-210): solo aplica mientras esté Pending;
-// CancellationReason es obligatorio cuando Status = Cancelled (lo valida el validador).
+// CancellationReason es opcional también al cancelar.
 public record UpdateCasonaVisitDto(
     Guid PersonId,
     string VisitorName,
@@ -11,4 +11,5 @@ public record UpdateCasonaVisitDto(
     TimeSpan StartTime,
     int EstimatedDurationMinutes,
     VisitStatus Status,
-    string? CancellationReason);
+    string? CancellationReason,
+    bool AllowOverlap = false);

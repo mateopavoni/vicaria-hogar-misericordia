@@ -11,6 +11,8 @@ public class PersonalCalendarEvent
     public TimeSpan? StartTime { get; set; }
     public TimeSpan? EndTime { get; set; }
     public WeekDays RecurrenceDays { get; set; }
+    // se repite el mismo día del mes que Date (en meses más cortos, el último día del mes)
+    public bool RepeatsMonthly { get; set; }
     public Guid AuthorUserId { get; set; }
     public User AuthorUser { get; set; } = null!;
     public DateTime CreatedAt { get; set; }

@@ -9,4 +9,7 @@ public record CreateCasonaVisitDto(
     string VisitorName,
     DateTime Date,
     TimeSpan StartTime,
-    int EstimatedDurationMinutes);
+    int EstimatedDurationMinutes,
+    // el solapamiento es una advertencia: sin esto responde 409 y el cliente puede reenviar
+    // con true si el usuario decide guardar igual
+    bool AllowOverlap = false);

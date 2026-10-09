@@ -14,4 +14,5 @@ public record GeneralCalendarEventDetailDto(
     WeekDays RecurrenceDays,
     Guid? AuthorUserId,
     string? AuthorName,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    bool RepeatsMonthly = false);

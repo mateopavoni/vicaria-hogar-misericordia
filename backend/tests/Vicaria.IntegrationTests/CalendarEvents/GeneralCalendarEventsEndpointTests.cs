@@ -77,6 +77,94 @@ public class GeneralCalendarEventsEndpointTests : IClassFixture<VicariaWebApplic
         recurrenceDays = (int)WeekDays.None
     };
 
+    // recurrencia mensual y series que arrancan antes del rango consultado
+    private async Task<JsonElement> GetDayAsync(string day) =>
+        await _client.GetFromJsonAsync<JsonElement>($"/api/general-calendar-events?from={day}&to={day}");
+
+    private static bool HasTitle(JsonElement page, string title) =>
+        page.GetProperty("items").EnumerateArray().Any(i => i.GetProperty("title").GetString() == title);
+
+    [Fact]
+    public async Task Post_MonthlyEvent_AppearsOnSameDayOfLaterMonths()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var title = $"Mensual {Guid.NewGuid():N}";
+
+        // 2026-10-03 es sábado: no coincide con las actividades precargadas
+        var response = await _client.PostAsJsonAsync("/api/general-calendar-events", new
+        {
+            title,
+            date = "2026-10-03T00:00:00Z",
+            startTime = "10:00:00",
+            endTime = "11:00:00",
+            recurrenceDays = 0,
+            repeatsMonthly = true
+        });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        Assert.True(HasTitle(await GetDayAsync("2026-10-03"), title));
+        Assert.True(HasTitle(await GetDayAsync("2026-11-03"), title));
+        Assert.True(HasTitle(await GetDayAsync("2027-02-03"), title));
+        Assert.False(HasTitle(await GetDayAsync("2026-11-04"), title));
+        Assert.False(HasTitle(await GetDayAsync("2026-09-03"), title));
+    }
+
+    [Fact]
+    public async Task Post_WeeklyEventStartedBeforeRange_AppearsInLaterWeeks()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var title = $"Semanal {Guid.NewGuid():N}";
+
+        await _client.PostAsJsonAsync("/api/general-calendar-events", new
+        {
+            title,
+            date = "2026-10-03T00:00:00Z",
+            startTime = "10:00:00",
+            endTime = "11:00:00",
+            recurrenceDays = (int)WeekDays.Saturday
+        });
+
+        // dos meses después, otro sábado
+        Assert.True(HasTitle(await GetDayAsync("2026-12-05"), title));
+    }
+
+    [Fact]
+    public async Task Post_MonthlyCombinedWithWeekDays_Returns400()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync("/api/general-calendar-events", new
+        {
+            title = "Mixto",
+            date = "2026-10-03T00:00:00Z",
+            recurrenceDays = (int)WeekDays.Monday,
+            repeatsMonthly = true
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_TurnsEventIntoMonthly_AndDetailReportsIt()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateEventAsync();
+
+        var response = await _client.PutAsJsonAsync($"/api/general-calendar-events/{id}", new
+        {
+            title = "Ahora mensual",
+            date = "2026-10-10T00:00:00Z",
+            startTime = "17:00:00",
+            endTime = "19:00:00",
+            recurrenceDays = 0,
+            repeatsMonthly = true
+        });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var detail = await _client.GetFromJsonAsync<JsonElement>($"/api/general-calendar-events/{id}");
+        Assert.True(detail.GetProperty("repeatsMonthly").GetBoolean());
+    }
+
     // edición y eliminación con permisos y auditoría (SCRUM-190)
     [Fact]
     public async Task Put_ByReferent_Returns204AndChangesDetail()

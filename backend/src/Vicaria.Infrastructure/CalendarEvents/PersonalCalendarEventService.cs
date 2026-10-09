@@ -30,6 +30,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             EndTime = dto.EndTime,
             Description = dto.Description?.Trim(),
             RecurrenceDays = dto.RecurrenceDays,
+            RepeatsMonthly = dto.RepeatsMonthly,
             AuthorUserId = actorId,
             CreatedAt = DateTime.UtcNow
         };
@@ -55,14 +56,17 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
         var calendarEvents = await _dbContext.PersonalCalendarEvents
             .AsNoTracking()
             .Where(e => e.AuthorUserId == actorId)
-            .Where(e => e.Date == null || (e.Date >= fromDate && e.Date <= toDate))
+            .Where(e => e.Date == null
+                || (e.Date <= toDate
+                    && (e.Date >= fromDate || e.RecurrenceDays != WeekDays.None || e.RepeatsMonthly)))
             .ToListAsync(cancellationToken);
 
         var occurrences = calendarEvents
             .SelectMany(e => CalendarEventOccurrenceExpander
-                .Expand(e.Date, e.RecurrenceDays, fromDate, toDate)
+                .Expand(e.Date, e.RecurrenceDays, fromDate, toDate, e.RepeatsMonthly)
                 .Select(d => new CalendarEventOccurrenceDto(
-                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description, e.AuthorUserId)))
+                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description, e.AuthorUserId,
+                    RecurrenceDays: e.RecurrenceDays, RepeatsMonthly: e.RepeatsMonthly)))
             .OrderBy(o => o.Date)
             .ThenBy(o => o.StartTime)
             .ToList();
@@ -98,7 +102,8 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             calendarEvent.EndTime,
             calendarEvent.RecurrenceDays,
             calendarEvent.AuthorUserId,
-            calendarEvent.CreatedAt);
+            calendarEvent.CreatedAt,
+            calendarEvent.RepeatsMonthly);
     }
 
     public async Task<CalendarEventOperationResult> UpdateAsync(
@@ -121,6 +126,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
         personalEvent.StartTime = dto.StartTime;
         personalEvent.EndTime = dto.EndTime;
         personalEvent.RecurrenceDays = dto.RecurrenceDays;
+        personalEvent.RepeatsMonthly = dto.RepeatsMonthly;
 
         _dbContext.AuditLogs.Add(new AuditLog
         {
@@ -187,6 +193,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             StartTime = personalEvent.StartTime,
             EndTime = personalEvent.EndTime,
             RecurrenceDays = personalEvent.RecurrenceDays,
+            RepeatsMonthly = personalEvent.RepeatsMonthly,
             AuthorUserId = actorId,
             CreatedAt = DateTime.UtcNow
         };

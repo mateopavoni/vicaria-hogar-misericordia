@@ -333,7 +333,7 @@ public class CasonaVisitsEndpointTests : IClassFixture<VicariaWebApplicationFact
     }
 
     [Fact]
-    public async Task Put_CancelledWithoutReason_Returns400()
+    public async Task Put_CancelledWithoutReason_Returns204()
     {
         await UseTokenAsync(RoleNames.Referent);
         var personId = await SeedResidentAsync();
@@ -344,8 +344,59 @@ public class CasonaVisitsEndpointTests : IClassFixture<VicariaWebApplicationFact
             $"/api/casona-visits/{visitId}",
             UpdatePayload(personId, IsoDate(19), "12:00:00", status: (int)VisitStatus.Cancelled));
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("motivo", await response.Content.ReadAsStringAsync());
+        // el motivo de cancelación es opcional
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_OverlappingVisitWithAllowOverlap_Returns201()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var personId = await SeedResidentAsync();
+        await SeedVisitAsync(personId, DateTime.UtcNow.Date.AddDays(40), new TimeSpan(16, 0, 0));
+
+        var response = await _client.PostAsJsonAsync("/api/casona-visits", new
+        {
+            personId,
+            visitorName = "Guardada igual",
+            date = IsoDate(40),
+            startTime = "16:30:00",
+            estimatedDurationMinutes = 60,
+            allowOverlap = true
+        });
+
+        // el solapamiento es una advertencia: con confirmación del usuario se guarda
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_OverlappingVisitWithAllowOverlap_Returns204()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var personId = await SeedResidentAsync();
+        await SeedVisitAsync(personId, DateTime.UtcNow.Date.AddDays(41), new TimeSpan(16, 0, 0));
+        await SeedVisitAsync(personId, DateTime.UtcNow.Date.AddDays(41), new TimeSpan(18, 0, 0));
+        var visitId = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<VicariaDbContext>()
+            .CasonaVisits.First(v => v.PersonId == personId && v.StartTime == new TimeSpan(18, 0, 0)).Id;
+
+        var withoutConfirm = await _client.PutAsJsonAsync(
+            $"/api/casona-visits/{visitId}", UpdatePayload(personId, IsoDate(41), "16:30:00"));
+        Assert.Equal(HttpStatusCode.Conflict, withoutConfirm.StatusCode);
+
+        var confirmed = await _client.PutAsJsonAsync(
+            $"/api/casona-visits/{visitId}",
+            new
+            {
+                personId,
+                visitorName = "María Visitante",
+                date = IsoDate(41),
+                startTime = "16:30:00",
+                estimatedDurationMinutes = 60,
+                status = 0,
+                cancellationReason = (string?)null,
+                allowOverlap = true
+            });
+        Assert.Equal(HttpStatusCode.NoContent, confirmed.StatusCode);
     }
 
     [Fact]
