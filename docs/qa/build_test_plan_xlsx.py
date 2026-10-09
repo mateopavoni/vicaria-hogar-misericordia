@@ -361,8 +361,6 @@ def main():
          "SCRUM-16 / 189", "Implementada", "Columna repeats_monthly y migración AddCalendarEventMonthlyRecurrence."),
         ("Limitación", "Al editar una ocurrencia de una serie, la fecha del formulario es la de esa ocurrencia y la serie pasa a empezar ese día.",
          "SCRUM-190", "Abierta", "Una mejora posible es exponer la fecha de inicio de la serie en la ocurrencia."),
-        ("Pendiente", "VPS de Dokku: SSH (puerto 22) y HTTP no responden, por lo que no se pudo borrar la aplicación ni sus datos en el servidor.",
-         "Infraestructura", "Abierta", "En el repositorio se eliminaron el Dockerfile y el nginx.conf de producción del frontend y las referencias en la documentación."),
         ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
          "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
         ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",

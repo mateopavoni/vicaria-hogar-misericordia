@@ -31,5 +31,5 @@ Evidencia (commits reales, no inferido):
 
 ## Deploy
 
-- El proyecto ya no tiene un entorno desplegado: se levanta en local con `docker compose` (ver `deploy-local.md`). Se eliminaron el `Dockerfile` y el `nginx.conf` del frontend que existían para el despliegue en Dokku.
+- El proyecto no tiene un entorno desplegado en este momento: se levanta en local con `docker compose` (ver `deploy-local.md`). El despliegue se va a definir en otra infraestructura.
 - No hay GitHub Actions ni ningún otro CI configurado todavía — los PRs se mergean sin check automático (`statusCheckRollup` viene vacío en los 4 PRs recientes). Ver [KNOWN_ISSUES.md](./KNOWN_ISSUES.md).
