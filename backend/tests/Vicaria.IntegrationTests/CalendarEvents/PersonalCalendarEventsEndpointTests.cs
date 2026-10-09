@@ -180,4 +180,176 @@ public class PersonalCalendarEventsEndpointTests : IClassFixture<VicariaWebAppli
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Contains("no existe", await response.Content.ReadAsStringAsync());
     }
+
+
+    private static object ValidCreatePayload(string title = "Turno médico") => new
+    {
+        title,
+        date = "2026-10-12T00:00:00Z",
+        startTime = "09:00:00",
+        endTime = "10:00:00",
+        recurrenceDays = (int)WeekDays.None
+    };
+
+    [Fact]
+    public async Task Post_WithReferent_Returns201AndOnlyOwnerSeesIt()
+    {
+        var actorId = await UseTokenAsync(RoleNames.Referent);
+        var title = $"Propio {Guid.NewGuid():N}";
+
+        var response = await _client.PostAsJsonAsync("/api/personal-calendar-events", ValidCreatePayload(title));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        var id = created!["id"];
+
+        // el dueño lo ve, con él mismo como autor
+        var own = await _client.GetFromJsonAsync<JsonElement>("/api/personal-calendar-events?from=2026-10-12&to=2026-10-12");
+        var item = own.GetProperty("items").EnumerateArray().Single(i => i.GetProperty("eventId").GetGuid() == id);
+        Assert.Equal(actorId, item.GetProperty("authorUserId").GetGuid());
+
+        // otro usuario no lo ve ni por id
+        await UseTokenAsync(RoleNames.Referent);
+        var other = await _client.GetFromJsonAsync<JsonElement>("/api/personal-calendar-events?from=2026-10-12&to=2026-10-12");
+        Assert.DoesNotContain(other.GetProperty("items").EnumerateArray(), i => i.GetProperty("eventId").GetGuid() == id);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/personal-calendar-events/{id}")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData(RoleNames.Listener)]
+    [InlineData(RoleNames.CasaConvivenciaDirector)]
+    [InlineData(RoleNames.CasaConvivenciaCoordinator)]
+    public async Task Post_WithNonReferentRoles_Returns403(string role)
+    {
+        await UseTokenAsync(role);
+
+        var response = await _client.PostAsJsonAsync("/api/personal-calendar-events", ValidCreatePayload());
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_WithoutToken_Returns401()
+    {
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await _client.PostAsJsonAsync("/api/personal-calendar-events", ValidCreatePayload());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_WithMissingTitle_Returns400()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync("/api/personal-calendar-events", ValidCreatePayload(title: ""));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    // conversión personal -> general (SCRUM-195): PUT api/personal-calendar-events/{id}/publish
+    [Fact]
+    public async Task Publish_ByOwner_Returns200MovesEventToGeneral()
+    {
+        var actorId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(actorId, "Pasa a público", new DateTime(2026, 10, 12));
+
+        var response = await _client.PutAsync($"/api/personal-calendar-events/{id}/publish", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        var generalId = body!["id"];
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/personal-calendar-events/{id}")).StatusCode);
+        var general = await _client.GetFromJsonAsync<JsonElement>($"/api/general-calendar-events/{generalId}");
+        Assert.Equal("Pasa a público", general.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Publish_OnOtherUsersEvent_Returns404()
+    {
+        var ownerId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(ownerId, "Ajeno", new DateTime(2026, 10, 12));
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PutAsync($"/api/personal-calendar-events/{id}/publish", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private static object UpdatePayload(string title) => new
+    {
+        title,
+        description = (string?)null,
+        date = "2026-10-12",
+        startTime = "09:00:00",
+        endTime = "10:00:00",
+        recurrenceDays = 0
+    };
+
+    [Fact]
+    public async Task Put_ByOwnerReferent_Returns204AndChangesTitle()
+    {
+        var actorId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(actorId, "Antes", new DateTime(2026, 10, 12));
+
+        var response = await _client.PutAsJsonAsync($"/api/personal-calendar-events/{id}", UpdatePayload("Después"));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var detail = await _client.GetFromJsonAsync<JsonElement>($"/api/personal-calendar-events/{id}");
+        Assert.Equal("Después", detail.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Put_OnOtherUsersEvent_Returns404()
+    {
+        var ownerId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(ownerId, "Ajeno", new DateTime(2026, 10, 12));
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PutAsJsonAsync($"/api/personal-calendar-events/{id}", UpdatePayload("Intruso"));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_WithEmptyTitle_Returns400()
+    {
+        var actorId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(actorId, "Titulo", new DateTime(2026, 10, 12));
+
+        var response = await _client.PutAsJsonAsync($"/api/personal-calendar-events/{id}", UpdatePayload(""));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_ByOwnerReferent_Returns204ThenDetailIs404()
+    {
+        var actorId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(actorId, "Borrar", new DateTime(2026, 10, 12));
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync($"/api/personal-calendar-events/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/personal-calendar-events/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_OnOtherUsersEvent_Returns404()
+    {
+        var ownerId = await UseTokenAsync(RoleNames.Referent);
+        var id = await SeedPersonalEventAsync(ownerId, "Ajeno", new DateTime(2026, 10, 12));
+        await UseTokenAsync(RoleNames.Referent);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.DeleteAsync($"/api/personal-calendar-events/{id}")).StatusCode);
+    }
+
+    [Theory]
+    [InlineData(RoleNames.Listener)]
+    [InlineData(RoleNames.CasaConvivenciaDirector)]
+    public async Task Delete_WithNonReferentRoles_Returns403(string role)
+    {
+        await UseTokenAsync(role);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await _client.DeleteAsync($"/api/personal-calendar-events/{Guid.NewGuid()}")).StatusCode);
+    }
 }

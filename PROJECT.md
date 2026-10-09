@@ -34,7 +34,7 @@ El nombre formal completo del dispositivo atendido por el sistema es "Parroquia 
 
 **Definitivo:**
 
-- **Frontend:** Angular 16+ (TypeScript, RxJS, Bootstrap/Tailwind CSS)
+- **Frontend:** Angular 22 (TypeScript, RxJS, Bootstrap/Tailwind CSS)
 - **Backend:** .NET 9.0 + C#
 - **Base de datos:** SQL Server + Entity Framework
 - **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (4 roles — ver sección Usuarios)
@@ -71,9 +71,9 @@ El sistema tiene 4 roles con permisos diferenciados (RBAC):
 | Rol - Permisos |
 |----|
 | **Referente** - Acceso completo (full) |
-| **DirectoraDeCasona** - Fichas y medicación |
+| **DirectoraDeCasaConvivencia** - Fichas y medicación, solo de personas Residentes (en listado y en cualquier recurso de la persona) |
 | **Escucha** - Lectura y carga de observaciones únicamente |
-| **CoordinadorDeCasaConvivencia** - Gestión de residentes de la casa convivencial (Casona) |
+| **CoordinadorDeCasaConvivencia** - Gestión de residentes de la casa convivencial; igual que la Directora, solo ve y gestiona Residentes |
 
 Los 4 roles están definidos como constantes en `RoleNames` (Domain), y los permisos por rol en `Permission`/`RolePermission` con códigos en `PermissionNames`.
 
@@ -93,7 +93,7 @@ Organizadas por épica/sprint según la planificación del proyecto:
 | Sprint 5 | EP-12 + EP-07 | Evaluación psiquiátrica/estado (incluye estadías y egreso en Casa de Convivencia — ver nota) + documentación y adjuntos (PDF) |
 | Sprint 6 | EP-13 + QA | Informes institucionales + regresión y cierre |
 
-**Nota (2026-09-18):** el trabajo de estadías en casona y egreso de residente (SCRUM-140/146, ya reflejado en la sección "Estado actual" y en la tabla de entidades de abajo) se integra a **EP-12** — no tenía épica asignada en versiones anteriores de esta tabla. Ver `.ai/context/DOMAIN.md` y `.ai/context/DECISIONS.md` para el detalle y para revertir esta clasificación si el equipo prefiere una épica propia.
+**Nota (2026-09-23):** el trabajo de estadías en Casa de Convivencia y egreso de residente (SCRUM-140/146, ya reflejado en la sección "Estado actual" y en la tabla de entidades de abajo) se integra a **EP-12** — no tenía épica asignada en versiones anteriores de esta tabla. Ver `.ai/context/DOMAIN.md` y `.ai/context/DECISIONS.md` para el detalle y para revertir esta clasificación si el equipo prefiere una épica propia.
 
 
 ### Sprint 1 — Historias de usuario (Módulo de acceso y roles, Ep-03)
@@ -103,7 +103,7 @@ Organizadas por épica/sprint según la planificación del proyecto:
 | ----- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | RF-01 | Registro y aprobación de cuenta | Registro abierto. La cuenta queda "Pendiente" hasta que un Referente la apruebe y asigne un rol.                      | SCRUM-12           |
 | RF-02 | Autenticación segura            | Login de usuarios con bloqueo tras 5 intentos fallidos y expiración de sesión por inactividad.                        | SCRUM-33           |
-| RF-03 | Roles diferenciados             | Permisos para Referente (full), Directora de Casona (fichas/medicación) y Escucha (lectura y carga de observaciones). | SCRUM-13, SCRUM-64 |
+| RF-03 | Roles diferenciados             | Permisos para Referente (full), Directora de Casa de Convivencia (fichas/medicación) y Escucha (lectura y carga de observaciones). | SCRUM-13, SCRUM-64 |
 | RF-04 | Desactivación de cuentas        | Baja lógica de usuarios para inhabilitar el acceso sin alterar la autoría de sus bitácoras históricas.                | SCRUM-20           |
 | RF-19 | Notificaciones internas         | Alertas del sistema ante nuevas cuentas pendientes o fichas sin observaciones por más de 30 días.                     | SCRUM-22           |
 
@@ -112,17 +112,19 @@ Organizadas por épica/sprint según la planificación del proyecto:
 ---
 ## Estado actual
 
-**Último relevamiento del código real (rama `dev`, 2026-08-26):**
+**Nota (2026-09-23):** esta sección quedó desactualizada tras el cierre de Sprint 2 — ver `.ai/context/CURRENT_STATE.md` para el estado real verificado (regenerado en esta misma fecha).
+
+**Último relevamiento del código real (rama `dev`, 2026-09-23):**
 
 ✅ **Completo, backend y frontend conectados de punta a punta (no mockeado):**
 - RF-01 (registro y aprobación de cuenta): registro, listado de pendientes, aprobar, rechazar, con auditoría y notificación a referentes.
 - RF-02 (login/JWT): `LoginAsync`, `POST /api/auth/login`, `refresh`, `logout`. Bloqueo de cuenta tras 5 intentos fallidos con notificación a referentes. Expiración de sesión resuelta con refresh token configurable (`Jwt:RefreshTokenExpirationDays`).
-- RF-03 (roles diferenciados): 4 roles (Referente, DirectoraDeCasona, Escucha, CoordinadorDeCasaConvivencia), tabla de permisos (`Permission`/`RolePermission`), reasignación de rol desde el panel.
+- RF-03 (roles diferenciados): 4 roles (Referente, DirectoraDeCasaConvivencia, Escucha, CoordinadorDeCasaConvivencia), tabla de permisos (`Permission`/`RolePermission`), reasignación de rol desde el panel.
 - RF-04 (desactivación de cuentas): activar/desactivar con auditoría, listado real de usuarios activos/inactivos en el panel.
 - RF-19 (notificaciones internas): cuenta pendiente y cuenta bloqueada, panel de notificaciones en el front con marcado individual y masivo como leídas.
 - **Fichas de personas (Social Records, EP-01/EP-02 parcial)**: creación, búsqueda con paginación (`PagedResult<T>`) y actualización de fichas flexibles (solo el nombre es obligatorio), con contacto asociado y auditoría. Backend completo en `api/social-records`.
-- **Tipo de persona (SCRUM-134)**: `PUT /api/persons/{id}/type` cambia el tipo de persona. Asignar `Resident` exige una evaluación psiquiátrica vigente (`PsychiatricEvaluation` con `IsValid = true`); sin ella responde 400 con detalle. `Ambulatory` no exige nada. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia.
-- **Egreso de estadías en la Casona (SCRUM-146)**: `PUT /api/casona-stays/{id}/egreso` registra el egreso de una estadía (`CasonaStay`) con fecha/hora automática server-side (UTC) y motivo opcional (`StayExitReason`: `VoluntaryDischarge`, `TeamDischarge`, `Referral`, `Abandonment`, `Other`) + texto libre obligatorio solo si motivo = `Other`. Estadía inexistente → 404, estadía ya egresada → 400, con registro de `AuditLog`. Autorizado para Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia. Modelo y persistencia de estadías desde SCRUM-140.
+- **Tipo de persona (SCRUM-134)**: `PUT /api/persons/{id}/type` cambia el tipo de persona. Asignar `Resident` exige una evaluación psiquiátrica vigente (`PsychiatricEvaluation` con `IsValid = true`); sin ella responde 400 con detalle. `Ambulatory` no exige nada. Autorizado para Referente, DirectoraDeCasaConvivencia y CoordinadorDeCasaConvivencia.
+- **Egreso de estadías en la Casona (SCRUM-146)**: `PUT /api/casona-stays/{id}/egreso` registra el egreso de una estadía (`CasonaStay`) con fecha/hora automática server-side (UTC) y motivo opcional (`StayExitReason`: `VoluntaryDischarge`, `TeamDischarge`, `Referral`, `Abandonment`, `Other`) + texto libre obligatorio solo si motivo = `Other`. Estadía inexistente → 404, estadía ya egresada → 400, con registro de `AuditLog`. Autorizado para Referente, DirectoraDeCasaConvivencia y CoordinadorDeCasaConvivencia. Modelo y persistencia de estadías desde SCRUM-140.
 - CORS configurado (`Cors:AllowedOrigins` por ambiente).
 - Migración de motor de BD: Postgres → SQL Server, completa.
 - Frontend: login, registro, pending-approval y gestión de usuarios (pendientes/activos/suspendidos) conectados al backend real, con interceptor de auth y persistencia de sesión.
@@ -148,7 +150,7 @@ Organizadas por épica/sprint según la planificación del proyecto:
 **Equipo de referentes (personas reales, no ficticias):**
 - Trabajador Social
 - Cura y Coordinador del Dispositivo
-- Contención diaria (Madraza / Directora de Casona)
+- Contención diaria (Madraza / Directora de Casa de Convivencia)
 
 ### El problema
 

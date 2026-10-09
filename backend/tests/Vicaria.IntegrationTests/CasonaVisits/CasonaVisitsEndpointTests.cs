@@ -407,7 +407,6 @@ public class CasonaVisitsEndpointTests : IClassFixture<VicariaWebApplicationFact
 
     [Theory]
     [InlineData(RoleNames.Referent)]
-    [InlineData(RoleNames.Listener)]
     [InlineData(RoleNames.CasaConvivenciaDirector)]
     [InlineData(RoleNames.CasaConvivenciaCoordinator)]
     public async Task Get_WithEachAuthorizedRole_Returns200(string role)
@@ -476,6 +475,86 @@ public class CasonaVisitsEndpointTests : IClassFixture<VicariaWebApplicationFact
         var response = await _client.GetAsync("/api/casona-visits?from=2026-10-01&to=2026-12-31");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    // cambio de estado dedicado (SCRUM-211): PATCH api/casona-visits/{id}/status
+    [Fact]
+    public async Task Patch_ToCompleted_Returns204AndPersistsStatus()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var personId = await SeedResidentAsync();
+        await SeedVisitAsync(personId, DateTime.UtcNow.Date.AddDays(30), new TimeSpan(10, 0, 0));
+        var visitId = GetVisitId(personId, DateTime.UtcNow.Date.AddDays(30));
+
+        var response = await _client.PatchAsJsonAsync($"/api/casona-visits/{visitId}/status", new { status = 1 });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        Assert.Equal(VisitStatus.Completed, db.CasonaVisits.First(v => v.Id == visitId).Status);
+    }
+
+    [Fact]
+    public async Task Patch_ToCancelled_StoresReason()
+    {
+        await UseTokenAsync(RoleNames.CasaConvivenciaDirector);
+        var personId = await SeedResidentAsync();
+        await SeedVisitAsync(personId, DateTime.UtcNow.Date.AddDays(31), new TimeSpan(10, 0, 0));
+        var visitId = GetVisitId(personId, DateTime.UtcNow.Date.AddDays(31));
+
+        var response = await _client.PatchAsJsonAsync(
+            $"/api/casona-visits/{visitId}/status", new { status = 2, cancellationReason = "El visitante avisó que no viene" });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var visit = db.CasonaVisits.First(v => v.Id == visitId);
+        Assert.Equal(VisitStatus.Cancelled, visit.Status);
+        Assert.Equal("El visitante avisó que no viene", visit.CancellationReason);
+    }
+
+    [Fact]
+    public async Task Patch_UnknownVisit_Returns404()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PatchAsJsonAsync($"/api/casona-visits/{Guid.NewGuid()}/status", new { status = 1 });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_WithInvalidStatusValue_Returns400()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var personId = await SeedResidentAsync();
+        await SeedVisitAsync(personId, DateTime.UtcNow.Date.AddDays(32), new TimeSpan(10, 0, 0));
+        var visitId = GetVisitId(personId, DateTime.UtcNow.Date.AddDays(32));
+
+        var response = await _client.PatchAsJsonAsync($"/api/casona-visits/{visitId}/status", new { status = 9 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patch_WithListenerRole_Returns403()
+    {
+        await UseTokenAsync(RoleNames.Listener);
+
+        var response = await _client.PatchAsJsonAsync($"/api/casona-visits/{Guid.NewGuid()}/status", new { status = 1 });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // SCRUM-212: la escucha tampoco puede consultar visitas
+    [Fact]
+    public async Task Get_WithListenerRole_Returns403()
+    {
+        await UseTokenAsync(RoleNames.Listener);
+
+        var response = await _client.GetAsync("/api/casona-visits?from=2026-10-01&to=2026-12-31");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     private Guid GetVisitId(Guid personId, DateTime date)

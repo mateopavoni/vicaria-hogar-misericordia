@@ -183,4 +183,22 @@ public class CollaboratorSearchTests
 
         Assert.Empty(results);
     }
+
+
+    [Fact]
+    public async Task ListAsync_ReturnsAllOrderedByNameWithRegisteredByName()
+    {
+        using var db = CreateDbContext();
+        var actorId = await SeedUserAsync(db);
+        await SeedCollaboratorAsync(db, actorId, "Zoe", "Díaz");
+        await SeedCollaboratorAsync(db, actorId, "Ana", "Ruiz", CollaboratorType.Employee, "Cocina");
+        var service = new CollaboratorService(db);
+
+        var result = await service.ListAsync();
+
+        Assert.Equal(["Ana", "Zoe"], result.Select(c => c.FirstName).ToArray());
+        Assert.Equal(CollaboratorType.Employee, result[0].Type);
+        Assert.Equal("Cocina", result[0].WorkArea);
+        Assert.Equal("Actor Test", result[0].RegisteredByName);
+    }
 }

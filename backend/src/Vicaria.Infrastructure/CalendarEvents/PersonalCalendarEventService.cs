@@ -15,6 +15,29 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
         _dbContext = dbContext;
     }
 
+    public async Task<Guid> CreateAsync(
+        CreateGeneralCalendarEventDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        // el autor sale del JWT, nunca del cliente: es lo que hace privado el evento (SCRUM-194)
+        var calendarEvent = new PersonalCalendarEvent
+        {
+            Id = Guid.NewGuid(),
+            Title = dto.Title.Trim(),
+            Date = dto.Date,
+            StartTime = dto.StartTime,
+            EndTime = dto.EndTime,
+            Description = dto.Description?.Trim(),
+            RecurrenceDays = dto.RecurrenceDays,
+            AuthorUserId = actorId,
+            CreatedAt = DateTime.UtcNow
+        };
+        _dbContext.PersonalCalendarEvents.Add(calendarEvent);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return calendarEvent.Id;
+    }
+
     public async Task<PagedResult<CalendarEventOccurrenceDto>> GetOccurrencesAsync(
         DateTime from,
         DateTime to,
@@ -39,7 +62,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             .SelectMany(e => CalendarEventOccurrenceExpander
                 .Expand(e.Date, e.RecurrenceDays, fromDate, toDate)
                 .Select(d => new CalendarEventOccurrenceDto(
-                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description)))
+                    e.Id, d, e.StartTime, e.EndTime, e.Title, e.Description, e.AuthorUserId)))
             .OrderBy(o => o.Date)
             .ThenBy(o => o.StartTime)
             .ToList();
@@ -76,6 +99,70 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             calendarEvent.RecurrenceDays,
             calendarEvent.AuthorUserId,
             calendarEvent.CreatedAt);
+    }
+
+    public async Task<CalendarEventOperationResult> UpdateAsync(
+        Guid id,
+        UpdateGeneralCalendarEventDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var personalEvent = await _dbContext.PersonalCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id && e.AuthorUserId == actorId, cancellationToken);
+
+        if (personalEvent is null)
+        {
+            return CalendarEventOperationResult.NotFound();
+        }
+
+        personalEvent.Title = dto.Title.Trim();
+        personalEvent.Description = dto.Description?.Trim();
+        personalEvent.Date = dto.Date;
+        personalEvent.StartTime = dto.StartTime;
+        personalEvent.EndTime = dto.EndTime;
+        personalEvent.RecurrenceDays = dto.RecurrenceDays;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento personal modificado",
+            AffectedEntity = $"PersonalCalendarEvent:{personalEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CalendarEventOperationResult.Ok();
+    }
+
+    public async Task<CalendarEventOperationResult> DeleteAsync(
+        Guid id,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var personalEvent = await _dbContext.PersonalCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id && e.AuthorUserId == actorId, cancellationToken);
+
+        if (personalEvent is null)
+        {
+            return CalendarEventOperationResult.NotFound();
+        }
+
+        _dbContext.PersonalCalendarEvents.Remove(personalEvent);
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento personal eliminado",
+            AffectedEntity = $"PersonalCalendarEvent:{personalEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CalendarEventOperationResult.Ok();
     }
 
     public async Task<PublishPersonalCalendarEventResult> PublishAsync(

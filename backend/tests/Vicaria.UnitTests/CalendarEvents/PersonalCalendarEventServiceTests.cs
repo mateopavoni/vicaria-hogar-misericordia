@@ -135,4 +135,25 @@ public class PersonalCalendarEventServiceTests
 
         Assert.Null(result);
     }
+
+
+    [Fact]
+    public async Task CreateAsync_StoresEventWithActorAsAuthor_AndOnlyOwnerSeesIt()
+    {
+        using var db = CreateDbContext();
+        var (ownerId, otherId) = await SeedTwoUsersAsync(db);
+        var service = new PersonalCalendarEventService(db);
+        var dto = new CreateGeneralCalendarEventDto(
+            "Turno médico", new DateTime(2026, 10, 12), new TimeSpan(9, 0, 0), new TimeSpan(10, 0, 0));
+
+        var id = await service.CreateAsync(dto, ownerId, CancellationToken.None);
+
+        var stored = await db.PersonalCalendarEvents.SingleAsync(e => e.Id == id);
+        Assert.Equal(ownerId, stored.AuthorUserId);
+        var own = await service.GetOccurrencesAsync(new DateTime(2026, 10, 12), new DateTime(2026, 10, 12), 1, ownerId, CancellationToken.None);
+        var other = await service.GetOccurrencesAsync(new DateTime(2026, 10, 12), new DateTime(2026, 10, 12), 1, otherId, CancellationToken.None);
+        Assert.Single(own.Items);
+        Assert.Equal(ownerId, own.Items[0].AuthorUserId);
+        Assert.Empty(other.Items);
+    }
 }

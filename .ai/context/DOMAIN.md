@@ -23,7 +23,7 @@ El diseño lógico original (`/PROJECT.md`, sección "Modelo de datos conceptual
 | 15 | InformeCaritas | — | ❌ no existe |
 | 16 | EventoCalendarioPersonal | — | ❌ no existe |
 | 17 | EventoCalendarioGeneral | — | ❌ no existe |
-| 18 | Colaborador | `Collaborator` | ✅ implementada (SCRUM-199: alta `POST /api/collaborators`, índice único sobre DNI cargado; SCRUM-204: búsqueda `GET /api/collaborators/search`, collation CI_AI en nombre/área) |
+| 18 | Colaborador | — | ❌ no existe |
 
 Entidades adicionales que existen en código y no están en las 18 originales: `AuditLog`, `Notification`, `Role`, `RolePermission`, `Permission`, `PersonType`, `SocialRecordStatus`, `UserStatus` — soporte de auth/RBAC/auditoría, no del dominio de negocio "atención a personas" en sí.
 
@@ -32,7 +32,7 @@ Entidades adicionales que existen en código y no están en las 18 originales: `
 `RoleNames` (`Vicaria.Domain.Entities`) define **4 roles**, no 3:
 
 - `Referente`
-- `DirectoraDeCasona`
+- `DirectoraDeCasaConvivencia`
 - `Escucha`
 - `CoordinadorDeCasaConvivencia` ← no está en la tabla de roles de `/PROJECT.md` (sección "Usuarios"). Ver [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
 

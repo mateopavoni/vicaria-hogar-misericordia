@@ -9,6 +9,9 @@ public interface ICollaboratorService
         Guid actorId,
         CancellationToken cancellationToken);
 
+    // listado completo ordenado por nombre, para la pantalla de gestión
+    Task<List<CollaboratorListItemDto>> ListAsync(CancellationToken cancellationToken = default);
+
         Task<UpdateCollaboratorResult> UpdateAsync(
         Guid id,
         UpdateCollaboratorDto dto,
