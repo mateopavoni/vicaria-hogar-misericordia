@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Vicaria.Domain\Vicaria.Domain.csproj" />
     <ProjectReference Include="..\..\src\Vicaria.Application\Vicaria.Application.csproj" />
     <ProjectReference Include="..\..\src\Vicaria.Infrastructure\Vicaria.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Vicaria.Api\Vicaria.Api.csproj" />
   </ItemGroup>
 
 </Project>
