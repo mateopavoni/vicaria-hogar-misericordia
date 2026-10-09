@@ -1,0 +1,19 @@
+<ui-modal title="Cancelar visita" size="sm" (closed)="onCancel()">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <p class="text-[13px] text-slate-600">
+      ¿Confirmás que se cancela la visita de <strong>{{ visit().visitorName }}</strong> a
+      <strong>{{ visit().residentName }}</strong>?
+    </p>
+
+    <ui-form-field label="Motivo (opcional)" for="cancel-reason">
+      <textarea id="cancel-reason" uiInput formControlName="reason" rows="3" maxlength="300" placeholder="Opcional"></textarea>
+    </ui-form-field>
+  </form>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" [disabled]="saving()" (click)="onCancel()">Volver</button>
+    <button uiButton variant="danger" type="button" [loading]="saving()" [disabled]="saving()" (click)="onConfirm()">
+      Cancelar visita
+    </button>
+  </ng-container>
+</ui-modal>

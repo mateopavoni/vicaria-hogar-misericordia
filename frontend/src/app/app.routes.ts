@@ -75,6 +75,24 @@ export const routes: Routes = [
             .then(m => m.SocialRecordDetailComponent)
       },
 
+      // EP-05: gestión y búsqueda de colaboradores (backend: api/collaborators)
+      {
+        path: 'colaboradores',
+        loadComponent: () =>
+          import('./features/collaborators/pages/collaborator-management/collaborator-management.component')
+            .then(m => m.CollaboratorManagementComponent),
+        canActivate: [permissionGuard('colaboradores.view')]
+      },
+
+      // EP-04: calendario general/personal; las visitas de la Casa de Convivencia son una pestaña
+      {
+        path: 'calendario',
+        loadComponent: () =>
+          import('./features/calendar/pages/calendar/calendar.component')
+            .then(m => m.CalendarComponent),
+        canActivate: [permissionGuard('calendario.view')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

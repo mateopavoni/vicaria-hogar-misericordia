@@ -23,7 +23,12 @@ export type Permission =
   | 'users.disable'
   | 'medicamentos.view'
   | 'medicamentos.create'
-  | 'medicamentos.edit';
+  | 'medicamentos.edit'
+  // SCRUM-74: el backend (CasonaVisitsController) deja leer a los 4 roles y escribir solo a
+  // Referente, Directora y Coordinador; Escucha nunca tiene visitas.*
+  | 'visitas.view'
+  | 'visitas.create'
+  | 'visitas.edit';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -65,7 +70,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Medicamentos
     'medicamentos.view',
     'medicamentos.create',
-    'medicamentos.edit'
+    'medicamentos.edit',
+
+    // Visitas de la Casa de Convivencia (SCRUM-74)
+    'visitas.view',
+    'visitas.create',
+    'visitas.edit'
   ],
 
 
@@ -74,7 +84,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.view',
 
     'observaciones.view',
-    'observaciones.create'
+    'observaciones.create',
+
+    // calendario de solo lectura (el backend le permite GET, no POST)
+    'calendario.view'
   ],
 
 
@@ -91,14 +104,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'observaciones.edit',
 
     // Calendario Casa de Convivencia
+    // crear/editar eventos es solo del Referente en el backend (GeneralCalendarEventsController)
     'calendario.view',
-    'calendario.create',
-    'calendario.edit',
 
     // Colaboradores Casa de Convivencia
+    // el alta de colaboradores es solo del Referente en el backend
     'colaboradores.view',
-    'colaboradores.create',
-    'colaboradores.edit',
 
     // Stock Casa de Convivencia
     'stock.view',
@@ -110,7 +121,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Medicamentos Casa de Convivencia
     'medicamentos.view',
     'medicamentos.create',
-    'medicamentos.edit'
+    'medicamentos.edit',
+
+    // Visitas de la Casa de Convivencia (SCRUM-74)
+    'visitas.view',
+    'visitas.create',
+    'visitas.edit'
   ],
 
   // bug reportado 2026-09-23: faltaba este rol por completo. Los permisos granulares
@@ -125,7 +141,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.view',
     'observaciones.view',
     'observaciones.create',
-    'medicamentos.view'
+    'medicamentos.view',
+
+    // calendario general de solo lectura y visitas de la casona (SCRUM-74)
+    'calendario.view',
+    'visitas.view',
+    'visitas.create',
+    'visitas.edit'
   ]
 
 };

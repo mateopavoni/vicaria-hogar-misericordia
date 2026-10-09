@@ -149,11 +149,11 @@
     </a>
 
     <!-- Calendario -->
+    @if (permissionService.hasPermission('calendario.view')) {
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/calendario"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       (click)="closeOnMobile()"
-      [routerLinkActiveOptions]="{ exact: true }"
       class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
             border border-transparent
             px-6 text-sm font-semibold text-slate-700
@@ -177,6 +177,38 @@
 
       <span>Calendario</span>
     </a>
+    }
+
+    <!-- Colaboradores -->
+    @if (permissionService.hasPermission('colaboradores.view')) {
+    <a
+      routerLink="/dashboard/colaboradores"
+      routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
+      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
+            border border-transparent
+            px-6 text-sm font-semibold text-slate-700
+            transition-all duration-200
+            hover:border-[#B8C8FA]
+            hover:bg-[#F5F7FF]
+            hover:text-[#6689F5]"
+    >
+      <svg
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+
+      <span>Colaboradores</span>
+    </a>
+    }
 
     <!-- Informes -->
     @if (permissionService.hasPermission('fichas.view')) {
