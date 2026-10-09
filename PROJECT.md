@@ -38,7 +38,7 @@ El nombre formal completo del dispositivo atendido por el sistema es "Parroquia 
 - **Backend:** .NET 9.0 + C#
 - **Base de datos:** SQL Server + Entity Framework
 - **Autenticación:** JWT + BCrypt (salt: 10 rounds) + RBAC (4 roles — ver sección Usuarios)
-- **DevOps:** Docker, docker-compose, GitHub Actions, Oracle Cloud VM
+- **DevOps:** Docker, docker-compose, GitHub Actions
 - **Testing:** xUnit (backend), Jest + Cypress (frontend, si aplica)
 
 **Historial de decisión (contexto, no ambigüedad):** el diseño técnico original (diagramas de clases, arquitectura de monolito modular, esquema de BD) fue elaborado sobre un stack anterior (NestJS + PostgreSQL + Prisma), luego reemplazado por decisión del equipo. La **estructura conceptual** de esos diagramas (18 entidades, relaciones, módulos por dominio) sigue siendo válida como diseño lógico; el mapeo tecnológico específico de esos documentos quedó desactualizado.

@@ -45,7 +45,7 @@ Esto levanta 3 contenedores:
 Abrir **http://localhost:4200** y loguearse con cualquiera de los [usuarios de prueba](#datos-de-prueba-ya-cargados).
 
 **Notas sobre el compose:**
-- El servicio `web` usa `frontend/Dockerfile.local` + `frontend/nginx.local.conf` (no los `Dockerfile`/`nginx.conf` de raíz, que son los de producción y apuntan la API a `vicaria-api.mateopavoni.com.ar`). El `.local` proxea `/api/` al contenedor `api` de la propia red de compose — así el frontend containerizado habla con el backend local, no con producción.
+- El servicio `web` usa `frontend/Dockerfile.local` + `frontend/nginx.local.conf`, que proxea `/api/` al contenedor `api` de la propia red de compose, de modo que el frontend containerizado habla con el backend local.
 - `FRONTEND_PATH` en `.env` asume que `frontend/` es carpeta hermana de `backend/` en el mismo checkout (`../frontend`) — es el layout normal de este repo, no hace falta tocarlo.
 - Para parar todo: `docker compose down` (agregar `-v` si además se quiere borrar la base y volver a sembrar datos desde cero en el próximo `up`).
 - Para reconstruir después de bajar una rama nueva: `docker compose up -d --build` de nuevo (rebuildea solo lo que cambió).
