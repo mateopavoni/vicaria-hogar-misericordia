@@ -101,6 +101,70 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
             calendarEvent.CreatedAt);
     }
 
+    public async Task<CalendarEventOperationResult> UpdateAsync(
+        Guid id,
+        UpdateGeneralCalendarEventDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var personalEvent = await _dbContext.PersonalCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id && e.AuthorUserId == actorId, cancellationToken);
+
+        if (personalEvent is null)
+        {
+            return CalendarEventOperationResult.NotFound();
+        }
+
+        personalEvent.Title = dto.Title.Trim();
+        personalEvent.Description = dto.Description?.Trim();
+        personalEvent.Date = dto.Date;
+        personalEvent.StartTime = dto.StartTime;
+        personalEvent.EndTime = dto.EndTime;
+        personalEvent.RecurrenceDays = dto.RecurrenceDays;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento personal modificado",
+            AffectedEntity = $"PersonalCalendarEvent:{personalEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CalendarEventOperationResult.Ok();
+    }
+
+    public async Task<CalendarEventOperationResult> DeleteAsync(
+        Guid id,
+        Guid actorId,
+        CancellationToken cancellationToken)
+    {
+        var personalEvent = await _dbContext.PersonalCalendarEvents
+            .FirstOrDefaultAsync(e => e.Id == id && e.AuthorUserId == actorId, cancellationToken);
+
+        if (personalEvent is null)
+        {
+            return CalendarEventOperationResult.NotFound();
+        }
+
+        _dbContext.PersonalCalendarEvents.Remove(personalEvent);
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Evento personal eliminado",
+            AffectedEntity = $"PersonalCalendarEvent:{personalEvent.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return CalendarEventOperationResult.Ok();
+    }
+
     public async Task<PublishPersonalCalendarEventResult> PublishAsync(
         Guid id,
         Guid actorId,

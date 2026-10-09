@@ -70,7 +70,7 @@ public class CollaboratorService : ICollaboratorService
 
         return rows
             .Select(c => new CollaboratorListItemDto(
-                c.Id, c.FirstName, c.LastName, c.Dni, c.Phone, c.Email, c.Type, c.WorkArea,
+                c.Id, c.FirstName, c.LastName, c.Dni, c.Phone, c.Email, c.Type, c.WorkArea, c.IsActive,
                 c.RegisteredAt,
                 c.RegisteredByUser is null
                     ? null

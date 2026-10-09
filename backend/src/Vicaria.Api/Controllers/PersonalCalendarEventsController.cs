@@ -14,13 +14,16 @@ public class PersonalCalendarEventsController : ControllerBase
 {
     private readonly IPersonalCalendarEventService _personalCalendarEventService;
     private readonly IValidator<CreateGeneralCalendarEventDto> _validator;
+    private readonly IValidator<UpdateGeneralCalendarEventDto> _updateValidator;
 
     public PersonalCalendarEventsController(
         IPersonalCalendarEventService personalCalendarEventService,
-        IValidator<CreateGeneralCalendarEventDto> validator)
+        IValidator<CreateGeneralCalendarEventDto> validator,
+        IValidator<UpdateGeneralCalendarEventDto> updateValidator)
     {
         _personalCalendarEventService = personalCalendarEventService;
         _validator = validator;
+        _updateValidator = updateValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -78,6 +81,37 @@ public class PersonalCalendarEventsController : ControllerBase
         return calendarEvent is null
             ? NotFound(new { message = "El evento especificado no existe." })
             : Ok(calendarEvent);
+    }
+
+    // edición y baja de un evento propio (SCRUM-17): solo Referente, igual que el alta;
+    // un evento ajeno responde 404 para no revelar su existencia
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdateGeneralCalendarEventDto dto,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _personalCalendarEventService.UpdateAsync(id, dto, ActorId, cancellationToken);
+        return result.IsSuccess ? NoContent() : NotFound(new { message = result.ErrorMessage });
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _personalCalendarEventService.DeleteAsync(id, ActorId, cancellationToken);
+        return result.IsSuccess ? NoContent() : NotFound(new { message = result.ErrorMessage });
     }
 
     [HttpPut("{id:guid}/publish")]

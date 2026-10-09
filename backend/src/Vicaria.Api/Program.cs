@@ -91,12 +91,15 @@ builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
 builder.Services.AddScoped<IGeneralCalendarEventService, GeneralCalendarEventService>();
 builder.Services.AddScoped<IPersonalCalendarEventService, PersonalCalendarEventService>();
 builder.Services.AddScoped<IValidator<CreateGeneralCalendarEventDto>, CreateGeneralCalendarEventDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateGeneralCalendarEventDto>, UpdateGeneralCalendarEventDtoValidator>();
 builder.Services.AddScoped<ICasonaVisitService, CasonaVisitService>();
 builder.Services.AddScoped<IValidator<CreateCasonaVisitDto>, CreateCasonaVisitDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCasonaVisitDto>, UpdateCasonaVisitDtoValidator>();
+builder.Services.AddScoped<IValidator<ChangeCasonaVisitStatusDto>, ChangeCasonaVisitStatusDtoValidator>();
 builder.Services.AddScoped<ICollaboratorService, CollaboratorService>();
 builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaboratorDtoValidator>();
 builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaboratorsDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
 
 
 

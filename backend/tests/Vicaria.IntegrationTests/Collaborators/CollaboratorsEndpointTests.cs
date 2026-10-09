@@ -418,4 +418,134 @@ public class CollaboratorsEndpointTests : IClassFixture<VicariaWebApplicationFac
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    private async Task<Guid> CreateCollaboratorAsync(string? dni = null)
+    {
+        var response = await _client.PostAsJsonAsync(Endpoint, ValidPayload(dni: dni));
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        return body!["id"];
+    }
+
+    private static object UpdatePayload(string? dni, string firstName = "Editada", bool isActive = true) => new
+    {
+        firstName,
+        lastName = "Pérez",
+        dni,
+        phone = "1145678901",
+        email = "editada@mail.com",
+        type = 1,
+        workArea = "Cocina",
+        isActive
+    };
+
+    // edición, baja lógica y detalle (SCRUM-200 / SCRUM-205)
+    [Fact]
+    public async Task Put_ByReferent_Returns204AndDetailReflectsChanges()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var dni = NewDni();
+        var id = await CreateCollaboratorAsync(dni);
+
+        var response = await _client.PutAsJsonAsync($"{Endpoint}/{id}", UpdatePayload(dni));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var detail = await _client.GetFromJsonAsync<CollaboratorDetailDto>($"{Endpoint}/{id}");
+        Assert.Equal("Editada", detail!.FirstName);
+        Assert.Equal(CollaboratorType.Employee, detail.Type);
+        Assert.True(detail.IsActive);
+    }
+
+    [Fact]
+    public async Task Put_WithIsActiveFalse_DeactivatesAndListShowsIt()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var dni = NewDni();
+        var id = await CreateCollaboratorAsync(dni);
+
+        var response = await _client.PutAsJsonAsync($"{Endpoint}/{id}", UpdatePayload(dni, isActive: false));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var list = await _client.GetFromJsonAsync<List<CollaboratorListItemDto>>(Endpoint);
+        Assert.False(Assert.Single(list!, c => c.Id == id).IsActive);
+    }
+
+    [Fact]
+    public async Task Put_WithDuplicateDni_Returns409()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var takenDni = NewDni();
+        await CreateCollaboratorAsync(takenDni);
+        var otherDni = NewDni();
+        var id = await CreateCollaboratorAsync(otherDni);
+
+        var response = await _client.PutAsJsonAsync($"{Endpoint}/{id}", UpdatePayload(takenDni));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_WithEmptyFirstName_Returns400()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var dni = NewDni();
+        var id = await CreateCollaboratorAsync(dni);
+
+        var response = await _client.PutAsJsonAsync($"{Endpoint}/{id}", UpdatePayload(dni, firstName: ""));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_UnknownCollaborator_Returns404()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PutAsJsonAsync($"{Endpoint}/{Guid.NewGuid()}", UpdatePayload(NewDni()));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(RoleNames.CasaConvivenciaDirector)]
+    [InlineData(RoleNames.CasaConvivenciaCoordinator)]
+    [InlineData(RoleNames.Listener)]
+    public async Task Put_WithUnauthorizedRole_Returns403(string role)
+    {
+        await UseTokenAsync(role);
+
+        var response = await _client.PutAsJsonAsync($"{Endpoint}/{Guid.NewGuid()}", UpdatePayload(NewDni()));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetById_WithAnyAuthenticatedRole_Returns200WithRegistrar()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateCollaboratorAsync();
+        await UseTokenAsync(RoleNames.Listener);
+
+        var response = await _client.GetAsync($"{Endpoint}/{id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var detail = await response.Content.ReadFromJsonAsync<CollaboratorDetailDto>();
+        Assert.Equal(id, detail!.Id);
+        Assert.False(string.IsNullOrWhiteSpace(detail.RegisteredByUserName));
+    }
+
+    [Fact]
+    public async Task GetById_Unknown_Returns404()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"{Endpoint}/{Guid.NewGuid()}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task GetById_WithoutToken_Returns401()
+    {
+        _client.DefaultRequestHeaders.Authorization = null;
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _client.GetAsync($"{Endpoint}/{Guid.NewGuid()}")).StatusCode);
+    }
 }

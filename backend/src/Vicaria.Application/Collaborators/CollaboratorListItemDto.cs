@@ -13,5 +13,6 @@ public record CollaboratorListItemDto(
     string? Email,
     CollaboratorType Type,
     string? WorkArea,
+    bool IsActive,
     DateTime RegisteredAt,
     string? RegisteredByName);

@@ -24,7 +24,19 @@ public interface IPersonalCalendarEventService
         Guid actorId,
         CancellationToken cancellationToken);
 
-        Task<PublishPersonalCalendarEventResult> PublishAsync(
+    // edición y baja de un evento propio; el de otro usuario se trata como inexistente (404)
+    Task<CalendarEventOperationResult> UpdateAsync(
+        Guid id,
+        UpdateGeneralCalendarEventDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken);
+
+    Task<CalendarEventOperationResult> DeleteAsync(
+        Guid id,
+        Guid actorId,
+        CancellationToken cancellationToken);
+
+    Task<PublishPersonalCalendarEventResult> PublishAsync(
         Guid id,
         Guid actorId,
         CancellationToken cancellationToken);

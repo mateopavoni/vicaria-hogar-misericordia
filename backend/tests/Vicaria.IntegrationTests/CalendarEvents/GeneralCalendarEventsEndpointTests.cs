@@ -60,6 +60,98 @@ public class GeneralCalendarEventsEndpointTests : IClassFixture<VicariaWebApplic
         recurrenceDays = (int)WeekDays.Tuesday
     };
 
+    private async Task<Guid> CreateEventAsync()
+    {
+        var response = await _client.PostAsJsonAsync("/api/general-calendar-events", ValidPayload());
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        return body!["id"];
+    }
+
+    private static object UpdatePayload(string title) => new
+    {
+        title,
+        description = "Cambió el plan",
+        date = "2026-10-10T00:00:00Z",
+        startTime = "17:00:00",
+        endTime = "19:00:00",
+        recurrenceDays = (int)WeekDays.None
+    };
+
+    // edición y eliminación con permisos y auditoría (SCRUM-190)
+    [Fact]
+    public async Task Put_ByReferent_Returns204AndChangesDetail()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateEventAsync();
+
+        var response = await _client.PutAsJsonAsync($"/api/general-calendar-events/{id}", UpdatePayload("Merienda editada"));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var detail = await _client.GetFromJsonAsync<JsonElement>($"/api/general-calendar-events/{id}");
+        Assert.Equal("Merienda editada", detail.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public async Task Put_WithEmptyTitle_Returns400()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateEventAsync();
+
+        var response = await _client.PutAsJsonAsync($"/api/general-calendar-events/{id}", UpdatePayload(""));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_UnknownEvent_Returns404()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PutAsJsonAsync($"/api/general-calendar-events/{Guid.NewGuid()}", UpdatePayload("X"));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_ByNonAuthorNonReferent_Returns403()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateEventAsync();
+        await UseTokenAsync(RoleNames.CasaConvivenciaDirector);
+
+        var response = await _client.PutAsJsonAsync($"/api/general-calendar-events/{id}", UpdatePayload("Intruso"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_ByReferent_Returns204ThenDetailIs404()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateEventAsync();
+
+        Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync($"/api/general-calendar-events/{id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/general-calendar-events/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_ByNonAuthorNonReferent_Returns403()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+        var id = await CreateEventAsync();
+        await UseTokenAsync(RoleNames.Listener);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await _client.DeleteAsync($"/api/general-calendar-events/{id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_UnknownEvent_Returns404()
+    {
+        await UseTokenAsync(RoleNames.Referent);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.DeleteAsync($"/api/general-calendar-events/{Guid.NewGuid()}")).StatusCode);
+    }
+
     [Fact]
     public async Task Post_WithReferentRole_Returns201WithId()
     {
