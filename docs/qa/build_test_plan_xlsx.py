@@ -1,9 +1,10 @@
-"""Genera docs/qa/Plan_de_pruebas_Sprint_1-3.xlsx.
+"""Genera docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx.
 
 Fuentes:
   - el docx "Plan de prueba - completo formateado" (Sprint 1 y 2: TC-01..TC-40 y TA-001..TA-233)
   - docs/qa/QA_SPRINT3.md (Sprint 3: TC-41 en adelante)
   - los tests xUnit de backend/tests (Sprint 3: TA-234 en adelante, derivados de los nombres de test)
+  - docs/qa/sprint4_cases.py (Sprint 4: casos manuales desde los criterios de aceptación de Jira, estado Pendiente)
 
 Uso: python docs/qa/build_test_plan_xlsx.py <ruta al docx> [resultado de test.json]
 Terminología del docx: TC = caso manual, TA = caso automatizado; campos Description,
@@ -16,6 +17,8 @@ import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from sprint4_cases import OPEN_QUESTIONS, STORIES  # noqa: E402
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
@@ -23,13 +26,13 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 ROOT = Path(__file__).resolve().parents[2]
 QA_MD = ROOT / "docs" / "qa" / "QA_SPRINT3.md"
-OUT = ROOT / "docs" / "qa" / "Plan_de_pruebas_Sprint_1-3.xlsx"
+OUT = ROOT / "docs" / "qa" / "Plan_de_pruebas_Sprint_1-4.xlsx"
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 # fechas de ejecución registradas
 DATE_S12_MANUAL = "2026-10-06"   # QA manual de los 40 TC (todos OK)
 DATE_S3_UI = "2026-10-08"        # QA de UI Sprint 3
-DATE_RERUN = "2026-10-09"        # re-ejecución con el backend de Emir integrado
+DATE_RERUN = "2026-10-12"        # re-ejecución de las suites automatizadas (backend y frontend)
 RUNNER = "Mateo Pavoni"
 
 STORY_OF = {"190": "16", "195": "17", "200": "18", "205": "19", "211": "74", "212": "74", "17": "17"}
@@ -223,6 +226,15 @@ def main():
                    f"1. {t['step']}  →  {t['expected']}", t["test"],
                    t["result"], date, RUNNER if ui else "Suite automatizada",
                    t.get("note", "") if t.get("note") and t["result"] == "OK" and "re-ejecutado" in t["note"] else ""])
+    s4 = []
+    next_id = max(int(t["id"][3:]) for t in s3) + 1
+    for jira, module, cases_ in STORIES:
+        for title, desc, pre, steps in cases_:
+            s4.append((f"TC-{next_id}", jira, module, title, desc, pre, steps))
+            next_id += 1
+            ws.append([s4[-1][0], "Sprint 4", f"{module} ({jira})", title, desc, pre, jira,
+                       "\n".join(f"{i}. {p}  →  {e}" for i, (p, _d, e) in enumerate(steps, 1)), "",
+                       "Pendiente", "", "", "Sin desarrollo todavía (Sprint 4 activo desde 2026-10-09)."])
     style_sheet(ws, [9, 11, 34, 44, 44, 38, 16, 70, 46, 12, 14, 18, 36])
     add_state_validation(ws, "J")
     manual_rows = ws.max_row
@@ -273,7 +285,7 @@ def main():
     wr = wb.create_sheet("Resumen", 0)
     wr["A1"] = "Plan de pruebas — Vicaria de los Pobres, Pastoral de Adicciones"
     wr["A1"].font = Font(bold=True, size=14)
-    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1, 2 y 3. Se actualiza con los contadores de las hojas."
+    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1 a 4 (el Sprint 4 todavía sin desarrollo: casos Pendientes). Se actualiza con los contadores de las hojas."
     wr.append([])
     wr.append(["Tipo", "Sprint", "Total", "OK", "Falla", "Bloqueado", "Pendiente"])
     hr = wr.max_row
@@ -294,6 +306,7 @@ def main():
 
     count_row("Manuales (TC)", "Sprint 1-2", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Manuales (TC)", "Sprint 3", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Manuales (TC)", "Sprint 4", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 1-2", "Parte B - Automatizados", auto_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 3", "Parte B - Automatizados", auto_rows, "B", "J")
     first, last = hr + 1, wr.max_row
@@ -305,14 +318,15 @@ def main():
         c.font = Font(bold=True)
 
     wr.append([])
-    wr.append(["Última ejecución (2026-10-09, rama dev)"])
+    wr.append(["Última ejecución (2026-10-12, rama dev)"])
     wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
     for line in [
         "Backend: 246 pruebas unitarias y 240 de integración, todas OK.",
         "Frontend: 20 archivos / 51 pruebas y build de producción, OK.",
-        "UI en navegador real (Playwright): 33 de 33 verificaciones OK en el flujo de Sprint 3.",
+        "UI en navegador real (Playwright): 33 de 33 verificaciones OK el 2026-10-09; no se volvió a correr el 2026-10-12 (necesita el stack completo).",
         "Prueba de humo por rol (Referente, Directora, Escucha, Coordinador): 11 de 15 pantallas OK; las 4 restantes son /inicio (ver Defectos y pendientes).",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK el 2026-10-06.",
+        "Sprint 4: casos derivados de los criterios de aceptación de Jira, todos Pendientes hasta que haya desarrollo.",
     ]:
         wr.append([line])
     wr.append([])
@@ -320,6 +334,7 @@ def main():
     wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
     for line in [
         "Sprint 1-2: EP-01 Fichas de personas · EP-02 Observaciones e historia de vida · EP-03 Cuentas, roles y notificaciones · EP-10 Asistencia · EP-12 Casa de Convivencia",
+        "Sprint 4: EP-10 Asistencia (SCRUM-54, 55, 56, 57) · Medicación (SCRUM-59, 60, 61, 71, 75)",
         "Sprint 3: EP-04 Calendario general y personal (SCRUM-15, 16, 17) · EP-05 Colaboradores (SCRUM-18, 19) y visitas de la Casa de Convivencia (SCRUM-74)",
     ]:
         wr.append([line])
@@ -361,17 +376,21 @@ def main():
          "SCRUM-16 / 189", "Implementada", "Columna repeats_monthly y migración AddCalendarEventMonthlyRecurrence."),
         ("Limitación", "Al editar una ocurrencia de una serie, la fecha del formulario es la de esa ocurrencia y la serie pasa a empezar ese día.",
          "SCRUM-190", "Abierta", "Una mejora posible es exponer la fecha de inicio de la serie en la ocurrencia."),
+        ("Defecto", "La suite de integración colgaba el equipo: cada clase de test levanta su propio SQL Server en Docker y xUnit las corría en paralelo (hasta 16 contenedores) contra una VM de WSL con tope de 4 GB; Docker se caía y los tests quedaban sin resultado.",
+         "Backend (tests de integración)", "Corregido en dev", "AssemblyInfo.cs desactiva el paralelismo y el factory limita cada SQL Server a 1 GB (MSSQL_MEMORY_LIMIT_MB). Resultado: 240 de 240 OK en 10 min 38 s."),
         ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
          "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
         ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",
          "Jira", "Abierta", "Cerrar con el resultado de esta ejecución."),
     ]
+    for jira, q in OPEN_QUESTIONS:
+        items.append(("Pregunta abierta", q, jira, "Abierta", "Consultar al equipo antes de implementar o probar."))
     for i, it in enumerate(items, 1):
         wd.append([i, *it])
     style_sheet(wd, [5, 18, 70, 30, 18, 60])
 
     wb.save(OUT)
-    print(f"{OUT} — manuales: {len(manual)} + {len(s3)} (Sprint 3) | automatizados: {len(auto)} + {len(s3_tests)} (Sprint 3)")
+    print(f"{OUT} — manuales: {len(manual)} + {len(s3)} (Sprint 3) + {len(s4)} (Sprint 4) | automatizados: {len(auto)} + {len(s3_tests)} (Sprint 3)")
 
 
 if __name__ == "__main__":
