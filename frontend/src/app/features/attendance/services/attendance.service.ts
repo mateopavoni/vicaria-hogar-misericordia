@@ -3,6 +3,7 @@ import { Observable, delay, of, throwError } from 'rxjs';
 import { isBeforeToday } from '../../../shared/utils/date.util';
 import {
   AttendanceActivity,
+  AttendanceHistoryEntry,
   DailyAttendance,
   SaveDailyAttendanceRequest,
 } from '../interfaces/attendance.interface';
@@ -29,6 +30,19 @@ export class AttendanceService {
 
   get(activity: AttendanceActivity, date: string): Observable<DailyAttendance | null> {
     return of(this.store.get(this.key(activity, date)) ?? null).pipe(delay(150));
+  }
+
+  // SCRUM-222: fechas en las que una persona asistió, de todas las actividades, de más
+  // reciente a más antigua. Los filtros por actividad y rango se aplican en pantalla.
+  getPersonHistory(personId: string): Observable<AttendanceHistoryEntry[]> {
+    const entries: AttendanceHistoryEntry[] = [];
+    for (const day of this.store.values()) {
+      if (day.persons.some((p) => p.personId === personId)) {
+        entries.push({ activity: day.activity, date: day.date });
+      }
+    }
+    entries.sort((a, b) => b.date.localeCompare(a.date));
+    return of(entries).pipe(delay(150));
   }
 
   save(request: SaveDailyAttendanceRequest): Observable<DailyAttendance> {

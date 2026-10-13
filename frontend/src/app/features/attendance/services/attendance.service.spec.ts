@@ -65,4 +65,16 @@ describe('AttendanceService', () => {
       });
     });
   });
+
+  it('arma el historial de una persona con todas sus actividades, de más reciente a más antigua', (done) => {
+    service.save(request({ date: '2000-01-01', justification: 'carga tardía' })).subscribe(() => {
+      service.save(request({ activity: 'casa-convivencia' })).subscribe(() => {
+        service.getPersonHistory('p1').subscribe((history) => {
+          expect(history.map((h) => h.activity)).toEqual(['casa-convivencia', 'hogar-de-dia']);
+          expect(history[0].date >= history[1].date).toBeTrue();
+          done();
+        });
+      });
+    });
+  });
 });
