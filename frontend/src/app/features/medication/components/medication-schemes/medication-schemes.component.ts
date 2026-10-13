@@ -3,13 +3,14 @@ import { DatePipe } from '@angular/common';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { extractApiError } from '../../../../core/http/api-error';
-import { UiButtonComponent } from '../../../../shared/ui';
+import { UiButtonComponent, UiTab, UiTabsComponent } from '../../../../shared/ui';
 import {
   CreateMedicationSchemeRequest,
   MedicationCatalogItem,
   MedicationScheme,
 } from '../../interfaces/medication.interface';
 import { MedicationHistoryComponent } from '../medication-history/medication-history.component';
+import { REVIEW_ALERT_DAYS, daysSinceReview, evaluationExpiryDate, needsReview } from '../../utils/scheme-review.util';
 import { MedicationService } from '../../services/medication.service';
 import { MedicationSchemeFormModalComponent } from '../scheme-form-modal/scheme-form-modal.component';
 
@@ -21,7 +22,7 @@ import { MedicationSchemeFormModalComponent } from '../scheme-form-modal/scheme-
  */
 @Component({
   selector: 'app-medication-schemes',
-  imports: [DatePipe, UiButtonComponent, MedicationSchemeFormModalComponent, MedicationHistoryComponent],
+  imports: [DatePipe, UiButtonComponent, UiTabsComponent, MedicationSchemeFormModalComponent, MedicationHistoryComponent],
   templateUrl: './medication-schemes.component.html',
 })
 export class MedicationSchemesComponent implements OnInit {
@@ -32,11 +33,24 @@ export class MedicationSchemesComponent implements OnInit {
   personId = input.required<string>();
   isResident = input(false);
   personName = input('');
+  /** Fecha de la última evaluación psiquiátrica (YYYY-MM-DD), si el perfil la tiene. */
+  evaluatedAt = input<string | null>(null);
 
   schemes = signal<MedicationScheme[]>([]);
   catalog = signal<MedicationCatalogItem[]>([]);
   catalogLoading = signal(false);
   evaluationValid = signal<boolean | null>(null);
+  evaluationExpired = signal(false);
+
+  // SCRUM-250: vigentes / esquemas anteriores / historial de tomas
+  activeTab = signal<'vigentes' | 'anteriores' | 'tomas'>('vigentes');
+  tabs = computed<UiTab<'vigentes' | 'anteriores' | 'tomas'>[]>(() => [
+    { id: 'vigentes', label: `Vigentes (${this.activeSchemes().length})` },
+    { id: 'anteriores', label: `Esquemas anteriores (${this.historicSchemes().length})` },
+    ...(this.canViewHistory() ? [{ id: 'tomas' as const, label: 'Historial de tomas' }] : []),
+  ]);
+  reviewingId = signal<string | null>(null);
+  readonly reviewAlertDays = REVIEW_ALERT_DAYS;
 
   loading = signal(true);
   errorMessage = signal<string | null>(null);
@@ -51,16 +65,22 @@ export class MedicationSchemesComponent implements OnInit {
   canViewHistory = computed(() => this.permissionService.hasPermission('medicamentos.history'));
   canCreate = computed(() => this.permissionService.hasPermission('medicamentos.create'));
   // la carga queda bloqueada hasta confirmar que hay una evaluación vigente
+  canReview = computed(() => this.permissionService.hasPermission('medicamentos.edit'));
   blocked = computed(() => this.evaluationValid() === false);
 
+  // vigentes con más de 30 días sin revisión
+  staleSchemes = computed(() => this.activeSchemes().filter((s) => needsReview(s)));
   activeSchemes = computed(() => this.schemes().filter((s) => s.active));
   historicSchemes = computed(() => this.schemes().filter((s) => !s.active));
 
   ngOnInit(): void {
     this.reload();
 
-    this.medicationService.getEvaluationStatus(this.personId(), this.isResident()).subscribe({
-      next: (status) => this.evaluationValid.set(status.valid),
+    this.medicationService.getEvaluationStatus(this.personId(), this.isResident(), this.evaluatedAt()).subscribe({
+      next: (status) => {
+        this.evaluationValid.set(status.valid);
+        this.evaluationExpired.set(status.expired);
+      },
       // si no se puede confirmar, se bloquea por precaución
       error: () => this.evaluationValid.set(false),
     });
@@ -116,7 +136,7 @@ export class MedicationSchemesComponent implements OnInit {
     this.formError.set(null);
 
     this.medicationService
-      .create(request, this.isResident(), { id: user.id, name: `${user.name} ${user.lastname}`.trim() })
+      .create(request, this.isResident(), { id: user.id, name: `${user.name} ${user.lastname}`.trim() }, this.evaluatedAt())
       .subscribe({
         next: (scheme) => {
           this.saving.set(false);
@@ -133,6 +153,40 @@ export class MedicationSchemesComponent implements OnInit {
           this.formError.set(extractApiError(err, 'No se pudo cargar el esquema.'));
         },
       });
+  }
+
+  isStale(scheme: MedicationScheme): boolean {
+    return needsReview(scheme);
+  }
+
+  daysWithoutReview(scheme: MedicationScheme): number {
+    return daysSinceReview(scheme);
+  }
+
+  expiredOn(): string {
+    const date = this.evaluatedAt();
+    return date ? evaluationExpiryDate(date).split('-').reverse().join('/') : '';
+  }
+
+  /** "Marcar como revisado": guarda revisado_en y revisado_por (usuario logueado). */
+  markReviewed(scheme: MedicationScheme): void {
+    const user = this.authService.user();
+    if (!user || !this.canReview() || this.reviewingId()) {
+      return;
+    }
+    this.reviewingId.set(scheme.id);
+    this.errorMessage.set(null);
+    this.medicationService.markReviewed(scheme.id, { id: user.id, name: `${user.name} ${user.lastname}`.trim() }).subscribe({
+      next: () => {
+        this.reviewingId.set(null);
+        this.showSuccess('Esquema marcado como revisado.');
+        this.reload();
+      },
+      error: (err) => {
+        this.reviewingId.set(null);
+        this.errorMessage.set(extractApiError(err, 'No se pudo marcar como revisado.'));
+      },
+    });
   }
 
   toggleActive(scheme: MedicationScheme): void {

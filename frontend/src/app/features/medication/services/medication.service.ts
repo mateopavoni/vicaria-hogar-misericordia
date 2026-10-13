@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, delay, map, of, throwError } from 'rxjs';
 import { todayLocalIso } from '../../../shared/utils/date.util';
+import { isEvaluationExpired } from '../utils/scheme-review.util';
 import { MedicationStockService } from '../../medication-stock/services/medication-stock.service';
 import { AttendanceService } from '../../attendance/services/attendance.service';
 import {
@@ -50,8 +51,14 @@ export class MedicationService {
     return of(catalog).pipe(delay(100));
   }
 
-  getEvaluationStatus(_personId: string, isResident: boolean): Observable<PsychiatricEvaluationStatus> {
-    return of({ valid: isResident }).pipe(delay(100));
+  /**
+   * `evaluatedAt` (YYYY-MM-DD) es la fecha de la última evaluación psiquiátrica, cuando el
+   * perfil la tenga. Hoy el frontend no la recibe del backend, así que suele venir null:
+   * en ese caso solo cuenta si la persona es Residente. Con fecha, pasados 6 meses vence.
+   */
+  getEvaluationStatus(_personId: string, isResident: boolean, evaluatedAt: string | null = null): Observable<PsychiatricEvaluationStatus> {
+    const expired = !!evaluatedAt && isEvaluationExpired(evaluatedAt, todayLocalIso());
+    return of({ valid: isResident && !expired, evaluatedAt, expired }).pipe(delay(100));
   }
 
   getSchemes(personId: string): Observable<MedicationScheme[]> {
@@ -61,8 +68,16 @@ export class MedicationService {
     return of(own.map((s) => ({ ...s, pendingStock: this.isPending(s) }))).pipe(delay(100));
   }
 
-  create(request: CreateMedicationSchemeRequest, isResident: boolean, actor: MedicationActor): Observable<MedicationScheme> {
-    // 1) evaluación psiquiátrica vigente, si no se bloquea la carga
+  create(
+    request: CreateMedicationSchemeRequest,
+    isResident: boolean,
+    actor: MedicationActor,
+    evaluatedAt: string | null = null,
+  ): Observable<MedicationScheme> {
+    // 1) evaluación psiquiátrica vigente (y no vencida: más de 6 meses), si no se bloquea la carga
+    if (evaluatedAt && isEvaluationExpired(evaluatedAt, todayLocalIso())) {
+      return this.fail('No se puede cargar medicación: la evaluación psiquiátrica venció (pasaron más de 6 meses).');
+    }
     if (!isResident) {
       return this.fail('No se puede cargar medicación: la persona no tiene una evaluación psiquiátrica vigente.');
     }
@@ -92,11 +107,29 @@ export class MedicationService {
       loadedAt: new Date().toISOString(),
       loadedByUserId: actor.id,
       loadedByName: actor.name,
+      reviewedAt: null,
+      reviewedByUserId: null,
+      reviewedByName: null,
       active: true,
       pendingStock: medication.quantity <= 0,
     };
     this.schemes.push(scheme);
     return of({ ...scheme }).pipe(delay(150));
+  }
+
+  /** SCRUM-250: "Marcar como revisado" — registra revisado_en y revisado_por. Solo esquemas vigentes. */
+  markReviewed(schemeId: string, actor: MedicationActor): Observable<MedicationScheme> {
+    const scheme = this.schemes.find((s) => s.id === schemeId);
+    if (!scheme) {
+      return this.fail('El esquema no existe.');
+    }
+    if (!scheme.active) {
+      return this.fail('Solo se puede revisar un esquema vigente.');
+    }
+    scheme.reviewedAt = new Date().toISOString();
+    scheme.reviewedByUserId = actor.id;
+    scheme.reviewedByName = actor.name;
+    return of({ ...scheme }).pipe(delay(100));
   }
 
   /** Marca un esquema como vigente (true) o histórico (false). */
