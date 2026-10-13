@@ -6,7 +6,7 @@
       <p class="mt-1 text-[13px] text-slate-500">
         Del {{ toDate(dateFrom() || today) | date: 'dd/MM/yyyy' }} al {{ toDate(dateTo() || today) | date: 'dd/MM/yyyy' }}
         @if (activityFilter()) {
-          · {{ activityFilter() === 'hogar-de-dia' ? 'Hogar de día' : 'Casa de Convivencia (diaria)' }}
+          · {{ activityName(activityFilter()) }}
         }
       </p>
     </div>
@@ -40,8 +40,8 @@
     <ui-form-field label="Actividad" for="stats-activity">
       <select id="stats-activity" uiInput [value]="activityFilter()" (change)="activityFilter.set($any($event.target).value)">
         <option value="" [selected]="activityFilter() === ''">Todas</option>
-        @for (option of activities; track option.id) {
-          <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.label }}</option>
+        @for (option of activities(); track option.id) {
+          <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.name }}</option>
         }
       </select>
     </ui-form-field>

@@ -34,7 +34,9 @@ export type Permission =
   | 'asistencia.create'
   | 'asistencia.edit'
   // SCRUM-226: estadísticas de asistencia del Centro Barrial, solo Referente
-  | 'asistencia.stats';
+  | 'asistencia.stats'
+  // SCRUM-230: configurar las actividades de asistencia (activar, desactivar, crear), solo Referente
+  | 'asistencia.config';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -87,7 +89,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'asistencia.view',
     'asistencia.create',
     'asistencia.edit',
-    'asistencia.stats'
+    'asistencia.stats',
+    'asistencia.config'
   ],
 
 

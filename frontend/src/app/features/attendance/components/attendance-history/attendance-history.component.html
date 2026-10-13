@@ -47,8 +47,8 @@
         (change)="activityFilter.set($any($event.target).value)"
       >
         <option value="" [selected]="activityFilter() === ''">Todas</option>
-        @for (option of activities; track option.id) {
-          <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.label }}</option>
+        @for (option of activities(); track option.id) {
+          <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.name }}</option>
         }
       </select>
     </ui-form-field>

@@ -1,12 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
-import {
-  ATTENDANCE_ACTIVITIES,
-  AttendanceActivity,
-  AttendanceHistoryEntry,
-} from '../../interfaces/attendance.interface';
+import { AttendanceActivity, AttendanceHistoryEntry } from '../../interfaces/attendance.interface';
+import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
 import { ABSENCE_ALERT_DAYS, computeAttendanceStats, isAbsenceAlert } from '../../utils/attendance-stats.util';
 
 interface ActivityGroup {
@@ -28,9 +25,12 @@ interface ActivityGroup {
   templateUrl: './attendance-history.component.html',
 })
 export class AttendanceHistoryComponent {
+  private activitiesService = inject(AttendanceActivitiesService);
+
   entries = input.required<AttendanceHistoryEntry[]>();
 
-  readonly activities = ATTENDANCE_ACTIVITIES;
+  // todas, también las desactivadas: la persona pudo asistir cuando estaban activas
+  readonly activities = this.activitiesService.all;
   readonly alertDays = ABSENCE_ALERT_DAYS;
   readonly today = todayLocalIso();
 
@@ -49,11 +49,11 @@ export class AttendanceHistoryComponent {
     const to = this.dateTo();
     const activity = this.activityFilter();
 
-    return this.activities
+    return this.activities()
       .filter((a) => !activity || a.id === activity)
       .map((a) => ({
         id: a.id,
-        label: a.label,
+        label: a.name,
         dates: this.entries()
           .filter((e) => e.activity === a.id && (!from || e.date >= from) && (!to || e.date <= to))
           .map((e) => e.date)
