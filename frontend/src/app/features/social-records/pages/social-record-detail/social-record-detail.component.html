@@ -180,7 +180,7 @@
         <button
           type="button"
           (click)="selectTab('datos')"
-          class="relative shrink-0 whitespace-nowrap px-5 py-3 text-[12px] font-semibold"
+          class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
           [class.text-[#4167D9]]="activeTab() === 'datos'"
           [class.text-slate-500]="activeTab() !== 'datos'"
         >
@@ -194,7 +194,7 @@
         <button
           type="button"
           (click)="selectTab('observaciones')"
-          class="relative shrink-0 whitespace-nowrap px-5 py-3 text-[12px] font-semibold"
+          class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
           [class.text-[#4167D9]]="activeTab() === 'observaciones'"
           [class.text-slate-500]="activeTab() !== 'observaciones'"
         >
@@ -208,7 +208,7 @@
         <button
           type="button"
           (click)="selectTab('historia')"
-          class="relative shrink-0 whitespace-nowrap px-5 py-3 text-[12px] font-semibold"
+          class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
           [class.text-[#4167D9]]="activeTab() === 'historia'"
           [class.text-slate-500]="activeTab() !== 'historia'"
         >
@@ -223,11 +223,11 @@
           <button
             type="button"
             (click)="selectTab('asistencia')"
-            class="relative shrink-0 whitespace-nowrap px-5 py-3 text-[12px] font-semibold"
+            class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
             [class.text-[#4167D9]]="activeTab() === 'asistencia'"
             [class.text-slate-500]="activeTab() !== 'asistencia'"
           >
-            Historial<br>Asistencia
+            Historial de asistencia
             @if (activeTab() === 'asistencia') {
               <span class="absolute bottom-0 left-0 h-[2px] w-full bg-[#4167D9]"></span>
             }
@@ -239,7 +239,7 @@
           <button
             type="button"
             (click)="selectTab('medicacion')"
-            class="relative shrink-0 whitespace-nowrap px-5 py-3 text-[12px] font-semibold"
+            class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
             [class.text-[#4167D9]]="activeTab() === 'medicacion'"
             [class.text-slate-500]="activeTab() !== 'medicacion'"
           >
@@ -254,7 +254,7 @@
         <button
           type="button"
           (click)="selectTab('evaluaciones')"
-          class="px-5 py-3 text-[12px] font-semibold text-slate-500 hover:text-[#4167D9]"
+          class="flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold text-slate-500 hover:text-[#4167D9]"
         >
           Evaluaciones
         </button>
@@ -263,7 +263,7 @@
         <button
           type="button"
           (click)="selectTab('documentos')"
-          class="px-5 py-3 text-[12px] font-semibold text-slate-500 hover:text-[#4167D9]"
+          class="flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold text-slate-500 hover:text-[#4167D9]"
         >
           Documentos
         </button>
