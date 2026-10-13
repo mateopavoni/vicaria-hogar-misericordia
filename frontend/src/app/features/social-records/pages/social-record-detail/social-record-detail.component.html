@@ -503,7 +503,11 @@
 
       <!-- PESTAÑA: MEDICACIÓN (SCRUM-234) -->
       @if (activeTab() === 'medicacion' && permissionService.hasPermission('medicamentos.view')) {
-        <app-medication-schemes [personId]="person.personId" [isResident]="person.personType === PersonType.Resident" />
+        <app-medication-schemes
+          [personId]="person.personId"
+          [personName]="person.firstName + ' ' + person.lastName"
+          [isResident]="person.personType === PersonType.Resident"
+        />
       }
 
       <!-- PESTAÑA: HISTORIA DE VIDA -->

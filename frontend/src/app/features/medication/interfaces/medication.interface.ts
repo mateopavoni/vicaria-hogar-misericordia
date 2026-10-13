@@ -98,3 +98,39 @@ export interface RecordAdministrationRequest {
   status: AdministrationStatus;
   observation: string | null;
 }
+
+/**
+ * SCRUM-242 (front de SCRUM-61): historial de tomas de una persona.
+ * 'unregistered' = estaba programada pero nadie la marcó.
+ */
+export type HistoryStatus = AdministrationStatus | 'unregistered';
+
+export interface MedicationHistoryEntry {
+  /** YYYY-MM-DD */
+  date: string;
+  /** HH:mm */
+  time: string;
+  schemeId: string;
+  medicationId: string;
+  medicationName: string;
+  dose: string;
+  status: HistoryStatus;
+  observation: string | null;
+  recordedByName: string | null;
+  recordedAt: string | null;
+}
+
+export interface MedicationHistoryFilters {
+  /** YYYY-MM-DD, vacío = sin límite */
+  from: string;
+  to: string;
+  /** vacío = todos los medicamentos */
+  medicationId: string;
+}
+
+export interface MedicationHistorySummary {
+  total: number;
+  administered: number;
+  notAdministered: number;
+  unregistered: number;
+}

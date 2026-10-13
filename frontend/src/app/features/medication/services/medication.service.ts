@@ -8,6 +8,7 @@ import {
   CreateMedicationSchemeRequest,
   MedicationAdministration,
   MedicationAgenda,
+  MedicationHistoryEntry,
   RecordAdministrationRequest,
   MedicationActor,
   MedicationCatalogItem,
@@ -199,6 +200,54 @@ export class MedicationService {
     };
     this.administrations.set(this.adminKey(scheme.id, request.date), administration);
     return of({ ...administration }).pipe(delay(100));
+  }
+
+  // ───────── SCRUM-242: historial de tomas de una persona ─────────
+
+  /**
+   * Historial de una persona, de más reciente a más antiguo. Por cada día en que asistió
+   * (o tiene tomas registradas) lista las tomas programadas de sus esquemas y su estado:
+   * administrada, no administrada o sin registrar. Mismas reglas que la agenda diaria.
+   */
+  getPersonHistory(personId: string): Observable<MedicationHistoryEntry[]> {
+    return this.attendanceService.getAll().pipe(
+      map((days) => {
+        const schemes = this.schemes.filter((s) => s.personId === personId);
+        const dates = new Set<string>();
+        for (const day of days) {
+          if (day.persons.some((p) => p.personId === personId)) dates.add(day.date);
+        }
+        for (const scheme of schemes) {
+          for (const adm of this.administrations.values()) {
+            if (adm.schemeId === scheme.id) dates.add(adm.date);
+          }
+        }
+
+        const entries: MedicationHistoryEntry[] = [];
+        for (const date of dates) {
+          for (const scheme of schemes) {
+            if (scheme.loadedAt.slice(0, 10) > date) continue;
+            const adm = this.administrations.get(this.adminKey(scheme.id, date)) ?? null;
+            if (!scheme.active && !adm) continue;
+            if (scheme.pendingStock && !adm) continue;
+            entries.push({
+              date,
+              time: scheme.time,
+              schemeId: scheme.id,
+              medicationId: scheme.medicationId,
+              medicationName: scheme.medicationName,
+              dose: scheme.dose,
+              status: adm ? adm.status : 'unregistered',
+              observation: adm?.observation ?? null,
+              recordedByName: adm?.recordedByName ?? null,
+              recordedAt: adm?.recordedAt ?? null,
+            });
+          }
+        }
+        return entries.sort((a, b) => b.date.localeCompare(a.date) || a.time.localeCompare(b.time));
+      }),
+      delay(100),
+    );
   }
 
   private adminKey(schemeId: string, date: string): string {
