@@ -58,3 +58,46 @@ export interface AttendanceStats {
   /** Días corridos desde la última asistencia hasta hoy; null si nunca asistió. */
   daysSinceLast: number | null;
 }
+
+/** SCRUM-226: filtros del panel de estadísticas. */
+export interface AttendanceStatsFilters {
+  /** YYYY-MM-DD, inclusive */
+  from: string;
+  /** YYYY-MM-DD, inclusive */
+  to: string;
+  /** null = todas las actividades */
+  activity: AttendanceActivity | null;
+}
+
+export interface ActivityStats {
+  activity: AttendanceActivity;
+  label: string;
+  /** Presencias totales (con ficha + sin ficha) en el período. */
+  totalPresences: number;
+  /** Días del período con asistencia cargada para esta actividad. */
+  daysWithData: number;
+  averagePerDay: number;
+}
+
+export interface DayTotal {
+  date: string;
+  total: number;
+}
+
+export interface AttendanceOverview {
+  totalPresences: number;
+  daysWithData: number;
+  dailyAverage: number;
+  weeklyAverage: number;
+  monthlyAverage: number;
+  byActivity: ActivityStats[];
+  perDay: DayTotal[];
+}
+
+/** Persona que dejó de asistir hace más de N días (SCRUM-56: 14). */
+export interface InactivePerson {
+  personId: string;
+  fullName: string;
+  lastAttendance: string;
+  daysSince: number;
+}

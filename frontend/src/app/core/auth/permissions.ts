@@ -32,7 +32,9 @@ export type Permission =
   // SCRUM-218: asistencia diaria. 'asistencia.edit' = modificar un día ya cerrado (solo Referente, con justificación)
   | 'asistencia.view'
   | 'asistencia.create'
-  | 'asistencia.edit';
+  | 'asistencia.edit'
+  // SCRUM-226: estadísticas de asistencia del Centro Barrial, solo Referente
+  | 'asistencia.stats';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -84,7 +86,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Asistencia diaria (SCRUM-218)
     'asistencia.view',
     'asistencia.create',
-    'asistencia.edit'
+    'asistencia.edit',
+    'asistencia.stats'
   ],
 
 
