@@ -26,6 +26,8 @@ export type Permission =
   | 'medicamentos.edit'
   // SCRUM-242: historial de tomas de una persona, solo Referente y Directora (no Coordinador ni Escucha)
   | 'medicamentos.history'
+  // SCRUM-246: inventario de medicamentos (ingresos, umbral, movimientos), solo Referente y Directora; separado del stock de ropa
+  | 'medicamentos.stock'
   // SCRUM-74: el backend (CasonaVisitsController) deja leer a los 4 roles y escribir solo a
   // Referente, Directora y Coordinador; Escucha nunca tiene visitas.*
   | 'visitas.view'
@@ -82,6 +84,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.create',
     'medicamentos.edit',
     'medicamentos.history',
+    'medicamentos.stock',
 
     // Visitas de la Casa de Convivencia (SCRUM-74)
     'visitas.view',
@@ -145,6 +148,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.create',
     'medicamentos.edit',
     'medicamentos.history',
+    'medicamentos.stock',
 
     // Visitas de la Casa de Convivencia (SCRUM-74)
     'visitas.view',

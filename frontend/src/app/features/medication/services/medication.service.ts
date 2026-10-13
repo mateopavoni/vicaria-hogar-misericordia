@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, delay, map, of, throwError } from 'rxjs';
 import { todayLocalIso } from '../../../shared/utils/date.util';
+import { MedicationStockService } from '../../medication-stock/services/medication-stock.service';
 import { AttendanceService } from '../../attendance/services/attendance.service';
 import {
   AgendaItem,
@@ -27,18 +28,14 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
  * misma forma de error ({ error: { message } }) que lee extractApiError. Al llegar los
  * endpoints reales solo hay que cambiar el cuerpo de estos métodos por llamadas HttpClient.
  *
- * - Catálogo: DATOS DE PRUEBA con nombres genéricos (no son medicamentos reales), uno de
- *   ellos con stock 0 para poder ver la alerta de "pendiente de stock".
+ * - Catálogo y stock: vienen de MedicationStockService (SCRUM-246), con datos de prueba genéricos
+ *   (no son medicamentos reales); uno de ellos arranca sin stock.
  * - Evaluación vigente: el backend exige una evaluación vigente para que una persona sea
  *   Residente (SCRUM-134), así que acá se asume vigente para residentes y no vigente para el resto.
  */
 @Injectable({ providedIn: 'root' })
 export class MedicationService {
-  private readonly catalog: MedicationCatalogItem[] = [
-    { id: 'med-1', name: 'Medicamento de prueba A', pharmacyStock: 40 },
-    { id: 'med-2', name: 'Medicamento de prueba B', pharmacyStock: 12 },
-    { id: 'med-3', name: 'Medicamento de prueba C (sin stock)', pharmacyStock: 0 },
-  ];
+  private stockService = inject(MedicationStockService);
 
   private attendanceService = inject(AttendanceService);
 
@@ -47,7 +44,10 @@ export class MedicationService {
   private nextId = 1;
 
   getCatalog(): Observable<MedicationCatalogItem[]> {
-    return of(this.catalog.map((m) => ({ ...m }))).pipe(delay(100));
+    const catalog: MedicationCatalogItem[] = this.stockService
+      .snapshotForCatalog()
+      .map((m) => ({ id: m.id, name: m.name, pharmacyStock: m.quantity }));
+    return of(catalog).pipe(delay(100));
   }
 
   getEvaluationStatus(_personId: string, isResident: boolean): Observable<PsychiatricEvaluationStatus> {
@@ -58,7 +58,7 @@ export class MedicationService {
     const own = this.schemes
       .filter((s) => s.personId === personId)
       .sort((a, b) => b.loadedAt.localeCompare(a.loadedAt));
-    return of(own.map((s) => ({ ...s }))).pipe(delay(100));
+    return of(own.map((s) => ({ ...s, pendingStock: this.isPending(s) }))).pipe(delay(100));
   }
 
   create(request: CreateMedicationSchemeRequest, isResident: boolean, actor: MedicationActor): Observable<MedicationScheme> {
@@ -68,7 +68,7 @@ export class MedicationService {
     }
 
     // 2) solo medicamentos que existan en el catálogo
-    const medication = this.catalog.find((m) => m.id === request.medicationId);
+    const medication = this.stockService.find(request.medicationId);
     if (!medication) {
       return this.fail('El medicamento no existe en el catálogo.');
     }
@@ -93,7 +93,7 @@ export class MedicationService {
       loadedByUserId: actor.id,
       loadedByName: actor.name,
       active: true,
-      pendingStock: medication.pharmacyStock <= 0,
+      pendingStock: medication.quantity <= 0,
     };
     this.schemes.push(scheme);
     return of({ ...scheme }).pipe(delay(150));
@@ -139,7 +139,7 @@ export class MedicationService {
 
           const administration = this.administrations.get(this.adminKey(scheme.id, date)) ?? null;
           if (!scheme.active && !administration) continue;
-          if (scheme.pendingStock && !administration) {
+          if (this.isPending(scheme) && !administration) {
             pendingStockCount++;
             continue;
           }
@@ -198,7 +198,17 @@ export class MedicationService {
       recordedByUserId: actor.id,
       recordedByName: actor.name,
     };
-    this.administrations.set(this.adminKey(scheme.id, request.date), administration);
+    const key = this.adminKey(scheme.id, request.date);
+    const previous = this.administrations.get(key);
+    this.administrations.set(key, administration);
+
+    // SCRUM-246: marcar administrada descuenta una unidad del stock; si después se corrige, se devuelve
+    const stockActor = { id: actor.id, name: actor.name };
+    if (request.status === 'administered' && previous?.status !== 'administered') {
+      this.stockService.consume(scheme.medicationId, key, request.date, stockActor);
+    } else if (request.status !== 'administered' && previous?.status === 'administered') {
+      this.stockService.restore(scheme.medicationId, key, request.date, stockActor);
+    }
     return of({ ...administration }).pipe(delay(100));
   }
 
@@ -229,7 +239,7 @@ export class MedicationService {
             if (scheme.loadedAt.slice(0, 10) > date) continue;
             const adm = this.administrations.get(this.adminKey(scheme.id, date)) ?? null;
             if (!scheme.active && !adm) continue;
-            if (scheme.pendingStock && !adm) continue;
+            if (this.isPending(scheme) && !adm) continue;
             entries.push({
               date,
               time: scheme.time,
@@ -248,6 +258,11 @@ export class MedicationService {
       }),
       delay(100),
     );
+  }
+
+  /** Pendiente de stock = se cargó sin stock y todavía no hay (un ingreso lo libera solo). */
+  private isPending(scheme: MedicationScheme): boolean {
+    return scheme.pendingStock && this.stockService.quantityOf(scheme.medicationId) <= 0;
   }
 
   private adminKey(schemeId: string, date: string): string {

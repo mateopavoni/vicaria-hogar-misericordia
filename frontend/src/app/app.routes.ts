@@ -137,6 +137,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('medicamentos.view')]
       },
 
+      // SCRUM-246: inventario de medicamentos, solo Referente y Directora
+      {
+        path: 'medicacion/stock',
+        loadComponent: () =>
+          import('./features/medication-stock/pages/medication-stock/medication-stock.component')
+            .then(m => m.MedicationStockComponent),
+        canActivate: [permissionGuard('medicamentos.stock')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

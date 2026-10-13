@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { todayLocalIso } from '../../../shared/utils/date.util';
 import { AttendanceService } from '../../attendance/services/attendance.service';
+import { MedicationStockService } from '../../medication-stock/services/medication-stock.service';
 import { MedicationService } from './medication.service';
 
 describe('MedicationService', () => {
@@ -152,6 +153,49 @@ describe('MedicationService', () => {
               expect(agenda.slots.length).toBe(0);
               done();
             });
+          });
+        });
+      });
+    });
+  });
+
+  describe('stock (SCRUM-246)', () => {
+    const today = todayLocalIso();
+    const stock = () => TestBed.inject(MedicationStockService);
+
+    it('marcar una toma como administrada descuenta una unidad y corregirla la devuelve', (done) => {
+      service.create(request(), true, actor).subscribe((scheme) => {
+        const mark = (status: 'administered' | 'not-administered') =>
+          service.recordAdministration({ schemeId: scheme.id, date: today, status, observation: null }, actor);
+        mark('administered').subscribe(() => {
+          expect(stock().quantityOf('med-1')).toBe(39);
+          mark('administered').subscribe(() => {
+            expect(stock().quantityOf('med-1')).toBe(39); // no descuenta dos veces
+            mark('not-administered').subscribe(() => {
+              expect(stock().quantityOf('med-1')).toBe(40);
+              done();
+            });
+          });
+        });
+      });
+    });
+
+    it('no descuenta si la toma queda como no administrada', (done) => {
+      service.create(request(), true, actor).subscribe((scheme) => {
+        service.recordAdministration({ schemeId: scheme.id, date: today, status: 'not-administered', observation: null }, actor).subscribe(() => {
+          expect(stock().quantityOf('med-1')).toBe(40);
+          done();
+        });
+      });
+    });
+
+    it('un ingreso de stock libera los esquemas pendientes de stock', (done) => {
+      service.create(request({ medicationId: 'med-3' }), true, actor).subscribe((scheme) => {
+        expect(scheme.pendingStock).toBeTrue();
+        stock().registerEntry({ medicationId: 'med-3', newName: null, quantity: 5, expirationDate: '2999-01-01', supplier: 'Proveedor' }, actor).subscribe(() => {
+          service.getSchemes('p1').subscribe((schemes) => {
+            expect(schemes[0].pendingStock).toBeFalse();
+            done();
           });
         });
       });
