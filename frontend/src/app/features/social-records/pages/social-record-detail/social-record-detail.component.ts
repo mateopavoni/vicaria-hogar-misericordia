@@ -1,23 +1,24 @@
+import { extractApiError } from '../../../../core/http/api-error';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
-import { EmptyFieldBadgeComponent } from '../../../../shared/ui/empty-field-badge/empty-field-badge.component';
+import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
 import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
-import { StaysTimelineComponent } from '../../casa-convivencia-stays/components/stays-timeline/stays-timeline.component';
-import { ExitStayModalComponent } from '../../casa-convivencia-stays/components/exit-stay-modal/exit-stay-modal.component';
-import { RegisterEntryStayModalComponent, RegisterEntrySubmitData } from '../../casa-convivencia-stays/components/register-entry-stay-modal/register-entry-stay-modal.component';
-import { SuccessModalComponent } from '../../../../shared/ui/success-modal/success-modal.component';
-import { LifeHistoryComponent } from '../../life-story/components/life-history/life-history.component';
-import { ObservationsComponent } from '../../observations/components/observations/observations.component';
+import { StaysTimelineComponent } from '../../components/stays-timeline/stays-timeline.component';
+import { ExitStayModalComponent } from '../../components/exit-stay-modal/exit-stay-modal.component';
+import { RegisterEntryStayModalComponent, RegisterEntrySubmitData } from '../../components/register-entry-stay-modal/register-entry-stay-modal.component';
+import { SuccessModalComponent } from '../../../../shared/components/success-modal/success-modal.component';
+import { LifeHistoryComponent } from '../../components/life-history/life-history.component';
+import { ObservationsComponent } from '../../components/observations/observations.component';
 import { PermissionService } from '../../../../core/auth/permission.service';
-import { RegisterExitRequest } from '../../casa-convivencia-stays/interfaces/exit-stay.interface';
-import { EXIT_REASON_TO_BACKEND } from '../../casa-convivencia-stays/interfaces/stay.interface';
-import { LifeHistory, LifeHistoryStage } from '../../life-story/interfaces/life-history.interface';
-import { LifeStoryService } from '../../life-story/services/life-story.service';
-import { Observation } from '../../observations/interfaces/observation.interface';
-import { ObservationsService } from '../../observations/services/observations.service';
+import { RegisterExitRequest } from '../../interfaces/exit-stay.interface';
+import { EXIT_REASON_TO_BACKEND } from '../../interfaces/stay.interface';
+import { LifeHistory, LifeHistoryStage } from '../../interfaces/life-history.interface';
+import { LifeStoryService } from '../../services/life-story.service';
+import { Observation } from '../../interfaces/observation.interface';
+import { ObservationsService } from '../../services/observations.service';
 
 @Component({
   selector: 'app-social-record-detail',
@@ -144,11 +145,22 @@ export class SocialRecordDetailComponent implements OnInit {
   // agrega una entrada nueva a una etapa de la historia de vida (SCRUM-11/171).
   // Bug reportado 2026-09-23: faltaba el modal de éxito acá (sí existía para
   // ingreso/egreso) — se reusa el mismo patrón de signals.
+  // error al guardar la historia de vida: se muestra como aviso, sin reemplazar la ficha entera
+  lifeHistoryError = signal<string | null>(null);
+
+  // abre el diálogo de impresión del navegador (imprimir o guardar como PDF); los estilos
+  // de impresión ocultan el menú y la barra superior
+  exportRecord(): void {
+    window.print();
+  }
+
   handleLifeHistorySaved(event: { stage: LifeHistoryStage; text: string }): void {
     const personId = this.record()?.personId;
     if (!personId) {
       return;
     }
+
+    this.lifeHistoryError.set(null);
 
     this.lifeStoryService.updateStage(personId, event.stage, event.text).subscribe({
       next: (updated) => {
@@ -158,7 +170,7 @@ export class SocialRecordDetailComponent implements OnInit {
         this.showSuccessModal.set(true);
       },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message || 'No se pudo guardar la historia de vida.');
+        this.lifeHistoryError.set(extractApiError(err, 'No se pudo guardar la historia de vida.'));
       }
     });
   }

@@ -1,3 +1,4 @@
+import { SensitiveContentNoticeComponent } from '../../../../shared/components/sensitive-content-notice/sensitive-content-notice.component';
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import {  CreateSocialRecordRequest, SocialRecordDetail, PersonType, PersonStatu
 
 @Component({
   selector: 'app-social-record-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SensitiveContentNoticeComponent],
   templateUrl: './social-record-form.component.html',
   styleUrl: './social-record-form.component.css'
 })
@@ -360,19 +361,6 @@ export class SocialRecordFormComponent {
 
     return !this.form.dirty;
 
-  }
-
-  /*
-   * Se llama desde el padre (modo edición) apenas el guardado
-   * se confirma como exitoso en el backend. A diferencia de
-   * resetForm(), NO vacía los campos (seguimos mostrando los
-   * datos recién guardados mientras se redirige al detalle):
-   * solo marca el formulario como "sin cambios pendientes" para
-   * que pendingChangesGuard dejé de considerarlo dirty y no
-   * muestre el confirm() del navegador de ahí en más.
-   */
-  markAsSaved(): void {
-    this.form.markAsPristine();
   }
 
 }

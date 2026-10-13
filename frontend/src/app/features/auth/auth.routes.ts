@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../core/guards/auth.guard';
+import { authGuard } from '../../core/auth/auth.guard';
 
 export const authRoutes: Routes = [
 
@@ -30,6 +30,13 @@ export const authRoutes: Routes = [
         loadComponent: () =>
           import('./pages/register/register.component')
             .then(m => m.RegisterComponent),
+      },
+
+      {
+        path: 'forgot-password',
+        loadComponent: () =>
+          import('./pages/forgot-password/forgot-password.component')
+            .then(m => m.ForgotPasswordComponent),
       },
 
       {

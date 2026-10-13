@@ -8,9 +8,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { LoginErrorType, LoginRequest } from '../../../../core/auth/models/auth.interfaces';
+import { LoginErrorType, LoginRequest } from '../../../../core/auth/auth.interfaces';
 import { AuthLayoutComponent } from '../../auth-layout/auth-layout.component';
-import { UserRole } from '../../../../core/auth/models/user-role';
+import { UserRole } from '../../../../core/auth/userRole';
 
 @Component({
   selector: 'app-login',
@@ -45,6 +45,13 @@ import { UserRole } from '../../../../core/auth/models/user-role';
     });
 
     constructor() {
+      // aviso de por qué se cerró la sesión (inactividad / sesión vencida)
+      const notice = sessionStorage.getItem('sessionNotice');
+      if (notice) {
+        sessionStorage.removeItem('sessionNotice');
+        this.credentialsError.set(notice);
+      }
+
       // si la vez pasada tildó "recordar usuario", precargamos el email guardado
       const savedEmail = localStorage.getItem('rememberedEmail');
       if (savedEmail) {
@@ -169,7 +176,7 @@ import { UserRole } from '../../../../core/auth/models/user-role';
           ]);
           break;
 
-        case 'DirectoraDeCasona':
+        case 'DirectoraDeCasaConvivencia':
 
           this.router.navigate([
             '/dashboard'

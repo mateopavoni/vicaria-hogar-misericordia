@@ -45,6 +45,9 @@ export interface CreateVisitDto {
   visitorName: string;
   start: string;
   durationMinutes: number;
+  // el solapamiento es una advertencia: el backend responde 409 y se reenvía con true
+  // cuando la persona confirma que quiere guardar igual
+  allowOverlap?: boolean;
 }
 
 export type UpdateVisitDto = CreateVisitDto;

@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ManagedUser } from '../../interfaces/user.interface';
-import { UserRole } from '../../../../core/auth/models/user-role';
-import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
+import { UserRole } from '../../../../core/auth/userRole';
 
 @Component({
   selector: 'app-change-role-modal',
-  imports: [UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],
-  templateUrl: './change-role-modal.component.html',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './change-role-modal.component.html', // O el template inline
 })
 export class ChangeRoleModalComponent implements OnInit {
   @Input() user: ManagedUser | null = null;
@@ -15,13 +16,13 @@ export class ChangeRoleModalComponent implements OnInit {
 
   // bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia, no se le podía
   // reasignar ese rol a un usuario existente desde este modal.
-  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasona', 'Escucha', 'CoordinadorDeCasaConvivencia'];
+  availableRoles: UserRole[] = ['Referente', 'DirectoraDeCasaConvivencia', 'Escucha', 'CoordinadorDeCasaConvivencia'];
   selectedRole = signal<UserRole>('Escucha');
 
   // nombres lindos para mostrar en el select
   private roleLabels: Record<UserRole, string> = {
     Referente: 'Referente',
-    DirectoraDeCasona: 'Directora de Casona',
+    DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',
     Escucha: 'Escucha',
     CoordinadorDeCasaConvivencia: 'Coordinador de Casa de Convivencia',
   };
