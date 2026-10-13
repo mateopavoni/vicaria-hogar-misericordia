@@ -1,0 +1,114 @@
+<div class="mt-4 flex flex-col gap-4">
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-[15px] font-bold text-slate-800">Esquema de medicación</h2>
+    @if (canCreate()) {
+      <button uiButton type="button" [disabled]="blocked() || evaluationValid() === null" (click)="openForm()">
+        Cargar medicamento
+      </button>
+    }
+  </div>
+
+  @if (blocked()) {
+    <div class="rounded-md bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-700" role="alert">
+      No se pueden cargar medicamentos: la persona no tiene una evaluación psiquiátrica vigente.
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="rounded-md bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-[13px] text-slate-400">Cargando esquema...</p>
+  } @else {
+    <!-- VIGENTES -->
+    <section class="overflow-hidden rounded-lg border border-slate-200">
+      <header class="bg-slate-50 px-4 py-2.5 text-[13px] font-bold text-slate-700">
+        Vigente ({{ activeSchemes().length }})
+      </header>
+      <ul class="divide-y divide-slate-100">
+        @for (scheme of activeSchemes(); track scheme.id) {
+          <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <div>
+              <p class="text-[14px] font-semibold text-slate-800">
+                {{ scheme.medicationName }} · {{ scheme.dose }} · {{ scheme.time }} hs
+                @if (scheme.pendingStock) {
+                  <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                    Pendiente de stock
+                  </span>
+                }
+              </p>
+              <p class="mt-0.5 text-[12px] text-slate-400">
+                Cargado por {{ scheme.loadedByName }} el {{ scheme.loadedAt | date: 'dd/MM/yyyy HH:mm' }}
+              </p>
+            </div>
+            @if (canCreate()) {
+              <button
+                type="button"
+                class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+                (click)="toggleActive(scheme)"
+              >
+                Pasar a histórico
+              </button>
+            }
+          </li>
+        } @empty {
+          <li class="px-4 py-4 text-[13px] text-slate-400">No hay medicación vigente cargada.</li>
+        }
+      </ul>
+    </section>
+
+    <!-- HISTÓRICOS -->
+    @if (historicSchemes().length > 0) {
+      <section class="overflow-hidden rounded-lg border border-slate-200">
+        <header class="bg-slate-50 px-4 py-2.5 text-[13px] font-bold text-slate-700">
+          Histórico ({{ historicSchemes().length }})
+        </header>
+        <ul class="divide-y divide-slate-100">
+          @for (scheme of historicSchemes(); track scheme.id) {
+            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <p class="text-[14px] font-semibold text-slate-400">
+                  {{ scheme.medicationName }} · {{ scheme.dose }} · {{ scheme.time }} hs
+                </p>
+                <p class="mt-0.5 text-[12px] text-slate-400">
+                  Cargado por {{ scheme.loadedByName }} el {{ scheme.loadedAt | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+              @if (canCreate()) {
+                <button
+                  type="button"
+                  class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+                  (click)="toggleActive(scheme)"
+                >
+                  Volver a vigente
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  @if (showForm()) {
+    <app-medication-scheme-form-modal
+      [personId]="personId()"
+      [catalog]="catalog()"
+      [catalogLoading]="catalogLoading()"
+      [saving]="saving()"
+      [errorMessage]="formError()"
+      (saved)="save($event)"
+      (closed)="closeForm()"
+    />
+  }
+</div>
