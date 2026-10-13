@@ -24,6 +24,7 @@ import { AttendanceHistoryEntry } from '../../../attendance/interfaces/attendanc
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { computeAttendanceStats, isAbsenceAlert } from '../../../attendance/utils/attendance-stats.util';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
+import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
   selector: 'app-social-record-detail',
@@ -39,6 +40,7 @@ import { todayLocalIso } from '../../../../shared/utils/date.util';
     LifeHistoryComponent,
     ObservationsComponent,
     AttendanceHistoryComponent,
+    MedicationSchemesComponent,
   ],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
