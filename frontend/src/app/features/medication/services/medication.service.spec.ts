@@ -201,4 +201,67 @@ describe('MedicationService', () => {
       });
     });
   });
+
+  describe('revisión mensual y evaluación vencida (SCRUM-250)', () => {
+    it('un esquema nuevo queda vigente y sin revisar', (done) => {
+      service.create(request(), true, actor).subscribe((scheme) => {
+        expect(scheme.active).toBeTrue();
+        expect(scheme.reviewedAt).toBeNull();
+        expect(scheme.reviewedByName).toBeNull();
+        done();
+      });
+    });
+
+    it('marcar como revisado guarda la fecha y el usuario', (done) => {
+      service.create(request(), true, actor).subscribe((scheme) => {
+        service.markReviewed(scheme.id, { id: 'u2', name: 'Otra Persona' }).subscribe((reviewed) => {
+          expect(reviewed.reviewedAt).toBeTruthy();
+          expect(reviewed.reviewedByName).toBe('Otra Persona');
+          expect(reviewed.reviewedByUserId).toBe('u2');
+          done();
+        });
+      });
+    });
+
+    it('no se puede revisar un esquema desactivado, que se conserva como historial', (done) => {
+      service.create(request(), true, actor).subscribe((scheme) => {
+        service.setActive(scheme.id, false).subscribe((off) => {
+          expect(off.active).toBeFalse();
+          service.markReviewed(scheme.id, actor).subscribe({
+            error: (err) => {
+              expect(err.error.message).toContain('vigente');
+              service.getSchemes('p1').subscribe((all) => {
+                expect(all.length).toBe(1);
+                done();
+              });
+            },
+          });
+        });
+      });
+    });
+
+    it('bloquea agregar medicamentos si la evaluación venció (más de 6 meses)', (done) => {
+      service.create(request(), true, actor, '2020-01-01').subscribe({
+        error: (err) => {
+          expect(err.error.message).toContain('venció');
+          done();
+        },
+      });
+    });
+
+    it('con una evaluación reciente permite cargar', (done) => {
+      service.create(request(), true, actor, todayLocalIso()).subscribe((scheme) => {
+        expect(scheme.id).toBeTruthy();
+        done();
+      });
+    });
+
+    it('el estado de la evaluación informa si está vencida', (done) => {
+      service.getEvaluationStatus('p1', true, '2020-01-01').subscribe((status) => {
+        expect(status.valid).toBeFalse();
+        expect(status.expired).toBeTrue();
+        done();
+      });
+    });
+  });
 });

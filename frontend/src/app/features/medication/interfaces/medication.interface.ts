@@ -15,6 +15,10 @@ export interface MedicationCatalogItem {
 /** Evaluación psiquiátrica de la persona: sin una vigente no se pueden cargar medicamentos. */
 export interface PsychiatricEvaluationStatus {
   valid: boolean;
+  /** Fecha de la evaluación (YYYY-MM-DD), si se conoce. Pasados 6 meses está vencida. */
+  evaluatedAt: string | null;
+  /** true si se conoce la fecha y pasaron más de 6 meses (SCRUM-250). */
+  expired: boolean;
 }
 
 export interface MedicationScheme {
@@ -30,6 +34,10 @@ export interface MedicationScheme {
   loadedAt: string;
   loadedByUserId: string;
   loadedByName: string;
+  /** SCRUM-250 (revisado_en / revisado_por): última revisión mensual; null = nunca revisado. */
+  reviewedAt: string | null;
+  reviewedByUserId: string | null;
+  reviewedByName: string | null;
   /** true = vigente; false = histórico. */
   active: boolean;
   /** true si al cargarlo no había stock en farmacia: no entra a la agenda hasta que haya. */
