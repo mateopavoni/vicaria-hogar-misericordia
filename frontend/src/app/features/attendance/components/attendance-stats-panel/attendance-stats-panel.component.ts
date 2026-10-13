@@ -2,7 +2,8 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
-import { ATTENDANCE_ACTIVITIES, AttendanceActivity, DailyAttendance } from '../../interfaces/attendance.interface';
+import { AttendanceActivity, DailyAttendance } from '../../interfaces/attendance.interface';
+import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { INACTIVE_AFTER_DAYS, computeOverview, findInactivePersons } from '../../utils/attendance-overview.util';
 
@@ -19,8 +20,10 @@ import { INACTIVE_AFTER_DAYS, computeOverview, findInactivePersons } from '../..
 })
 export class AttendanceStatsPanelComponent implements OnInit {
   private attendanceService = inject(AttendanceService);
+  private activitiesService = inject(AttendanceActivitiesService);
 
-  readonly activities = ATTENDANCE_ACTIVITIES;
+  // todas, también las desactivadas: tienen registros viejos que se siguen contando
+  readonly activities = this.activitiesService.all;
   readonly inactiveAfterDays = INACTIVE_AFTER_DAYS;
   readonly today = todayLocalIso();
 
@@ -43,7 +46,7 @@ export class AttendanceStatsPanelComponent implements OnInit {
       from: this.dateFrom() || '0000-01-01',
       to: this.dateTo() || '9999-12-31',
       activity: this.activityFilter() || null,
-    }),
+    }, this.activities()),
   );
 
   inactivePersons = computed(() => findInactivePersons(this.records(), this.today));
@@ -63,6 +66,10 @@ export class AttendanceStatsPanelComponent implements OnInit {
         this.errorMessage.set('No se pudieron cargar las estadísticas de asistencia.');
       },
     });
+  }
+
+  activityName(id: AttendanceActivity): string {
+    return this.activitiesService.name(id);
   }
 
   toDate(dateIso: string): Date {

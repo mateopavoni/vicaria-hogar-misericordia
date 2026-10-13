@@ -1,17 +1,40 @@
 /**
- * SCRUM-218 (front de SCRUM-54): registro de asistencia diaria.
- * Actividades pedidas por el AC: Hogar de día y Casa de Convivencia (diaria).
+ * SCRUM-218 (front de SCRUM-54) + SCRUM-230 (front de SCRUM-57): registro de asistencia diaria.
+ * Las actividades ya no son una lista fija: son un catálogo configurable por el Referente
+ * (ver AttendanceActivitiesService). El id es un texto estable.
  */
-export type AttendanceActivity = 'hogar-de-dia' | 'casa-convivencia';
+export type AttendanceActivity = string;
 
-export interface AttendanceActivityOption {
+/**
+ * Área del hogar. El registro de la Casa de Convivencia es diario y va aparte del Hogar de
+ * día (SCRUM-57): tiene su propia actividad fija y solo admite residentes.
+ */
+export type AttendanceArea = 'hogar-de-dia' | 'casa-convivencia';
+
+/** De dónde sale la actividad: fija del sistema, sincronizada del calendario o creada a mano. */
+export type AttendanceActivitySource = 'system' | 'calendar' | 'custom';
+
+export interface AttendanceActivityDef {
   id: AttendanceActivity;
-  label: string;
+  name: string;
+  area: AttendanceArea;
+  /** Solo las activas se ofrecen para registrar; las inactivas conservan su historial. */
+  active: boolean;
+  source: AttendanceActivitySource;
 }
 
-export const ATTENDANCE_ACTIVITIES: AttendanceActivityOption[] = [
-  { id: 'hogar-de-dia', label: 'Hogar de día' },
-  { id: 'casa-convivencia', label: 'Casa de Convivencia (diaria)' },
+export const HOGAR_DE_DIA_ID = 'hogar-de-dia';
+export const CASA_CONVIVENCIA_ID = 'casa-convivencia';
+
+export const AREA_LABELS: Record<AttendanceArea, string> = {
+  'hogar-de-dia': 'Hogar de día',
+  'casa-convivencia': 'Casa de Convivencia (diaria)',
+};
+
+/** Actividades fijas: no se pueden desactivar (son la base de cada área). */
+export const SYSTEM_ACTIVITIES: AttendanceActivityDef[] = [
+  { id: HOGAR_DE_DIA_ID, name: 'Hogar de día', area: 'hogar-de-dia', active: true, source: 'system' },
+  { id: CASA_CONVIVENCIA_ID, name: 'Casa de Convivencia (diaria)', area: 'casa-convivencia', active: true, source: 'system' },
 ];
 
 /** Persona con ficha marcada como presente. */

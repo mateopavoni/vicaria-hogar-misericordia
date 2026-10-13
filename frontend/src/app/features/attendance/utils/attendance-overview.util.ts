@@ -1,6 +1,6 @@
 import {
-  ATTENDANCE_ACTIVITIES,
   ActivityStats,
+  AttendanceActivityDef,
   AttendanceOverview,
   AttendanceStatsFilters,
   DailyAttendance,
@@ -46,7 +46,11 @@ function groupSums<K>(records: DailyAttendance[], keyOf: (date: string) => K): n
  * semanal y mensual = promedio de los totales de cada semana (lunes a domingo) o mes
  * que tiene al menos un día cargado.
  */
-export function computeOverview(records: readonly DailyAttendance[], filters: AttendanceStatsFilters): AttendanceOverview {
+export function computeOverview(
+  records: readonly DailyAttendance[],
+  filters: AttendanceStatsFilters,
+  activities: readonly Pick<AttendanceActivityDef, 'id' | 'name'>[],
+): AttendanceOverview {
   const inRange = records.filter(
     (r) =>
       r.date >= filters.from &&
@@ -64,20 +68,21 @@ export function computeOverview(records: readonly DailyAttendance[], filters: At
 
   const totalPresences = perDay.reduce((sum, d) => sum + d.total, 0);
 
-  const byActivity: ActivityStats[] = ATTENDANCE_ACTIVITIES.filter((a) => !filters.activity || a.id === filters.activity).map(
+  // una barra por actividad con datos en el período (o la elegida en el filtro, aunque esté vacía)
+  const byActivity: ActivityStats[] = activities.filter((a) => !filters.activity || a.id === filters.activity).map(
     (a) => {
       const own = inRange.filter((r) => r.activity === a.id);
       const total = own.reduce((sum, r) => sum + dayTotal(r), 0);
       const days = new Set(own.map((r) => r.date)).size;
       return {
         activity: a.id,
-        label: a.label,
+        label: a.name,
         totalPresences: total,
         daysWithData: days,
         averagePerDay: days ? round1(total / days) : 0,
       };
     },
-  );
+  ).filter((stat) => stat.daysWithData > 0 || !!filters.activity);
 
   return {
     totalPresences,

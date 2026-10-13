@@ -2,52 +2,77 @@ import { Component, DestroyRef, OnInit, computed, effect, inject, signal } from 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { catchError, debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
+import { RouterLink } from '@angular/router';
+import { catchError, debounceTime, distinctUntilChanged, forkJoin, of, switchMap, tap } from 'rxjs';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { extractApiError } from '../../../../core/http/api-error';
-import { UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
+import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiTab, UiTabsComponent } from '../../../../shared/ui';
 import { isBeforeToday, todayLocalIso } from '../../../../shared/utils/date.util';
-import { SocialRecordListItem } from '../../../social-records/interfaces/social-record.interface';
+import { PersonType, SocialRecordListItem } from '../../../social-records/interfaces/social-record.interface';
 import { SocialRecordsService } from '../../../social-records/services/social-records.service';
 import { AttendanceJustificationModalComponent } from '../../components/justification-modal/justification-modal.component';
 import {
-  ATTENDANCE_ACTIVITIES,
+  AREA_LABELS,
   AttendanceActivity,
+  AttendanceArea,
   AttendancePerson,
+  CASA_CONVIVENCIA_ID,
+  HOGAR_DE_DIA_ID,
 } from '../../interfaces/attendance.interface';
+import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
 import { AttendanceService } from '../../services/attendance.service';
 
+/** Una persona marcada y las actividades del día en las que estuvo (SCRUM-230). */
+interface AttendanceRow {
+  person: AttendancePerson;
+  activityIds: AttendanceActivity[];
+}
+
 /**
- * SCRUM-218: pantalla de registro de asistencia diaria. Selector de actividad y fecha,
- * buscador de personas con ficha para marcar presentes, contador de personas anónimas,
- * error inline ante duplicado y modal de justificación para días cerrados.
+ * SCRUM-218 + SCRUM-230: registro de asistencia diaria. Dos áreas separadas (Hogar de día /
+ * Casa de Convivencia diaria). En Hogar de día se eligen una o más actividades y una grilla
+ * persona × actividad permite marcar a la misma persona en varias actividades del mismo día.
+ * Buscador de personas con ficha, contador de personas sin ficha por actividad, error inline
+ * ante duplicado y modal de justificación para días cerrados.
  */
 @Component({
   selector: 'app-daily-attendance',
   imports: [
     ReactiveFormsModule,
     DatePipe,
+    RouterLink,
     UiButtonComponent,
     UiFormFieldComponent,
     UiInputDirective,
+    UiTabsComponent,
     AttendanceJustificationModalComponent,
   ],
   templateUrl: './daily-attendance.component.html',
 })
 export class DailyAttendanceComponent implements OnInit {
   private attendanceService = inject(AttendanceService);
+  private activitiesService = inject(AttendanceActivitiesService);
   private socialRecordsService = inject(SocialRecordsService);
   private permissionService = inject(PermissionService);
   private destroyRef = inject(DestroyRef);
 
-  readonly activities = ATTENDANCE_ACTIVITIES;
   readonly today = todayLocalIso();
 
-  activity = signal<AttendanceActivity>('hogar-de-dia');
+  readonly areaTabs: UiTab<AttendanceArea>[] = [
+    { id: 'hogar-de-dia', label: AREA_LABELS['hogar-de-dia'] },
+    { id: 'casa-convivencia', label: AREA_LABELS['casa-convivencia'] },
+  ];
+
+  area = signal<AttendanceArea>('hogar-de-dia');
   date = signal(todayLocalIso());
 
-  present = signal<AttendancePerson[]>([]);
-  anonymousCount = signal(0);
+  // actividades del Hogar de día elegidas para registrar (selección múltiple)
+  selectedIds = signal<AttendanceActivity[]>([HOGAR_DE_DIA_ID]);
+
+  rows = signal<AttendanceRow[]>([]);
+  anonymous = signal<Record<AttendanceActivity, number>>({});
+  // actividades que ya tenían un registro guardado en la fecha cargada
+  private existing = new Set<AttendanceActivity>();
 
   loading = signal(false);
   saving = signal(false);
@@ -71,11 +96,24 @@ export class DailyAttendanceComponent implements OnInit {
 
   canCreate = computed(() => this.permissionService.hasPermission('asistencia.create'));
   canEditClosed = computed(() => this.permissionService.hasPermission('asistencia.edit'));
+  canConfigure = computed(() => this.permissionService.hasPermission('asistencia.config'));
 
   // día abierto: quien puede cargar; día cerrado: solo Referente (con justificación)
   canModify = computed(() => (this.isClosed() ? this.canEditClosed() : this.canCreate()));
 
-  totalPresent = computed(() => this.present().length + this.anonymousCount());
+  // actividades que se pueden elegir en el área Hogar de día (solo activas)
+  hogarOptions = computed(() => this.activitiesService.active().filter((a) => a.area === 'hogar-de-dia'));
+
+  // columnas de la grilla: la actividad fija de la Casa, o las elegidas del Hogar de día
+  columns = computed(() => {
+    const all = this.activitiesService.all();
+    if (this.area() === 'casa-convivencia') {
+      return all.filter((a) => a.id === CASA_CONVIVENCIA_ID);
+    }
+    return all.filter((a) => a.area === 'hogar-de-dia' && this.selectedIds().includes(a.id));
+  });
+
+  columnIds = computed(() => this.columns().map((c) => c.id));
 
   constructor() {
     // [disabled] en un input con [formControl] no deshabilita el control: se hace por código
@@ -114,12 +152,18 @@ export class DailyAttendanceComponent implements OnInit {
       .subscribe((response) => {
         this.searching.set(false);
         if (response) {
-          this.results.set(response.items.map((item) => this.toPerson(item)));
+          // la Casa de Convivencia registra solo a sus residentes
+          const onlyResidents = this.area() === 'casa-convivencia';
+          this.results.set(
+            response.items.filter((item) => !onlyResidents || item.personType === PersonType.Resident).map((item) => this.toPerson(item)),
+          );
         }
       });
   }
 
   ngOnInit(): void {
+    // las recurrentes del calendario se suman solas al catálogo; si el calendario falla se sigue con el catálogo actual
+    this.activitiesService.syncFromCalendar().subscribe({ error: () => undefined });
     this.load();
   }
 
@@ -131,21 +175,48 @@ export class DailyAttendanceComponent implements OnInit {
     };
   }
 
-  activityLabel(): string {
-    return this.activities.find((a) => a.id === this.activity())?.label ?? '';
-  }
-
   get dateAsDate(): Date {
     const [y, m, d] = this.date().split('-').map(Number);
     return new Date(y, m - 1, d);
   }
 
-  isMarked(person: AttendancePerson): boolean {
-    return this.present().some((p) => p.personId === person.personId);
+  areaLabel(): string {
+    return AREA_LABELS[this.area()];
   }
 
-  onActivityChange(value: string): void {
-    this.activity.set(value as AttendanceActivity);
+  isSelected(id: AttendanceActivity): boolean {
+    return this.selectedIds().includes(id);
+  }
+
+  isChecked(row: AttendanceRow, id: AttendanceActivity): boolean {
+    return row.activityIds.includes(id);
+  }
+
+  isMarked(person: AttendancePerson): boolean {
+    const cols = this.columnIds();
+    const row = this.rows().find((r) => r.person.personId === person.personId);
+    return !!row && cols.length > 0 && cols.every((id) => row.activityIds.includes(id));
+  }
+
+  countFor(id: AttendanceActivity): number {
+    return this.rows().filter((r) => r.activityIds.includes(id)).length + (this.anonymous()[id] ?? 0);
+  }
+
+  totalPresent = computed(() => {
+    // personas distintas con alguna actividad visible + sin ficha de todas las columnas
+    const cols = this.columnIds();
+    const withFile = this.rows().filter((r) => cols.some((id) => r.activityIds.includes(id))).length;
+    const without = cols.reduce((sum, id) => sum + (this.anonymous()[id] ?? 0), 0);
+    return withFile + without;
+  });
+
+  onAreaChange(area: AttendanceArea): void {
+    if (area === this.area()) {
+      return;
+    }
+    this.area.set(area);
+    this.searchControl.setValue('');
+    this.results.set([]);
     this.load();
   }
 
@@ -158,15 +229,49 @@ export class DailyAttendanceComponent implements OnInit {
     this.load();
   }
 
+  toggleActivity(id: AttendanceActivity): void {
+    const current = this.selectedIds();
+    if (current.includes(id)) {
+      // tiene que quedar al menos una actividad elegida
+      if (current.length > 1) {
+        this.selectedIds.set(current.filter((x) => x !== id));
+      }
+    } else {
+      this.selectedIds.set([...current, id]);
+    }
+    this.duplicateError.set(null);
+  }
+
   private load(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.duplicateError.set(null);
 
-    this.attendanceService.get(this.activity(), this.date()).subscribe({
-      next: (attendance) => {
-        this.present.set(attendance?.persons ?? []);
-        this.anonymousCount.set(attendance?.anonymousCount ?? 0);
+    // se cargan todas las actividades del área (también las desactivadas), para no perder
+    // lo ya registrado en ellas
+    const defs = this.activitiesService.all().filter((a) => a.area === this.area());
+
+    forkJoin(defs.map((a) => this.attendanceService.get(a.id, this.date()))).subscribe({
+      next: (records) => {
+        const byPerson = new Map<string, AttendanceRow>();
+        const anonymous: Record<AttendanceActivity, number> = {};
+        this.existing = new Set();
+
+        records.forEach((record, i) => {
+          if (!record) {
+            return;
+          }
+          this.existing.add(defs[i].id);
+          anonymous[defs[i].id] = record.anonymousCount;
+          for (const person of record.persons) {
+            const row = byPerson.get(person.personId) ?? { person, activityIds: [] };
+            row.activityIds.push(defs[i].id);
+            byPerson.set(person.personId, row);
+          }
+        });
+
+        this.rows.set([...byPerson.values()]);
+        this.anonymous.set(anonymous);
         this.loading.set(false);
       },
       error: () => {
@@ -177,31 +282,71 @@ export class DailyAttendanceComponent implements OnInit {
   }
 
   markPresent(person: AttendancePerson): void {
-    if (this.isMarked(person)) {
+    const cols = this.columnIds();
+    if (cols.length === 0) {
+      return;
+    }
+
+    const existing = this.rows().find((r) => r.person.personId === person.personId);
+    if (!existing) {
+      this.duplicateError.set(null);
+      this.rows.update((list) => [...list, { person, activityIds: [...cols] }]);
+      return;
+    }
+
+    const missing = cols.filter((id) => !existing.activityIds.includes(id));
+    if (missing.length === 0) {
       this.duplicateError.set(
-        `${person.fullName} ya está registrada en ${this.activityLabel()} el ${this.dateAsDate.toLocaleDateString('es-AR')}.`,
+        `${person.fullName} ya está registrada en ${this.columns().map((c) => c.name).join(', ')} el ${this.dateAsDate.toLocaleDateString('es-AR')}.`,
       );
       return;
     }
+
+    // ya estaba en otra actividad del día: se le suman las que faltaban
     this.duplicateError.set(null);
-    this.present.update((list) => [...list, person]);
+    this.rows.update((list) =>
+      list.map((r) => (r.person.personId === person.personId ? { ...r, activityIds: [...r.activityIds, ...missing] } : r)),
+    );
   }
 
-  unmark(person: AttendancePerson): void {
-    this.present.update((list) => list.filter((p) => p.personId !== person.personId));
+  toggleCell(row: AttendanceRow, id: AttendanceActivity): void {
+    this.duplicateError.set(null);
+    this.rows.update((list) =>
+      list.map((r) => {
+        if (r.person.personId !== row.person.personId) {
+          return r;
+        }
+        return {
+          ...r,
+          activityIds: r.activityIds.includes(id) ? r.activityIds.filter((x) => x !== id) : [...r.activityIds, id],
+        };
+      }),
+    );
   }
 
-  changeAnonymous(delta: number): void {
-    this.setAnonymous(this.anonymousCount() + delta);
+  unmark(row: AttendanceRow): void {
+    const cols = this.columnIds();
+    // se quita de las actividades visibles; las no visibles (otras actividades del día) quedan como estaban
+    this.rows.update((list) =>
+      list
+        .map((r) =>
+          r.person.personId === row.person.personId ? { ...r, activityIds: r.activityIds.filter((id) => !cols.includes(id)) } : r,
+        )
+        .filter((r) => r.activityIds.length > 0),
+    );
   }
 
-  setAnonymous(value: number): void {
+  setAnonymous(id: AttendanceActivity, value: number): void {
     const n = Number.isFinite(value) ? Math.floor(value) : 0;
-    this.anonymousCount.set(Math.max(0, Math.min(n, 999)));
+    this.anonymous.update((map) => ({ ...map, [id]: Math.max(0, Math.min(n, 999)) }));
+  }
+
+  changeAnonymous(id: AttendanceActivity, delta: number): void {
+    this.setAnonymous(id, (this.anonymous()[id] ?? 0) + delta);
   }
 
   requestSave(): void {
-    if (!this.canModify()) {
+    if (!this.canModify() || this.columnIds().length === 0) {
       return;
     }
     if (this.isClosed()) {
@@ -217,34 +362,47 @@ export class DailyAttendanceComponent implements OnInit {
   }
 
   save(justification: string | null): void {
+    // un registro por actividad visible; las vacías que nunca se habían guardado se omiten
+    const requests = this.columnIds()
+      .map((id) => ({
+        activity: id,
+        date: this.date(),
+        persons: this.rows()
+          .filter((r) => r.activityIds.includes(id))
+          .map((r) => r.person),
+        anonymousCount: this.anonymous()[id] ?? 0,
+        justification,
+      }))
+      .filter((r) => r.persons.length > 0 || r.anonymousCount > 0 || this.existing.has(r.activity));
+
+    if (requests.length === 0) {
+      this.errorMessage.set('No hay nada para guardar: marcá al menos una persona o un conteo sin ficha.');
+      return;
+    }
+
     this.saving.set(true);
     this.errorMessage.set(null);
     this.justificationError.set(null);
 
-    this.attendanceService
-      .save({
-        activity: this.activity(),
-        date: this.date(),
-        persons: this.present(),
-        anonymousCount: this.anonymousCount(),
-        justification,
-      })
-      .subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.showJustificationModal.set(false);
-          this.showSuccess('Asistencia guardada correctamente.');
-        },
-        error: (err) => {
-          this.saving.set(false);
-          const message = extractApiError(err, 'No se pudo guardar la asistencia.');
-          if (this.showJustificationModal()) {
-            this.justificationError.set(message);
-          } else {
-            this.errorMessage.set(message);
-          }
-        },
-      });
+    forkJoin(requests.map((request) => this.attendanceService.save(request))).subscribe({
+      next: () => {
+        requests.forEach((r) => this.existing.add(r.activity));
+        this.saving.set(false);
+        this.showJustificationModal.set(false);
+        this.showSuccess(
+          requests.length > 1 ? `Asistencia guardada en ${requests.length} actividades.` : 'Asistencia guardada correctamente.',
+        );
+      },
+      error: (err) => {
+        this.saving.set(false);
+        const message = extractApiError(err, 'No se pudo guardar la asistencia.');
+        if (this.showJustificationModal()) {
+          this.justificationError.set(message);
+        } else {
+          this.errorMessage.set(message);
+        }
+      },
+    });
   }
 
   private showSuccess(message: string): void {

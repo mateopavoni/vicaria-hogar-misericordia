@@ -110,6 +110,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('asistencia.view')]
       },
 
+      // SCRUM-230: configuración de actividades de asistencia, solo Referente
+      {
+        path: 'asistencia/actividades',
+        loadComponent: () =>
+          import('./features/attendance/pages/activity-settings/activity-settings.component')
+            .then(m => m.ActivitySettingsComponent),
+        canActivate: [permissionGuard('asistencia.config')]
+      },
+
       // SCRUM-226: panel de estadísticas de asistencia, solo Referente
       {
         path: 'asistencia/estadisticas',
