@@ -18,7 +18,6 @@ import {
   startOfWeek,
   weekDays,
 } from '../../utils/calendar-date.util';
-import { generateRecurringEvents } from '../../utils/recurring-events.util';
 import { isBeforeToday } from '../../../../shared/utils/date.util';
 import { CasaConvivenciaVisitsCalendarComponent } from '../../../casa-convivencia-visits/pages/casa-convivencia-visits-calendar/casa-convivencia-visits-calendar.component';
 
@@ -149,7 +148,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
   // Las recurrentes son siempre institucionales/generales — no aparecen en "Mi
   // calendario" (scope 'personal').
   allEvents = computed<CalendarEvent[]>(() => {
-    const recurring = this.calendarTab() === 'personal' ? [] : generateRecurringEvents(this.rangeStart(), this.rangeEnd());
+    // las actividades precargadas (desayuno, almuerzo...) ya vienen del backend (plantillas del seed)
+    const recurring: CalendarEvent[] = [];
     return [...this.events(), ...recurring];
   });
 
@@ -447,7 +447,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
     this.deleting.set(true);
 
-    this.calendarEventsService.delete(event.id).subscribe({
+    this.calendarEventsService.delete(event.id, event.scope).subscribe({
       next: () => {
         this.deleting.set(false);
         this.deletingEvent.set(null);

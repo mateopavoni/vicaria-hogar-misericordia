@@ -242,6 +242,7 @@
         placeholder="Escriba aquí observaciones (opcional)..."
         class="w-full rounded-md border border-[#D5DDF3] bg-white px-4 py-3 text-[14px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#6B8DF5] focus:ring-1 focus:ring-[#6B8DF5]"
       ></textarea>
+      <app-sensitive-content-notice />
     </div>
 
     <div class="border-y border-[#E3E8F5] bg-slate-50 px-6 py-4">
@@ -314,7 +315,7 @@
       </a>
       <button
         type="submit"
-        class="h-[42px] rounded-md bg-[#6B8DF5] px-6 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#587BE8] active:bg-[#4F70D8] disabled:cursor-not-allowed disabled:opacity-60"
+        class="h-[42px] rounded-md bg-[#4167D9] px-6 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#3556C0] active:bg-[#2F4DB0] disabled:cursor-not-allowed disabled:opacity-60"
         [disabled]="loading()"
       >
          @if (loading()) {

@@ -259,22 +259,30 @@ export class CasaConvivenciaVisitsCalendarComponent implements OnInit, OnDestroy
     this.editingVisit.set(null);
     this.formInitialDate.set(isoDate(date));
     this.formError.set(null);
+    this.overlapConfirmed = false;
     this.showFormModal.set(true);
   }
 
   openEditModal(visit: Visit): void {
     this.editingVisit.set(visit);
     this.formError.set(null);
+    this.overlapConfirmed = false;
     this.showFormModal.set(true);
   }
 
   closeFormModal(): void {
     this.showFormModal.set(false);
+    this.overlapConfirmed = false;
   }
 
-  saveVisit(dto: CreateVisitDto): void {
+  // el solapamiento es una advertencia: tras un 409 el próximo Guardar reenvía con allowOverlap
+  private overlapConfirmed = false;
+
+  saveVisit(formDto: CreateVisitDto): void {
     this.saving.set(true);
     this.formError.set(null);
+
+    const dto = { ...formDto, allowOverlap: this.overlapConfirmed || formDto.allowOverlap };
 
     const editing = this.editingVisit();
     const request$ = editing
@@ -285,11 +293,18 @@ export class CasaConvivenciaVisitsCalendarComponent implements OnInit, OnDestroy
       next: () => {
         this.saving.set(false);
         this.showFormModal.set(false);
+        this.overlapConfirmed = false;
         this.showSuccess(editing ? 'Visita actualizada correctamente.' : 'Visita creada correctamente.');
         this.loadVisits();
       },
       error: (err) => {
         this.saving.set(false);
+        // 409 por solapamiento = advertencia; otros 409 (p. ej. visita ya cerrada) son errores
+        if (err?.status === 409 && /superpone/i.test(err?.error?.message ?? '')) {
+          this.overlapConfirmed = true;
+          this.formError.set(`${err.error.message} Si es correcto, tocá Guardar de nuevo para guardarla igual.`);
+          return;
+        }
         this.formError.set(err?.error?.message || 'No se pudo guardar la visita.');
       },
     });
