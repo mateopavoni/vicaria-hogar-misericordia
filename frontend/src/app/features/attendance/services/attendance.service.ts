@@ -32,6 +32,12 @@ export class AttendanceService {
     return of(this.store.get(this.key(activity, date)) ?? null).pipe(delay(150));
   }
 
+  // SCRUM-226: todas las asistencias cargadas, para las estadísticas del panel. Los
+  // filtros de fecha y actividad se aplican en pantalla (computeOverview).
+  getAll(): Observable<DailyAttendance[]> {
+    return of([...this.store.values()]).pipe(delay(150));
+  }
+
   // SCRUM-222: fechas en las que una persona asistió, de todas las actividades, de más
   // reciente a más antigua. Los filtros por actividad y rango se aplican en pantalla.
   getPersonHistory(personId: string): Observable<AttendanceHistoryEntry[]> {

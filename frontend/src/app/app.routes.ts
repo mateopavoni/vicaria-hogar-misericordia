@@ -29,6 +29,14 @@ export const routes: Routes = [
         .then(m => m.LayoutComponent),
 
     children: [
+      // INICIO (/dashboard): estadísticas de asistencia para Referente (SCRUM-226)
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/home/pages/home/home.component')
+            .then(m => m.HomeComponent),
+      },
       {
         path: 'users',
 
@@ -100,6 +108,15 @@ export const routes: Routes = [
           import('./features/attendance/pages/daily-attendance/daily-attendance.component')
             .then(m => m.DailyAttendanceComponent),
         canActivate: [permissionGuard('asistencia.view')]
+      },
+
+      // SCRUM-226: panel de estadísticas de asistencia, solo Referente
+      {
+        path: 'asistencia/estadisticas',
+        loadComponent: () =>
+          import('./features/attendance/components/attendance-stats-panel/attendance-stats-panel.component')
+            .then(m => m.AttendanceStatsPanelComponent),
+        canActivate: [permissionGuard('asistencia.stats')]
       },
 
       // RUTA DE EDICIÓN
