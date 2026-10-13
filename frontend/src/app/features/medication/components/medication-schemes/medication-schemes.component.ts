@@ -9,6 +9,7 @@ import {
   MedicationCatalogItem,
   MedicationScheme,
 } from '../../interfaces/medication.interface';
+import { MedicationHistoryComponent } from '../medication-history/medication-history.component';
 import { MedicationService } from '../../services/medication.service';
 import { MedicationSchemeFormModalComponent } from '../scheme-form-modal/scheme-form-modal.component';
 
@@ -20,7 +21,7 @@ import { MedicationSchemeFormModalComponent } from '../scheme-form-modal/scheme-
  */
 @Component({
   selector: 'app-medication-schemes',
-  imports: [DatePipe, UiButtonComponent, MedicationSchemeFormModalComponent],
+  imports: [DatePipe, UiButtonComponent, MedicationSchemeFormModalComponent, MedicationHistoryComponent],
   templateUrl: './medication-schemes.component.html',
 })
 export class MedicationSchemesComponent implements OnInit {
@@ -30,6 +31,7 @@ export class MedicationSchemesComponent implements OnInit {
 
   personId = input.required<string>();
   isResident = input(false);
+  personName = input('');
 
   schemes = signal<MedicationScheme[]>([]);
   catalog = signal<MedicationCatalogItem[]>([]);
@@ -45,6 +47,8 @@ export class MedicationSchemesComponent implements OnInit {
   saving = signal(false);
   formError = signal<string | null>(null);
 
+  // SCRUM-242: historial de tomas, solo Referente y Directora
+  canViewHistory = computed(() => this.permissionService.hasPermission('medicamentos.history'));
   canCreate = computed(() => this.permissionService.hasPermission('medicamentos.create'));
   // la carga queda bloqueada hasta confirmar que hay una evaluación vigente
   blocked = computed(() => this.evaluationValid() === false);
