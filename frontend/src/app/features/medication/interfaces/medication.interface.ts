@@ -48,3 +48,53 @@ export interface MedicationActor {
   id: string;
   name: string;
 }
+
+/**
+ * SCRUM-238 (front de SCRUM-60): agenda diaria de medicamentos.
+ * OJO — backend pendiente: ver MedicationService (agenda y administraciones en memoria).
+ */
+export type AdministrationStatus = 'administered' | 'not-administered';
+
+/** Registro de una toma de un esquema en una fecha (YYYY-MM-DD). */
+export interface MedicationAdministration {
+  schemeId: string;
+  date: string;
+  status: AdministrationStatus;
+  /** Opcional. */
+  observation: string | null;
+  recordedAt: string;
+  recordedByUserId: string;
+  recordedByName: string;
+}
+
+/** Una toma de la agenda: esquema + persona + (si ya se registró) su administración. */
+export interface AgendaItem {
+  schemeId: string;
+  personId: string;
+  personName: string;
+  medicationName: string;
+  dose: string;
+  /** HH:mm */
+  time: string;
+  administration: MedicationAdministration | null;
+}
+
+/** Tomas de una misma hora, ej. 08:00 → Juan Pérez: A 2 mg / José Reyes: B 500 mg. */
+export interface AgendaTimeSlot {
+  time: string;
+  items: AgendaItem[];
+}
+
+export interface MedicationAgenda {
+  date: string;
+  slots: AgendaTimeSlot[];
+  /** Esquemas de personas presentes que no entran a la agenda por estar pendientes de stock. */
+  pendingStockCount: number;
+}
+
+export interface RecordAdministrationRequest {
+  schemeId: string;
+  date: string;
+  status: AdministrationStatus;
+  observation: string | null;
+}
