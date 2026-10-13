@@ -1,7 +1,14 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, of, throwError } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable, delay, map, of, throwError } from 'rxjs';
+import { todayLocalIso } from '../../../shared/utils/date.util';
+import { AttendanceService } from '../../attendance/services/attendance.service';
 import {
+  AgendaItem,
+  AgendaTimeSlot,
   CreateMedicationSchemeRequest,
+  MedicationAdministration,
+  MedicationAgenda,
+  RecordAdministrationRequest,
   MedicationActor,
   MedicationCatalogItem,
   MedicationScheme,
@@ -32,7 +39,10 @@ export class MedicationService {
     { id: 'med-3', name: 'Medicamento de prueba C (sin stock)', pharmacyStock: 0 },
   ];
 
+  private attendanceService = inject(AttendanceService);
+
   private readonly schemes: MedicationScheme[] = [];
+  private readonly administrations = new Map<string, MedicationAdministration>();
   private nextId = 1;
 
   getCatalog(): Observable<MedicationCatalogItem[]> {
@@ -96,6 +106,103 @@ export class MedicationService {
     }
     scheme.active = active;
     return of({ ...scheme }).pipe(delay(100));
+  }
+
+  // ───────── SCRUM-238: agenda diaria ─────────
+
+  /**
+   * Agenda del día agrupada por hora. Se arma sola con la asistencia registrada ese día
+   * (cualquier actividad): solo entran las personas que asistieron y tienen medicación.
+   * - Esquemas pendientes de stock no entran (se informan aparte en pendingStockCount).
+   * - Un esquema solo cuenta desde el día en que se cargó.
+   * - Si el esquema hoy es histórico solo figura en días donde ya tiene una toma registrada,
+   *   así el historial de días anteriores no cambia al dar de baja un medicamento.
+   */
+  getAgenda(date: string): Observable<MedicationAgenda> {
+    return this.attendanceService.getAll().pipe(
+      map((days) => {
+        const present = new Map<string, string>();
+        for (const day of days) {
+          if (day.date !== date) continue;
+          for (const person of day.persons) {
+            present.set(person.personId, person.fullName);
+          }
+        }
+
+        const items: AgendaItem[] = [];
+        let pendingStockCount = 0;
+        for (const scheme of this.schemes) {
+          const personName = present.get(scheme.personId);
+          if (personName === undefined) continue;
+          if (scheme.loadedAt.slice(0, 10) > date) continue;
+
+          const administration = this.administrations.get(this.adminKey(scheme.id, date)) ?? null;
+          if (!scheme.active && !administration) continue;
+          if (scheme.pendingStock && !administration) {
+            pendingStockCount++;
+            continue;
+          }
+
+          items.push({
+            schemeId: scheme.id,
+            personId: scheme.personId,
+            personName,
+            medicationName: scheme.medicationName,
+            dose: scheme.dose,
+            time: scheme.time,
+            administration: administration ? { ...administration } : null,
+          });
+        }
+
+        const byTime = new Map<string, AgendaItem[]>();
+        for (const item of items) {
+          byTime.set(item.time, [...(byTime.get(item.time) ?? []), item]);
+        }
+        const slots: AgendaTimeSlot[] = [...byTime.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([time, group]) => ({
+            time,
+            items: group.sort((a, b) => a.personName.localeCompare(b.personName, 'es')),
+          }));
+
+        return { date, slots, pendingStockCount };
+      }),
+      delay(100),
+    );
+  }
+
+  /** Marca una toma como administrada / no administrada. Solo del día actual; se puede corregir. */
+  recordAdministration(request: RecordAdministrationRequest, actor: MedicationActor): Observable<MedicationAdministration> {
+    if (request.date !== todayLocalIso()) {
+      return this.fail('Solo se puede registrar la administración del día actual.');
+    }
+    if (request.status !== 'administered' && request.status !== 'not-administered') {
+      return this.fail('El estado de la toma no es válido.');
+    }
+    const scheme = this.schemes.find((s) => s.id === request.schemeId);
+    if (!scheme) {
+      return this.fail('El esquema no existe.');
+    }
+    const observation = request.observation?.trim() || null;
+    if (observation && observation.length > 500) {
+      return this.fail('La observación no puede superar los 500 caracteres.');
+    }
+
+    const administration: MedicationAdministration = {
+      schemeId: scheme.id,
+      date: request.date,
+      status: request.status,
+      observation,
+      recordedAt: new Date().toISOString(),
+      recordedByUserId: actor.id,
+      recordedByName: actor.name,
+    };
+    this.administrations.set(this.adminKey(scheme.id, request.date), administration);
+    return of({ ...administration }).pipe(delay(100));
+  }
+
+  private adminKey(schemeId: string, date: string): string {
+    return `${schemeId}|${date}`;
   }
 
   private fail(message: string): Observable<never> {

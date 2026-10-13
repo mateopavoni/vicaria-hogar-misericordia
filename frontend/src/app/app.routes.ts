@@ -128,6 +128,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('asistencia.stats')]
       },
 
+      // SCRUM-238: agenda diaria de medicamentos (ver: medicamentos.view; marcar tomas: medicamentos.edit)
+      {
+        path: 'medicacion',
+        loadComponent: () =>
+          import('./features/medication/pages/medication-agenda/medication-agenda.component')
+            .then(m => m.MedicationAgendaComponent),
+        canActivate: [permissionGuard('medicamentos.view')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

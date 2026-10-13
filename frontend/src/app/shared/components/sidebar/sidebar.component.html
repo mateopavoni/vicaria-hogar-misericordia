@@ -122,8 +122,9 @@
     }
 
     <!-- Medicación -->
+    @if (permissionService.hasPermission('medicamentos.view')) {
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/medicacion"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -149,6 +150,7 @@
 
       <span>Medicación</span>
     </a>
+    }
 
     <!-- Calendario -->
     @if (permissionService.hasPermission('calendario.view')) {
