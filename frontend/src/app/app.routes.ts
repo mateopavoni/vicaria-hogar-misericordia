@@ -93,6 +93,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('calendario.view')]
       },
 
+      // SCRUM-218: registro de asistencia diaria
+      {
+        path: 'asistencia',
+        loadComponent: () =>
+          import('./features/attendance/pages/daily-attendance/daily-attendance.component')
+            .then(m => m.DailyAttendanceComponent),
+        canActivate: [permissionGuard('asistencia.view')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

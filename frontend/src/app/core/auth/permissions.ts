@@ -28,7 +28,11 @@ export type Permission =
   // Referente, Directora y Coordinador; Escucha nunca tiene visitas.*
   | 'visitas.view'
   | 'visitas.create'
-  | 'visitas.edit';
+  | 'visitas.edit'
+  // SCRUM-218: asistencia diaria. 'asistencia.edit' = modificar un día ya cerrado (solo Referente, con justificación)
+  | 'asistencia.view'
+  | 'asistencia.create'
+  | 'asistencia.edit';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -75,7 +79,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Visitas de la Casa de Convivencia (SCRUM-74)
     'visitas.view',
     'visitas.create',
-    'visitas.edit'
+    'visitas.edit',
+
+    // Asistencia diaria (SCRUM-218)
+    'asistencia.view',
+    'asistencia.create',
+    'asistencia.edit'
   ],
 
 
@@ -87,7 +96,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'observaciones.create',
 
     // calendario de solo lectura (el backend le permite GET, no POST)
-    'calendario.view'
+    'calendario.view',
+
+    // el backend deja a Escucha cargar la asistencia del día a día (POST api/attendance)
+    'asistencia.view',
+    'asistencia.create'
   ],
 
 
@@ -126,7 +139,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Visitas de la Casa de Convivencia (SCRUM-74)
     'visitas.view',
     'visitas.create',
-    'visitas.edit'
+    'visitas.edit',
+
+    // Asistencia diaria (SCRUM-218); modificar días cerrados es solo del Referente
+    'asistencia.view',
+    'asistencia.create'
   ],
 
   // bug reportado 2026-09-23: faltaba este rol por completo. Los permisos granulares
@@ -147,7 +164,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'calendario.view',
     'visitas.view',
     'visitas.create',
-    'visitas.edit'
+    'visitas.edit',
+
+    'asistencia.view',
+    'asistencia.create'
   ]
 
 };

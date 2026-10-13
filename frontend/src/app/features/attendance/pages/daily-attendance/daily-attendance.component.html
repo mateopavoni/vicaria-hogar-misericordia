@@ -1,0 +1,198 @@
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+
+  <!-- ENCABEZADO -->
+  <div class="mb-5">
+    <h1 class="text-[26px] font-bold text-slate-900">Asistencia</h1>
+    <p class="mt-1 text-[14px] text-slate-500">
+      Registrá quiénes asistieron a cada actividad del día.
+    </p>
+  </div>
+
+  <!-- SELECTOR DE ACTIVIDAD Y FECHA -->
+  <div class="mb-4 grid grid-cols-1 gap-4 rounded-2xl border border-[#E3E8F5] bg-white p-5 shadow-[0_8px_30px_rgba(79,115,232,0.08)] md:grid-cols-2">
+    <ui-form-field label="Actividad" for="attendance-activity">
+      <select
+        id="attendance-activity"
+        uiInput
+        [value]="activity()"
+        (change)="onActivityChange($any($event.target).value)"
+      >
+        @for (option of activities; track option.id) {
+          <option [value]="option.id" [selected]="option.id === activity()">{{ option.label }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Fecha" for="attendance-date">
+      <input
+        id="attendance-date"
+        uiInput
+        type="date"
+        [value]="date()"
+        [attr.max]="today"
+        (change)="onDateChange($any($event.target).value)"
+      />
+    </ui-form-field>
+  </div>
+
+  @if (isClosed()) {
+    <div class="mb-4 rounded-md bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-700" role="status">
+      @if (canEditClosed()) {
+        Este día ya está cerrado. Podés modificarlo, pero te vamos a pedir una justificación.
+      } @else {
+        Este día ya está cerrado: solo un Referente puede modificarlo.
+      }
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center justify-center gap-2 rounded-2xl border border-[#E3E8F5] bg-white px-6 py-16 text-[14px] text-slate-400">
+      <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
+      Cargando asistencia...
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+      <!-- BUSCADOR DE PERSONAS CON FICHA -->
+      <section class="rounded-2xl border border-[#E3E8F5] bg-white p-5 shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+        <h2 class="mb-3 text-[15px] font-bold text-slate-900">Personas con ficha</h2>
+
+        <ui-form-field label="Buscar por nombre o DNI" for="attendance-search" [error]="duplicateError()">
+          <input
+            id="attendance-search"
+            uiInput
+            type="text"
+            autocomplete="off"
+            placeholder="Escribí al menos 2 letras"
+            [formControl]="searchControl"
+          />
+        </ui-form-field>
+
+        <div class="mt-3 flex flex-col gap-1.5">
+          @if (searching()) {
+            <p class="text-[12px] text-slate-400">Buscando...</p>
+          } @else if (searchError()) {
+            <p class="text-[12px] font-semibold text-rose-500" role="alert">{{ searchError() }}</p>
+          } @else if (searchControl.value.trim().length >= 2 && results().length === 0) {
+            <p class="text-[12px] text-slate-400">No se encontraron personas con esa búsqueda.</p>
+          }
+
+          @for (person of results(); track person.personId) {
+            <button
+              type="button"
+              class="flex items-center justify-between rounded-md border border-[#E3E8F5] px-3 py-2 text-left text-[13px] transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              [disabled]="!canModify()"
+              (click)="markPresent(person)"
+            >
+              <span>
+                <span class="font-semibold text-slate-700">{{ person.fullName }}</span>
+                @if (person.dni) {
+                  <span class="ml-2 text-[12px] text-slate-400">DNI {{ person.dni }}</span>
+                }
+              </span>
+              <span class="text-[12px] font-semibold" [class]="isMarked(person) ? 'text-emerald-600' : 'text-[#4167D9]'">
+                {{ isMarked(person) ? 'Presente' : 'Marcar presente' }}
+              </span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <!-- PRESENTES + ANÓNIMOS -->
+      <section class="rounded-2xl border border-[#E3E8F5] bg-white p-5 shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+        <div class="mb-3 flex items-baseline justify-between">
+          <h2 class="text-[15px] font-bold text-slate-900">
+            {{ activityLabel() }} · {{ dateAsDate | date: 'dd/MM/yyyy' }}
+          </h2>
+          <span class="text-[12px] font-semibold text-slate-500">Total: {{ totalPresent() }}</span>
+        </div>
+
+        <h3 class="mb-2 text-[12px] font-semibold uppercase text-slate-400">
+          Presentes con ficha ({{ present().length }})
+        </h3>
+        <div class="mb-5 flex flex-col gap-1.5">
+          @for (person of present(); track person.personId) {
+            <div class="flex items-center justify-between rounded-md bg-[#EEF2FF] px-3 py-2 text-[13px] text-[#4167D9]">
+              <span class="font-semibold">{{ person.fullName }}</span>
+              @if (canModify()) {
+                <button
+                  type="button"
+                  class="text-[12px] font-semibold text-slate-500 hover:text-rose-500"
+                  [attr.aria-label]="'Quitar a ' + person.fullName"
+                  (click)="unmark(person)"
+                >
+                  Quitar
+                </button>
+              }
+            </div>
+          } @empty {
+            <p class="text-[12px] text-slate-300">Todavía no marcaste a nadie.</p>
+          }
+        </div>
+
+        <h3 class="mb-2 text-[12px] font-semibold uppercase text-slate-400">Personas sin ficha</h3>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5DDF3] bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+            aria-label="Restar una persona sin ficha"
+            [disabled]="!canModify() || anonymousCount() === 0"
+            (click)="changeAnonymous(-1)"
+          >
+            −
+          </button>
+          <input
+            uiInput
+            type="number"
+            min="0"
+            max="999"
+            class="w-20 text-center"
+            aria-label="Cantidad de personas sin ficha"
+            [value]="anonymousCount()"
+            [disabled]="!canModify()"
+            (change)="setAnonymous(+$any($event.target).value)"
+          />
+          <button
+            type="button"
+            class="flex h-9 w-9 items-center justify-center rounded-md border border-[#D5DDF3] bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50"
+            aria-label="Sumar una persona sin ficha"
+            [disabled]="!canModify()"
+            (click)="changeAnonymous(1)"
+          >
+            +
+          </button>
+        </div>
+      </section>
+    </div>
+
+    @if (canModify()) {
+      <div class="mt-4 flex justify-end">
+        <button uiButton type="button" [loading]="saving()" [disabled]="saving()" (click)="requestSave()">
+          Guardar asistencia
+        </button>
+      </div>
+    }
+  }
+
+  @if (showJustificationModal()) {
+    <app-attendance-justification-modal
+      [date]="date()"
+      [saving]="saving()"
+      [errorMessage]="justificationError()"
+      (confirmed)="save($event)"
+      (cancelled)="closeJustificationModal()"
+    />
+  }
+</div>
