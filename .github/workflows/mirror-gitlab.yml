@@ -18,11 +18,13 @@ jobs:
       - name: Push a GitLab
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_USER: ${{ secrets.GITLAB_USER }}
         run: |
           set +x
           if [ -z "$GITLAB_TOKEN" ]; then echo "::error::GITLAB_TOKEN vacío o no configurado"; exit 1; fi
+          if [ -z "$GITLAB_USER" ]; then echo "::error::GITLAB_USER vacío o no configurado (bot username del token, ej. project_123_bot_abc)"; exit 1; fi
           echo "Token configurado, longitud: ${#GITLAB_TOKEN}"
-          git remote add gitlab "https://oauth2:${GITLAB_TOKEN}@git.icgb.com.ar/cliente-hogar-de-cristo/vicaria-hogar-misericordia.git"
+          git remote add gitlab "https://${GITLAB_USER}:${GITLAB_TOKEN}@git.icgb.com.ar/cliente-hogar-de-cristo/vicaria-hogar-misericordia.git"
           echo "--- read test (ls-remote) ---"
           git ls-remote gitlab HEAD
           echo "--- write test (push) ---"
