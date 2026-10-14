@@ -292,7 +292,7 @@ def main():
     wr = wb.create_sheet("Resumen", 0)
     wr["A1"] = "Plan de pruebas — Vicaria de los Pobres, Pastoral de Adicciones"
     wr["A1"].font = Font(bold=True, size=14)
-    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1 a 4 (el Sprint 4 todavía sin desarrollo: casos Pendientes). Se actualiza con los contadores de las hojas."
+    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1 a 4 (Sprint 4: frontend hecho con datos simulados, backend en curso; casos manuales Pendientes). Se actualiza con los contadores de las hojas."
     wr.append([])
     wr.append(["Tipo", "Sprint", "Total", "OK", "Falla", "Bloqueado", "Pendiente"])
     hr = wr.max_row
@@ -334,7 +334,7 @@ def main():
         "UI en navegador real (Playwright): 33 de 33 verificaciones OK el 2026-10-09; no se volvió a correr el 2026-10-12 (necesita el stack completo).",
         "Prueba de humo por rol (Referente, Directora, Escucha, Coordinador): 11 de 15 pantallas OK; las 4 restantes son /inicio (ver Defectos y pendientes).",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK el 2026-10-06.",
-        "Sprint 4: casos derivados de los criterios de aceptación de Jira, todos Pendientes hasta que haya desarrollo.",
+        "Sprint 4: 48 casos manuales derivados de los criterios de Jira, todos Pendientes. Solo el esquema de medicación (SCRUM-232) tiene backend y tests; asistencia, agenda, stock e historial todavía no.",
     ]:
         wr.append([line])
     wr.append([])
@@ -386,6 +386,12 @@ def main():
          "SCRUM-190", "Abierta", "Una mejora posible es exponer la fecha de inicio de la serie en la ocurrencia."),
         ("Defecto", "La suite de integración colgaba el equipo: cada clase de test levanta su propio SQL Server en Docker y xUnit las corría en paralelo (hasta 16 contenedores) contra una VM de WSL con tope de 4 GB; Docker se caía y los tests quedaban sin resultado.",
          "Backend (tests de integración)", "Corregido en dev", "AssemblyInfo.cs desactiva el paralelismo y el factory limita cada SQL Server a 1 GB (MSSQL_MEMORY_LIMIT_MB). Resultado: 240 de 240 OK en 10 min 38 s."),
+        ("Defecto", "Los specs de asistencia y medicación de dev-frontend-belen usaban sintaxis de Jasmine (done, toBeTrue, toBeFalse) y no compilaban con Vitest: 55 errores y ningún test corría.",
+         "SCRUM-218 a 250 (frontend)", "Corregido en dev", "Se convirtieron a promesas y toBe(true/false): 120 de 120 pruebas OK."),
+        ("Brecha", "Las pantallas de asistencia y medicación del frontend usan servicios simulados (of(...).pipe(delay)) y no llaman a la API.",
+         "SCRUM-218 a 250 (frontend)", "Abierta", "Integrarlas con el backend a medida que se complete; hasta entonces los criterios de negocio no están verificados."),
+        ("Pendiente", "dev-backend trae un global.json que exige SDK 9.0.x y falla en equipos con otros SDK. dev no lo tiene.",
+         "dev-backend", "Abierta", "Avisar a Santiago antes de sincronizar ramas. Esta PC ya tiene el SDK 9.0.319."),
         ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
          "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
         ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",
