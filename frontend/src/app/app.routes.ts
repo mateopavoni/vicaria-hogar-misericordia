@@ -146,6 +146,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('medicamentos.stock')]
       },
 
+      // SCRUM-267: respaldos de la base de datos, solo administrador técnico (Referente)
+      {
+        path: 'configuracion/respaldos',
+        loadComponent: () =>
+          import('./features/backups/pages/backups/backups.component')
+            .then(m => m.BackupsComponent),
+        canActivate: [permissionGuard('configuracion.respaldos')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

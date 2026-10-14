@@ -303,6 +303,31 @@
       <span>Usuarios</span>
     </a>
   }
+
+    <!-- Respaldos (SCRUM-267) -->
+    @if (permissionService.hasPermission('configuracion.respaldos')) {
+    <a
+      routerLink="/dashboard/configuracion/respaldos"
+      routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
+            border border-transparent
+            px-6 text-sm font-semibold text-slate-700
+            transition-all duration-200
+            hover:border-[#B8C8FA]
+            hover:bg-[#F5F7FF]
+            hover:text-[#6689F5]"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+        <path d="M3 5v14a9 3 0 0 0 18 0V5"></path>
+        <path d="M3 12a9 3 0 0 0 18 0"></path>
+      </svg>
+
+      <span>Respaldos</span>
+    </a>
+    }
   </nav>
 
   <!-- Cerrar sesión -->
