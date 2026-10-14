@@ -102,7 +102,7 @@
               @if (person.personType === PersonType.Ambulatory && permissionService.hasPermission('fichas.edit')) {
                 <button
                   type="button"
-                  (click)="toggleProfileStatus()"
+                  (click)="openStatusModal()"
                   class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   {{ person.status === PersonStatus.Active ? 'Marcar como Inactivo' : 'Marcar como Activo' }}
@@ -521,6 +521,14 @@
           />
         </section>
 
+        <!-- SCRUM-264: HISTORIAL DE ESTADOS (automáticos y manuales, con motivo) -->
+        <section class="mt-5">
+          <app-change-history
+            [title]="'Historial de Estado (Activo / Inactivo)'"
+            [items]="statusHistory()"
+          />
+        </section>
+
       }
 
       <!-- PESTAÑA: OBSERVACIONES -->
@@ -601,6 +609,16 @@
   }
 
 </div>
+
+@if (showStatusModal()) {
+  <app-status-change-modal
+    [targetLabel]="statusTargetLabel()"
+    [saving]="statusSaving()"
+    [errorMessage]="statusError()"
+    (confirmed)="confirmStatusChange($event)"
+    (closed)="showStatusModal.set(false)"
+  />
+}
 
 @if (showExportModal()) {
   <app-export-record-modal

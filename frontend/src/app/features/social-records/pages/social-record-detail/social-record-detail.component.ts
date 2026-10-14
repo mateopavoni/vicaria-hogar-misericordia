@@ -34,6 +34,8 @@ import { PersonAttachmentsComponent } from '../../../attachments/components/pers
 import { PsychiatricEvaluationsComponent } from '../../../psychiatric-evaluations/components/psychiatric-evaluations/psychiatric-evaluations.component';
 import { PsychiatricEvaluationsService } from '../../../psychiatric-evaluations/services/psychiatric-evaluations.service';
 import { daysUntilExpiry, evaluationValidity } from '../../../psychiatric-evaluations/utils/evaluation-validity.util';
+import { StatusChangeModalComponent } from '../../components/status-change-modal/status-change-modal.component';
+import { StatusChangeLogService, mergeStatusHistory } from '../../services/status-change-log.service';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
@@ -55,6 +57,7 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
     PersonAttachmentsComponent,
     PsychiatricEvaluationsComponent,
     RecordExportPrintComponent,
+    StatusChangeModalComponent,
   ],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
@@ -173,21 +176,55 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // marca a una persona ambulatoria como activa/inactiva a mano (SCRUM-78/156)
-  toggleProfileStatus(): void {
+  // SCRUM-264: cambio manual de estado (ambulatorios): pide un motivo obligatorio y lo deja en el historial
+  private statusLog = inject(StatusChangeLogService);
+  showStatusModal = signal(false);
+  statusSaving = signal(false);
+  statusError = signal<string | null>(null);
+
+  statusTargetLabel = computed(() =>
+    this.record()?.status === PersonStatus.Active ? 'Inactivo' : 'Activo');
+
+  // historial de estados: el que venga del backend + los cambios manuales hechos en esta sesión
+  statusHistory = computed(() => {
     const person = this.record();
-    if (!person) {
+    return person ? mergeStatusHistory(person.statusHistory, this.statusLog.forPerson(person.personId)) : [];
+  });
+
+  openStatusModal(): void {
+    this.statusError.set(null);
+    this.showStatusModal.set(true);
+  }
+
+  confirmStatusChange(reason: string): void {
+    const person = this.record();
+    const user = this.authService.user();
+    if (!person || !user || this.statusSaving()) {
       return;
     }
 
-    const newStatus = person.status === PersonStatus.Active
+    const previous = person.status;
+    const newStatus = previous === PersonStatus.Active
       ? PersonProfileStatus.InactiveAmbulatory
       : PersonProfileStatus.ActiveAmbulatory;
 
-    this.socialRecordsService.updateProfileStatus(person.personId, newStatus).subscribe({
-      next: () => this.loadRecord(person.id),
+    this.statusSaving.set(true);
+    this.socialRecordsService.updateProfileStatus(person.personId, newStatus, reason).subscribe({
+      next: () => {
+        this.statusLog.record(
+          person.personId,
+          previous,
+          previous === PersonStatus.Active ? PersonStatus.Inactive : PersonStatus.Active,
+          `${user.name} ${user.lastname}`.trim(),
+          reason,
+        );
+        this.statusSaving.set(false);
+        this.showStatusModal.set(false);
+        this.loadRecord(person.id);
+      },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message || 'No se pudo cambiar el estado.');
+        this.statusSaving.set(false);
+        this.statusError.set(err?.error?.message || 'No se pudo cambiar el estado.');
       }
     });
   }

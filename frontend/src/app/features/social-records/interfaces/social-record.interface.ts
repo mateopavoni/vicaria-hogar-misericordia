@@ -101,6 +101,8 @@ export interface SocialRecordsResponse {
 
     status: PersonStatus;
     lastModifiedAt?: string | null;
+    // SCRUM-264: historial de cambios de estado (automáticos y manuales). Opcional hasta que el backend lo exponga.
+    statusHistory?: ChangeHistoryItem[];
   }
 
 // PersonProfileStatus del backend (Application/Persons/PersonProfileStatus.cs): distinto de PersonStatus,

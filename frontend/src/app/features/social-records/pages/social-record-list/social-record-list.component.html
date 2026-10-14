@@ -550,16 +550,15 @@
 
               <td class="px-5 py-3">
 
-              <span
-                class="rounded-full
-                       bg-green-100
-                       px-3 py-1
-                       text-[11px]
-                       font-semibold
-                       text-green-700"
-              >
-                Activo
-              </span>
+              @if (record.status === PersonStatus.Active) {
+                <span class="rounded-full bg-green-100 px-3 py-1 text-[11px] font-semibold text-green-700">
+                  Activo
+                </span>
+              } @else {
+                <span class="rounded-full bg-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-600">
+                  Inactivo
+                </span>
+              }
 
             </td>
 

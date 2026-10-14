@@ -70,8 +70,9 @@ export class SocialRecordsService {
   }
 
   // marca manualmente a una persona ambulatoria como activa/inactiva (SCRUM-78/156)
-  updateProfileStatus(personId: string, status: PersonProfileStatus): Observable<void> {
-    return this.http.put<void>(`/api/persons/${personId}/status`, { status });
+  // SCRUM-264: se manda el motivo del cambio manual (el backend actual lo ignora hasta que lo soporte)
+  updateProfileStatus(personId: string, status: PersonProfileStatus, reason?: string): Observable<void> {
+    return this.http.put<void>(`/api/persons/${personId}/status`, reason ? { status, reason } : { status });
   }
 }
 
