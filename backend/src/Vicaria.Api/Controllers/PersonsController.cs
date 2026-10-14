@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
+using Vicaria.Application.MedicationSchemes;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Application.Timelines;
@@ -21,19 +22,25 @@ public class PersonsController : ControllerBase
     private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
     private readonly ICasaConvivenciaStayService _casaConvivenciaStayService;
     private readonly IProfileTimelineService _profileTimelineService;
+    private readonly IMedicationSchemeService _medicationSchemeService;
+    private readonly IValidator<CreateMedicationSchemeDto> _createMedicationSchemeValidator;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
         IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
         IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator,
         ICasaConvivenciaStayService casaConvivenciaStayService,
-        IProfileTimelineService profileTimelineService)
+        IProfileTimelineService profileTimelineService,
+        IMedicationSchemeService medicationSchemeService,
+        IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator)
     {
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
         _casaConvivenciaStayService = casaConvivenciaStayService;
         _profileTimelineService = profileTimelineService;
+        _medicationSchemeService = medicationSchemeService;
+        _createMedicationSchemeValidator = createMedicationSchemeValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -95,6 +102,36 @@ public class PersonsController : ControllerBase
             UpdatePersonProfileStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonProfileStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
             UpdatePersonProfileStatusError.ActiveStayMustBeExitedFirst => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    // carga de esquema de medicación (SCRUM-232 / SCRUM-59): medicamento del
+    // catálogo + dosis + hora (HH:mm). Solo Residentes con evaluación
+    // psiquiátrica vigente; el duplicado vigente responde 409. Devuelve el
+    // esquema completo como lo usa el front (SCRUM-234).
+    [HttpPost("{id}/medication-schemes")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> CreateMedicationScheme(Guid id, [FromBody] CreateMedicationSchemeDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _createMedicationSchemeValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _medicationSchemeService.CreateAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => StatusCode(StatusCodes.Status201Created, result.Scheme),
+            CreateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreateMedicationSchemeError.MedicationNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreateMedicationSchemeError.DuplicateScheme => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
