@@ -4,6 +4,8 @@ export type Permission =
   | 'fichas.view'
   | 'fichas.create'
   | 'fichas.edit'
+  // SCRUM-253: exportar / imprimir la ficha completa, solo Referente
+  | 'fichas.export'
   | 'observaciones.view'
   | 'observaciones.create'
   | 'observaciones.edit'
@@ -51,6 +53,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.view',
     'fichas.create',
     'fichas.edit',
+    'fichas.export',
 
     // Observaciones
     'observaciones.view',

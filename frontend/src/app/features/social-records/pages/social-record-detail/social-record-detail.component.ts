@@ -24,6 +24,12 @@ import { AttendanceHistoryEntry } from '../../../attendance/interfaces/attendanc
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { computeAttendanceStats, isAbsenceAlert } from '../../../attendance/utils/attendance-stats.util';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { ExportRecordModalComponent } from '../../components/export-record-modal/export-record-modal.component';
+import { RecordExportPrintComponent } from '../../components/record-export-print/record-export-print.component';
+import { RecordExportLogService } from '../../services/record-export-log.service';
+import { ExportSections, RecordExportDocument, buildExportFilename, buildRecordExport } from '../../utils/record-export.util';
+import { buildPdf } from '../../utils/simple-pdf.util';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
@@ -41,6 +47,8 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
     ObservationsComponent,
     AttendanceHistoryComponent,
     MedicationSchemesComponent,
+    ExportRecordModalComponent,
+    RecordExportPrintComponent,
   ],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
@@ -56,6 +64,8 @@ export class SocialRecordDetailComponent implements OnInit {
   private lifeStoryService = inject(LifeStoryService);
   private observationsService = inject(ObservationsService);
   private attendanceService = inject(AttendanceService);
+  private authService = inject(AuthService);
+  private exportLog = inject(RecordExportLogService);
 
   record = signal<SocialRecordDetail | null>(null);
   loading = signal(true);
@@ -162,10 +172,104 @@ export class SocialRecordDetailComponent implements OnInit {
   // error al guardar la historia de vida: se muestra como aviso, sin reemplazar la ficha entera
   lifeHistoryError = signal<string | null>(null);
 
-  // abre el diálogo de impresión del navegador (imprimir o guardar como PDF); los estilos
-  // de impresión ocultan el menú y la barra superior
+  // SCRUM-253: "Exportar ficha" abre el selector de secciones; de ahí se descarga el PDF o se imprime
+  showExportModal = signal(false);
+  exportDoc = signal<RecordExportDocument | null>(null);
+  exporting = signal(false);
+
   exportRecord(): void {
-    window.print();
+    if (!this.permissionService.hasPermission('fichas.export')) {
+      return;
+    }
+    this.showExportModal.set(true);
+  }
+
+  // genera el PDF y lo descarga directo al dispositivo
+  downloadExport(sections: ExportSections): void {
+    this.prepareExport(sections, (doc, record, exportedAt) => {
+      const bytes = buildPdf(doc);
+      const url = URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = buildExportFilename(record, exportedAt);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      this.logExport(record.personId, sections, 'pdf');
+    });
+  }
+
+  // vista de impresión: se imprime solo la ficha armada (ver .print-only-target en styles.css)
+  printExport(sections: ExportSections): void {
+    this.prepareExport(sections, (doc, record) => {
+      this.exportDoc.set(doc);
+      this.logExport(record.personId, sections, 'print');
+
+      const body = document.body;
+      const cleanup = () => {
+        body.classList.remove('print-only-target');
+        this.exportDoc.set(null);
+        window.removeEventListener('afterprint', cleanup);
+      };
+      body.classList.add('print-only-target');
+      window.addEventListener('afterprint', cleanup);
+      // esperar a que Angular pinte la vista de impresión antes de abrir el diálogo
+      setTimeout(() => window.print(), 100);
+    });
+  }
+
+  // las observaciones se piden de nuevo para incluir las que se cargaron en esta sesión
+  private prepareExport(
+    sections: ExportSections,
+    run: (doc: RecordExportDocument, record: SocialRecordDetail, exportedAt: Date) => void,
+  ): void {
+    const record = this.record();
+    const user = this.authService.user();
+    if (!record || !user || this.exporting() || !this.permissionService.hasPermission('fichas.export')) {
+      return;
+    }
+
+    const finish = (observations: Observation[]) => {
+      const exportedAt = new Date();
+      const doc = buildRecordExport({
+        record,
+        lifeHistory: this.lifeHistory(),
+        observations,
+        sections,
+        exportedAt,
+        exportedBy: `${user.name} ${user.lastname}`.trim(),
+      });
+      this.showExportModal.set(false);
+      this.exporting.set(false);
+      run(doc, record, exportedAt);
+    };
+
+    if (sections === 'datos') {
+      finish([]);
+      return;
+    }
+
+    this.exporting.set(true);
+    this.observationsService.getByPersonId(record.personId).subscribe({
+      next: (observations) => finish(observations),
+      error: () => {
+        this.exporting.set(false);
+        this.errorMessage.set('No se pudieron cargar las observaciones para exportar la ficha.');
+      },
+    });
+  }
+
+  private logExport(personId: string, sections: ExportSections, format: 'pdf' | 'print'): void {
+    const user = this.authService.user();
+    if (!user) return;
+    this.exportLog.log({
+      personId,
+      sections,
+      format,
+      exportedById: user.id,
+      exportedByName: `${user.name} ${user.lastname}`.trim(),
+    });
   }
 
   handleLifeHistorySaved(event: { stage: LifeHistoryStage; text: string }): void {

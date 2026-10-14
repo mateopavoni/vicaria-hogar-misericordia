@@ -110,13 +110,15 @@
               Editar ficha
             </button>
 
-            <button
-              type="button"
-              (click)="exportRecord()"
-              class="no-print h-[34px] rounded-md bg-[#4167D9] px-4 text-[12px] font-semibold text-white hover:bg-[#3556C0]"
-            >
-              Exportar Ficha
-            </button>
+            @if (permissionService.hasPermission('fichas.export')) {
+              <button
+                type="button"
+                (click)="exportRecord()"
+                class="no-print h-[34px] rounded-md bg-[#4167D9] px-4 text-[12px] font-semibold text-white hover:bg-[#3556C0]"
+              >
+                Exportar Ficha
+              </button>
+            }
           </div>
 
           <div class="mt-3 sm:text-right break-all">
@@ -555,3 +557,13 @@
   }
 
 </div>
+
+@if (showExportModal()) {
+  <app-export-record-modal
+    (download)="downloadExport($event)"
+    (print)="printExport($event)"
+    (closed)="showExportModal.set(false)"
+  />
+}
+
+<app-record-export-print [doc]="exportDoc()" />
