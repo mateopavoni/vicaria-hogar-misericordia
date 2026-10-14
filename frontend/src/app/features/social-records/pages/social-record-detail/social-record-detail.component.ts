@@ -30,6 +30,7 @@ import { RecordExportPrintComponent } from '../../components/record-export-print
 import { RecordExportLogService } from '../../services/record-export-log.service';
 import { ExportSections, RecordExportDocument, buildExportFilename, buildRecordExport } from '../../utils/record-export.util';
 import { buildPdf } from '../../utils/simple-pdf.util';
+import { PersonAttachmentsComponent } from '../../../attachments/components/person-attachments/person-attachments.component';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
@@ -48,6 +49,7 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
     AttendanceHistoryComponent,
     MedicationSchemesComponent,
     ExportRecordModalComponent,
+    PersonAttachmentsComponent,
     RecordExportPrintComponent,
   ],
   templateUrl: './social-record-detail.component.html',

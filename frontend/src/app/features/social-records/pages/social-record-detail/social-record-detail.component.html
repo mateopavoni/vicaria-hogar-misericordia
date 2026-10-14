@@ -261,14 +261,21 @@
           Evaluaciones
         </button>
 
-        <!-- DOCUMENTOS -->
+        <!-- DOCUMENTOS (SCRUM-256) -->
+        @if (permissionService.hasPermission('adjuntos.view')) {
         <button
           type="button"
           (click)="selectTab('documentos')"
-          class="flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold text-slate-500 hover:text-[#4167D9]"
+          class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
+          [class.text-[#4167D9]]="activeTab() === 'documentos'"
+          [class.text-slate-500]="activeTab() !== 'documentos'"
         >
           Documentos
+          @if (activeTab() === 'documentos') {
+            <span class="absolute bottom-0 left-0 h-[2px] w-full bg-[#4167D9]"></span>
+          }
         </button>
+        }
 
       </div>
     </div>
@@ -510,6 +517,11 @@
           [personName]="person.firstName + ' ' + person.lastName"
           [isResident]="person.personType === PersonType.Resident"
         />
+      }
+
+      <!-- PESTAÑA: DOCUMENTOS (SCRUM-256) -->
+      @if (activeTab() === 'documentos' && permissionService.hasPermission('adjuntos.view')) {
+        <app-person-attachments [personId]="person.personId" />
       }
 
       <!-- PESTAÑA: HISTORIA DE VIDA -->
