@@ -30,6 +30,8 @@ public class VicariaDbContext : DbContext
     public DbSet<PersonalCalendarEvent> PersonalCalendarEvents => Set<PersonalCalendarEvent>();
     public DbSet<CasonaVisit> CasonaVisits => Set<CasonaVisit>();
     public DbSet<Collaborator> Collaborators => Set<Collaborator>();
+    public DbSet<MedicationCatalog> MedicationCatalogs => Set<MedicationCatalog>();
+    public DbSet<MedicationScheme> MedicationSchemes => Set<MedicationScheme>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
