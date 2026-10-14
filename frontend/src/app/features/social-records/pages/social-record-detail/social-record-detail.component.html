@@ -23,15 +23,7 @@
   @else if (record(); as person) {
 
     <!-- VOLVER -->
-    <div class="mb-5">
-      <a
-        routerLink="/dashboard/fichas"
-        class="inline-flex items-center gap-2 text-[13px] font-medium text-[#4167D9] hover:text-[#3155C7]"
-      >
-        <span class="text-lg">←</span>
-        Volver a Fichas
-      </a>
-    </div>
+    <ui-back-button to="/dashboard/fichas" label="Volver a Fichas" />
 
     @if (lifeHistoryError()) {
       <div class="mb-4 rounded-lg bg-red-50 px-5 py-3 text-[13px] font-semibold text-red-600" role="alert">
@@ -125,6 +117,7 @@
         <!-- ACCIONES -->
         <div class="flex flex-col sm:items-end">
           <div class="flex flex-wrap items-center gap-3">
+            @if (permissionService.hasPermission('fichas.edit')) {
             <button
               type="button"
               [routerLink]="['/dashboard/fichas', person.id, 'edit']"
@@ -132,6 +125,7 @@
             >
               Editar ficha
             </button>
+            }
 
             @if (permissionService.hasPermission('fichas.export')) {
               <button
@@ -229,6 +223,7 @@
           }
         </button>
 
+        @if (permissionService.hasPermission('historia.view')) {
         <!-- HISTORIA -->
         <button
           type="button"
@@ -242,6 +237,7 @@
             <span class="absolute bottom-0 left-0 h-[2px] w-full bg-[#4167D9]"></span>
           }
         </button>
+        }
 
         <!-- ASISTENCIA -->
         @if (permissionService.hasPermission('asistencia.view')) {
@@ -499,6 +495,7 @@
         <!-- ACCIONES DE EGRESO / INGRESO -->
         <div class="mb-4 mt-4 flex justify-end gap-3">
           @if (hasActiveStay()) {
+            @if (permissionService.hasPermission('estadias.exit')) {
             <button
               type="button"
               (click)="openExitModal()"
@@ -506,7 +503,8 @@
             >
               Registrar Egreso de Casa de Convivencia
             </button>
-          } @else {
+            }
+          } @else if (permissionService.hasPermission('estadias.entry')) {
             @if (entryBlocked()) {
               <p class="self-center text-[12px] font-semibold text-red-600" role="alert">
                 Ingreso bloqueado: la evaluación psiquiátrica está vencida. Cargá una nueva en la pestaña Evaluaciones.
@@ -605,8 +603,9 @@
       }
 
       <!-- PESTAÑA: HISTORIA DE VIDA -->
-      @if (activeTab() === 'historia') {
+      @if (activeTab() === 'historia' && permissionService.hasPermission('historia.view')) {
         <app-life-history
+          [canEdit]="permissionService.hasPermission('historia.edit')"
           [history]="lifeHistory()"
           (historySaved)="handleLifeHistorySaved($event)"
         />

@@ -5,6 +5,9 @@ import { BackendUser, LoginErrorBody, LoginErrorType, LoginRequest, LoginRespons
 import { Router } from '@angular/router';
 import { UserRole } from './userRole';
 
+/** Evento de window que dispara el interceptor al renovar el token. */
+export const TOKEN_REFRESHED_EVENT = 'vicaria:token-refreshed';
+
 // forma cruda que devuelve el backend en /api/auth/login y /api/auth/refresh
 interface BackendLoginResponse {
   token: string;
@@ -20,6 +23,36 @@ export class AuthService {
   // al crear el service (o sea, al arrancar la app / recargar la página) tratamos
   // de recuperar la sesión leyendo el token guardado, así no te desloguea al refrescar
   public user = signal<User | null>(this.loadUserFromToken());
+
+  constructor() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    // el token vive en localStorage, que comparten todas las pestañas: si en otra pestaña se
+    // entra con otra cuenta (o se renueva el token), esta pestaña tiene que tomar ese usuario y
+    // ese rol en vez de seguir mostrando el anterior
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'token' || event.key === null) {
+        this.syncUserFromStorage();
+      }
+    });
+    // el interceptor avisa así cuando renueva el token (no puede inyectar este service sin ciclo)
+    window.addEventListener(TOKEN_REFRESHED_EVENT, () => this.syncUserFromStorage());
+  }
+
+  /** Vuelve a leer el usuario y el rol del token guardado. */
+  syncUserFromStorage(): void {
+    const fromToken = this.loadUserFromToken();
+    const current = this.user();
+    if (fromToken?.id === current?.id && fromToken?.role === current?.role) {
+      return;
+    }
+    this.user.set(fromToken);
+    // se cerró la sesión en otra pestaña
+    if (!fromToken && current) {
+      this.router.navigate(['/auth/login']);
+    }
+  }
 
   private loadUserFromToken(): User | null {
     const token = localStorage.getItem('token');

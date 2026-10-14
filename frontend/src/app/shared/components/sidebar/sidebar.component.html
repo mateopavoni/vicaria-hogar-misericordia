@@ -152,31 +152,6 @@
     </a>
     }
 
-    <!-- Stock de medicamentos (SCRUM-246): separado del stock de ropa -->
-    @if (permissionService.hasPermission('medicamentos.stock')) {
-    <a
-      routerLink="/dashboard/medicacion/stock"
-      routerLinkActive="bg-indigo-100 text-indigo-500"
-      (click)="closeOnMobile()"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
-            border border-transparent
-            px-6 text-sm font-semibold text-slate-700
-            transition-all duration-200
-            hover:border-[#B8C8FA]
-            hover:bg-[#F5F7FF]
-            hover:text-[#6689F5]"
-    >
-      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
-        <path d="m3.3 7 8.7 5 8.7-5"></path>
-        <path d="M12 22V12"></path>
-      </svg>
-
-      <span>Stock de medicamentos</span>
-    </a>
-    }
-
     <!-- Calendario -->
     @if (permissionService.hasPermission('calendario.view')) {
     <a
@@ -205,6 +180,63 @@
       </svg>
 
       <span>Calendario</span>
+    </a>
+    }
+
+    <!-- Usuarios -->
+     @if (permissionService.hasPermission('users.view')) {
+
+    <a
+      routerLink="/dashboard/users"
+      routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
+            border border-transparent
+            px-6 text-sm font-semibold text-slate-700
+            transition-all duration-200
+            hover:border-[#B8C8FA]
+            hover:bg-[#F5F7FF]
+            hover:text-[#6689F5]"
+    >
+      <svg
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+
+      <span>Usuarios</span>
+    </a>
+  }
+
+    <!-- Categorías de observaciones (SCRUM-180) -->
+    @if (permissionService.hasPermission('categorias.manage')) {
+    <a
+      routerLink="/dashboard/configuracion/categorias"
+      routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
+            border border-transparent
+            px-6 text-sm font-semibold text-slate-700
+            transition-all duration-200
+            hover:border-[#B8C8FA]
+            hover:bg-[#F5F7FF]
+            hover:text-[#6689F5]"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"></path>
+        <circle cx="7.5" cy="7.5" r="1.5"></circle>
+      </svg>
+
+      <span>Categorías</span>
     </a>
     }
 
@@ -265,63 +297,6 @@
       <span>Informe Cáritas</span>
     </a>
     }
-
-    <!-- Categorías de observaciones (SCRUM-180) -->
-    @if (permissionService.hasPermission('categorias.manage')) {
-    <a
-      routerLink="/dashboard/configuracion/categorias"
-      routerLinkActive="bg-indigo-100 text-indigo-500"
-      (click)="closeOnMobile()"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
-            border border-transparent
-            px-6 text-sm font-semibold text-slate-700
-            transition-all duration-200
-            hover:border-[#B8C8FA]
-            hover:bg-[#F5F7FF]
-            hover:text-[#6689F5]"
-    >
-      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"></path>
-        <circle cx="7.5" cy="7.5" r="1.5"></circle>
-      </svg>
-
-      <span>Categorías</span>
-    </a>
-    }
-
-    <!-- Usuarios -->
-     @if (isReferente()) {
-
-    <a
-      routerLink="/dashboard/users"
-      routerLinkActive="bg-indigo-100 text-indigo-500"
-      (click)="closeOnMobile()"
-      [routerLinkActiveOptions]="{ exact: true }"
-      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
-            border border-transparent
-            px-6 text-sm font-semibold text-slate-700
-            transition-all duration-200
-            hover:border-[#B8C8FA]
-            hover:bg-[#F5F7FF]
-            hover:text-[#6689F5]"
-    >
-      <svg
-        class="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-      >
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-
-      <span>Usuarios</span>
-    </a>
-  }
 
     <!-- Respaldos (SCRUM-267) -->
     @if (permissionService.hasPermission('configuracion.respaldos')) {

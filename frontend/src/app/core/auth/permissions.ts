@@ -57,7 +57,13 @@ export type Permission =
   // SCRUM-275: configurar los valores de los campos del informe de Cáritas, solo Referente
   | 'informes.config'
   // SCRUM-180: gestionar categorías de observaciones, solo Referente (Escucha no accede)
-  | 'categorias.manage';
+  | 'categorias.manage'
+  // historia de vida: ver (Referente, Directora, Escucha: lo que autoriza el backend) y editar (solo Referente)
+  | 'historia.view'
+  | 'historia.edit'
+  // estadías de la Casa de Convivencia: marcar ingreso (Referente y Directora) y registrar egreso (solo Referente)
+  | 'estadias.entry'
+  | 'estadias.exit';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -123,13 +129,18 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'configuracion.respaldos',
     'informes.caritas',
     'informes.config',
-    'categorias.manage'
+    'categorias.manage',
+    'historia.view',
+    'historia.edit',
+    'estadias.entry',
+    'estadias.exit'
   ],
 
 
   Escucha: [
 
     'fichas.view',
+    'historia.view',
 
     'observaciones.view',
     'observaciones.create',
@@ -147,6 +158,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
      // Fichas Casa de Convivencia
     'fichas.view',
+    'historia.view',
+    'estadias.entry',
     'fichas.create',
     'fichas.edit',
     'adjuntos.view',

@@ -1,6 +1,7 @@
 import { extractApiError } from '../../../../core/http/api-error';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { UiBackButtonComponent } from '../../../../shared/ui';
 import { DatePipe } from '@angular/common';
 import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
@@ -47,6 +48,7 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
   selector: 'app-social-record-detail',
   imports: [
     RouterLink,
+    UiBackButtonComponent,
     DatePipe,
     EmptyFieldBadgeComponent,
     ChangeHistoryComponent,

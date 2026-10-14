@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRe
 import { inject } from '@angular/core';
 import { Observable, catchError, finalize, map, shareReplay, switchMap, tap, throwError } from 'rxjs';
 
-import { AuthService } from './auth.service';
+import { AuthService, TOKEN_REFRESHED_EVENT } from './auth.service';
 import { SESSION_NOTICE_KEY } from './idle-timeout.service';
 
 interface RefreshResponse {
@@ -51,6 +51,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         tap(res => {
           localStorage.setItem('token', res.token);
           localStorage.setItem('refreshToken', res.refreshToken);
+          // que el usuario y el rol que se muestran sigan al token nuevo (ej. si le cambiaron el rol)
+          window.dispatchEvent(new Event(TOKEN_REFRESHED_EVENT));
         }),
         map(res => res.token),
         finalize(() => (refreshInFlight = null)),

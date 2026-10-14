@@ -1,5 +1,4 @@
 import { Component, computed, inject } from '@angular/core';
-import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { MedicationAgendaShortcutComponent } from '../../../medication/components/medication-agenda-shortcut/medication-agenda-shortcut.component';
 import { AttendanceStatsPanelComponent } from '../../../attendance/components/attendance-stats-panel/attendance-stats-panel.component';
@@ -15,8 +14,14 @@ import { AttendanceStatsPanelComponent } from '../../../attendance/components/at
   template: `
     <div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
       <div class="mb-5">
-        <h1 class="text-[26px] font-bold text-slate-900">Inicio</h1>
-        <p class="mt-1 text-[14px] text-slate-500">Hola, {{ firstName() }}.</p>
+        <div class="flex items-center gap-3">
+          <svg class="h-7 w-7 text-[#4167D9]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m3 10 9-8 9 8"></path>
+            <path d="M5 10v10h14V10"></path>
+            <path d="M9 20v-6h6v6"></path>
+          </svg>
+          <h1 class="text-[26px] font-bold text-slate-900">Inicio</h1>
+        </div>
       </div>
 
       @if (canSeeMedication()) {
@@ -30,10 +35,8 @@ import { AttendanceStatsPanelComponent } from '../../../attendance/components/at
   `,
 })
 export class HomeComponent {
-  private authService = inject(AuthService);
   private permissionService = inject(PermissionService);
 
-  firstName = computed(() => this.authService.user()?.name ?? '');
   canSeeMedication = computed(() => this.permissionService.hasPermission('medicamentos.view'));
   canSeeStats = computed(() => this.permissionService.hasPermission('asistencia.stats'));
 }

@@ -2,13 +2,14 @@ import { SensitiveContentNoticeComponent } from '../../../../shared/components/s
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { UiBackButtonComponent } from '../../../../shared/ui';
 import { ReportFieldsSelectComponent } from '../../../report-fields/components/report-fields-select/report-fields-select.component';
 import { PersonReportData } from '../../../report-fields/interfaces/report-fields.interface';
 import {  CreateSocialRecordRequest, SocialRecordDetail, PersonType, PersonStatus} from '../../interfaces/social-record.interface';
 
 @Component({
   selector: 'app-social-record-form',
-  imports: [ReactiveFormsModule, RouterLink, SensitiveContentNoticeComponent, ReportFieldsSelectComponent],
+  imports: [ReactiveFormsModule, RouterLink, UiBackButtonComponent, SensitiveContentNoticeComponent, ReportFieldsSelectComponent],
   templateUrl: './social-record-form.component.html',
   styleUrl: './social-record-form.component.css'
 })
