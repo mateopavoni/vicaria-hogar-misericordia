@@ -2,7 +2,7 @@
 
 Parte A (manuales): secciones nuevas al final de la Parte A, antes del título de la Parte B.
 Parte B (automatizados): sección del Sprint 3 al final del documento.
-El Sprint 4 no tiene desarrollo todavía, por eso solo tiene casos manuales.
+El Sprint 4 suma casos manuales y los automatizados del esquema de medicación (SCRUM-232).
 
 Uso: python docs/qa/update_docx_plan.py <docx de entrada> <docx de salida>
 Los formatos replican el XML que ya usa el documento (tabla de título, ficha y pasos).
@@ -125,7 +125,7 @@ def main():
     for t in tests:
         k += 1
         if t["module"] != last_module:
-            part_b += heading2(f"Sprint 3 — Pruebas automatizadas — {t['module']}")
+            part_b += heading2(f"{t['sprint']} — Pruebas automatizadas — {t['module']}")
             last_module = t["module"]
         tc = by_method.get(t["method"])
         pre = "API levantada con WebApplicationFactory." if t["proj"].endswith("IntegrationTests") else "Servicio con DbContext InMemory."
@@ -151,7 +151,7 @@ def main():
             data = xml.encode("utf8") if item.filename == "word/document.xml" else zin.read(item.filename)
             zout.writestr(item, data)
     tmp.replace(dst)
-    print(f"{dst} — Parte A: +{len(s3)} (Sprint 3) +{n - last_tc} (Sprint 4) | Parte B: +{len(tests)} (Sprint 3)")
+    print(f"{dst} — Parte A: +{len(s3)} (Sprint 3) +{n - last_tc} (Sprint 4) | Parte B: +{len(tests)} (Sprint 3 y 4)")
 
 
 if __name__ == "__main__":

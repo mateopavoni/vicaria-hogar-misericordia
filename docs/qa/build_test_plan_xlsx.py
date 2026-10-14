@@ -32,8 +32,12 @@ W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 # fechas de ejecución registradas
 DATE_S12_MANUAL = "2026-10-06"   # QA manual de los 40 TC (todos OK)
 DATE_S3_UI = "2026-10-08"        # QA de UI Sprint 3
-DATE_RERUN = "2026-10-12"        # re-ejecución de las suites automatizadas (backend y frontend)
+DATE_RERUN = "2026-10-14"        # re-ejecución de las suites automatizadas (backend y frontend)
 RUNNER = "Mateo Pavoni"
+
+SPRINT4_NOTES = {
+    "SCRUM-59": "Backend (SCRUM-232) cubierto por tests automatizados; falta probar el formulario de punta a punta: hoy usa datos simulados.",
+}
 
 STORY_OF = {"190": "16", "195": "17", "200": "18", "205": "19", "211": "74", "212": "74", "17": "17"}
 
@@ -135,6 +139,7 @@ AREAS = [
     ("CalendarEvents/CalendarEvent", "SCRUM-15 / SCRUM-16", "Calendario general"),
     ("Collaborators/", "SCRUM-18 / SCRUM-19", "Colaboradores"),
     ("CasonaVisits/", "SCRUM-74", "Visitas de la Casa de Convivencia"),
+    ("MedicationSchemes/", "SCRUM-59", "Esquema de medicación"),
 ]
 
 
@@ -155,8 +160,10 @@ def parse_sprint3_tests():
                 name = m.group(1)
                 human = re.sub(r"_", " · ", name)
                 rows.append({"proj": proj, "cls": cls.group(1), "method": name, "jira": area[0],
-                             "module": area[1], "human": human})
-    return rows
+                             "module": area[1], "human": human,
+                             "sprint": "Sprint 4" if area[0] == "SCRUM-59" else "Sprint 3"})
+    # Sprint 4 al final para no renumerar los TA del Sprint 3
+    return sorted(rows, key=lambda r: r["sprint"])
 
 
 # ---------------------------------------------------------------- Excel
@@ -234,7 +241,7 @@ def main():
             next_id += 1
             ws.append([s4[-1][0], "Sprint 4", f"{module} ({jira})", title, desc, pre, jira,
                        "\n".join(f"{i}. {p}  →  {e}" for i, (p, _d, e) in enumerate(steps, 1)), "",
-                       "Pendiente", "", "", "Sin desarrollo todavía (Sprint 4 activo desde 2026-10-09)."])
+                       "Pendiente", "", "", SPRINT4_NOTES.get(jira, "Sin desarrollo todavía (Sprint 4 activo desde 2026-10-09).")])
     style_sheet(ws, [9, 11, 34, 44, 44, 38, 16, 70, 46, 12, 14, 18, 36])
     add_state_validation(ws, "J")
     manual_rows = ws.max_row
@@ -275,7 +282,7 @@ def main():
             pre = "API levantada con WebApplicationFactory." if t["proj"].endswith("IntegrationTests") else "Servicio con DbContext InMemory."
             steps = ""
             jira = t["jira"]
-        wb_.append([f"TA-{n:03d}", "Sprint 3", t["module"], title, desc, pre, jira, steps,
+        wb_.append([f"TA-{n:03d}", t["sprint"], t["module"], title, desc, pre, jira, steps,
                     f"{t['proj']} › {t['cls']} › {t['method']}", auto_state, DATE_RERUN, "Suite automatizada"])
     style_sheet(wb_, [9, 11, 34, 50, 44, 34, 18, 60, 70, 12, 14, 18])
     add_state_validation(wb_, "J")
@@ -309,6 +316,7 @@ def main():
     count_row("Manuales (TC)", "Sprint 4", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 1-2", "Parte B - Automatizados", auto_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 3", "Parte B - Automatizados", auto_rows, "B", "J")
+    count_row("Automatizados (TA)", "Sprint 4", "Parte B - Automatizados", auto_rows, "B", "J")
     first, last = hr + 1, wr.max_row
     wr.append(["Total", "", *[f"=SUM({get_column_letter(i)}{first}:{get_column_letter(i)}{last})" for i in range(3, 8)]])
     for row in wr.iter_rows(min_row=hr + 1, max_row=wr.max_row):
@@ -318,11 +326,11 @@ def main():
         c.font = Font(bold=True)
 
     wr.append([])
-    wr.append(["Última ejecución (2026-10-12, rama dev)"])
+    wr.append(["Última ejecución (2026-10-14, rama dev con el trabajo de Sprint 4 integrado)"])
     wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
     for line in [
-        "Backend: 246 pruebas unitarias y 240 de integración, todas OK.",
-        "Frontend: 20 archivos / 51 pruebas y build de producción, OK.",
+        "Backend: 259 pruebas unitarias y 248 de integración, todas OK (incluye el endpoint de esquema de medicación, SCRUM-232).",
+        "Frontend: 29 archivos / 120 pruebas y build de producción, OK (incluye asistencia y medicación de Sprint 4, que usan datos simulados).",
         "UI en navegador real (Playwright): 33 de 33 verificaciones OK el 2026-10-09; no se volvió a correr el 2026-10-12 (necesita el stack completo).",
         "Prueba de humo por rol (Referente, Directora, Escucha, Coordinador): 11 de 15 pantallas OK; las 4 restantes son /inicio (ver Defectos y pendientes).",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK el 2026-10-06.",
