@@ -19,43 +19,50 @@ describe('MedicationStockService', () => {
     service = new MedicationStockService();
   });
 
-  it('registra un ingreso y suma al stock', (done) => {
-    service.registerEntry(entry(), actor).subscribe((item) => {
-      expect(item.quantity).toBe(50);
-      done();
-    });
-  });
+  it('registra un ingreso y suma al stock', () =>
+    new Promise<void>((done) => {
+      service.registerEntry(entry(), actor).subscribe((item) => {
+        expect(item.quantity).toBe(50);
+        done();
+      });
+    }));
 
-  it('exige cantidad entera mayor a 0, proveedor y vencimiento no pasado', (done) => {
-    service.registerEntry(entry({ quantity: 0 }), actor).subscribe({
-      error: (e1) => {
-        expect(e1.error.message).toContain('cantidad');
-        service.registerEntry(entry({ supplier: '  ' }), actor).subscribe({
-          error: (e2) => {
-            expect(e2.error.message).toContain('proveedor');
-            service.registerEntry(entry({ expirationDate: '2020-01-01' }), actor).subscribe({
-              error: (e3) => {
-                expect(e3.error.message).toContain('anterior a hoy');
+  it('exige cantidad entera mayor a 0, proveedor y vencimiento no pasado', () =>
+    new Promise<void>((done) => {
+      service.registerEntry(entry({ quantity: 0 }), actor).subscribe({
+        error: (e1) => {
+          expect(e1.error.message).toContain('cantidad');
+          service.registerEntry(entry({ supplier: '  ' }), actor).subscribe({
+            error: (e2) => {
+              expect(e2.error.message).toContain('proveedor');
+              service.registerEntry(entry({ expirationDate: '2020-01-01' }), actor).subscribe({
+                error: (e3) => {
+                  expect(e3.error.message).toContain('anterior a hoy');
+                  done();
+                },
+              });
+            },
+          });
+        },
+      });
+    }));
+
+  it('permite dar de alta un medicamento nuevo y rechaza duplicados', () =>
+    new Promise<void>((done) => {
+      service
+        .registerEntry(entry({ medicationId: null, newName: 'Medicamento nuevo' }), actor)
+        .subscribe((item) => {
+          expect(item.quantity).toBe(10);
+          service
+            .registerEntry(entry({ medicationId: null, newName: 'medicamento NUEVO' }), actor)
+            .subscribe({
+              error: (err) => {
+                expect(err.error.message).toContain('Ya existe');
                 done();
               },
             });
-          },
         });
-      },
-    });
-  });
-
-  it('permite dar de alta un medicamento nuevo y rechaza duplicados', (done) => {
-    service.registerEntry(entry({ medicationId: null, newName: 'Medicamento nuevo' }), actor).subscribe((item) => {
-      expect(item.quantity).toBe(10);
-      service.registerEntry(entry({ medicationId: null, newName: 'medicamento NUEVO' }), actor).subscribe({
-        error: (err) => {
-          expect(err.error.message).toContain('Ya existe');
-          done();
-        },
-      });
-    });
-  });
+    }));
 
   it('consume descuenta una unidad una sola vez por toma y restore la devuelve', () => {
     service.consume('med-1', 's1|' + today, today, actor);
@@ -72,25 +79,27 @@ describe('MedicationStockService', () => {
     expect(service.quantityOf('med-3')).toBe(0);
   });
 
-  it('guarda el historial de movimientos con ingresos y consumos', (done) => {
-    service.consume('med-1', 's1|' + today, today, actor);
-    service.getMovements('med-1').subscribe((movs) => {
-      expect(movs.map((m) => m.type)).toEqual(['consumption', 'entry']);
-      expect(movs[0].quantity).toBe(-1);
-      expect(movs[0].balanceAfter).toBe(39);
-      expect(movs[1].supplier).toBeTruthy();
-      done();
-    });
-  });
+  it('guarda el historial de movimientos con ingresos y consumos', () =>
+    new Promise<void>((done) => {
+      service.consume('med-1', 's1|' + today, today, actor);
+      service.getMovements('med-1').subscribe((movs) => {
+        expect(movs.map((m) => m.type)).toEqual(['consumption', 'entry']);
+        expect(movs[0].quantity).toBe(-1);
+        expect(movs[0].balanceAfter).toBe(39);
+        expect(movs[1].supplier).toBeTruthy();
+        done();
+      });
+    }));
 
-  it('valida el umbral', (done) => {
-    service.setThreshold('med-1', -1).subscribe({
-      error: () => {
-        service.setThreshold('med-1', 20).subscribe((item) => {
-          expect(item.lowStockThreshold).toBe(20);
-          done();
-        });
-      },
-    });
-  });
+  it('valida el umbral', () =>
+    new Promise<void>((done) => {
+      service.setThreshold('med-1', -1).subscribe({
+        error: () => {
+          service.setThreshold('med-1', 20).subscribe((item) => {
+            expect(item.lowStockThreshold).toBe(20);
+            done();
+          });
+        },
+      });
+    }));
 });

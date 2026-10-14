@@ -22,7 +22,9 @@ describe('AttendanceActivitiesService', () => {
   beforeEach(() => {
     calendarEvents = [];
     TestBed.configureTestingModule({
-      providers: [{ provide: CalendarEventsService, useValue: { getByRange: () => of(calendarEvents) } }],
+      providers: [
+        { provide: CalendarEventsService, useValue: { getByRange: () => of(calendarEvents) } },
+      ],
     });
     service = TestBed.inject(AttendanceActivitiesService);
   });
@@ -34,46 +36,52 @@ describe('AttendanceActivitiesService', () => {
 
   it('no deja desactivar las actividades fijas', () => {
     const result = service.setActive('casa-convivencia', false);
-    expect(result.ok).toBeFalse();
+    expect(result.ok).toBe(false);
     expect(service.active().length).toBe(2);
   });
 
   it('crea una actividad propia del Hogar de día y la puede desactivar y reactivar', () => {
     const created = service.create('  Taller   de costura ');
-    expect(created.ok).toBeTrue();
+    expect(created.ok).toBe(true);
     const id = created.ok ? created.activity.id : '';
     expect(service.name(id)).toBe('Taller de costura');
 
     service.setActive(id, false);
-    expect(service.active().some((a) => a.id === id)).toBeFalse();
+    expect(service.active().some((a) => a.id === id)).toBe(false);
     service.setActive(id, true);
-    expect(service.active().some((a) => a.id === id)).toBeTrue();
+    expect(service.active().some((a) => a.id === id)).toBe(true);
   });
 
   it('rechaza nombres cortos, largos o repetidos', () => {
-    expect(service.create('ab').ok).toBeFalse();
-    expect(service.create('x'.repeat(61)).ok).toBeFalse();
+    expect(service.create('ab').ok).toBe(false);
+    expect(service.create('x'.repeat(61)).ok).toBe(false);
     service.create('Taller de costura');
-    expect(service.create('taller DE costura').ok).toBeFalse();
-    expect(service.create('hogar de día').ok).toBeFalse();
+    expect(service.create('taller DE costura').ok).toBe(false);
+    expect(service.create('hogar de día').ok).toBe(false);
   });
 
-  it('sincroniza las actividades recurrentes del calendario sin duplicarlas', (done) => {
-    calendarEvents = [
-      event('Desayuno', { isRecurring: true }),
-      event('Desayuno', { isRecurring: true }), // misma serie, otro día
-      event('Taller de música', { recurrence: 'weekly' }),
-      event('Reunión de equipo', { recurrence: 'none' }), // evento puntual: no es una actividad
-    ];
+  it('sincroniza las actividades recurrentes del calendario sin duplicarlas', () =>
+    new Promise<void>((done) => {
+      calendarEvents = [
+        event('Desayuno', { isRecurring: true }),
+        event('Desayuno', { isRecurring: true }), // misma serie, otro día
+        event('Taller de música', { recurrence: 'weekly' }),
+        event('Reunión de equipo', { recurrence: 'none' }), // evento puntual: no es una actividad
+      ];
 
-    service.syncFromCalendar().subscribe((added) => {
-      expect(added).toBe(2);
-      expect(service.all().filter((a) => a.source === 'calendar').map((a) => a.name)).toEqual(['Desayuno', 'Taller de música']);
+      service.syncFromCalendar().subscribe((added) => {
+        expect(added).toBe(2);
+        expect(
+          service
+            .all()
+            .filter((a) => a.source === 'calendar')
+            .map((a) => a.name),
+        ).toEqual(['Desayuno', 'Taller de música']);
 
-      service.syncFromCalendar().subscribe((again) => {
-        expect(again).toBe(0);
-        done();
+        service.syncFromCalendar().subscribe((again) => {
+          expect(again).toBe(0);
+          done();
+        });
       });
-    });
-  });
+    }));
 });
