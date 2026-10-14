@@ -155,6 +155,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('configuracion.respaldos')]
       },
 
+      // SCRUM-271: informe estadístico para Cáritas, solo Referente
+      {
+        path: 'informes/caritas',
+        loadComponent: () =>
+          import('./features/caritas-report/pages/caritas-report/caritas-report.component')
+            .then(m => m.CaritasReportComponent),
+        canActivate: [permissionGuard('informes.caritas')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',
