@@ -31,6 +31,9 @@ import { RecordExportLogService } from '../../services/record-export-log.service
 import { ExportSections, RecordExportDocument, buildExportFilename, buildRecordExport } from '../../utils/record-export.util';
 import { buildPdf } from '../../utils/simple-pdf.util';
 import { PersonAttachmentsComponent } from '../../../attachments/components/person-attachments/person-attachments.component';
+import { PsychiatricEvaluationsComponent } from '../../../psychiatric-evaluations/components/psychiatric-evaluations/psychiatric-evaluations.component';
+import { PsychiatricEvaluationsService } from '../../../psychiatric-evaluations/services/psychiatric-evaluations.service';
+import { daysUntilExpiry, evaluationValidity } from '../../../psychiatric-evaluations/utils/evaluation-validity.util';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
@@ -50,6 +53,7 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
     MedicationSchemesComponent,
     ExportRecordModalComponent,
     PersonAttachmentsComponent,
+    PsychiatricEvaluationsComponent,
     RecordExportPrintComponent,
   ],
   templateUrl: './social-record-detail.component.html',
@@ -68,6 +72,7 @@ export class SocialRecordDetailComponent implements OnInit {
   private attendanceService = inject(AttendanceService);
   private authService = inject(AuthService);
   private exportLog = inject(RecordExportLogService);
+  private evaluationsService = inject(PsychiatricEvaluationsService);
 
   record = signal<SocialRecordDetail | null>(null);
   loading = signal(true);
@@ -81,6 +86,22 @@ export class SocialRecordDetailComponent implements OnInit {
   attendanceHistory = signal<AttendanceHistoryEntry[]>([]);
   attendanceStats = computed(() => computeAttendanceStats(this.attendanceHistory(), todayLocalIso()));
   hasAbsenceAlert = computed(() => isAbsenceAlert(this.attendanceStats()));
+
+  // SCRUM-260: evaluación psiquiátrica vigente y su vigencia (vence a los 6 meses)
+  currentEvaluation = computed(() => {
+    const personId = this.record()?.personId;
+    return personId ? this.evaluationsService.currentFor(personId) : null;
+  });
+  evaluationValidity = computed(() => {
+    const evaluation = this.currentEvaluation();
+    return evaluation ? evaluationValidity(evaluation.date, todayLocalIso()) : null;
+  });
+  evaluationDaysLeft = computed(() => {
+    const evaluation = this.currentEvaluation();
+    return evaluation ? daysUntilExpiry(evaluation.date, todayLocalIso()) : 0;
+  });
+  // evaluación vencida: se bloquea el ingreso a la Casa de Convivencia
+  entryBlocked = computed(() => this.evaluationValidity() === 'expired');
 
   showExitModal = signal(false);
   showEntryModal = signal(false);
@@ -98,6 +119,9 @@ export class SocialRecordDetailComponent implements OnInit {
   }
 
   openEntryModal(): void {
+    if (this.entryBlocked()) {
+      return;
+    }
     this.showEntryModal.set(true);
   }
 
@@ -105,7 +129,7 @@ export class SocialRecordDetailComponent implements OnInit {
   // la fecha que carga el modal no se usa: el backend siempre registra el ingreso "ahora" (SCRUM-141)
   handleEntryConfirm(_data?: RegisterEntrySubmitData): void {
     const personId = this.record()?.personId;
-    if (!personId) {
+    if (!personId || this.entryBlocked()) {
       return;
     }
 

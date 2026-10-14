@@ -194,6 +194,13 @@ describe('MedicationService', () => {
       expect(scheme.id).toBeTruthy();
     });
 
+    it('con una evaluación vigente cargada permite cargar aunque no sea Residente', async () => {
+      const scheme = await create({}, false, today);
+      expect(scheme.id).toBeTruthy();
+      const status = await firstValueFrom(service.getEvaluationStatus('p1', false, today));
+      expect(status.valid).toBe(true);
+    });
+
     it('el estado de la evaluación informa si está vencida', async () => {
       const status = await firstValueFrom(service.getEvaluationStatus('p1', true, '2020-01-01'));
       expect(status.valid).toBe(false);

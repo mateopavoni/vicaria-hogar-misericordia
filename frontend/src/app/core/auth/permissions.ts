@@ -6,6 +6,9 @@ export type Permission =
   | 'fichas.edit'
   // SCRUM-253: exportar / imprimir la ficha completa, solo Referente
   | 'fichas.export'
+  // SCRUM-260: evaluación psiquiátrica (ver y cargar), Referente y Directora
+  | 'evaluaciones.view'
+  | 'evaluaciones.create'
   // SCRUM-256: documentos adjuntos de la ficha; eliminar es solo del Referente
   | 'adjuntos.view'
   | 'adjuntos.create'
@@ -60,6 +63,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.export',
     'adjuntos.view',
     'adjuntos.create',
+    'evaluaciones.view',
+    'evaluaciones.create',
     'adjuntos.delete',
 
     // Observaciones
@@ -134,6 +139,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.edit',
     'adjuntos.view',
     'adjuntos.create',
+    'evaluaciones.view',
+    'evaluaciones.create',
 
     // Observaciones Casa de Convivencia
     'observaciones.view',

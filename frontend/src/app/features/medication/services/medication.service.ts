@@ -52,13 +52,15 @@ export class MedicationService {
   }
 
   /**
-   * `evaluatedAt` (YYYY-MM-DD) es la fecha de la última evaluación psiquiátrica, cuando el
-   * perfil la tenga. Hoy el frontend no la recibe del backend, así que suele venir null:
-   * en ese caso solo cuenta si la persona es Residente. Con fecha, pasados 6 meses vence.
+   * `evaluatedAt` (YYYY-MM-DD) es la fecha de la evaluación psiquiátrica vigente (la carga el
+   * perfil, ver PsychiatricEvaluationsService). Sin evaluación cargada en el frontend solo cuenta
+   * si la persona es Residente. Con fecha, pasados 6 meses vence.
    */
   getEvaluationStatus(_personId: string, isResident: boolean, evaluatedAt: string | null = null): Observable<PsychiatricEvaluationStatus> {
     const expired = !!evaluatedAt && isEvaluationExpired(evaluatedAt, todayLocalIso());
-    return of({ valid: isResident && !expired, evaluatedAt, expired }).pipe(delay(100));
+    // con una evaluación cargada manda su fecha; sin ella se asume vigente solo para Residentes
+    const valid = evaluatedAt ? !expired : isResident;
+    return of({ valid, evaluatedAt, expired }).pipe(delay(100));
   }
 
   getSchemes(personId: string): Observable<MedicationScheme[]> {
@@ -78,7 +80,7 @@ export class MedicationService {
     if (evaluatedAt && isEvaluationExpired(evaluatedAt, todayLocalIso())) {
       return this.fail('No se puede cargar medicación: la evaluación psiquiátrica venció (pasaron más de 6 meses).');
     }
-    if (!isResident) {
+    if (!evaluatedAt && !isResident) {
       return this.fail('No se puede cargar medicación: la persona no tiene una evaluación psiquiátrica vigente.');
     }
 
