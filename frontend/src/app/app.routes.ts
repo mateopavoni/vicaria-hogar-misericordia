@@ -173,6 +173,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('informes.config')]
       },
 
+      // SCRUM-180: categorías de observaciones, solo Referente
+      {
+        path: 'configuracion/categorias',
+        loadComponent: () =>
+          import('./features/observation-categories/pages/observation-categories/observation-categories.component')
+            .then(m => m.ObservationCategoriesComponent),
+        canActivate: [permissionGuard('categorias.manage')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

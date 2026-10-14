@@ -55,7 +55,9 @@ export type Permission =
   // SCRUM-271: informe estadístico para Cáritas, solo Referente
   | 'informes.caritas'
   // SCRUM-275: configurar los valores de los campos del informe de Cáritas, solo Referente
-  | 'informes.config';
+  | 'informes.config'
+  // SCRUM-180: gestionar categorías de observaciones, solo Referente (Escucha no accede)
+  | 'categorias.manage';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -120,7 +122,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'asistencia.config',
     'configuracion.respaldos',
     'informes.caritas',
-    'informes.config'
+    'informes.config',
+    'categorias.manage'
   ],
 
 

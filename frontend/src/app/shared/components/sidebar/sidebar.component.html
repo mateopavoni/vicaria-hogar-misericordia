@@ -266,6 +266,30 @@
     </a>
     }
 
+    <!-- Categorías de observaciones (SCRUM-180) -->
+    @if (permissionService.hasPermission('categorias.manage')) {
+    <a
+      routerLink="/dashboard/configuracion/categorias"
+      routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
+            border border-transparent
+            px-6 text-sm font-semibold text-slate-700
+            transition-all duration-200
+            hover:border-[#B8C8FA]
+            hover:bg-[#F5F7FF]
+            hover:text-[#6689F5]"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"></path>
+        <circle cx="7.5" cy="7.5" r="1.5"></circle>
+      </svg>
+
+      <span>Categorías</span>
+    </a>
+    }
+
     <!-- Usuarios -->
      @if (isReferente()) {
 
