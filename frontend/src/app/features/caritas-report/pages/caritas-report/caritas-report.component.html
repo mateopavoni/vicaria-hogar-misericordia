@@ -1,10 +1,20 @@
 <div class="no-print min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
 
-  <div class="mb-5">
-    <h1 class="text-[26px] font-bold text-slate-900">Informe estadístico para Cáritas</h1>
-    <p class="mt-1 text-[14px] text-slate-500">
-      Elegí el período y la fecha de corte para generar el informe trimestral o semestral de la rendición institucional.
-    </p>
+  <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="text-[26px] font-bold text-slate-900">Informe estadístico para Cáritas</h1>
+      <p class="mt-1 text-[14px] text-slate-500">
+        Elegí el período y la fecha de corte para generar el informe trimestral o semestral de la rendición institucional.
+      </p>
+    </div>
+    @if (permissionService.hasPermission('informes.config')) {
+      <a
+        routerLink="/dashboard/configuracion/campos-informe"
+        class="flex h-[38px] items-center rounded-lg border border-[#D5DDF3] bg-white px-4 text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Campos del informe
+      </a>
+    }
   </div>
 
   <!-- SELECTOR DE PERÍODO -->

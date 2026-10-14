@@ -2,11 +2,13 @@ import { SensitiveContentNoticeComponent } from '../../../../shared/components/s
 import { Component, effect, inject, input, output, signal } from '@angular/core';
 import {FormBuilder,ReactiveFormsModule,Validators} from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ReportFieldsSelectComponent } from '../../../report-fields/components/report-fields-select/report-fields-select.component';
+import { PersonReportData } from '../../../report-fields/interfaces/report-fields.interface';
 import {  CreateSocialRecordRequest, SocialRecordDetail, PersonType, PersonStatus} from '../../interfaces/social-record.interface';
 
 @Component({
   selector: 'app-social-record-form',
-  imports: [ReactiveFormsModule, RouterLink, SensitiveContentNoticeComponent],
+  imports: [ReactiveFormsModule, RouterLink, SensitiveContentNoticeComponent, ReportFieldsSelectComponent],
   templateUrl: './social-record-form.component.html',
   styleUrl: './social-record-form.component.css'
 })
@@ -28,6 +30,15 @@ export class SocialRecordFormComponent {
 
   // El componente padre recibe los datos cuando se presiona Guardar
   submittedForm = output<CreateSocialRecordRequest>();
+
+  // SCRUM-275: datos opcionales para el informe de Cáritas (solo al crear; al editar se cargan desde el perfil)
+  reportData = signal<PersonReportData>({});
+  reportDataChange = output<PersonReportData>();
+
+  setReportData(data: PersonReportData): void {
+    this.reportData.set(data);
+    this.reportDataChange.emit(data);
+  }
 
   loading = input(false);
 

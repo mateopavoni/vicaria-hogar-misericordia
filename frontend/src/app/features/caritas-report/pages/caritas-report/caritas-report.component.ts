@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { extractApiError } from '../../../../core/http/api-error';
@@ -26,13 +27,13 @@ import {
  */
 @Component({
   selector: 'app-caritas-report',
-  imports: [DatePipe, UiButtonComponent, UiFormFieldComponent, UiInputDirective, RecordExportPrintComponent],
+  imports: [DatePipe, RouterLink, UiButtonComponent, UiFormFieldComponent, UiInputDirective, RecordExportPrintComponent],
   templateUrl: './caritas-report.component.html',
 })
 export class CaritasReportComponent {
   private reportService = inject(CaritasReportService);
   private authService = inject(AuthService);
-  private permissionService = inject(PermissionService);
+  readonly permissionService = inject(PermissionService);
 
   readonly periodTypes = Object.keys(PERIOD_LABELS) as ReportPeriodType[];
   readonly periodLabels = PERIOD_LABELS;

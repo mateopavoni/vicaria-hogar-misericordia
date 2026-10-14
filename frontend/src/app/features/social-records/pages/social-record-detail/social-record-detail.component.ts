@@ -34,6 +34,11 @@ import { PersonAttachmentsComponent } from '../../../attachments/components/pers
 import { PsychiatricEvaluationsComponent } from '../../../psychiatric-evaluations/components/psychiatric-evaluations/psychiatric-evaluations.component';
 import { PsychiatricEvaluationsService } from '../../../psychiatric-evaluations/services/psychiatric-evaluations.service';
 import { daysUntilExpiry, evaluationValidity } from '../../../psychiatric-evaluations/utils/evaluation-validity.util';
+import { ReportFieldsModalComponent } from '../../../report-fields/components/report-fields-modal/report-fields-modal.component';
+import { PersonReportData, REPORT_FIELD_KEYS, REPORT_FIELD_LABELS } from '../../../report-fields/interfaces/report-fields.interface';
+import { PersonReportDataService } from '../../../report-fields/services/person-report-data.service';
+import { ReportFieldCatalogService } from '../../../report-fields/services/report-field-catalog.service';
+import { pendingReportFields } from '../../../report-fields/utils/report-fields.util';
 import { StatusChangeModalComponent } from '../../components/status-change-modal/status-change-modal.component';
 import { StatusChangeLogService, mergeStatusHistory } from '../../services/status-change-log.service';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
@@ -58,6 +63,7 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
     PsychiatricEvaluationsComponent,
     RecordExportPrintComponent,
     StatusChangeModalComponent,
+    ReportFieldsModalComponent,
   ],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
@@ -174,6 +180,32 @@ export class SocialRecordDetailComponent implements OnInit {
         this.errorMessage.set(err?.error?.message || 'Error al registrar el egreso.');
       }
     });
+  }
+
+  // SCRUM-275: datos de la ficha que alimentan el informe de Cáritas, con indicador de los pendientes
+  private reportDataService = inject(PersonReportDataService);
+  private reportCatalog = inject(ReportFieldCatalogService);
+  readonly reportFieldKeys = REPORT_FIELD_KEYS;
+  readonly reportFieldLabels = REPORT_FIELD_LABELS;
+  showReportFieldsModal = signal(false);
+
+  reportData = computed(() => {
+    const person = this.record();
+    return person ? this.reportDataService.get(person.personId) : {};
+  });
+  pendingReportFields = computed(() => pendingReportFields(this.reportData()));
+
+  reportValueLabel(key: (typeof REPORT_FIELD_KEYS)[number]): string | null {
+    return this.reportCatalog.label(key, this.reportData()[key]);
+  }
+
+  saveReportFields(data: PersonReportData): void {
+    const person = this.record();
+    if (!person || !this.permissionService.hasPermission('fichas.edit')) {
+      return;
+    }
+    this.reportDataService.save(person.personId, data);
+    this.showReportFieldsModal.set(false);
   }
 
   // SCRUM-264: cambio manual de estado (ambulatorios): pide un motivo obligatorio y lo deja en el historial

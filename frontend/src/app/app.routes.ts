@@ -164,6 +164,15 @@ export const routes: Routes = [
         canActivate: [permissionGuard('informes.caritas')]
       },
 
+      // SCRUM-275: valores de los campos del informe de Cáritas, solo Referente
+      {
+        path: 'configuracion/campos-informe',
+        loadComponent: () =>
+          import('./features/report-fields/pages/report-fields-settings/report-fields-settings.component')
+            .then(m => m.ReportFieldsSettingsComponent),
+        canActivate: [permissionGuard('informes.config')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',

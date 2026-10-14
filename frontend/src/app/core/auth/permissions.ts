@@ -53,7 +53,9 @@ export type Permission =
   // SCRUM-267: panel de respaldos de la base de datos (administrador técnico = Referente, no hay rol aparte)
   | 'configuracion.respaldos'
   // SCRUM-271: informe estadístico para Cáritas, solo Referente
-  | 'informes.caritas';
+  | 'informes.caritas'
+  // SCRUM-275: configurar los valores de los campos del informe de Cáritas, solo Referente
+  | 'informes.config';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -117,7 +119,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'asistencia.stats',
     'asistencia.config',
     'configuracion.respaldos',
-    'informes.caritas'
+    'informes.caritas',
+    'informes.config'
   ],
 
 

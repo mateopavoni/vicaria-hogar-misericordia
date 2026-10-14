@@ -306,6 +306,17 @@
       </div>
     }
 
+    @if (mode() === 'create') {
+      <!-- SCRUM-275: datos opcionales para el informe de Cáritas -->
+      <div class="border-t border-[#E3E8F5] px-6 py-5">
+        <h2 class="text-[15px] font-bold text-slate-800">Datos para el informe de Cáritas</h2>
+        <p class="mb-4 mt-1 text-[12px] text-slate-500">
+          Son opcionales. Lo que quede sin cargar se marca como pendiente en el perfil.
+        </p>
+        <app-report-fields-select [value]="reportData()" (changed)="setReportData($event)" />
+      </div>
+    }
+
     <div class="flex justify-end gap-3 border-t border-[#E3E8F5] px-6 py-4">
       <a
         routerLink="/dashboard/fichas"

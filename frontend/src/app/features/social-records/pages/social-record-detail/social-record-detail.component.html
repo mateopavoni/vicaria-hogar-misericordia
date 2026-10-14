@@ -98,6 +98,16 @@
                 }
               }
 
+              <!-- SCRUM-275: faltan datos para el informe de Cáritas -->
+              @if (pendingReportFields().length > 0) {
+                <span
+                  class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+                  [title]="'Pendiente: ' + pendingReportFields().length + ' de ' + reportFieldKeys.length"
+                >
+                  ⚠ {{ pendingReportFields().length }} {{ pendingReportFields().length === 1 ? 'dato pendiente' : 'datos pendientes' }} para el informe Cáritas
+                </span>
+              }
+
               <!-- CAMBIO MANUAL DE ESTADO (solo ambulatorios, Residentes usan el flujo de Casa de Convivencia) -->
               @if (person.personType === PersonType.Ambulatory && permissionService.hasPermission('fichas.edit')) {
                 <button
@@ -521,6 +531,36 @@
           />
         </section>
 
+        <!-- SCRUM-275: DATOS PARA EL INFORME DE CÁRITAS -->
+        <section class="mt-5 overflow-hidden rounded-lg border border-slate-200">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+            <h2 class="text-[13px] font-semibold text-slate-800">Datos para el informe de Cáritas</h2>
+            @if (permissionService.hasPermission('fichas.edit')) {
+              <button
+                type="button"
+                (click)="showReportFieldsModal.set(true)"
+                class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {{ pendingReportFields().length > 0 ? 'Completar' : 'Editar' }}
+              </button>
+            }
+          </div>
+          <div class="grid grid-cols-1 gap-x-8 gap-y-4 px-6 py-5 sm:grid-cols-2 sm:px-12">
+            @for (key of reportFieldKeys; track key) {
+              <div>
+                <p class="text-[12px] font-semibold text-slate-700">{{ reportFieldLabels[key] }}</p>
+                @if (reportValueLabel(key); as valueLabel) {
+                  <p class="mt-1 text-[12px] text-slate-500">{{ valueLabel }}</p>
+                } @else {
+                  <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                    ⚠ Pendiente para el informe
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </section>
+
         <!-- SCRUM-264: HISTORIAL DE ESTADOS (automáticos y manuales, con motivo) -->
         <section class="mt-5">
           <app-change-history
@@ -609,6 +649,14 @@
   }
 
 </div>
+
+@if (showReportFieldsModal()) {
+  <app-report-fields-modal
+    [initial]="reportData()"
+    (saved)="saveReportFields($event)"
+    (closed)="showReportFieldsModal.set(false)"
+  />
+}
 
 @if (showStatusModal()) {
   <app-status-change-modal
