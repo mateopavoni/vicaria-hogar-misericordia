@@ -9,15 +9,15 @@ using Vicaria.Domain.Entities;
 namespace Vicaria.Api.Controllers;
 
 [ApiController]
-[Route("api/attendance")]
+[Route("api/attendances")]
 [Authorize]
-public class AttendanceController : ControllerBase
+public class AttendancesController : ControllerBase
 {
     private readonly IAttendanceService _attendanceService;
     private readonly IPersonAccessService _personAccessService;
     private readonly IValidator<CreateAttendanceDto> _validator;
 
-    public AttendanceController(
+    public AttendancesController(
         IAttendanceService attendanceService,
         IPersonAccessService personAccessService,
         IValidator<CreateAttendanceDto> validator)
@@ -29,7 +29,7 @@ public class AttendanceController : ControllerBase
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    // registra la asistencia diaria de una persona (SCRUM-135) y reactiva su ficha si
+    // registra la asistencia diaria de una persona (SCRUM-216) y reactiva su ficha si
     // estaba Inactiva; Escucha también puede cargarla en el día a día del Centro Barrial
     [HttpPost]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
@@ -57,6 +57,7 @@ public class AttendanceController : ControllerBase
             null => NoContent(),
             RegisterAttendanceError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             RegisterAttendanceError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            RegisterAttendanceError.Duplicate => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
