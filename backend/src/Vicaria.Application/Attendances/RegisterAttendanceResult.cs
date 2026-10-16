@@ -3,7 +3,8 @@ namespace Vicaria.Application.Attendances;
 public enum RegisterAttendanceError
 {
     PersonNotFound,
-    SocialRecordNotFound
+    SocialRecordNotFound,
+    Duplicate
 }
 
 public class RegisterAttendanceResult
@@ -19,4 +20,7 @@ public class RegisterAttendanceResult
 
     public static RegisterAttendanceResult SocialRecordNotFound() =>
         new() { Success = false, Error = RegisterAttendanceError.SocialRecordNotFound, ErrorMessage = "La persona no tiene una ficha social asociada." };
+
+    public static RegisterAttendanceResult Duplicate() =>
+        new() { Success = false, Error = RegisterAttendanceError.Duplicate, ErrorMessage = "Ya existe un registro de asistencia para esa persona, actividad y fecha." };
 }

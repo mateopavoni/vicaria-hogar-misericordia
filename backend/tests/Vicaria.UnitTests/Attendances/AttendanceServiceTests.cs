@@ -59,7 +59,7 @@ public class AttendanceServiceTests
         var personId = await CrearPersonaConFichaActiva(db);
         var service = new AttendanceService(db);
 
-        var resultado = await service.RegisterAsync(new CreateAttendanceDto(personId), Guid.NewGuid());
+        var resultado = await service.RegisterAsync(new CreateAttendanceDto(personId, AttendanceActivity.DayCenter, DateTime.UtcNow), Guid.NewGuid());
 
         Assert.True(resultado.Success);
         Assert.Single(await db.Attendances.Where(a => a.PersonId == personId).ToListAsync());
@@ -79,7 +79,7 @@ public class AttendanceServiceTests
         var actorId = Guid.NewGuid();
         var service = new AttendanceService(db);
 
-        var resultado = await service.RegisterAsync(new CreateAttendanceDto(personId), actorId);
+        var resultado = await service.RegisterAsync(new CreateAttendanceDto(personId, AttendanceActivity.DayCenter, DateTime.UtcNow), actorId);
 
         Assert.True(resultado.Success);
         var reactivada = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
@@ -96,7 +96,7 @@ public class AttendanceServiceTests
         using var db = CrearDbContext();
         var service = new AttendanceService(db);
 
-        var resultado = await service.RegisterAsync(new CreateAttendanceDto(Guid.NewGuid()), Guid.NewGuid());
+        var resultado = await service.RegisterAsync(new CreateAttendanceDto(Guid.NewGuid(), AttendanceActivity.DayCenter, DateTime.UtcNow), Guid.NewGuid());
 
         Assert.False(resultado.Success);
         Assert.Equal(RegisterAttendanceError.PersonNotFound, resultado.Error);
@@ -111,10 +111,44 @@ public class AttendanceServiceTests
         await db.SaveChangesAsync();
         var service = new AttendanceService(db);
 
-        var resultado = await service.RegisterAsync(new CreateAttendanceDto(person.Id), Guid.NewGuid());
+        var resultado = await service.RegisterAsync(new CreateAttendanceDto(person.Id, AttendanceActivity.DayCenter, DateTime.UtcNow), Guid.NewGuid());
 
         Assert.False(resultado.Success);
         Assert.Equal(RegisterAttendanceError.SocialRecordNotFound, resultado.Error);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_DuplicadoMismaPersonaActividadFecha_DevuelveDuplicate()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db);
+        var service = new AttendanceService(db);
+        var date = DateTime.UtcNow;
+
+        var primero = await service.RegisterAsync(new CreateAttendanceDto(personId, AttendanceActivity.DayCenter, date), Guid.NewGuid());
+        Assert.True(primero.Success);
+
+        var duplicado = await service.RegisterAsync(new CreateAttendanceDto(personId, AttendanceActivity.DayCenter, date), Guid.NewGuid());
+
+        Assert.False(duplicado.Success);
+        Assert.Equal(RegisterAttendanceError.Duplicate, duplicado.Error);
+        Assert.Single(await db.Attendances.Where(a => a.PersonId == personId).ToListAsync());
+    }
+
+    [Fact]
+    public async Task RegisterAsync_MismaPersonaDistintaActividad_PermiteRegistro()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db);
+        var service = new AttendanceService(db);
+        var date = DateTime.UtcNow;
+
+        var primera = await service.RegisterAsync(new CreateAttendanceDto(personId, AttendanceActivity.DayCenter, date), Guid.NewGuid());
+        var segunda = await service.RegisterAsync(new CreateAttendanceDto(personId, AttendanceActivity.CasaConvivencia, date), Guid.NewGuid());
+
+        Assert.True(primera.Success);
+        Assert.True(segunda.Success);
+        Assert.Equal(2, await db.Attendances.CountAsync(a => a.PersonId == personId));
     }
 
     [Fact]
