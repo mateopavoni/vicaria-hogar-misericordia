@@ -9,5 +9,7 @@ public class Attendance
     public Guid PersonId { get; set; }
     public Person? Person { get; set; }
     public DateTime Date { get; set; }
+    public AttendanceActivity Activity { get; set; }
+    public int AnonymousCount { get; set; }
     public Guid CreatedByUserId { get; set; }
 }

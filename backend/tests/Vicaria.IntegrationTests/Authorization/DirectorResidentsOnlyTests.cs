@@ -98,7 +98,7 @@ public class DirectorResidentsOnlyTests : IClassFixture<VicariaWebApplicationFac
         var (_, personId) = await CrearFichaAsync(PersonType.Ambulatory);
         await UsarTokenAsync(RoleNames.CasaConvivenciaDirector);
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId });
+        var response = await _client.PostAsJsonAsync("/api/attendances", new { personId, activity = 0, date = DateTime.UtcNow, anonymousCount = 0 });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

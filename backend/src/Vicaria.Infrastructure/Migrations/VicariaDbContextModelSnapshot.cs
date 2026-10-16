@@ -28,6 +28,13 @@ namespace Vicaria.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Activity")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AnonymousCount")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -39,7 +46,9 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonId");
+                    b.HasIndex("PersonId", "Activity", "Date")
+                        .IsUnique()
+                        .HasDatabaseName("IX_attendances_PersonId_Activity_Date");
 
                     b.ToTable("attendances", (string)null);
                 });
