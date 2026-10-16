@@ -1,5 +1,5 @@
 ---
-description: Análisis previo de una subtarea de Jira (solo lectura). Uso: /analizar SCRUM-209 [alcance opcional]
+description: Análisis previo de una subtarea de Jira (solo lectura). Uso: /analizar SCRUM-XXX [alcance opcional]
 agent: jira-analisis
 ---
 

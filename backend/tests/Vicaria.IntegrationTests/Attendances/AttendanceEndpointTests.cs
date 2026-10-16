@@ -59,9 +59,12 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
         return body!["personId"];
     }
 
+    private static object CuerpoAsistencia(Guid personId, DateTime? date = null, int activity = 0, int anonymousCount = 0) =>
+        new { personId, activity, date = date ?? DateTime.UtcNow, anonymousCount };
+
     private async Task RegistrarAsistenciaAsync(Guid personId)
     {
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId));
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
@@ -71,7 +74,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
         var personId = await CrearPersonaAsync();
         await UsarTokenAsync(RoleNames.Listener);
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId));
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -81,7 +84,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var personId = await CrearPersonaAsync();
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId));
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
@@ -105,7 +108,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
             await db.SaveChangesAsync();
         }
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId));
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         using var verifyScope = _factory.Services.CreateScope();
@@ -119,7 +122,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         await UsarTokenAsync(RoleNames.Referent);
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId = Guid.NewGuid() });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(Guid.NewGuid()));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -135,7 +138,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
         db.People.Add(person);
         await db.SaveChangesAsync();
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId = person.Id });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(person.Id));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -145,7 +148,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         await UsarTokenAsync(RoleNames.Referent);
 
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId = Guid.Empty });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(Guid.Empty));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -153,9 +156,40 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task Register_SinToken_Devuelve401()
     {
-        var response = await _client.PostAsJsonAsync("/api/attendance", new { personId = Guid.NewGuid() });
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(Guid.NewGuid()));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_DuplicadoMismaPersonaActividadFecha_Devuelve409()
+    {
+        var personId = await CrearPersonaAsync();
+        await RegistrarAsistenciaAsync(personId);
+
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_FechaFutura_Devuelve400()
+    {
+        var personId = await CrearPersonaAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId, DateTime.UtcNow.AddDays(1)));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_CantidadAnonimosNegativa_Devuelve400()
+    {
+        var personId = await CrearPersonaAsync();
+
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId, anonymousCount: -1));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
