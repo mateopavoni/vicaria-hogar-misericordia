@@ -191,4 +191,108 @@ public class PersonAttendanceHistoryTests
         Assert.Contains(RoleNames.CasaConvivenciaCoordinator, authorizeAttribute.Roles);
         Assert.DoesNotContain(RoleNames.Listener, authorizeAttribute.Roles);
     }
+
+    [Fact]
+    public async Task GetPersonAttendanceHistoryAsync_SinAsistencias_CalculaIndicadoresVacios()
+    {
+        using var db = CrearDbContext();
+        var person = await CrearPersona(db);
+        var service = new AttendanceService(db);
+        var filter = new GetPersonAttendanceHistoryFilterDto(null, null, null);
+
+        var result = await service.GetPersonAttendanceHistoryAsync(person.Id, filter, Guid.NewGuid(), [RoleNames.Referent]);
+
+        Assert.NotNull(result.Data);
+        var indicators = result.Data.Indicators;
+        Assert.Equal(0, indicators.TotalDiasAsistidos);
+        Assert.Equal(0, indicators.RachaActual);
+        Assert.Null(indicators.UltimaAsistencia);
+        Assert.True(indicators.SinAsistir7Dias);
+    }
+
+    [Fact]
+    public async Task GetPersonAttendanceHistoryAsync_AsistenciasConsecutivasHastaHoy_CalculaRachaYUltimaAsistencia()
+    {
+        using var db = CrearDbContext();
+        var person = await CrearPersona(db);
+        var today = DateTime.UtcNow.Date;
+        await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-2));
+        await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-1));
+        await CrearAsistencia(db, person.Id, AttendanceActivity.CasaConvivencia, today);
+
+        var service = new AttendanceService(db);
+        var filter = new GetPersonAttendanceHistoryFilterDto(null, null, null);
+
+        var result = await service.GetPersonAttendanceHistoryAsync(person.Id, filter, Guid.NewGuid(), [RoleNames.Referent]);
+
+        Assert.NotNull(result.Data);
+        var indicators = result.Data.Indicators;
+        Assert.Equal(3, indicators.TotalDiasAsistidos);
+        Assert.Equal(3, indicators.RachaActual);
+        Assert.Equal(today, indicators.UltimaAsistencia);
+        Assert.False(indicators.SinAsistir7Dias);
+    }
+
+    [Fact]
+    public async Task GetPersonAttendanceHistoryAsync_AsistenciaAyerPeroNoHoy_MantieneRachaViva()
+    {
+        using var db = CrearDbContext();
+        var person = await CrearPersona(db);
+        var today = DateTime.UtcNow.Date;
+        await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-2));
+        await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-1));
+
+        var service = new AttendanceService(db);
+        var filter = new GetPersonAttendanceHistoryFilterDto(null, null, null);
+
+        var result = await service.GetPersonAttendanceHistoryAsync(person.Id, filter, Guid.NewGuid(), [RoleNames.Referent]);
+
+        Assert.NotNull(result.Data);
+        var indicators = result.Data.Indicators;
+        Assert.Equal(2, indicators.TotalDiasAsistidos);
+        Assert.Equal(2, indicators.RachaActual);
+        Assert.Equal(today.AddDays(-1), indicators.UltimaAsistencia);
+        Assert.False(indicators.SinAsistir7Dias);
+    }
+
+    [Fact]
+    public async Task GetPersonAttendanceHistoryAsync_AsistenciaHaceMasDe7Dias_MarcaSinAsistir7Dias()
+    {
+        using var db = CrearDbContext();
+        var person = await CrearPersona(db);
+        var pastDate = DateTime.UtcNow.Date.AddDays(-8);
+        await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, pastDate);
+
+        var service = new AttendanceService(db);
+        var filter = new GetPersonAttendanceHistoryFilterDto(null, null, null);
+
+        var result = await service.GetPersonAttendanceHistoryAsync(person.Id, filter, Guid.NewGuid(), [RoleNames.Referent]);
+
+        Assert.NotNull(result.Data);
+        var indicators = result.Data.Indicators;
+        Assert.Equal(1, indicators.TotalDiasAsistidos);
+        Assert.Equal(0, indicators.RachaActual);
+        Assert.Equal(pastDate, indicators.UltimaAsistencia);
+        Assert.True(indicators.SinAsistir7Dias);
+    }
+
+    [Fact]
+    public async Task GetPersonAttendanceHistoryAsync_MultiplesActividadesMismoDia_CuentaUnSoloDiaAsistido()
+    {
+        using var db = CrearDbContext();
+        var person = await CrearPersona(db);
+        var today = DateTime.UtcNow.Date;
+        await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today);
+        await CrearAsistencia(db, person.Id, AttendanceActivity.CasaConvivencia, today);
+
+        var service = new AttendanceService(db);
+        var filter = new GetPersonAttendanceHistoryFilterDto(null, null, null);
+
+        var result = await service.GetPersonAttendanceHistoryAsync(person.Id, filter, Guid.NewGuid(), [RoleNames.Referent]);
+
+        Assert.NotNull(result.Data);
+        var indicators = result.Data.Indicators;
+        Assert.Equal(1, indicators.TotalDiasAsistidos);
+        Assert.Equal(1, indicators.RachaActual);
+    }
 }

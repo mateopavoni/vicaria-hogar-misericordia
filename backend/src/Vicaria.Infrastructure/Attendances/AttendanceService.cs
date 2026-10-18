@@ -76,7 +76,7 @@ public class AttendanceService : IAttendanceService
         return RegisterAttendanceResult.Ok();
     }
 
-    public async Task<GetPersonAttendanceHistoryResult> GetPersonAttendanceHistoryAsync(Guid personId,GetPersonAttendanceHistoryFilterDto filter,Guid actorId,IEnumerable<string> actorRoles,CancellationToken cancellationToken = default)
+    public async Task<GetPersonAttendanceHistoryResult> GetPersonAttendanceHistoryAsync(Guid personId, GetPersonAttendanceHistoryFilterDto filter, Guid actorId, IEnumerable<string> actorRoles, CancellationToken cancellationToken = default)
     {
         var personExists = await _dbContext.People
             .AsNoTracking()
@@ -101,6 +101,43 @@ public class AttendanceService : IAttendanceService
                 return GetPersonAttendanceHistoryResult.Forbidden("La Directora de Casona solo puede consultar el historial de residentes activos de Casona.");
             }
         }
+        var allPersonDates = await _dbContext.Attendances
+            .AsNoTracking()
+            .Where(a => a.PersonId == personId)
+            .Select(a => a.Date.Date)
+            .Distinct()
+            .OrderByDescending(d => d)
+            .ToListAsync(cancellationToken);
+
+        var today = DateTime.UtcNow.Date;
+        var totalDiasAsistidos = allPersonDates.Count;
+        DateTime? ultimaAsistencia = allPersonDates.Count > 0 ? allPersonDates[0] : null;
+
+        var sinAsistir7Dias = ultimaAsistencia is null || (today - ultimaAsistencia.Value).TotalDays > 7;
+
+        var rachaActual = 0;
+        if (allPersonDates.Count > 0)
+        {
+            var dateSet = allPersonDates.ToHashSet();
+            var checkDate = dateSet.Contains(today) ? today : (dateSet.Contains(today.AddDays(-1)) ? today.AddDays(-1) : (DateTime?)null);
+
+            if (checkDate.HasValue)
+            {
+                var cursor = checkDate.Value;
+                while (dateSet.Contains(cursor))
+                {
+                    rachaActual++;
+                    cursor = cursor.AddDays(-1);
+                }
+            }
+        }
+
+        var indicators = new PersonAttendanceIndicatorsDto(
+            TotalDiasAsistidos: totalDiasAsistidos,
+            RachaActual: rachaActual,
+            UltimaAsistencia: ultimaAsistencia,
+            SinAsistir7Dias: sinAsistir7Dias
+        );
 
         var query = _dbContext.Attendances
             .AsNoTracking()
@@ -147,9 +184,9 @@ public class AttendanceService : IAttendanceService
 
         var dto = new PersonAttendanceHistoryDto(
             PersonId: personId,
+            Indicators: indicators,
             Groups: groups
         );
-
         return GetPersonAttendanceHistoryResult.Success(dto);
     }
 }
