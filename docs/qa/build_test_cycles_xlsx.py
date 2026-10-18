@@ -14,6 +14,8 @@ import run_2026_10_16 as run
 from openpyxl.worksheet.datavalidation import DataValidation
 
 HERE = Path(__file__).parent
+BLOCKED_NOTE = ("Bloqueado: el backend de esta historia no está desarrollado y la pantalla usa un servicio simulado en memoria "
+                "(sin llamadas HTTP), por lo que no hay integración que validar de punta a punta.")
 STATES = {"OK": "PASÓ", "Falla": "FALLÓ", "Bloqueado": "BLOQUEADO", "Pendiente": "NO EJECUTADO"}
 
 # Sprint 1 = EP-03 (registro, login, roles, notificaciones); el resto del Sprint 1-2 es Sprint 2.
@@ -65,8 +67,8 @@ def split_steps(text):
 def actual_result(state, expected, test, observ, sprint, who, when):
     last = expected.splitlines()[-1] if expected else ""
     last = re.sub(r"^\d+\.\s*", "", last)
-    if state == "NO EJECUTADO":
-        return "Sin ejecutar: el caso depende de funcionalidad de Sprint 4 todavía no desarrollada en el backend."
+    if state in ("NO EJECUTADO", "BLOQUEADO"):
+        return BLOCKED_NOTE
     if who == "Suite automatizada":
         base = f"Prueba automatizada {test or ''} en verde (dotnet test); se cumple cada resultado esperado. Último: {last}"
     elif sprint == "Sprint 1-2":
@@ -143,8 +145,9 @@ def main():
             comment = observ if sprint not in ("Transversal",) and tc_id not in run.UI_RESULTS else ""
             if tc_id in BUGS and state == "PASÓ" and tc_id not in run.UI_RESULTS:
                 comment = (comment + " " if comment else "") + f"Defecto {BUGS[tc_id]} corregido; el caso pasa tras la corrección."
-            if state == "NO EJECUTADO" and not comment:
-                comment = "Sin desarrollo todavía (Sprint 4)."
+            if state == "NO EJECUTADO":
+                state = "BLOQUEADO"
+                comment = "Bloqueado por integración pendiente (Sprint 4). Se destraba al conectar el frontend con el backend de la historia."
             ui = run.UI_RESULTS.get(tc_id)
             if ui:
                 real = ui[0]
