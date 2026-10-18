@@ -21,6 +21,8 @@ public class VicariaWebApplicationFactory : WebApplicationFactory<Program>, IAsy
 
     private readonly MsSqlContainer _sqlServer = new MsSqlBuilder()
         .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        // SQL Server toma toda la RAM que encuentra; con tope no ahoga la VM de Docker
+        .WithEnvironment("MSSQL_MEMORY_LIMIT_MB", "1024")
         .Build();
 
     async Task IAsyncLifetime.InitializeAsync() => await _sqlServer.StartAsync();
