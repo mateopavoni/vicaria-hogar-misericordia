@@ -30,8 +30,6 @@ public class AttendanceService : IAttendanceService
             return RegisterAttendanceResult.SocialRecordNotFound();
         }
 
-        // SCRUM-216: la unicidad es por día (persona, actividad, fecha); se normaliza
-        // la fecha a medianoche para que el índice único compuesto la compare por día
         var attendanceDate = dto.Date.Date;
 
         var alreadyRegistered = await _dbContext.Attendances
@@ -51,7 +49,6 @@ public class AttendanceService : IAttendanceService
             CreatedByUserId = actorId
         });
 
-        // SCRUM-135: una nueva asistencia reactiva la ficha si había quedado Inactiva
         if (socialRecord.Status == SocialRecordStatus.Inactive)
         {
             socialRecord.Status = SocialRecordStatus.Active;
@@ -73,11 +70,86 @@ public class AttendanceService : IAttendanceService
         }
         catch (DbUpdateException)
         {
-            // el índice único compuesto (persona, actividad, fecha) rechaza el duplicado
-            // ante una condición de carrera entre el chequeo previo y el guardado
             return RegisterAttendanceResult.Duplicate();
         }
 
         return RegisterAttendanceResult.Ok();
+    }
+
+    public async Task<GetPersonAttendanceHistoryResult> GetPersonAttendanceHistoryAsync(Guid personId,GetPersonAttendanceHistoryFilterDto filter,Guid actorId,IEnumerable<string> actorRoles,CancellationToken cancellationToken = default)
+    {
+        var personExists = await _dbContext.People
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == personId, cancellationToken);
+
+        if (!personExists)
+        {
+            return GetPersonAttendanceHistoryResult.NotFound();
+        }
+
+        var isDirector = actorRoles.Contains(RoleNames.CasaConvivenciaDirector);
+        var isReferentOrCoordinator = actorRoles.Contains(RoleNames.Referent) ||
+                                      actorRoles.Contains(RoleNames.CasaConvivenciaCoordinator);
+        if (isDirector && !isReferentOrCoordinator)
+        {
+            var isCasonaResident = await _dbContext.CasaConvivenciaStays
+                .AsNoTracking()
+                .AnyAsync(s => s.PersonId == personId && s.ExitDate == null, cancellationToken);
+
+            if (!isCasonaResident)
+            {
+                return GetPersonAttendanceHistoryResult.Forbidden("La Directora de Casona solo puede consultar el historial de residentes activos de Casona.");
+            }
+        }
+
+        var query = _dbContext.Attendances
+            .AsNoTracking()
+            .Where(a => a.PersonId == personId);
+
+        if (filter.Activity.HasValue)
+        {
+            query = query.Where(a => a.Activity == filter.Activity.Value);
+        }
+
+        if (filter.FromDate.HasValue)
+        {
+            var from = filter.FromDate.Value.Date;
+            query = query.Where(a => a.Date >= from);
+        }
+
+        if (filter.ToDate.HasValue)
+        {
+            var to = filter.ToDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(a => a.Date <= to);
+        }
+
+        var attendances = await query
+            .OrderByDescending(a => a.Date)
+            .ToListAsync(cancellationToken);
+
+        var groups = attendances
+            .GroupBy(a => a.Activity)
+            .Select(g => new ActivityAttendanceGroupDto(
+                Activity: g.Key,
+                ActivityName: g.Key switch
+                {
+                    AttendanceActivity.DayCenter => "Centro de Día",
+                    AttendanceActivity.CasaConvivencia => "Casa de Convivencia",
+                    _ => g.Key.ToString()
+                },
+                Attendances: g.Select(a => new PersonAttendanceItemDto(
+                    Id: a.Id,
+                    Date: a.Date,
+                    AnonymousCount: a.AnonymousCount
+                )).ToList()
+            ))
+            .ToList();
+
+        var dto = new PersonAttendanceHistoryDto(
+            PersonId: personId,
+            Groups: groups
+        );
+
+        return GetPersonAttendanceHistoryResult.Success(dto);
     }
 }
