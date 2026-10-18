@@ -149,5 +149,5 @@ SEC_FIRST_ID = 195  # TC-195 en adelante
 SEC_NOTE = "Entorno local en Docker (SQL Server Express limitado); las cifras sirven de referencia, no de dimensionamiento de producción."
 
 # Cifras de las suites automatizadas de la corrida (se completan con los resultados reales de `dotnet test` y `ng test`)
-SUITES = {"backend_unit": 260, "backend_integration": 248, "frontend_tests": 122, "frontend_files": 29,
+SUITES = {"backend_unit": 262, "backend_integration": 251, "frontend_tests": 122, "frontend_files": 29,
           "ui_checks": 35, "security_checks": 13, "load_checks": 4}
