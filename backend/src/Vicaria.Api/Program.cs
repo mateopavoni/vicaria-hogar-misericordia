@@ -76,6 +76,7 @@ builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoV
 builder.Services.AddScoped<IValidator<UpdatePersonProfileStatusDto>, UpdatePersonProfileStatusValidator>();
 builder.Services.AddScoped<IValidator<CasaConvivenciaStayExitDto>, CasaConvivenciaStayExitDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoValidator>();
+builder.Services.AddScoped<IValidator<GetPersonAttendanceHistoryFilterDto>, GetPersonAttendanceHistoryValidator>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
