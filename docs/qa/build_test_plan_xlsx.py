@@ -346,16 +346,17 @@ def main():
         c.font = Font(bold=True)
 
     wr.append([])
-    wr.append(["Última ejecución (2026-10-16, rama dev + correcciones de QA)"])
+    wr.append(["Última ejecución (2026-10-17, rama dev + correcciones de QA + asistencia diaria SCRUM-216)"])
     wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
     for line in [
-        "Backend: ver cifras de la corrida en el informe (unitarias e integración, todas OK; el 16/10 se agregó un test unitario por el aviso de bloqueo en el 5º intento).",
+        "Backend: 262 pruebas unitarias y 251 de integración, todas OK (el 16/10 se agregó un test unitario por el aviso de bloqueo en el 5º intento; el 17/10 se integró SCRUM-216).",
         "Frontend: 29 archivos / 122 pruebas y build de producción, OK.",
         "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#22 a #27).",
         "Matriz rol x pantalla (Referente, Directora, Escucha, Coordinador): permisos correctos en todas las rutas; solo 'Informes' apunta a /inicio (#5).",
         "Seguridad y carga (security/api-security-and-load.mjs): 13 verificaciones de seguridad y 4 de carga OK, sin errores bajo 50 usuarios concurrentes.",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK; 23 de ellos se re-ejecutaron en navegador real el 2026-10-16.",
-        "Sprint 4: 48 casos manuales derivados de los criterios de Jira, todos Pendientes (backend sin desarrollar salvo SCRUM-232).",
+        "Sprint 4: 48 casos manuales derivados de los criterios de Jira, todos Pendientes (backend sin desarrollar salvo SCRUM-216 y SCRUM-232).",
+        "Sprint 4 por API (e2e/sprint4-api-flows.mjs): 21 de 21 OK en asistencia diaria (SCRUM-216) y carga de esquema de medicación (SCRUM-232); detalle en la pestaña 'Ciclo - Sprint 4 (API)' de Ciclos_de_prueba_Sprint_1-4.xlsx.",
     ]:
         wr.append([line])
     wr.append([])

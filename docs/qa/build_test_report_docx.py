@@ -99,16 +99,18 @@ def main():
     stats, modules = {}, collections.defaultdict(collections.Counter)
     for ws in wbc:
         stats[ws.title] = collections.Counter(ws.cell(row=r, column=7).value for r in range(4, ws.max_row + 1))
-        if ws.title != "Ciclo - Sprint 4":
+        if not ws.title.startswith("Ciclo - Sprint 4"):
             for r in range(4, ws.max_row + 1):
                 modules[ws.title][ws.cell(row=r, column=2).value] += 1
-    scope = [k for k in stats if k != "Ciclo - Sprint 4"]
+    scope = [k for k in stats if not k.startswith("Ciclo - Sprint 4")]
     tot = sum(sum(stats[k].values()) for k in scope)
     tc = collections.Counter()
     for k in scope:
         tc.update(stats[k])
     executed = tot - tc["NO EJECUTADO"]
     s4 = sum(stats["Ciclo - Sprint 4"].values())
+    api = stats["Ciclo - Sprint 4 (API)"]
+    api_n, api_ok = sum(api.values()), api["PASÓ"]
     first_fail = [k for k, v in run.UI_RESULTS.items() if v[2]]
 
     defects = [r for r in openpyxl.load_workbook(plan)["Defectos y pendientes"].iter_rows(min_row=2, values_only=True) if r[0]]
@@ -151,7 +153,7 @@ def main():
     doc.add_paragraph(
         "El software es estable en sus funciones críticas (acceso y roles, fichas, observaciones, historia de vida, Casa de Convivencia, calendario, "
         "colaboradores y visitas), resiste 50 usuarios concurrentes sin errores y pasó las verificaciones básicas de seguridad. "
-        f"Quedan {len(open_defects)} hallazgos abiertos, ninguno crítico. El Sprint 4 (asistencia y medicación) no se evalúa: su backend todavía no está desarrollado."
+        f"Quedan {len(open_defects)} hallazgos abiertos, ninguno crítico. El Sprint 4 (asistencia y medicación) se evalúa solo en lo que ya tiene backend: {api_n} pruebas de API, {api_ok} en PASÓ; las pantallas y el resto de las historias no se pueden probar todavía."
     )
     p = doc.add_paragraph(); r = p.add_run("Recomendación: APROBADO CON CONDICIONES para los Sprint 1 a 3 (ver sección 8)."); r.bold = True
 
@@ -170,7 +172,7 @@ def main():
     )
     doc.add_heading("2.2 Qué NO se probó", 2)
     table(doc, ["Exclusión", "Motivo", "Riesgo / mitigación"], [
-        [f"Sprint 4: asistencia y medicación ({s4} casos, TC-147 a TC-194)", "El backend tiene 1 de 18 subtareas hechas (SCRUM-232) y las pantallas usan servicios simulados; los casos están diseñados pero no se pueden ejecutar.", "Sin riesgo sobre Sprint 1-3. Se ejecutan cuando el backend se integre; vence el 24/10."],
+        [f"Sprint 4: asistencia y medicación ({s4} casos, TC-147 a TC-194)", f"El backend tiene 2 de 18 subtareas hechas (SCRUM-216 y SCRUM-232), probadas por API ({api_n} pruebas, {api_ok} PASÓ); las pantallas usan servicios simulados y el resto de las historias no tiene backend, así que los {s4} casos de interfaz no se pueden ejecutar.", "Sin riesgo sobre Sprint 1-3. Se ejecutan cuando el backend se integre; vence el 24/10."],
         ["Criterios de Sprint 4 con preguntas abiertas", "Cierre del día de asistencia, actividades configurables, permisos del Coordinador y stock en farmacia vs. Centro Barrial no están definidos.", "Confirmar con el equipo antes de implementar o probar."],
         ["Pruebas de penetración y seguridad avanzada", "Fuera del alcance del plan; se hicieron verificaciones básicas (sección 6), no un pentest.", "Antes de salir a producción real conviene un análisis de dependencias y una revisión de configuración (HTTPS, CORS, secretos)."],
         ["Carga sostenida y dimensionamiento", "La prueba se hizo en Docker local con SQL Server Express limitado; sirve de referencia, no de dimensionamiento.", "Repetir en el entorno de despliegue si se espera más de 50 usuarios simultáneos."],
@@ -216,6 +218,7 @@ def main():
         [f"Frontend (Vitest, {S['frontend_files']} archivos) y build de producción", f"{S['frontend_tests']} de {S['frontend_tests']} OK; build OK"],
         ["UI en navegador real, Sprint 1-2 (Playwright)", f"{S['ui_checks']} de {S['ui_checks']} verificaciones OK (tras corregir 6 defectos)"],
         ["Seguridad y carga (Node)", f"{S['security_checks'] + S['load_checks']} de {S['security_checks'] + S['load_checks']} OK"],
+        ["Sprint 4 por API: asistencia diaria y esquema de medicación (Node)", f"{api_ok} de {api_n} OK"],
     ], widths=[4.4, 2.3])
     doc.add_heading("Cobertura por módulo", 2)
     mrows = []
@@ -259,10 +262,18 @@ def main():
     doc.add_paragraph(run.SEC_NOTE + " El login es la operación más lenta por el hash bcrypt (decisión de seguridad); con 20 usuarios simultáneos tarda unos 2,7 s en el percentil 95.")
     doc.add_paragraph("Observación: la API no aplica límite de tasa (rate limiting) más allá del bloqueo de cuenta por 5 intentos; se recomienda evaluarlo antes de exponer el sistema a internet.")
 
+    doc.add_heading("Sprint 4: endpoints ya desarrollados (17/10/2026)", 2)
+    doc.add_paragraph(
+        f"Con el commit SCRUM-216 (asistencia diaria) integrado en dev se ejecutaron {api_n} pruebas contra la API real: asistencia diaria (registro, duplicados, "
+        "otra actividad el mismo día, conteo de personas sin ficha, fecha futura, persona inexistente, permisos por rol) y carga de esquema de medicación "
+        f"(evaluación psiquiátrica vigente, duplicado, medicamento sin stock, hora y dosis inválidas, permisos). Resultado: {api_ok} de {api_n} en PASÓ. "
+        "Observación para el frontend: la actividad de asistencia viaja como número (0 = Hogar de día, 1 = Casa de Convivencia); con texto la API responde 400."
+    )
+
     # ---- 7
     doc.add_heading("7. Riesgos y recomendaciones", 1)
     table(doc, ["Riesgo", "Impacto", "Recomendación"], [
-        ["Sprint 4 sin backend a 8 días del cierre (24/10)", "Alto: asistencia y medicación no se pueden validar", "Priorizar los endpoints de asistencia (SCRUM-216, 220) y de agenda; integrar las pantallas con la API antes de ejecutar los 48 casos."],
+        ["Sprint 4 con 22 de 25 subtareas sin empezar a 7 días del cierre (24/10)", "Alto: asistencia y medicación no se pueden validar", "Priorizar los endpoints de historial e indicadores de asistencia (SCRUM-220, 221) y de agenda; integrar las pantallas con la API antes de ejecutar los 48 casos."],
         ["Ramas dev-backend y dev-frontend desactualizadas respecto de dev", "Medio: conflictos y pérdida de correcciones", "Sincronizar por PR y avisar a Santiago por el global.json que exige SDK 9."],
         ["Reglas de DNI y permisos del Coordinador sin definir", "Medio: comportamientos distintos entre API y UI", "Resolver las preguntas abiertas #20, #28 y #29 con el equipo."],
         ["Ítem 'Informes' del menú sin pantalla", "Bajo: página vacía", "Ocultar el ítem o crear la pantalla (defecto #5)."],
@@ -287,12 +298,11 @@ def main():
     ], widths=[4.6, 2.1])
     doc.add_paragraph("Condiciones para liberar:")
     bullets(doc, [
-        "Commitear las correcciones del 16/10 y sincronizar las ramas (dev-backend, dev-frontend y main).",
-        "Resolver el ítem 'Informes' del menú (#5).",
+                "Resolver el ítem 'Informes' del menú (#5).",
         "Definir con el equipo las reglas de DNI duplicado y los permisos del Coordinador.",
         "Repetir los flujos de UI en un navegador adicional y en un celular antes del uso real.",
     ])
-    doc.add_paragraph("Sprint 4: sin veredicto. Se evaluará cuando el backend de asistencia y medicación esté integrado y se resuelvan las preguntas abiertas.")
+    doc.add_paragraph(f"Sprint 4: sin veredicto. Los endpoints ya desarrollados (asistencia diaria y carga de esquema de medicación) pasan {api_ok} de {api_n} pruebas de API; el resto se evaluará cuando el backend esté integrado y se resuelvan las preguntas abiertas.")
 
     # ---- Anexo
     doc.add_heading("Anexo A. Evidencia y cómo repetir las pruebas", 1)
