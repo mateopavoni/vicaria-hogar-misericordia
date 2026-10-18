@@ -76,6 +76,41 @@ def actual_result(state, expected, test, observ, sprint, who, when):
     return base.strip()
 
 
+S4_API_RESULTS = HERE / "e2e" / "sprint4-api-results.json"
+
+
+def add_sprint4_api_sheet(wb, base, style_row):
+    """Pestaña con lo del Sprint 4 que ya tiene backend: se ejecuta contra la API real (e2e/sprint4-api-flows.mjs)."""
+    if not S4_API_RESULTS.exists():
+        return
+    import json
+    results = json.loads(S4_API_RESULTS.read_text(encoding="utf-8"))
+    ws = wb.copy_worksheet(base)
+    ws.title = "Ciclo - Sprint 4 (API)"
+    ws["A1"] = "PLANILLA DE EJECUCIÓN DE CICLO DE PRUEBAS — Sprint 4 — endpoints ya desarrollados (asistencia diaria SCRUM-216 y esquema de medicación SCRUM-232), API local, 17/10/2026"
+    ws.delete_rows(4, ws.max_row)
+    when = date(2026, 10, 17)
+    for n, r in enumerate(results):
+        is_att = r["id"].startswith("S4-A")
+        module = "Asistencia diaria (SCRUM-54 / 216)" if is_att else "Esquema de medicación (SCRUM-59 / 232)"
+        login = "1. Iniciar sesión con el rol indicado en el título (Referente por defecto)"
+        pasos = login + chr(10) + ("2. POST /api/attendances con el dato del caso" if is_att else "2. POST /api/persons/{id}/medication-schemes con el dato del caso")
+        vals = [r["id"], module, r["name"], pasos, r["name"],
+                f"Respuesta de la API: {r['note']}".strip(), "PASÓ" if r["ok"] else "FALLÓ", None, "QA (script sprint4-api-flows.mjs)", when,
+                "Observación: la actividad viaja como número (0 = Hogar de día, 1 = Casa de Convivencia) y no como texto; el front debe enviarla así." if r["id"] == "S4-A01" else None]
+        for c, v in enumerate(vals, start=1):
+            cell = ws.cell(row=4 + n, column=c, value=v)
+            s = style_row[c - 1]
+            cell.font, cell.fill, cell.border = copy(s.font), copy(s.fill), copy(s.border)
+            cell.alignment, cell.number_format = copy(s.alignment), s.number_format
+            if c == 10:
+                cell.number_format = "dd/mm/yyyy"
+    ws.data_validations.dataValidation = []
+    dv = DataValidation(type="list", formula1='"PASÓ,FALLÓ,BLOQUEADO,NO EJECUTADO"', allow_blank=False)
+    ws.add_data_validation(dv)
+    dv.add(f"G4:G{3 + len(results)}")
+
+
 def main():
     template = sys.argv[1]
     plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-4.xlsx")
@@ -135,6 +170,7 @@ def main():
         ws.add_data_validation(dv)
         dv.add(f"G4:G{3 + len(data)}")
 
+    add_sprint4_api_sheet(wb, base, style_row)
     wb.save(out)
     print(out, [len(b) for b in buckets], sum(len(b) for b in buckets))
 

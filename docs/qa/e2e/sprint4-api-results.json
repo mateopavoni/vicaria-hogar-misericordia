@@ -1,0 +1,128 @@
+[
+ {
+  "id": "S4-A01",
+  "name": "Referente registra la asistencia de una persona en Hogar de día (204)",
+  "ok": true,
+  "note": "status=204 "
+ },
+ {
+  "id": "S4-A02",
+  "name": "La misma persona, actividad y fecha no se registra dos veces (409)",
+  "ok": true,
+  "note": "status=409 Ya existe un registro de asistencia para esa persona, actividad y fecha."
+ },
+ {
+  "id": "S4-A03",
+  "name": "La misma persona sí puede asistir a otra actividad el mismo día (204)",
+  "ok": true,
+  "note": "status=204"
+ },
+ {
+  "id": "S4-A04",
+  "name": "Se acepta un conteo de personas sin ficha (204)",
+  "ok": true,
+  "note": "status=204"
+ },
+ {
+  "id": "S4-A05",
+  "name": "Un conteo negativo se rechaza con mensaje de validación (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S4-A06",
+  "name": "No se registra asistencia con fecha futura (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S4-A07",
+  "name": "Una persona inexistente responde 404",
+  "ok": true,
+  "note": "status=404"
+ },
+ {
+  "id": "S4-A08",
+  "name": "Una actividad inválida se rechaza sin error 500 (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S4-A09",
+  "name": "Sin sesión responde 401",
+  "ok": true,
+  "note": "status=401"
+ },
+ {
+  "id": "S4-A10",
+  "name": "Escucha puede registrar asistencia del día a día del Centro Barrial (204)",
+  "ok": true,
+  "note": "status=204"
+ },
+ {
+  "id": "S4-A11",
+  "name": "Coordinador de Casona registra asistencia de un residente (204)",
+  "ok": true,
+  "note": "status=204"
+ },
+ {
+  "id": "S4-M01",
+  "name": "Referente carga un esquema a un Residente con evaluación vigente (201 con el esquema completo)",
+  "ok": true,
+  "note": "status=201 Medicamento de prueba A pendingStock=false"
+ },
+ {
+  "id": "S4-M02",
+  "name": "Un esquema duplicado vigente se rechaza (409)",
+  "ok": true,
+  "note": "status=409 Ya existe un esquema vigente con ese medicamento y horario para la persona."
+ },
+ {
+  "id": "S4-M03",
+  "name": "Un medicamento sin stock se carga igual y queda marcado como pendiente de stock (201)",
+  "ok": true,
+  "note": "status=201 pendingStock=true"
+ },
+ {
+  "id": "S4-M04",
+  "name": "Sin evaluación psiquiátrica vigente no se puede cargar el esquema (4xx)",
+  "ok": true,
+  "note": "status=400 No se puede cargar medicación: la persona no tiene una evaluación psiquiátrica vigente."
+ },
+ {
+  "id": "S4-M05",
+  "name": "Escucha no puede cargar esquemas (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S4-M06",
+  "name": "Una hora inválida se rechaza (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S4-M07",
+  "name": "La dosis vacía se rechaza (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S4-M08",
+  "name": "Un medicamento fuera del catálogo responde 404",
+  "ok": true,
+  "note": "status=404"
+ },
+ {
+  "id": "S4-M09",
+  "name": "Una persona inexistente responde 404",
+  "ok": true,
+  "note": "status=404"
+ },
+ {
+  "id": "S4-M10",
+  "name": "Sin sesión responde 401",
+  "ok": true,
+  "note": "status=401"
+ }
+]
