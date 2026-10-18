@@ -121,6 +121,25 @@ public class AuthServiceLoginTests
     }
 
     [Fact]
+    public async Task LoginAsync_ElQuintoPasswordIncorrecto_YaInformaElBloqueo()
+    {
+        using var db = CrearDbContext();
+        var user = await CrearUsuarioConEstado(db, UserStatus.Active, "password123");
+        var service = new AuthService(db, CrearConfiguracionJwt());
+
+        for (var i = 0; i < 4; i++)
+        {
+            var intermediate = await service.LoginAsync(new LoginDto(user.Email, "otra-password"));
+            Assert.Equal(LoginError.InvalidCredentials, intermediate.Error);
+        }
+
+        var fifth = await service.LoginAsync(new LoginDto(user.Email, "otra-password"));
+
+        Assert.Equal(LoginError.AccountLocked, fifth.Error);
+        Assert.NotNull(fifth.LockoutEnd);
+    }
+
+    [Fact]
     public async Task LoginAsync_Con5PasswordsIncorrectos_NotificaALosReferentes()
     {
         using var db = CrearDbContext();

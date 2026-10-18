@@ -1,0 +1,168 @@
+<section class="flex flex-col gap-5">
+
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h2 class="text-[20px] font-bold text-slate-900">Estadísticas de asistencia</h2>
+      <p class="mt-1 text-[13px] text-slate-500">
+        Del {{ toDate(dateFrom() || today) | date: 'dd/MM/yyyy' }} al {{ toDate(dateTo() || today) | date: 'dd/MM/yyyy' }}
+        @if (activityFilter()) {
+          · {{ activityName(activityFilter()) }}
+        }
+      </p>
+    </div>
+
+    <!-- EXPORTAR RESUMEN MENSUAL -->
+    <div class="no-print flex items-end gap-2">
+      <ui-form-field label="Mes a exportar" for="stats-export-month">
+        <input
+          id="stats-export-month"
+          uiInput
+          type="month"
+          [value]="exportMonth()"
+          [attr.max]="today.slice(0, 7)"
+          (change)="exportMonth.set($any($event.target).value)"
+        />
+      </ui-form-field>
+      <button uiButton type="button" variant="secondary" [disabled]="!exportMonth() || loading()" (click)="exportMonthlyPdf()">
+        Exportar a PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTROS -->
+  <div class="no-print grid grid-cols-1 gap-3 md:grid-cols-3">
+    <ui-form-field label="Desde" for="stats-from">
+      <input id="stats-from" uiInput type="date" [value]="dateFrom()" [attr.max]="today" (change)="dateFrom.set($any($event.target).value)" />
+    </ui-form-field>
+    <ui-form-field label="Hasta" for="stats-to">
+      <input id="stats-to" uiInput type="date" [value]="dateTo()" [attr.max]="today" (change)="dateTo.set($any($event.target).value)" />
+    </ui-form-field>
+    <ui-form-field label="Actividad" for="stats-activity">
+      <select id="stats-activity" uiInput [value]="activityFilter()" (change)="activityFilter.set($any($event.target).value)">
+        <option value="" [selected]="activityFilter() === ''">Todas</option>
+        @for (option of activities(); track option.id) {
+          <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+  </div>
+
+  @if (invalidRange()) {
+    <p class="no-print text-[12px] font-semibold text-rose-500" role="alert">La fecha "Desde" no puede ser posterior a "Hasta".</p>
+  }
+
+  @if (errorMessage()) {
+    <div class="rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center justify-center gap-2 rounded-2xl border border-[#E3E8F5] bg-white px-6 py-12 text-[14px] text-slate-400">
+      <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#D5DDF3] border-t-[#6B8DF5]"></span>
+      Cargando estadísticas...
+    </div>
+  } @else if (!invalidRange()) {
+
+    @if (overview().daysWithData === 0) {
+      <p class="rounded-lg border border-slate-200 bg-white px-4 py-6 text-center text-[13px] text-slate-400">
+        No hay asistencias cargadas en este período.
+      </p>
+    } @else {
+
+      <!-- NÚMEROS DESTACADOS -->
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-[11px] font-semibold uppercase text-slate-400">Presencias totales</p>
+          <p class="mt-1 text-[26px] font-bold text-slate-800">{{ overview().totalPresences }}</p>
+          <p class="text-[11px] text-slate-400">en {{ overview().daysWithData }} días con datos</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-[11px] font-semibold uppercase text-slate-400">Promedio por día</p>
+          <p class="mt-1 text-[26px] font-bold text-[#4167D9]">{{ overview().dailyAverage }}</p>
+          <p class="text-[11px] text-slate-400">personas por día</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-[11px] font-semibold uppercase text-slate-400">Promedio semanal</p>
+          <p class="mt-1 text-[26px] font-bold text-slate-800">{{ overview().weeklyAverage }}</p>
+          <p class="text-[11px] text-slate-400">presencias por semana</p>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-white p-4">
+          <p class="text-[11px] font-semibold uppercase text-slate-400">Promedio mensual</p>
+          <p class="mt-1 text-[26px] font-bold text-slate-800">{{ overview().monthlyAverage }}</p>
+          <p class="text-[11px] text-slate-400">presencias por mes</p>
+        </div>
+      </div>
+
+      <!-- COMPARATIVA ENTRE ACTIVIDADES -->
+      <div class="rounded-lg border border-slate-200 bg-white p-5">
+        <h3 class="mb-4 text-[14px] font-bold text-slate-800">Asistencia por actividad</h3>
+        <div class="flex flex-col gap-4">
+          @for (item of overview().byActivity; track item.activity) {
+            <div>
+              <div class="mb-1 flex items-baseline justify-between text-[13px]">
+                <span class="font-semibold text-slate-700">{{ item.label }}</span>
+                <span class="text-slate-500">
+                  <strong class="text-slate-800">{{ item.totalPresences }}</strong> presencias ·
+                  {{ item.averagePerDay }} por día · {{ item.daysWithData }} días
+                </span>
+              </div>
+              <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  class="h-full rounded-full bg-[#6B8DF5]"
+                  [style.width.%]="pct(item.totalPresences, maxActivityTotal())"
+                  role="img"
+                  [attr.aria-label]="item.label + ': ' + item.totalPresences + ' presencias'"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- PERSONAS POR DÍA -->
+      <div class="rounded-lg border border-slate-200 bg-white p-5">
+        <h3 class="mb-4 text-[14px] font-bold text-slate-800">Personas por día</h3>
+        <div class="flex h-40 items-end gap-1.5 overflow-x-auto">
+          @for (day of overview().perDay; track day.date) {
+            <div class="flex h-full min-w-[26px] flex-1 flex-col items-center justify-end gap-1">
+              <span class="text-[10px] font-semibold text-slate-500">{{ day.total }}</span>
+              <div
+                class="w-full rounded-t bg-[#6B8DF5]"
+                [style.height.%]="pct(day.total, maxDayTotal()) * 0.8"
+                role="img"
+                [attr.aria-label]="(toDate(day.date) | date: 'dd/MM') + ': ' + day.total + ' personas'"
+              ></div>
+              <span class="text-[10px] text-slate-400">{{ toDate(day.date) | date: 'dd/MM' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- PERSONAS QUE DEJARON DE ASISTIR -->
+    <div class="rounded-lg border border-slate-200 bg-white p-5">
+      <h3 class="mb-1 text-[14px] font-bold text-slate-800">
+        Dejaron de asistir hace más de {{ inactiveAfterDays }} días
+        @if (inactivePersons().length > 0) {
+          <span class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[12px] text-amber-700">{{ inactivePersons().length }}</span>
+        }
+      </h3>
+      <p class="mb-3 text-[12px] text-slate-400">Se calcula con la última asistencia de cada persona, sin importar el período elegido.</p>
+
+      @if (inactivePersons().length === 0) {
+        <p class="text-[13px] text-slate-400">Nadie supera los {{ inactiveAfterDays }} días sin asistir.</p>
+      } @else {
+        <ul class="divide-y divide-slate-100">
+          @for (person of inactivePersons(); track person.personId) {
+            <li class="flex items-center justify-between py-2 text-[13px]">
+              <span class="font-semibold text-slate-700">{{ person.fullName }}</span>
+              <span class="text-slate-500">
+                última vez el {{ toDate(person.lastAttendance) | date: 'dd/MM/yyyy' }} ·
+                <strong class="text-amber-600">{{ person.daysSince }} días</strong>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</section>

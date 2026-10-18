@@ -24,11 +24,23 @@ export type Permission =
   | 'medicamentos.view'
   | 'medicamentos.create'
   | 'medicamentos.edit'
+  // SCRUM-242: historial de tomas de una persona, solo Referente y Directora (no Coordinador ni Escucha)
+  | 'medicamentos.history'
+  // SCRUM-246: inventario de medicamentos (ingresos, umbral, movimientos), solo Referente y Directora; separado del stock de ropa
+  | 'medicamentos.stock'
   // SCRUM-74: el backend (CasonaVisitsController) deja leer a los 4 roles y escribir solo a
   // Referente, Directora y Coordinador; Escucha nunca tiene visitas.*
   | 'visitas.view'
   | 'visitas.create'
-  | 'visitas.edit';
+  | 'visitas.edit'
+  // SCRUM-218: asistencia diaria. 'asistencia.edit' = modificar un día ya cerrado (solo Referente, con justificación)
+  | 'asistencia.view'
+  | 'asistencia.create'
+  | 'asistencia.edit'
+  // SCRUM-226: estadísticas de asistencia del Centro Barrial, solo Referente
+  | 'asistencia.stats'
+  // SCRUM-230: configurar las actividades de asistencia (activar, desactivar, crear), solo Referente
+  | 'asistencia.config';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -71,11 +83,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.view',
     'medicamentos.create',
     'medicamentos.edit',
+    'medicamentos.history',
+    'medicamentos.stock',
 
     // Visitas de la Casa de Convivencia (SCRUM-74)
     'visitas.view',
     'visitas.create',
-    'visitas.edit'
+    'visitas.edit',
+
+    // Asistencia diaria (SCRUM-218)
+    'asistencia.view',
+    'asistencia.create',
+    'asistencia.edit',
+    'asistencia.stats',
+    'asistencia.config'
   ],
 
 
@@ -87,7 +108,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'observaciones.create',
 
     // calendario de solo lectura (el backend le permite GET, no POST)
-    'calendario.view'
+    'calendario.view',
+
+    // el backend deja a Escucha cargar la asistencia del día a día (POST api/attendance)
+    'asistencia.view',
+    'asistencia.create'
   ],
 
 
@@ -122,11 +147,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.view',
     'medicamentos.create',
     'medicamentos.edit',
+    'medicamentos.history',
+    'medicamentos.stock',
 
     // Visitas de la Casa de Convivencia (SCRUM-74)
     'visitas.view',
     'visitas.create',
-    'visitas.edit'
+    'visitas.edit',
+
+    // Asistencia diaria (SCRUM-218); modificar días cerrados es solo del Referente
+    'asistencia.view',
+    'asistencia.create'
   ],
 
   // bug reportado 2026-09-23: faltaba este rol por completo. Los permisos granulares
@@ -147,7 +178,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'calendario.view',
     'visitas.view',
     'visitas.create',
-    'visitas.edit'
+    'visitas.edit',
+
+    'asistencia.view',
+    'asistencia.create'
   ]
 
 };

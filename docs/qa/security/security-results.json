@@ -1,0 +1,148 @@
+{
+ "results": [
+  {
+   "id": "SEC-01",
+   "name": "Los endpoints protegidos responden 401 sin token",
+   "ok": true,
+   "note": "7 rutas"
+  },
+  {
+   "id": "SEC-02",
+   "name": "Escucha no crea fichas (403) y Escucha / Coordinador / Directora no listan usuarios (403)",
+   "ok": true,
+   "note": "crear=403 escucha=403 coord=403 dir=403"
+  },
+  {
+   "id": "SEC-03",
+   "name": "Un JWT con el rol alterado, con alg=none o malformado se rechaza (401)",
+   "ok": true,
+   "note": "firma alterada=401 alg none=401 basura=401"
+  },
+  {
+   "id": "SEC-04",
+   "name": "Un intento de inyección SQL en la búsqueda no da 500 ni devuelve todo el listado",
+   "ok": true,
+   "note": "total=15 con inyección=4 (coincidencias de texto, no un OR 1=1) drop=200"
+  },
+  {
+   "id": "SEC-05",
+   "name": "El login no revela si el correo existe (misma respuesta)",
+   "ok": true,
+   "note": "401 \"{\"message\":\"Credenciales inválidas.\"}\" vs 401 \"{\"message\":\"Credenciales inválidas.\"}\""
+  },
+  {
+   "id": "SEC-06",
+   "name": "El registro rechaza una contraseña débil (400)",
+   "ok": true,
+   "note": "status=400"
+  },
+  {
+   "id": "SEC-07",
+   "name": "Enviar role/roleId/status en el registro no da una cuenta activa ni con rol",
+   "ok": true,
+   "note": "registro=201 login=403 Pending"
+  },
+  {
+   "id": "SEC-08a",
+   "name": "La API acepta o rechaza con 4xx un nombre con HTML, sin error 500",
+   "ok": true,
+   "note": "status=400"
+  },
+  {
+   "id": "SEC-09",
+   "name": "El frontend envía las cabeceras de seguridad (nosniff, X-Frame-Options, CSP, Referrer-Policy)",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "id": "SEC-10",
+   "name": "La API no expone la versión del servidor (cabecera Server/X-Powered-By)",
+   "ok": true,
+   "note": "server=Kestrel x-powered-by=null"
+  },
+  {
+   "id": "SEC-11",
+   "name": "Un payload de 2 MB se rechaza sin error 500",
+   "ok": true,
+   "note": "status=400"
+  },
+  {
+   "id": "SEC-12",
+   "name": "Un JSON malformado devuelve 400 y no expone stack trace",
+   "ok": true,
+   "note": "status=400"
+  },
+  {
+   "id": "SEC-13",
+   "name": "Un id inexistente da 404 y un id mal formado da 4xx, sin 500",
+   "ok": true,
+   "note": "inexistente=404 malformado=404"
+  },
+  {
+   "id": "PERF-01",
+   "name": "Listado de fichas con 50 usuarios concurrentes: sin errores y p95 < 2000 ms",
+   "ok": true,
+   "note": "p95=195 ms, 486.9 req/s"
+  },
+  {
+   "id": "PERF-02",
+   "name": "Notificaciones con 50 usuarios concurrentes: sin errores y p95 < 2000 ms",
+   "ok": true,
+   "note": "p95=101 ms, 756.9 req/s"
+  },
+  {
+   "id": "PERF-03",
+   "name": "Calendario con 30 usuarios concurrentes: sin errores y p95 < 2000 ms",
+   "ok": true,
+   "note": "p95=89 ms, 545.1 req/s"
+  },
+  {
+   "id": "PERF-04",
+   "name": "Login con 20 usuarios concurrentes: sin errores y p95 < 3000 ms",
+   "ok": true,
+   "note": "p95=2781 ms, 11.6 req/s"
+  }
+ ],
+ "loads": [
+  {
+   "name": "GET /api/social-records/list",
+   "concurrentes": 50,
+   "requests": 500,
+   "errores": 0,
+   "rps": 486.9,
+   "p50": 89,
+   "p95": 195,
+   "max": 318
+  },
+  {
+   "name": "GET /api/notifications",
+   "concurrentes": 50,
+   "requests": 500,
+   "errores": 0,
+   "rps": 756.9,
+   "p50": 62,
+   "p95": 101,
+   "max": 161
+  },
+  {
+   "name": "GET /api/general-calendar-events",
+   "concurrentes": 30,
+   "requests": 300,
+   "errores": 0,
+   "rps": 545.1,
+   "p50": 49,
+   "p95": 89,
+   "max": 101
+  },
+  {
+   "name": "POST /api/auth/login (bcrypt)",
+   "concurrentes": 20,
+   "requests": 100,
+   "errores": 0,
+   "rps": 11.6,
+   "p50": 1674,
+   "p95": 2781,
+   "max": 3110
+  }
+ ]
+}

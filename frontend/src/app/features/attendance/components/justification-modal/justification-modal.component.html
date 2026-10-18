@@ -1,0 +1,30 @@
+<ui-modal title="Modificar un día cerrado" size="sm" [closeOnBackdrop]="false" (closed)="onCancel()">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <p class="text-[13px] text-slate-600">
+      La asistencia del <strong>{{ dateAsDate | date: 'dd/MM/yyyy' }}</strong> ya está cerrada. Para
+      modificarla tenés que dejar una justificación, que queda registrada.
+    </p>
+
+    <ui-form-field label="Justificación" for="attendance-justification" [required]="true" [error]="justificationError">
+      <textarea
+        id="attendance-justification"
+        uiInput
+        formControlName="justification"
+        rows="3"
+        maxlength="300"
+        placeholder="Ej.: se cargó tarde la lista de la mañana"
+      ></textarea>
+    </ui-form-field>
+
+    @if (errorMessage()) {
+      <p class="text-[12px] font-semibold text-rose-500" role="alert">{{ errorMessage() }}</p>
+    }
+  </form>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" [disabled]="saving()" (click)="onCancel()">Volver</button>
+    <button uiButton type="button" [loading]="saving()" [disabled]="saving()" (click)="onConfirm()">
+      Guardar cambios
+    </button>
+  </ng-container>
+</ui-modal>

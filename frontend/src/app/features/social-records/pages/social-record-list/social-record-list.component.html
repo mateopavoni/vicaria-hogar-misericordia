@@ -607,6 +607,7 @@
                   </a>
 
 
+                  @if (permissionService.hasPermission('fichas.edit')) {
                   <!-- Editar -->
                   <button
                     type="button"
@@ -633,6 +634,7 @@
                     </svg>
 
                   </button>
+                  }
 
                 </div>
 

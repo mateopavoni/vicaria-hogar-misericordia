@@ -32,7 +32,7 @@ export class CreateObservationModalComponent implements OnInit {
   // Formulario reactivo
   observationForm = this.fb.group({
     categoryId: [null as string | null],
-    content: ['', [Validators.required, Validators.minLength(3)]]
+    content: ['', [Validators.required, (c) => ((c.value ?? '').trim().length >= 3 ? null : { minlength: true })]]
   });
 
   ngOnInit(): void {

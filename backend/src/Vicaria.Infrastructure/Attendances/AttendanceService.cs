@@ -30,11 +30,24 @@ public class AttendanceService : IAttendanceService
             return RegisterAttendanceResult.SocialRecordNotFound();
         }
 
+        // SCRUM-216: la unicidad es por día (persona, actividad, fecha); se normaliza
+        // la fecha a medianoche para que el índice único compuesto la compare por día
+        var attendanceDate = dto.Date.Date;
+
+        var alreadyRegistered = await _dbContext.Attendances
+            .AnyAsync(a => a.PersonId == dto.PersonId && a.Activity == dto.Activity && a.Date == attendanceDate, cancellationToken);
+        if (alreadyRegistered)
+        {
+            return RegisterAttendanceResult.Duplicate();
+        }
+
         _dbContext.Attendances.Add(new Attendance
         {
             Id = Guid.NewGuid(),
             PersonId = dto.PersonId,
-            Date = DateTime.UtcNow,
+            Date = attendanceDate,
+            Activity = dto.Activity,
+            AnonymousCount = dto.AnonymousCount,
             CreatedByUserId = actorId
         });
 
@@ -54,7 +67,16 @@ public class AttendanceService : IAttendanceService
             });
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // el índice único compuesto (persona, actividad, fecha) rechaza el duplicado
+            // ante una condición de carrera entre el chequeo previo y el guardado
+            return RegisterAttendanceResult.Duplicate();
+        }
 
         return RegisterAttendanceResult.Ok();
     }

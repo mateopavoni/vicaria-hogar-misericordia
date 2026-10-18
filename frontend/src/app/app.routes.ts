@@ -29,6 +29,14 @@ export const routes: Routes = [
         .then(m => m.LayoutComponent),
 
     children: [
+      // INICIO (/dashboard): estadísticas de asistencia para Referente (SCRUM-226)
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/home/pages/home/home.component')
+            .then(m => m.HomeComponent),
+      },
       {
         path: 'users',
 
@@ -91,6 +99,51 @@ export const routes: Routes = [
           import('./features/calendar/pages/calendar/calendar.component')
             .then(m => m.CalendarComponent),
         canActivate: [permissionGuard('calendario.view')]
+      },
+
+      // SCRUM-218: registro de asistencia diaria
+      {
+        path: 'asistencia',
+        loadComponent: () =>
+          import('./features/attendance/pages/daily-attendance/daily-attendance.component')
+            .then(m => m.DailyAttendanceComponent),
+        canActivate: [permissionGuard('asistencia.view')]
+      },
+
+      // SCRUM-230: configuración de actividades de asistencia, solo Referente
+      {
+        path: 'asistencia/actividades',
+        loadComponent: () =>
+          import('./features/attendance/pages/activity-settings/activity-settings.component')
+            .then(m => m.ActivitySettingsComponent),
+        canActivate: [permissionGuard('asistencia.config')]
+      },
+
+      // SCRUM-226: panel de estadísticas de asistencia, solo Referente
+      {
+        path: 'asistencia/estadisticas',
+        loadComponent: () =>
+          import('./features/attendance/components/attendance-stats-panel/attendance-stats-panel.component')
+            .then(m => m.AttendanceStatsPanelComponent),
+        canActivate: [permissionGuard('asistencia.stats')]
+      },
+
+      // SCRUM-238: agenda diaria de medicamentos (ver: medicamentos.view; marcar tomas: medicamentos.edit)
+      {
+        path: 'medicacion',
+        loadComponent: () =>
+          import('./features/medication/pages/medication-agenda/medication-agenda.component')
+            .then(m => m.MedicationAgendaComponent),
+        canActivate: [permissionGuard('medicamentos.view')]
+      },
+
+      // SCRUM-246: inventario de medicamentos, solo Referente y Directora
+      {
+        path: 'medicacion/stock',
+        loadComponent: () =>
+          import('./features/medication-stock/pages/medication-stock/medication-stock.component')
+            .then(m => m.MedicationStockComponent),
+        canActivate: [permissionGuard('medicamentos.stock')]
       },
 
       // RUTA DE EDICIÓN

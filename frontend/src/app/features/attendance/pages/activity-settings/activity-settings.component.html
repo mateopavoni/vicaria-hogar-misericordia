@@ -1,0 +1,89 @@
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+
+  <a routerLink="/dashboard/asistencia" class="mb-3 inline-block text-[13px] font-semibold text-[#4167D9] hover:underline">
+    ← Volver a Asistencia
+  </a>
+
+  <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="text-[26px] font-bold text-slate-900">Actividades de asistencia</h1>
+      <p class="mt-1 text-[14px] text-slate-500">
+        Elegí qué actividades se pueden registrar. Las recurrentes del calendario se suman solas.
+      </p>
+    </div>
+    <button uiButton type="button" variant="secondary" [loading]="syncing()" [disabled]="syncing()" (click)="sync()">
+      Sincronizar con el calendario
+    </button>
+  </div>
+
+  @if (successMessage()) {
+    <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- NUEVA ACTIVIDAD -->
+  <div class="mb-5 rounded-2xl border border-[#E3E8F5] bg-white p-5 shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="min-w-[240px] flex-1">
+        <ui-form-field label="Nueva actividad del Hogar de día" for="activity-name" [error]="formError()">
+          <input
+            id="activity-name"
+            uiInput
+            type="text"
+            maxlength="60"
+            placeholder="Ej.: Taller de costura"
+            [formControl]="nameControl"
+            (keydown.enter)="create()"
+          />
+        </ui-form-field>
+      </div>
+      <button uiButton type="button" (click)="create()">Crear actividad</button>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+    <ul class="divide-y divide-slate-100">
+      @for (activity of activities(); track activity.id) {
+        <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+          <div>
+            <p class="text-[14px] font-semibold" [class]="activity.active ? 'text-slate-800' : 'text-slate-400'">
+              {{ activity.name }}
+            </p>
+            <p class="mt-0.5 text-[12px] text-slate-400">
+              {{ areaLabels[activity.area] }} · {{ sourceLabel(activity) }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span
+              class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+              [class]="activity.active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
+            >
+              {{ activity.active ? 'Activa' : 'Inactiva' }}
+            </span>
+
+            @if (activity.source === 'system') {
+              <span class="text-[12px] text-slate-300">No se puede desactivar</span>
+            } @else {
+              <button
+                type="button"
+                class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+                (click)="toggle(activity)"
+              >
+                {{ activity.active ? 'Desactivar' : 'Activar' }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</div>

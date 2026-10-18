@@ -27,4 +27,8 @@ appsettings.*.local.json
 
 # ── Configuracion local de agentes de IA ──────────────────────────────────────
 opencode.json
+.opencode/
 TestResults/
+
+# archivos de bloqueo de Office
+~$*

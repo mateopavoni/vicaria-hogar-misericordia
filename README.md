@@ -155,7 +155,7 @@ Estado de la última ejecución completa:
 
 La integración continua (`.github/workflows/ci.yml`) compila y ejecuta las pruebas de backend y frontend en cada push y pull request hacia `main` y `dev`.
 
-El plan de pruebas completo, con los casos manuales (TC) y automatizados (TA) de los tres sprints, está en [`docs/qa/Plan_de_pruebas_Sprint_1-3.xlsx`](./docs/qa/Plan_de_pruebas_Sprint_1-3.xlsx). El detalle del Sprint 3 y los flujos de interfaz reproducibles están en [`docs/qa/`](./docs/qa/).
+El plan de pruebas completo, con los casos manuales (TC) y automatizados (TA) de los cuatro sprints (el Sprint 4 todavía sin desarrollo), está en [`docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx`](./docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx). El detalle del Sprint 3 y los flujos de interfaz reproducibles están en [`docs/qa/`](./docs/qa/).
 
 ## Flujo de trabajo
 

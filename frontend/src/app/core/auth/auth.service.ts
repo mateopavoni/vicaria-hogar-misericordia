@@ -109,6 +109,12 @@ export class AuthService {
     if (error.status === 403 && body?.status === 'Pending') {
       return 'pending';
     }
+    if (error.status === 403 && body?.status === 'Inactive') {
+      return 'inactive';
+    }
+    if (error.status === 403 && body?.status === 'Rejected') {
+      return 'rejected';
+    }
     return 'unknown';
   }
 

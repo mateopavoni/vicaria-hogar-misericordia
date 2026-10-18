@@ -19,6 +19,12 @@ import { LifeHistory, LifeHistoryStage } from '../../interfaces/life-history.int
 import { LifeStoryService } from '../../services/life-story.service';
 import { Observation } from '../../interfaces/observation.interface';
 import { ObservationsService } from '../../services/observations.service';
+import { AttendanceHistoryComponent } from '../../../attendance/components/attendance-history/attendance-history.component';
+import { AttendanceHistoryEntry } from '../../../attendance/interfaces/attendance.interface';
+import { AttendanceService } from '../../../attendance/services/attendance.service';
+import { computeAttendanceStats, isAbsenceAlert } from '../../../attendance/utils/attendance-stats.util';
+import { todayLocalIso } from '../../../../shared/utils/date.util';
+import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
   selector: 'app-social-record-detail',
@@ -33,6 +39,8 @@ import { ObservationsService } from '../../services/observations.service';
     SuccessModalComponent,
     LifeHistoryComponent,
     ObservationsComponent,
+    AttendanceHistoryComponent,
+    MedicationSchemesComponent,
   ],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
@@ -47,6 +55,7 @@ export class SocialRecordDetailComponent implements OnInit {
   private socialRecordsService = inject(SocialRecordsService);
   private lifeStoryService = inject(LifeStoryService);
   private observationsService = inject(ObservationsService);
+  private attendanceService = inject(AttendanceService);
 
   record = signal<SocialRecordDetail | null>(null);
   loading = signal(true);
@@ -55,6 +64,11 @@ export class SocialRecordDetailComponent implements OnInit {
 
   lifeHistory = signal<LifeHistory | null>(null);
   initialObservations = signal<Observation[]>([]);
+
+  // SCRUM-222: historial de asistencia (solo se pide con permiso asistencia.view)
+  attendanceHistory = signal<AttendanceHistoryEntry[]>([]);
+  attendanceStats = computed(() => computeAttendanceStats(this.attendanceHistory(), todayLocalIso()));
+  hasAbsenceAlert = computed(() => isAbsenceAlert(this.attendanceStats()));
 
   showExitModal = signal(false);
   showEntryModal = signal(false);
@@ -197,11 +211,24 @@ export class SocialRecordDetailComponent implements OnInit {
         this.loading.set(false);
         this.loadLifeHistory(response.personId);
         this.loadObservations(response.personId);
+        this.loadAttendanceHistory(response.personId);
       },
       error: () => {
         this.loading.set(false);
         this.errorMessage.set('No se pudo cargar la ficha.');
       }
+    });
+  }
+
+  private loadAttendanceHistory(personId: string): void {
+    if (!this.permissionService.hasPermission('asistencia.view')) {
+      this.attendanceHistory.set([]);
+      return;
+    }
+    this.attendanceService.getPersonHistory(personId).subscribe({
+      next: (entries) => this.attendanceHistory.set(entries),
+      // el historial no bloquea el resto del perfil si falla
+      error: () => this.attendanceHistory.set([])
     });
   }
 

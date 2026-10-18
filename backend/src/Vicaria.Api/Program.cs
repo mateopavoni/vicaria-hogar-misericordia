@@ -31,6 +31,8 @@ using Vicaria.Application.CasonaVisits;
 using Vicaria.Infrastructure.CasonaVisits;
 using Vicaria.Application.Collaborators;
 using Vicaria.Infrastructure.Collaborators;
+using Vicaria.Application.MedicationSchemes;
+using Vicaria.Infrastructure.MedicationSchemes;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -100,6 +102,8 @@ builder.Services.AddScoped<ICollaboratorService, CollaboratorService>();
 builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaboratorDtoValidator>();
 builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaboratorsDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
+builder.Services.AddScoped<IMedicationSchemeService, MedicationSchemeService>();
+builder.Services.AddScoped<IValidator<CreateMedicationSchemeDto>, CreateMedicationSchemeDtoValidator>();
 
 
 
@@ -181,6 +185,7 @@ using (var scope = app.Services.CreateScope())
         SeedTestUsers(dbContext);
         SeedExtraTestUsers(dbContext);
         SeedDemoData(dbContext);
+        SeedDemoMedicationCatalog(dbContext);
     }
 }
 
@@ -498,6 +503,25 @@ static void SeedDemoData(VicariaDbContext dbContext)
         new Attendance { Id = Guid.NewGuid(), PersonId = personCarlos.Id, Date = now.AddDays(-1), CreatedByUserId = directora.Id },
         new Attendance { Id = Guid.NewGuid(), PersonId = personLucia.Id, Date = now, CreatedByUserId = directora.Id },
         new Attendance { Id = Guid.NewGuid(), PersonId = personPedro.Id, Date = now.AddDays(-4), CreatedByUserId = escucha.Id }
+    );
+
+    dbContext.SaveChanges();
+}
+
+// catálogo de ejemplo para QA manual local y demos (docker-compose, SCRUM-232):
+// nombres genéricos de prueba (no son medicamentos reales), uno sin stock para
+// ver la alerta de "pendiente de stock". Idempotente e independiente de SeedDemoData.
+static void SeedDemoMedicationCatalog(VicariaDbContext dbContext)
+{
+    if (dbContext.MedicationCatalogs.Any())
+    {
+        return;
+    }
+
+    dbContext.MedicationCatalogs.AddRange(
+        new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba A", Stock = 40 },
+        new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba B", Stock = 12 },
+        new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba C (sin stock)", Stock = 0 }
     );
 
     dbContext.SaveChanges();

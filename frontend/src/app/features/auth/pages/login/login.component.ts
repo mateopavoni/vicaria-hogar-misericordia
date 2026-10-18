@@ -136,7 +136,16 @@ import { UserRole } from '../../../../core/auth/userRole';
       private handleError(type: LoginErrorType): void {
     switch (type) {
       case 'blocked':
-        this.router.navigate(['/auth/blocked']);
+        // no existe una pantalla /auth/blocked: se informa en el propio formulario
+        this.setCredentialsError('Alcanzaste el máximo de intentos permitidos: tu cuenta quedó bloqueada por 30 minutos.');
+        break;
+
+      case 'inactive':
+        this.setCredentialsError('Tu cuenta está desactivada. Contactá a un Referente para reactivarla.');
+        break;
+
+      case 'rejected':
+        this.setCredentialsError('Tu solicitud de cuenta fue rechazada. Contactá a un Referente.');
         break;
 
       case 'pending':

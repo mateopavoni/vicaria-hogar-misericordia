@@ -282,6 +282,13 @@ public class AuthService : IAuthService
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
+
+            // el intento que dispara el bloqueo ya informa el bloqueo (no "credenciales inválidas")
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+            {
+                return LoginResult.AccountLocked(user.LockoutEnd.Value);
+            }
+
             return LoginResult.InvalidCredentials();
         }
 

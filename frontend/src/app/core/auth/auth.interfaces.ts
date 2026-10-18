@@ -34,7 +34,7 @@ export interface BackendUser {
   role: UserRole | null;
 }
 
-export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'unknown';
+export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'inactive' | 'rejected' | 'unknown';
 
 
 // bug reportado 2026-09-23: el backend manda el campo "status" (AuthController.Login,

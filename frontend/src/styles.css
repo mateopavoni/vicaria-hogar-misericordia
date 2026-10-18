@@ -13,3 +13,22 @@
     background: #fff !important;
   }
 }
+
+/* SCRUM-242: exportar un bloque puntual (historial de medicación) a PDF: solo se imprime .print-target */
+@media print {
+  body.print-only-target * {
+    visibility: hidden !important;
+  }
+
+  body.print-only-target .print-target,
+  body.print-only-target .print-target * {
+    visibility: visible !important;
+  }
+
+  body.print-only-target .print-target {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

@@ -15,8 +15,20 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
         builder.Property(e => e.Date)
             .IsRequired();
 
+        builder.Property(e => e.Activity)
+            .IsRequired()
+            .HasConversion<string>();
+
+        builder.Property(e => e.AnonymousCount)
+            .IsRequired();
+
         builder.Property(e => e.CreatedByUserId)
             .IsRequired();
+
+        // índice único compuesto (personaId, actividad, fecha)
+        builder.HasIndex(e => new { e.PersonId, e.Activity, e.Date })
+            .IsUnique()
+            .HasDatabaseName("IX_attendances_PersonId_Activity_Date");
 
         // una persona puede tener múltiples registros de asistencia (1:N)
         builder.HasOne(e => e.Person)
