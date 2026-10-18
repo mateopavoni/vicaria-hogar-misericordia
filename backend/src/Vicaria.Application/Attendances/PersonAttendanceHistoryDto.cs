@@ -2,6 +2,13 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Application.Attendances;
 
+public record PersonAttendanceIndicatorsDto(
+    int TotalDiasAsistidos,
+    int RachaActual,
+    DateTime? UltimaAsistencia,
+    bool SinAsistir7Dias
+);
+
 public record PersonAttendanceItemDto(
     Guid Id,
     DateTime Date,
@@ -16,6 +23,7 @@ public record ActivityAttendanceGroupDto(
 
 public record PersonAttendanceHistoryDto(
     Guid PersonId,
+    PersonAttendanceIndicatorsDto Indicators,
     IReadOnlyList<ActivityAttendanceGroupDto> Groups
 );
 
