@@ -1,0 +1,41 @@
+<ui-modal title="Cargar esquema de medicación" size="sm" [closeOnBackdrop]="false" (closed)="onClose()">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+
+    <ui-form-field label="Medicamento" for="scheme-medication" [required]="true" [error]="medicationError">
+      <select id="scheme-medication" uiInput formControlName="medicationId">
+        <option value="" disabled>{{ catalogLoading() ? 'Cargando catálogo...' : 'Elegí un medicamento' }}</option>
+        @for (item of catalog(); track item.id) {
+          <option [value]="item.id">{{ item.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    @if (selected(); as medication) {
+      @if (noStock()) {
+        <div class="rounded-md bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-700" role="alert">
+          ⚠ No hay stock en farmacia de este medicamento. Podés cargar el esquema igual: va a quedar como
+          "pendiente de stock" y no entra a la agenda hasta que haya.
+        </div>
+      } @else {
+        <p class="text-[12px] text-slate-400">Stock en farmacia: {{ medication.pharmacyStock }}</p>
+      }
+    }
+
+    <ui-form-field label="Dosis" for="scheme-dose" [required]="true" [error]="doseError">
+      <input id="scheme-dose" uiInput type="text" formControlName="dose" placeholder="Ej.: 500 mg" maxlength="50" />
+    </ui-form-field>
+
+    <ui-form-field label="Hora" for="scheme-time" [required]="true" [error]="timeError">
+      <input id="scheme-time" uiInput type="time" formControlName="time" />
+    </ui-form-field>
+
+    @if (errorMessage()) {
+      <p class="text-[12px] font-semibold text-rose-500" role="alert">{{ errorMessage() }}</p>
+    }
+  </form>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" [disabled]="saving()" (click)="onClose()">Cancelar</button>
+    <button uiButton type="button" [loading]="saving()" [disabled]="saving()" (click)="submit()">Guardar</button>
+  </ng-container>
+</ui-modal>

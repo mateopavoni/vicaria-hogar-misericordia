@@ -3,6 +3,7 @@ import { ActivatedRoute,  Router} from '@angular/router';
 import {  SocialRecordsService} from '../../services/social-records.service';
 import { SocialRecordDetail, CreateSocialRecordRequest} from '../../interfaces/social-record.interface';
 import { SocialRecordFormComponent} from '../../components/social-record-form/social-record-form.component';
+import { extractApiError } from '../../../../core/http/api-error';
 import { ComponentCanDeactivate } from '../../../../core/guards/pending-changes.guard';
 
 
@@ -133,7 +134,7 @@ export class SocialRecordEditComponent
           console.error('Error al actualizar la ficha:', err);
           this.saving.set(false);
           this.errorMessage.set(
-            err?.error?.message || 'Ocurrió un error al actualizar la ficha.'
+            extractApiError(err, 'Ocurrió un error al actualizar la ficha.')
           );
         }
       });

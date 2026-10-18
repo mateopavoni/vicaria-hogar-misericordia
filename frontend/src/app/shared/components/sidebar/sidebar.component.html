@@ -31,7 +31,7 @@
 
     <!-- Inicio -->
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -91,8 +91,9 @@
     }
 
     <!-- Asistencia -->
+    @if (permissionService.hasPermission('asistencia.view')) {
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/asistencia"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -118,10 +119,12 @@
 
       <span>Asistencia</span>
     </a>
+    }
 
     <!-- Medicación -->
+    @if (permissionService.hasPermission('medicamentos.view')) {
     <a
-      routerLink="/inicio"
+      routerLink="/dashboard/medicacion"
       routerLinkActive="bg-indigo-100 text-indigo-500"
       (click)="closeOnMobile()"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -147,6 +150,32 @@
 
       <span>Medicación</span>
     </a>
+    }
+
+    <!-- Stock de medicamentos (SCRUM-246): separado del stock de ropa -->
+    @if (permissionService.hasPermission('medicamentos.stock')) {
+    <a
+      routerLink="/dashboard/medicacion/stock"
+      routerLinkActive="bg-indigo-100 text-indigo-500"
+      (click)="closeOnMobile()"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="mb-3 flex h-[46px] items-center gap-4 rounded-lg
+            border border-transparent
+            px-6 text-sm font-semibold text-slate-700
+            transition-all duration-200
+            hover:border-[#B8C8FA]
+            hover:bg-[#F5F7FF]
+            hover:text-[#6689F5]"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+        <path d="m3.3 7 8.7 5 8.7-5"></path>
+        <path d="M12 22V12"></path>
+      </svg>
+
+      <span>Stock de medicamentos</span>
+    </a>
+    }
 
     <!-- Calendario -->
     @if (permissionService.hasPermission('calendario.view')) {
