@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { SocialRecordsService } from '../../services/social-records.service';
 import { CreateSocialRecordRequest } from '../../interfaces/social-record.interface';
 import { SocialRecordFormComponent } from '../../components/social-record-form/social-record-form.component';
+import { extractApiError } from '../../../../core/http/api-error';
 
 @Component({
   selector: 'app-new-social-record',
@@ -36,7 +37,7 @@ export class NewSocialRecordComponent {
       },
       error: (err) => {
         this.saving.set(false);
-        this.errorMessage.set(err?.error?.message || 'Ocurrió un error al guardar la ficha.');
+        this.errorMessage.set(extractApiError(err, 'Ocurrió un error al guardar la ficha.'));
       }
     });
   }

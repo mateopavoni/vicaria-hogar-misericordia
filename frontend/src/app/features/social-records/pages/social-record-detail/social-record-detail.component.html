@@ -102,6 +102,7 @@
         <!-- ACCIONES -->
         <div class="flex flex-col sm:items-end">
           <div class="flex flex-wrap items-center gap-3">
+            @if (permissionService.hasPermission('fichas.edit')) {
             <button
               type="button"
               [routerLink]="['/dashboard/fichas', person.id, 'edit']"
@@ -109,6 +110,7 @@
             >
               Editar ficha
             </button>
+            }
 
             <button
               type="button"
