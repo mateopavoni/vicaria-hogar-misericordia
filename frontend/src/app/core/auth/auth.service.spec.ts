@@ -24,6 +24,16 @@ describe('AuthService.mapError', () => {
     expect(service.mapError(error)).toBe('blocked');
   });
 
+  it('mapea 403 con status Inactive a inactive', () => {
+    const error = new HttpErrorResponse({ status: 403, error: { status: 'Inactive' } });
+    expect(service.mapError(error)).toBe('inactive');
+  });
+
+  it('mapea 403 con status Rejected a rejected', () => {
+    const error = new HttpErrorResponse({ status: 403, error: { status: 'Rejected' } });
+    expect(service.mapError(error)).toBe('rejected');
+  });
+
   it('mapea 403 con status Pending a pending', () => {
     const error = new HttpErrorResponse({ status: 403, error: { status: 'Pending' } });
     expect(service.mapError(error)).toBe('pending');
