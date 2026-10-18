@@ -198,6 +198,9 @@ def steps_text(steps):
     return "\n".join(f"{n}. {p}  →  {e}" for n, p, _d, e in steps)
 
 
+import run_2026_10_16 as run
+
+
 def main():
     docx = Path(sys.argv[1])
     auto_ok = True  # el suite completo pasó (se confirma con el argumento opcional)
@@ -242,6 +245,22 @@ def main():
             ws.append([s4[-1][0], "Sprint 4", f"{module} ({jira})", title, desc, pre, jira,
                        "\n".join(f"{i}. {p}  →  {e}" for i, (p, _d, e) in enumerate(steps, 1)), "",
                        "Pendiente", "", "", SPRINT4_NOTES.get(jira, "Sin desarrollo todavía (Sprint 4 activo desde 2026-10-09).")])
+    # corrida de UI del 2026-10-16: casos de Sprint 1-2 ejecutados en navegador real
+    for row in ws.iter_rows(min_row=2):
+        res = run.UI_RESULTS.get(row[0].value)
+        if res:
+            real, bugs, failed_first = res
+            row[8].value = run.UI_SCRIPT
+            row[10].value = run.RUN_DATE
+            row[11].value = run.RUNNER
+            row[12].value = (("FALLÓ en la primera ejecución en navegador (" + bugs + "); corregido y re-ejecutado OK. ") if failed_first else "OK en navegador real. ") + real
+    sec_id = run.SEC_FIRST_ID
+    for key, title, desc, steps, script, real in run.SEC_CASES:
+        ui = key == "SEC-09"
+        ws.append([f"TC-{sec_id}", "Transversal", "Seguridad y rendimiento", title, desc,
+                   "Stack local levantado (docker compose en backend/); usuarios de prueba *@test.com.", "RNF seguridad / rendimiento",
+                   steps, script, "OK", run.RUN_DATE, run.RUNNER, real])
+        sec_id += 1
     style_sheet(ws, [9, 11, 34, 44, 44, 38, 16, 70, 46, 12, 14, 18, 36])
     add_state_validation(ws, "J")
     manual_rows = ws.max_row
@@ -314,6 +333,7 @@ def main():
     count_row("Manuales (TC)", "Sprint 1-2", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Manuales (TC)", "Sprint 3", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Manuales (TC)", "Sprint 4", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Manuales (TC)", "Transversal", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 1-2", "Parte B - Automatizados", auto_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 3", "Parte B - Automatizados", auto_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 4", "Parte B - Automatizados", auto_rows, "B", "J")
@@ -326,15 +346,16 @@ def main():
         c.font = Font(bold=True)
 
     wr.append([])
-    wr.append(["Última ejecución (2026-10-14, rama dev con el trabajo de Sprint 4 integrado)"])
+    wr.append(["Última ejecución (2026-10-16, rama dev + correcciones de QA)"])
     wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
     for line in [
-        "Backend: 259 pruebas unitarias y 248 de integración, todas OK (incluye el endpoint de esquema de medicación, SCRUM-232).",
-        "Frontend: 29 archivos / 120 pruebas y build de producción, OK (incluye asistencia y medicación de Sprint 4, que usan datos simulados).",
-        "UI en navegador real (Playwright): 33 de 33 verificaciones OK el 2026-10-09; no se volvió a correr el 2026-10-12 (necesita el stack completo).",
-        "Prueba de humo por rol (Referente, Directora, Escucha, Coordinador): 11 de 15 pantallas OK; las 4 restantes son /inicio (ver Defectos y pendientes).",
-        "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK el 2026-10-06.",
-        "Sprint 4: 48 casos manuales derivados de los criterios de Jira, todos Pendientes. Solo el esquema de medicación (SCRUM-232) tiene backend y tests; asistencia, agenda, stock e historial todavía no.",
+        "Backend: ver cifras de la corrida en el informe (unitarias e integración, todas OK; el 16/10 se agregó un test unitario por el aviso de bloqueo en el 5º intento).",
+        "Frontend: 29 archivos / 122 pruebas y build de producción, OK.",
+        "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#22 a #27).",
+        "Matriz rol x pantalla (Referente, Directora, Escucha, Coordinador): permisos correctos en todas las rutas; solo 'Informes' apunta a /inicio (#5).",
+        "Seguridad y carga (security/api-security-and-load.mjs): 13 verificaciones de seguridad y 4 de carga OK, sin errores bajo 50 usuarios concurrentes.",
+        "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK; 23 de ellos se re-ejecutaron en navegador real el 2026-10-16.",
+        "Sprint 4: 48 casos manuales derivados de los criterios de Jira, todos Pendientes (backend sin desarrollar salvo SCRUM-232).",
     ]:
         wr.append([line])
     wr.append([])
@@ -399,6 +420,10 @@ def main():
     ]
     for jira, q in OPEN_QUESTIONS:
         items.append(("Pregunta abierta", q, jira, "Abierta", "Consultar al equipo antes de implementar o probar."))
+    for tipo, desc, origen, estado, detalle, _sev in run.NEW_DEFECTS:
+        items.append((tipo, desc, origen, estado, detalle))
+    d5 = items[4]
+    items[4] = (d5[0], run.DEFECT_5_NOTE, d5[2], d5[3], d5[4])
     for i, it in enumerate(items, 1):
         wd.append([i, *it])
     style_sheet(wd, [5, 18, 70, 30, 18, 60])
