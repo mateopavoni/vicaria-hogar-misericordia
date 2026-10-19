@@ -228,4 +228,23 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
+
+    // marca el esquema como revisado (SCRUM-249): registra ReviewedAt y ReviewedBy a partir
+    // del actor autenticado. Solo esquemas vigentes; el histórico responde 409.
+    [HttpPatch("{id}/medication-schemes/{schemeId:guid}/review")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> ReviewMedicationScheme(Guid id, Guid schemeId, CancellationToken cancellationToken)
+    {
+        var result = await _medicationSchemeService.ReviewAsync(id, schemeId, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            ReviewMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            ReviewMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
+            ReviewMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
 }
