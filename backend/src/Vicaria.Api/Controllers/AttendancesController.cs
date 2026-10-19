@@ -18,6 +18,7 @@ public class AttendancesController : ControllerBase
     private readonly IAttendanceSummaryPdfGenerator _pdfGenerator;
     private readonly IPersonAccessService _personAccessService;
     private readonly IValidator<CreateAttendanceDto> _validator;
+    private readonly IValidator<UpdateAttendanceDto> _updateValidator;
     private readonly IValidator<GetInactivePeopleQueryDto> _inactiveValidator;
     private readonly IValidator<GetMonthlySummaryQueryDto> _monthlySummaryValidator;
     private readonly IValidator<GetStatisticsQueryDto> _statisticsValidator;
@@ -28,6 +29,7 @@ public class AttendancesController : ControllerBase
         IAttendanceSummaryPdfGenerator pdfGenerator,
         IPersonAccessService personAccessService,
         IValidator<CreateAttendanceDto> validator,
+        IValidator<UpdateAttendanceDto> updateValidator,
         IValidator<GetInactivePeopleQueryDto> inactiveValidator,
         IValidator<GetMonthlySummaryQueryDto> monthlySummaryValidator,
         IValidator<GetStatisticsQueryDto> statisticsValidator)
@@ -37,6 +39,7 @@ public class AttendancesController : ControllerBase
         _pdfGenerator = pdfGenerator;
         _personAccessService = personAccessService;
         _validator = validator;
+        _updateValidator = updateValidator;
         _inactiveValidator = inactiveValidator;
         _monthlySummaryValidator = monthlySummaryValidator;
         _statisticsValidator = statisticsValidator;
@@ -73,6 +76,33 @@ public class AttendancesController : ControllerBase
             RegisterAttendanceError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             RegisterAttendanceError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
             RegisterAttendanceError.Duplicate => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // modificación de una asistencia de día cerrado con justificación (SCRUM-217),
+    // restringido a Referente; día cerrado = fecha anterior a hoy
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateAttendanceDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _attendanceService.UpdateAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdateAttendanceError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdateAttendanceError.JustificationRequired => BadRequest(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
