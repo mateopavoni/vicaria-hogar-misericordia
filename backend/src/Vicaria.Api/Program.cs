@@ -205,6 +205,7 @@ using (var scope = app.Services.CreateScope())
         SeedExtraTestUsers(dbContext);
         SeedDemoData(dbContext);
         SeedDemoMedicationCatalog(dbContext);
+        SeedDemoMedicationSchemes(dbContext);
     }
 }
 
@@ -542,6 +543,40 @@ static void SeedDemoMedicationCatalog(VicariaDbContext dbContext)
         new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba B", Stock = 12 },
         new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba C (sin stock)", Stock = 0 }
     );
+
+    dbContext.SaveChanges();
+}
+
+// esquema de ejemplo para ver la alerta de revisión mensual (SCRUM-249): cargado hace 45
+// días y nunca revisado, así supera el umbral de 30 días. Idempotente e independiente
+// de los otros seed.
+static void SeedDemoMedicationSchemes(VicariaDbContext dbContext)
+{
+    if (dbContext.MedicationSchemes.Any())
+    {
+        return;
+    }
+
+    var referente = dbContext.Users.FirstOrDefault(u => u.Email == "referente@test.com");
+    var resident = dbContext.People.FirstOrDefault(p => p.FirstName == "Carlos" && p.LastName == "Rodríguez");
+    var medication = dbContext.MedicationCatalogs.OrderBy(m => m.Name).FirstOrDefault();
+    if (referente is null || resident is null || medication is null)
+    {
+        return;
+    }
+
+    dbContext.MedicationSchemes.Add(new MedicationScheme
+    {
+        Id = Guid.NewGuid(),
+        PersonId = resident.Id,
+        MedicationId = medication.Id,
+        Dose = "1 comprimido",
+        Time = new TimeSpan(8, 0, 0),
+        LoadedAt = DateTime.UtcNow.AddDays(-45),
+        LoadedByUserId = referente.Id,
+        IsActive = true,
+        PendingStock = medication.Stock <= 0
+    });
 
     dbContext.SaveChanges();
 }
