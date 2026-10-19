@@ -1,6 +1,17 @@
 namespace Vicaria.Application.MedicationSchemes;
 
-// forma de respuesta del esquema creado (SCRUM-232): el front (SCRUM-234) usa
+public record MedicationStockAlertDto(
+    string Code,
+    string Message)
+{
+    public const string PendingStockCode = "PendingStock";
+    public const string PendingStockMessage = "Sin stock en farmacia: el medicamento queda marcado como pendiente de stock.";
+
+    public static MedicationStockAlertDto PendingStock() =>
+        new(PendingStockCode, PendingStockMessage);
+}
+
+// forma de respuesta del esquema creado (SCRUM-232 / SCRUM-233): el front (SCRUM-234) usa
 // el objeto devuelto directamente, por eso viaja completo y no solo el id.
 // Time en HH:mm y LoadedAt en ISO, igual que MedicationScheme del front.
 public record MedicationSchemeDto(
@@ -14,4 +25,5 @@ public record MedicationSchemeDto(
     Guid LoadedByUserId,
     string LoadedByName,
     bool IsActive,
-    bool PendingStock);
+    bool PendingStock,
+    MedicationStockAlertDto? StockAlert = null);

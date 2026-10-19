@@ -8,11 +8,34 @@ namespace Vicaria.Infrastructure.MedicationSchemes;
 
 public class MedicationSchemeService : IMedicationSchemeService
 {
+    private static readonly TimeZoneInfo CordobaTimeZone = ResolveCordobaTimeZone();
     private readonly VicariaDbContext _dbContext;
 
     public MedicationSchemeService(VicariaDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public static DateTime GetCordobaToday() =>
+        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CordobaTimeZone).Date;
+
+    private static TimeZoneInfo ResolveCordobaTimeZone()
+    {
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("America/Argentina/Cordoba", out var ianaTimeZone))
+        {
+            return ianaTimeZone;
+        }
+
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("Argentina Standard Time", out var windowsTimeZone))
+        {
+            return windowsTimeZone;
+        }
+
+        return TimeZoneInfo.CreateCustomTimeZone(
+            "America/Argentina/Cordoba",
+            TimeSpan.FromHours(-3),
+            "Hora de Córdoba",
+            "Hora de Córdoba");
     }
 
     public async Task<CreateMedicationSchemeResult> CreateAsync(
@@ -38,10 +61,14 @@ public class MedicationSchemeService : IMedicationSchemeService
             return CreateMedicationSchemeResult.PersonNotResident();
         }
 
-        // SCRUM-232 (decisión 14): sin evaluación psiquiátrica vigente se bloquea la carga
+        // SCRUM-232 / SCRUM-233: sin evaluación psiquiátrica vigente (IsValid y no vencida a más de 6 meses en fecha de Córdoba) se bloquea la carga
+        var minValidEvaluationDate = GetCordobaToday().AddMonths(-6);
         var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
             .AsNoTracking()
-            .AnyAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+            .AnyAsync(e =>
+                e.PersonId == personId &&
+                e.IsValid &&
+                e.Date.Date >= minValidEvaluationDate, cancellationToken);
         if (!hasValidEvaluation)
         {
             return CreateMedicationSchemeResult.MissingPsychiatricEvaluation();
@@ -112,6 +139,7 @@ public class MedicationSchemeService : IMedicationSchemeService
             scheme.LoadedByUserId,
             actor is null ? string.Empty : $"{actor.FirstName} {actor.LastName}".Trim(),
             scheme.IsActive,
-            scheme.PendingStock));
+            scheme.PendingStock,
+            scheme.PendingStock ? MedicationStockAlertDto.PendingStock() : null));
     }
 }
