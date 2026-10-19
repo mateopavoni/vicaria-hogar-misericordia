@@ -64,6 +64,56 @@ public class AttendanceService : IAttendanceService
             });
         }
 
+        // Generación automática de agenda diaria de medicamentos según asistencia (SCRUM-236)
+        var activeSchemes = await _dbContext.MedicationSchemes
+            .Where(s => s.PersonId == dto.PersonId && s.IsActive)
+            .ToListAsync(cancellationToken);
+
+        if (activeSchemes.Count > 0)
+        {
+            var existingSchemeIds = await _dbContext.DailyMedicationSchedules
+                .Where(d => d.PersonId == dto.PersonId && d.Date == attendanceDate)
+                .Select(d => d.MedicationSchemeId)
+                .ToListAsync(cancellationToken);
+
+            var existingSchemeIdSet = existingSchemeIds.ToHashSet();
+            var newIntakesCreated = 0;
+
+            foreach (var scheme in activeSchemes)
+            {
+                if (existingSchemeIdSet.Contains(scheme.Id))
+                {
+                    continue;
+                }
+
+                _dbContext.DailyMedicationSchedules.Add(new DailyMedicationSchedule
+                {
+                    Id = Guid.NewGuid(),
+                    PersonId = dto.PersonId,
+                    MedicationSchemeId = scheme.Id,
+                    MedicationId = scheme.MedicationId,
+                    Date = attendanceDate,
+                    Time = scheme.Time,
+                    Dose = scheme.Dose,
+                    Status = MedicationIntakeStatus.Pending
+                });
+
+                newIntakesCreated++;
+            }
+
+            if (newIntakesCreated > 0)
+            {
+                _dbContext.AuditLogs.Add(new AuditLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = actorId,
+                    Action = "Agenda diaria de medicamentos generada por asistencia",
+                    AffectedEntity = $"Person:{dto.PersonId}",
+                    Date = DateTime.UtcNow
+                });
+            }
+        }
+
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
