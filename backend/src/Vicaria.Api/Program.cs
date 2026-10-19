@@ -90,6 +90,7 @@ builder.Services.AddScoped<IAttendanceStatisticsService, AttendanceStatisticsSer
 builder.Services.AddScoped<IAttendanceSummaryPdfGenerator, AttendanceSummaryPdfGenerator>();
 builder.Services.AddScoped<IValidator<GetInactivePeopleQueryDto>, GetInactivePeopleQueryValidator>();
 builder.Services.AddScoped<IValidator<GetMonthlySummaryQueryDto>, GetMonthlySummaryQueryValidator>();
+builder.Services.AddScoped<IValidator<GetStatisticsQueryDto>, GetStatisticsQueryValidator>();
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 builder.Services.AddScoped<IStaleRecordAlertService, StaleRecordAlertService>();
 builder.Services.AddScoped<IPersonAccessService, PersonAccessService>();
