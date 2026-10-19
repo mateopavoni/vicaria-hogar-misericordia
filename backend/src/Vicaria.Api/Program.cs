@@ -86,6 +86,10 @@ builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoV
 builder.Services.AddScoped<IValidator<GetPersonAttendanceHistoryFilterDto>, GetPersonAttendanceHistoryValidator>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
+builder.Services.AddScoped<IAttendanceStatisticsService, AttendanceStatisticsService>();
+builder.Services.AddScoped<IAttendanceSummaryPdfGenerator, AttendanceSummaryPdfGenerator>();
+builder.Services.AddScoped<IValidator<GetInactivePeopleQueryDto>, GetInactivePeopleQueryValidator>();
+builder.Services.AddScoped<IValidator<GetMonthlySummaryQueryDto>, GetMonthlySummaryQueryValidator>();
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 builder.Services.AddScoped<IStaleRecordAlertService, StaleRecordAlertService>();
 builder.Services.AddScoped<IPersonAccessService, PersonAccessService>();
