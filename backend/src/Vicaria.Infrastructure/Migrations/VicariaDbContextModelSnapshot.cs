@@ -22,6 +22,30 @@ namespace Vicaria.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.Activity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFromCalendar")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Activities");
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.Attendance", b =>
                 {
                     b.Property<Guid>("Id")
@@ -272,6 +296,62 @@ namespace Vicaria.Infrastructure.Migrations
                     b.ToTable("contacts", (string)null);
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.DailyMedicationSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("AdministeredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AdministeredByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Dose")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("MedicationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MedicationSchemeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Observation")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("Time")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdministeredByUserId");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("MedicationId");
+
+                    b.HasIndex("MedicationSchemeId");
+
+                    b.HasIndex("PersonId");
+
+                    b.HasIndex("PersonId", "Date");
+
+                    b.ToTable("daily_medication_schedules", (string)null);
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.GeneralCalendarEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -463,6 +543,11 @@ namespace Vicaria.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("MinimumStockThreshold")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(5);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -519,6 +604,45 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("PersonId");
 
                     b.ToTable("medication_schemes", (string)null);
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.MedicationStockMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpirationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("MedicationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Supplier")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("MedicationId");
+
+                    b.ToTable("medication_stock_movements", (string)null);
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Notification", b =>
@@ -1133,6 +1257,40 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("SocialRecord");
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.DailyMedicationSchedule", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.User", "AdministeredByUser")
+                        .WithMany()
+                        .HasForeignKey("AdministeredByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.MedicationCatalog", "Medication")
+                        .WithMany()
+                        .HasForeignKey("MedicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vicaria.Domain.Entities.MedicationScheme", "MedicationScheme")
+                        .WithMany()
+                        .HasForeignKey("MedicationSchemeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AdministeredByUser");
+
+                    b.Navigation("Medication");
+
+                    b.Navigation("MedicationScheme");
+
+                    b.Navigation("Person");
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.GeneralCalendarEvent", b =>
                 {
                     b.HasOne("Vicaria.Domain.Entities.User", "AuthorUser")
@@ -1219,6 +1377,25 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("Medication");
 
                     b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.MedicationStockMovement", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vicaria.Domain.Entities.MedicationCatalog", "Medication")
+                        .WithMany()
+                        .HasForeignKey("MedicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Medication");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.Observation", b =>
