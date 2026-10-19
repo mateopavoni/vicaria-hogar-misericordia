@@ -37,7 +37,8 @@ using Vicaria.Application.Activities;
 using Vicaria.Infrastructure.Activities;
 using Vicaria.Application.MedicationAgendas;
 using Vicaria.Infrastructure.MedicationAgendas;
-
+using Vicaria.Application.MedicationStocks;
+using Vicaria.Infrastructure.MedicationStocks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -115,6 +116,8 @@ builder.Services.AddScoped<IValidator<UpdateActivityDto>, UpdateActivityValidato
 builder.Services.AddScoped<ICalendarActivitySyncService, CalendarActivitySyncService>();
 builder.Services.AddScoped<IMedicationAgendaService, MedicationAgendaService>();
 builder.Services.AddScoped<IValidator<UpdateMedicationIntakeStatusDto>, UpdateMedicationIntakeStatusDtoValidator>();
+builder.Services.AddScoped<IMedicationStockService, MedicationStockService>();
+builder.Services.AddScoped<IValidator<RegisterMedicationStockEntryDto>, RegisterMedicationStockEntryDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
