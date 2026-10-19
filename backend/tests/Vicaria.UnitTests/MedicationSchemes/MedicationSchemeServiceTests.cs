@@ -38,7 +38,8 @@ public class MedicationSchemeServiceTests
         VicariaDbContext db,
         Guid createdByUserId,
         PersonType personType = PersonType.Resident,
-        bool validEvaluation = true)
+        bool validEvaluation = true,
+        DateTime? evaluationDate = null)
     {
         var person = new Person
         {
@@ -64,7 +65,7 @@ public class MedicationSchemeServiceTests
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = DateTime.UtcNow,
+            Date = evaluationDate ?? MedicationSchemeService.GetCordobaToday(),
             Professional = "Dra. Test",
             IsValid = validEvaluation,
             RegisteredByUserId = createdByUserId
@@ -110,6 +111,7 @@ public class MedicationSchemeServiceTests
         Assert.Equal("08:30", scheme.Time);
         Assert.True(scheme.IsActive);
         Assert.False(scheme.PendingStock);
+        Assert.Null(scheme.StockAlert);
         Assert.Equal("Actor Test", scheme.LoadedByName);
         Assert.True((DateTime.UtcNow - scheme.LoadedAt).TotalMinutes < 5);
 
@@ -135,6 +137,9 @@ public class MedicationSchemeServiceTests
 
         Assert.True(result.Success);
         Assert.True(result.Scheme!.PendingStock);
+        Assert.NotNull(result.Scheme.StockAlert);
+        Assert.Equal(MedicationStockAlertDto.PendingStockCode, result.Scheme.StockAlert!.Code);
+        Assert.Equal(MedicationStockAlertDto.PendingStockMessage, result.Scheme.StockAlert.Message);
     }
 
     [Fact]
@@ -179,6 +184,62 @@ public class MedicationSchemeServiceTests
 
         Assert.False(result.Success);
         Assert.Equal(CreateMedicationSchemeError.MissingPsychiatricEvaluation, result.Error);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithEvaluationAtExactSixMonthsCutoff_Succeeds()
+    {
+        using var db = CreateDbContext();
+        var actorId = await SeedUserAsync(db);
+        var cutoffDate = MedicationSchemeService.GetCordobaToday().AddMonths(-6);
+        var personId = await SeedPersonAsync(db, actorId, validEvaluation: true, evaluationDate: cutoffDate);
+        var medicationId = await SeedMedicationAsync(db);
+        var service = new MedicationSchemeService(db);
+
+        var result = await service.CreateAsync(personId, NewSchemeDto(medicationId), actorId, CancellationToken.None);
+
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithEvaluationOlderThanSixMonths_ReturnsMissingPsychiatricEvaluation()
+    {
+        using var db = CreateDbContext();
+        var actorId = await SeedUserAsync(db);
+        var expiredDate = MedicationSchemeService.GetCordobaToday().AddMonths(-6).AddDays(-1);
+        var personId = await SeedPersonAsync(db, actorId, validEvaluation: true, evaluationDate: expiredDate);
+        var medicationId = await SeedMedicationAsync(db);
+        var service = new MedicationSchemeService(db);
+
+        var result = await service.CreateAsync(personId, NewSchemeDto(medicationId), actorId, CancellationToken.None);
+
+        Assert.False(result.Success);
+        Assert.Equal(CreateMedicationSchemeError.MissingPsychiatricEvaluation, result.Error);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithExpiredAndRecentValidEvaluations_Succeeds()
+    {
+        using var db = CreateDbContext();
+        var actorId = await SeedUserAsync(db);
+        var expiredDate = MedicationSchemeService.GetCordobaToday().AddMonths(-6).AddDays(-10);
+        var personId = await SeedPersonAsync(db, actorId, validEvaluation: true, evaluationDate: expiredDate);
+        db.PsychiatricEvaluations.Add(new PsychiatricEvaluation
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personId,
+            Date = MedicationSchemeService.GetCordobaToday().AddMonths(-2),
+            Professional = "Dra. Reciente",
+            IsValid = true,
+            RegisteredByUserId = actorId
+        });
+        await db.SaveChangesAsync();
+        var medicationId = await SeedMedicationAsync(db);
+        var service = new MedicationSchemeService(db);
+
+        var result = await service.CreateAsync(personId, NewSchemeDto(medicationId), actorId, CancellationToken.None);
+
+        Assert.True(result.Success);
     }
 
     [Fact]
