@@ -33,6 +33,8 @@ using Vicaria.Application.Collaborators;
 using Vicaria.Infrastructure.Collaborators;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Infrastructure.MedicationSchemes;
+using Vicaria.Application.Activities;
+using Vicaria.Infrastructure.Activities;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -105,7 +107,9 @@ builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaborato
 builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
 builder.Services.AddScoped<IMedicationSchemeService, MedicationSchemeService>();
 builder.Services.AddScoped<IValidator<CreateMedicationSchemeDto>, CreateMedicationSchemeDtoValidator>();
-
+builder.Services.AddScoped<IActivityService, ActivityService>();
+builder.Services.AddScoped<IValidator<CreateActivityDto>, CreateActivityValidator>();
+builder.Services.AddScoped<IValidator<UpdateActivityDto>, UpdateActivityValidator>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
