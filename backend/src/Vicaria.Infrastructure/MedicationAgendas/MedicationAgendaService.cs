@@ -16,7 +16,8 @@ public class MedicationAgendaService : IMedicationAgendaService
 
     public async Task<DailyMedicationAgendaDto> GetDailyAgendaAsync(DateTime? date, CancellationToken cancellationToken = default)
     {
-        var targetDate = (date ?? DateTime.UtcNow).Date;
+        // "hoy" se toma en hora de Córdoba, igual que en el resto de la medicación (SCRUM-233)
+        var targetDate = (date ?? MedicationSchemes.MedicationSchemeService.GetCordobaToday()).Date;
 
         var intakes = await _dbContext.DailyMedicationSchedules
             .AsNoTracking()
