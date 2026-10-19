@@ -142,8 +142,12 @@
             <li class="flex items-center justify-between py-2 text-[13px]">
               <span class="font-semibold text-slate-700">{{ person.fullName }}</span>
               <span class="text-slate-500">
-                última vez el {{ toDate(person.lastAttendance) | date: 'dd/MM/yyyy' }} ·
-                <strong class="text-amber-600">{{ person.daysSince }} días</strong>
+                @if (person.lastAttendance) {
+                  última vez el {{ toDate(person.lastAttendance) | date: 'dd/MM/yyyy' }} ·
+                  <strong class="text-amber-600">{{ person.daysSince }} días</strong>
+                } @else {
+                  <strong class="text-amber-600">nunca registró asistencia</strong>
+                }
               </span>
             </li>
           }
