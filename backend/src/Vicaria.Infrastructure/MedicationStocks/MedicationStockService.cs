@@ -102,4 +102,49 @@ public class MedicationStockService : IMedicationStockService
 
         return GetMedicationStockHistoryResult.Ok(dto);
     }
+
+    public async Task<IReadOnlyList<MedicationStockAlertDto>> GetStockAlertsAsync(CancellationToken cancellationToken = default)
+    {
+        var lowStockMedications = await _dbContext.MedicationCatalogs
+            .AsNoTracking()
+            .Where(m => m.Stock <= m.MinimumStockThreshold)
+            .OrderBy(m => m.Stock)
+            .ThenBy(m => m.Name)
+            .Select(m => new MedicationStockAlertDto(
+                m.Id,
+                m.Name,
+                m.Stock,
+                m.MinimumStockThreshold,
+                m.Stock == 0
+            ))
+            .ToListAsync(cancellationToken);
+
+        return lowStockMedications;
+    }
+
+    public async Task<UpdateMedicationStockThresholdResult> UpdateThresholdAsync(Guid medicationId, UpdateMedicationStockThresholdDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var medication = await _dbContext.MedicationCatalogs
+            .FirstOrDefaultAsync(m => m.Id == medicationId, cancellationToken);
+
+        if (medication is null)
+        {
+            return UpdateMedicationStockThresholdResult.NotFound();
+        }
+
+        medication.MinimumStockThreshold = dto.MinimumStockThreshold;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = $"Umbral mínimo de stock actualizado a {dto.MinimumStockThreshold}",
+            AffectedEntity = $"MedicationCatalog:{medication.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdateMedicationStockThresholdResult.Ok();
+    }
 }

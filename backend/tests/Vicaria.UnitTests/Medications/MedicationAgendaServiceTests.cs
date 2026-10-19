@@ -150,4 +150,49 @@ public class MedicationAgendaServiceTests
         Assert.False(result.Success);
         Assert.Equal(UpdateMedicationIntakeError.InvalidStatus, result.Error);
     }
+
+    [Fact]
+    public async Task UpdateStatusAsync_WhenAdministered_DecrementsStockAndCreatesConsumptionMovement()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new MedicationAgendaService(context);
+
+        var actorId = Guid.NewGuid();
+        var medication = new MedicationCatalog
+        {
+            Id = Guid.NewGuid(),
+            Name = "Risperdal 2mg",
+            Stock = 5
+        };
+        context.MedicationCatalogs.Add(medication);
+
+        var intake = new DailyMedicationSchedule
+        {
+            Id = Guid.NewGuid(),
+            PersonId = Guid.NewGuid(),
+            MedicationId = medication.Id,
+            Date = DateTime.UtcNow.Date,
+            Time = new TimeSpan(8, 0, 0),
+            Dose = "2mg",
+            Status = MedicationIntakeStatus.Pending
+        };
+        context.DailyMedicationSchedules.Add(intake);
+        await context.SaveChangesAsync();
+
+        var dto = new UpdateMedicationIntakeStatusDto(MedicationIntakeStatus.Administered, "Administrada en horario");
+
+        var result = await service.UpdateStatusAsync(intake.Id, dto, actorId);
+
+        Assert.True(result.Success);
+
+        var updatedMed = await context.MedicationCatalogs.FindAsync(medication.Id);
+        Assert.NotNull(updatedMed);
+        Assert.Equal(4, updatedMed.Stock);
+
+        var movement = await context.MedicationStockMovements
+            .FirstOrDefaultAsync(m => m.MedicationId == medication.Id && m.Type == MedicationStockMovementType.Consumo);
+        Assert.NotNull(movement);
+        Assert.Equal(1, movement.Quantity);
+        Assert.Equal(actorId, movement.CreatedByUserId);
+    }
 }

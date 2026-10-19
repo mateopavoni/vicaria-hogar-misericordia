@@ -19,6 +19,10 @@ public class MedicationCatalogConfiguration : IEntityTypeConfiguration<Medicatio
         builder.Property(e => e.Stock)
             .IsRequired();
 
+        builder.Property(e => e.MinimumStockThreshold)
+            .HasDefaultValue(5)
+            .IsRequired();
+
         builder.HasIndex(e => e.Name);
     }
 }
