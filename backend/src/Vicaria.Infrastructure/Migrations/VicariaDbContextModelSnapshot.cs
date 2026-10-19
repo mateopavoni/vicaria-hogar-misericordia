@@ -592,6 +592,12 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<TimeSpan>("Time")
                         .HasColumnType("time");
 
@@ -602,6 +608,8 @@ namespace Vicaria.Infrastructure.Migrations
                     b.HasIndex("MedicationId");
 
                     b.HasIndex("PersonId");
+
+                    b.HasIndex("ReviewedByUserId");
 
                     b.ToTable("medication_schemes", (string)null);
                 });
@@ -1372,11 +1380,18 @@ namespace Vicaria.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Vicaria.Domain.Entities.User", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("LoadedBy");
 
                     b.Navigation("Medication");
 
                     b.Navigation("Person");
+
+                    b.Navigation("ReviewedBy");
                 });
 
             modelBuilder.Entity("Vicaria.Domain.Entities.MedicationStockMovement", b =>
