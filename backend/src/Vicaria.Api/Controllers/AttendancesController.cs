@@ -14,17 +14,29 @@ namespace Vicaria.Api.Controllers;
 public class AttendancesController : ControllerBase
 {
     private readonly IAttendanceService _attendanceService;
+    private readonly IAttendanceStatisticsService _statisticsService;
+    private readonly IAttendanceSummaryPdfGenerator _pdfGenerator;
     private readonly IPersonAccessService _personAccessService;
     private readonly IValidator<CreateAttendanceDto> _validator;
+    private readonly IValidator<GetInactivePeopleQueryDto> _inactiveValidator;
+    private readonly IValidator<GetMonthlySummaryQueryDto> _monthlySummaryValidator;
 
     public AttendancesController(
         IAttendanceService attendanceService,
+        IAttendanceStatisticsService statisticsService,
+        IAttendanceSummaryPdfGenerator pdfGenerator,
         IPersonAccessService personAccessService,
-        IValidator<CreateAttendanceDto> validator)
+        IValidator<CreateAttendanceDto> validator,
+        IValidator<GetInactivePeopleQueryDto> inactiveValidator,
+        IValidator<GetMonthlySummaryQueryDto> monthlySummaryValidator)
     {
         _attendanceService = attendanceService;
+        _statisticsService = statisticsService;
+        _pdfGenerator = pdfGenerator;
         _personAccessService = personAccessService;
         _validator = validator;
+        _inactiveValidator = inactiveValidator;
+        _monthlySummaryValidator = monthlySummaryValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -60,5 +72,49 @@ public class AttendancesController : ControllerBase
             RegisterAttendanceError.Duplicate => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
+    }
+
+    // lista las personas sin asistir en los últimos días (SCRUM-225);
+    // criterio puro por asistencia, por defecto más de 14 días
+    [HttpGet("inactive")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> GetInactive([FromQuery] int days = 14, CancellationToken cancellationToken = default)
+    {
+        var query = new GetInactivePeopleQueryDto(days);
+        var validationResult = await _inactiveValidator.ValidateAsync(query, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _statisticsService.GetInactivePeopleAsync(days, null, cancellationToken);
+        return Ok(result.Data);
+    }
+
+    // resumen mensual de asistencia exportable a PDF (SCRUM-225);
+    // usa el mismo cálculo compartido que SCRUM-224 reutiliza
+    [HttpGet("monthly-summary/pdf")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> GetMonthlySummaryPdf([FromQuery] int? year, [FromQuery] int? month, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var query = new GetMonthlySummaryQueryDto(year ?? now.Year, month ?? now.Month);
+        var validationResult = await _monthlySummaryValidator.ValidateAsync(query, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _statisticsService.GetMonthlySummaryAsync(query.Year, query.Month, cancellationToken);
+        var pdfBytes = _pdfGenerator.GenerateMonthlySummaryPdf(result.Data!);
+        return File(pdfBytes, "application/pdf", $"resumen-mensual-{query.Year}-{query.Month:00}.pdf");
     }
 }
