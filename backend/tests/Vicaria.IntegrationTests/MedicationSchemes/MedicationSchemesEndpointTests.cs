@@ -53,7 +53,8 @@ public class MedicationSchemesEndpointTests : IClassFixture<VicariaWebApplicatio
     private async Task<(Guid PersonId, Guid MedicationId)> SeedResidentAsync(
         PersonType personType = PersonType.Resident,
         bool validEvaluation = true,
-        int stock = 10)
+        int stock = 10,
+        DateTime? evaluationDate = null)
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
@@ -98,7 +99,7 @@ public class MedicationSchemesEndpointTests : IClassFixture<VicariaWebApplicatio
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = DateTime.UtcNow,
+            Date = evaluationDate ?? DateTime.UtcNow,
             Professional = "Dra. Test",
             IsValid = validEvaluation,
             RegisteredByUserId = owner.Id
@@ -125,6 +126,7 @@ public class MedicationSchemesEndpointTests : IClassFixture<VicariaWebApplicatio
         Assert.Equal("08:30", body.GetProperty("time").GetString());
         Assert.True(body.GetProperty("isActive").GetBoolean());
         Assert.False(body.GetProperty("pendingStock").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("stockAlert").ValueKind);
         Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("medicationName").GetString()));
         Assert.False(string.IsNullOrWhiteSpace(body.GetProperty("loadedByName").GetString()));
     }
@@ -137,15 +139,30 @@ public class MedicationSchemesEndpointTests : IClassFixture<VicariaWebApplicatio
 
         var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/medication-schemes", NewSchemeBody(medicationId));
 
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.True(body.GetProperty("pendingStock").GetBoolean());
+        var stockAlert = body.GetProperty("stockAlert");
+        Assert.Equal("PendingStock", stockAlert.GetProperty("code").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(stockAlert.GetProperty("message").GetString()));
     }
 
     [Fact]
     public async Task Create_SinEvaluacionVigente_Devuelve400()
     {
         var (personId, medicationId) = await SeedResidentAsync(validEvaluation: false);
+        await UseTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/medication-schemes", NewSchemeBody(medicationId));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_ConEvaluacionVencidaMasDeSeisMeses_Devuelve400()
+    {
+        var expiredDate = DateTime.UtcNow.AddMonths(-6).AddDays(-2);
+        var (personId, medicationId) = await SeedResidentAsync(validEvaluation: true, evaluationDate: expiredDate);
         await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/medication-schemes", NewSchemeBody(medicationId));
