@@ -77,6 +77,121 @@ public class AttendanceStatisticsService : IAttendanceStatisticsService
         return GetMonthlySummaryResult.Ok(summary);
     }
 
+    public async Task<GetStatisticsResult> GetStatisticsAsync(DateTime from, DateTime to, string? activity, CancellationToken cancellationToken = default)
+    {
+        var fromDate = from.Date;
+        var toDate = to.Date;
+        var rangeEndExclusive = toDate.AddDays(1);
+
+        AttendanceActivity? activityFilter = null;
+        if (!string.IsNullOrWhiteSpace(activity) && Enum.TryParse<AttendanceActivity>(activity, out var parsedActivity))
+        {
+            activityFilter = parsedActivity;
+        }
+
+        var records = await _dbContext.Attendances
+            .AsNoTracking()
+            .Where(a => a.Date >= fromDate && a.Date < rangeEndExclusive
+                && (activityFilter == null || a.Activity == activityFilter))
+            .ToListAsync(cancellationToken);
+
+        var totalRecords = records.Count;
+        var totalAnonymous = records.Sum(r => r.AnonymousCount);
+        var daysInRange = (toDate - fromDate).Days + 1;
+        var averagePerDay = Math.Round((totalRecords + totalAnonymous) / (double)daysInRange, 2);
+
+        IReadOnlyList<ActivityTotalDto> totalsByActivity = activityFilter.HasValue
+            ? [new ActivityTotalDto(activityFilter.Value, GetActivityName(activityFilter.Value), totalRecords)]
+            : Enum.GetValues<AttendanceActivity>()
+                .Select(act => new ActivityTotalDto(act, GetActivityName(act), records.Count(r => r.Activity == act)))
+                .ToList();
+
+        var previousFrom = fromDate.AddDays(-daysInRange);
+        var previousPeriodTotal = await _dbContext.Attendances
+            .AsNoTracking()
+            .CountAsync(a => a.Date >= previousFrom && a.Date < fromDate
+                && (activityFilter == null || a.Activity == activityFilter), cancellationToken);
+
+        double? comparisonPercentage = null;
+        if (previousPeriodTotal > 0)
+        {
+            comparisonPercentage = Math.Round((totalRecords - previousPeriodTotal) / (double)previousPeriodTotal * 100, 2);
+        }
+
+        var weeklyAverages = BuildWeeklyAverages(records, fromDate, toDate);
+        var monthlyAverages = BuildMonthlyAverages(records, fromDate, toDate);
+
+        var dto = new AttendanceStatisticsDto(
+            fromDate,
+            toDate,
+            activityFilter?.ToString(),
+            totalRecords,
+            totalAnonymous,
+            averagePerDay,
+            totalsByActivity,
+            previousPeriodTotal,
+            comparisonPercentage,
+            weeklyAverages,
+            monthlyAverages);
+
+        return GetStatisticsResult.Ok(dto);
+    }
+
+    private static IReadOnlyList<WeeklyAverageDto> BuildWeeklyAverages(
+        IReadOnlyList<Attendance> records, DateTime fromDate, DateTime toDate)
+    {
+        // semanas de lunes a domingo; los bordes usan solo los días que caen dentro del rango
+        var firstWeekStart = fromDate.AddDays(-(((int)fromDate.DayOfWeek + 6) % 7));
+        var result = new List<WeeklyAverageDto>();
+
+        for (var weekStart = firstWeekStart; weekStart <= toDate; weekStart = weekStart.AddDays(7))
+        {
+            var weekEnd = weekStart.AddDays(6);
+            var overlapStart = weekStart > fromDate ? weekStart : fromDate;
+            var overlapEnd = weekEnd < toDate ? weekEnd : toDate;
+            var days = (overlapEnd - overlapStart).Days + 1;
+
+            var inWeek = records.Where(r => r.Date.Date >= overlapStart && r.Date.Date <= overlapEnd).ToList();
+            var count = inWeek.Count;
+            var anonymous = inWeek.Sum(r => r.AnonymousCount);
+
+            result.Add(new WeeklyAverageDto(
+                weekStart,
+                Math.Round((count + anonymous) / (double)days, 2),
+                count,
+                anonymous));
+        }
+
+        return result;
+    }
+
+    private static IReadOnlyList<MonthlyAverageDto> BuildMonthlyAverages(
+        IReadOnlyList<Attendance> records, DateTime fromDate, DateTime toDate)
+    {
+        var result = new List<MonthlyAverageDto>();
+
+        for (var cursor = new DateTime(fromDate.Year, fromDate.Month, 1); cursor <= toDate; cursor = cursor.AddMonths(1))
+        {
+            var monthEnd = cursor.AddMonths(1).AddDays(-1);
+            var overlapStart = cursor > fromDate ? cursor : fromDate;
+            var overlapEnd = monthEnd < toDate ? monthEnd : toDate;
+            var days = (overlapEnd - overlapStart).Days + 1;
+
+            var inMonth = records.Where(r => r.Date.Date >= overlapStart && r.Date.Date <= overlapEnd).ToList();
+            var count = inMonth.Count;
+            var anonymous = inMonth.Sum(r => r.AnonymousCount);
+
+            result.Add(new MonthlyAverageDto(
+                cursor.Year,
+                cursor.Month,
+                Math.Round((count + anonymous) / (double)days, 2),
+                count,
+                anonymous));
+        }
+
+        return result;
+    }
+
     private async Task<IReadOnlyList<InactivePersonDto>> FindInactiveAsync(int days, DateTime asOf, IEnumerable<Guid>? personIds, CancellationToken cancellationToken)
     {
         var threshold = asOf.AddDays(-days);
