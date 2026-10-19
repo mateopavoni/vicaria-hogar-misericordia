@@ -34,6 +34,7 @@ public class VicariaDbContext : DbContext
     public DbSet<MedicationScheme> MedicationSchemes => Set<MedicationScheme>();
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<DailyMedicationSchedule> DailyMedicationSchedules => Set<DailyMedicationSchedule>();
+    public DbSet<MedicationStockMovement> MedicationStockMovements => Set<MedicationStockMovement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
