@@ -79,6 +79,28 @@ public class MedicationAgendaService : IMedicationAgendaService
         intake.AdministeredAt = DateTime.UtcNow;
         intake.AdministeredByUserId = actorId;
 
+        // Descuento automático de stock al marcar como Administrada (SCRUM-245)
+        if (dto.Status == MedicationIntakeStatus.Administered)
+        {
+            var medication = await _dbContext.MedicationCatalogs
+                .FirstOrDefaultAsync(m => m.Id == intake.MedicationId, cancellationToken);
+
+            if (medication != null)
+            {
+                medication.Stock = Math.Max(0, medication.Stock - 1);
+
+                _dbContext.MedicationStockMovements.Add(new MedicationStockMovement
+                {
+                    Id = Guid.NewGuid(),
+                    MedicationId = medication.Id,
+                    Type = MedicationStockMovementType.Consumo,
+                    Quantity = 1,
+                    Date = DateTime.UtcNow,
+                    CreatedByUserId = actorId
+                });
+            }
+        }
+
         var statusText = dto.Status == MedicationIntakeStatus.Administered ? "Administrada" : "No administrada";
 
         _dbContext.AuditLogs.Add(new AuditLog
