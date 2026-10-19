@@ -26,6 +26,7 @@ public class PersonsController : ControllerBase
     private readonly IMedicationSchemeService _medicationSchemeService;
     private readonly IValidator<CreateMedicationSchemeDto> _createMedicationSchemeValidator;
     private readonly IMedicationHistoryService _medicationHistoryService;
+    private readonly IMedicationHistoryPdfGenerator _medicationHistoryPdfGenerator;
     private readonly IValidator<GetMedicationHistoryDto> _getMedicationHistoryValidator;
 
     public PersonsController(
@@ -37,9 +38,11 @@ public class PersonsController : ControllerBase
         IMedicationSchemeService medicationSchemeService,
         IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator,
         IMedicationHistoryService medicationHistoryService,
+        IMedicationHistoryPdfGenerator medicationHistoryPdfGenerator,
         IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator)
     {
         _medicationHistoryService = medicationHistoryService;
+        _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
         _getMedicationHistoryValidator = getMedicationHistoryValidator;
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
@@ -210,6 +213,59 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
+
+    // exportación del historial a PDF para presentar a un profesional de salud (SCRUM-241):
+    // mismos filtros, misma autorización y mismo conjunto que el JSON (SCRUM-240)
+    [HttpGet("{id}/medication-history/pdf")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetMedicationHistoryPdf(
+        Guid id,
+        [FromQuery(Name = "from")] DateOnly? from,
+        [FromQuery(Name = "to")] DateOnly? to,
+        [FromQuery(Name = "medicationId")] Guid? medicationId,
+        CancellationToken cancellationToken)
+    {
+        var filter = new GetMedicationHistoryDto(from, to, medicationId);
+
+        var validationResult = await _getMedicationHistoryValidator.ValidateAsync(filter, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var actorRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        var result = await _medicationHistoryService.GetPersonHistoryAsync(id, filter, actorRoles, cancellationToken);
+
+        return result.Error switch
+        {
+            MedicationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            not null => BadRequest(new { message = result.ErrorMessage }),
+            _ => File(
+                _medicationHistoryPdfGenerator.GeneratePersonHistoryPdf(new MedicationHistoryPdfDocument(
+                    PersonName: result.PersonName ?? string.Empty,
+                    PersonDni: result.PersonDni,
+                    From: filter.From,
+                    To: filter.To,
+                    Entries: result.Entries ?? [],
+                    GeneratedAt: DateTime.UtcNow)),
+                "application/pdf",
+                $"medication-history-{id}-{FormatPdfRange(filter.From, filter.To)}.pdf")
+        };
+    }
+
+    private static string FormatPdfRange(DateOnly? from, DateOnly? to) =>
+        (from, to) switch
+        {
+            (not null, not null) => $"{from.Value:yyyyMMdd}-{to.Value:yyyyMMdd}",
+            (not null, null) => $"{from.Value:yyyyMMdd}-all",
+            (null, not null) => $"all-{to.Value:yyyyMMdd}",
+            _ => "all"
+        };
 
     // desactiva un esquema de medicación manteniendo el registro histórico (SCRUM-248 / SCRUM-75)
     [HttpPatch("{id}/medication-schemes/{schemeId:guid}/deactivate")]

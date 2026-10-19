@@ -120,6 +120,7 @@ builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaborato
 builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
 builder.Services.AddScoped<IMedicationSchemeService, MedicationSchemeService>();
 builder.Services.AddScoped<IMedicationHistoryService, MedicationHistoryService>();
+builder.Services.AddScoped<IMedicationHistoryPdfGenerator, MedicationHistoryPdfGenerator>();
 builder.Services.AddScoped<IValidator<GetMedicationHistoryDto>, GetMedicationHistoryDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateMedicationSchemeDto>, CreateMedicationSchemeDtoValidator>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
