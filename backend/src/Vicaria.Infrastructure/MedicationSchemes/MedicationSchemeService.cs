@@ -15,11 +15,7 @@ public class MedicationSchemeService : IMedicationSchemeService
         _dbContext = dbContext;
     }
 
-    public async Task<CreateMedicationSchemeResult> CreateAsync(
-        Guid personId,
-        CreateMedicationSchemeDto dto,
-        Guid actorId,
-        CancellationToken cancellationToken)
+    public async Task<CreateMedicationSchemeResult> CreateAsync(Guid personId, CreateMedicationSchemeDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
         var personExists = await _dbContext.People
             .AsNoTracking()
@@ -113,5 +109,89 @@ public class MedicationSchemeService : IMedicationSchemeService
             actor is null ? string.Empty : $"{actor.FirstName} {actor.LastName}".Trim(),
             scheme.IsActive,
             scheme.PendingStock));
+    }
+
+   public async Task<GetPersonMedicationSchemesResult> GetByPersonIdAsync(Guid personId, bool? onlyActive = null, CancellationToken cancellationToken = default)
+    {
+        var personExists = await _dbContext.People
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == personId, cancellationToken);
+
+        if (!personExists)
+        {
+            return GetPersonMedicationSchemesResult.PersonNotFound();
+        }
+
+        var query = _dbContext.MedicationSchemes
+            .AsNoTracking()
+            .Include(s => s.Medication)
+            .Include(s => s.LoadedBy)
+            .Where(s => s.PersonId == personId);
+
+        if (onlyActive.HasValue)
+        {
+            var activeFilter = onlyActive.Value;
+            query = query.Where(s => s.IsActive == activeFilter);
+        }
+
+        var schemes = await query
+            .OrderByDescending(s => s.IsActive)
+            .ThenByDescending(s => s.LoadedAt)
+            .Select(s => new MedicationSchemeDto(
+                s.Id,
+                s.PersonId,
+                s.MedicationId,
+                s.Medication != null ? s.Medication.Name : string.Empty,
+                s.Dose,
+                s.Time.ToString(@"hh\:mm"),
+                s.LoadedAt,
+                s.LoadedByUserId,
+                s.LoadedBy != null ? $"{s.LoadedBy.FirstName} {s.LoadedBy.LastName}".Trim() : string.Empty,
+                s.IsActive,
+                s.PendingStock
+            ))
+            .ToListAsync(cancellationToken);
+
+        return GetPersonMedicationSchemesResult.Ok(schemes);
+    }
+
+    public async Task<DeactivateMedicationSchemeResult> DeactivateAsync(Guid personId, Guid schemeId, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var personExists = await _dbContext.People
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == personId, cancellationToken);
+
+        if (!personExists)
+        {
+            return DeactivateMedicationSchemeResult.PersonNotFound();
+        }
+
+        var scheme = await _dbContext.MedicationSchemes
+            .FirstOrDefaultAsync(s => s.Id == schemeId && s.PersonId == personId, cancellationToken);
+
+        if (scheme is null)
+        {
+            return DeactivateMedicationSchemeResult.SchemeNotFound();
+        }
+
+        if (!scheme.IsActive)
+        {
+            return DeactivateMedicationSchemeResult.AlreadyInactive();
+        }
+
+        scheme.IsActive = false;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Esquema de medicación desactivado",
+            AffectedEntity = $"MedicationScheme:{scheme.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return DeactivateMedicationSchemeResult.Ok();
     }
 }
