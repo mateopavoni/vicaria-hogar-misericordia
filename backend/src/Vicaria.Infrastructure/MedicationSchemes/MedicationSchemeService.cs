@@ -208,6 +208,15 @@ public class MedicationSchemeService : IMedicationSchemeService
         return GetPersonMedicationSchemesResult.Ok(schemes);
     }
 
+    public async Task<IReadOnlyList<MedicationCatalogItemDto>> GetCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.MedicationCatalogs
+            .AsNoTracking()
+            .OrderBy(m => m.Name)
+            .Select(m => new MedicationCatalogItemDto(m.Id, m.Name, m.Stock))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<MedicationReviewAlertDto>> GetNeedsReviewAsync(CancellationToken cancellationToken = default)
     {
         var threshold = GetCordobaNow().AddDays(-ReviewAlertDays);

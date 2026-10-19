@@ -18,6 +18,15 @@ public class MedicationSchemesController : ControllerBase
         _medicationSchemeService = medicationSchemeService;
     }
 
+    // catálogo de medicamentos con stock de farmacia para cargar esquemas
+    [HttpGet("catalog")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetCatalog(CancellationToken cancellationToken)
+    {
+        var catalog = await _medicationSchemeService.GetCatalogAsync(cancellationToken);
+        return Ok(catalog);
+    }
+
     // esquemas vigentes de todas las personas con más de 30 días sin revisión (SCRUM-249)
     [HttpGet("needs-review")]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]

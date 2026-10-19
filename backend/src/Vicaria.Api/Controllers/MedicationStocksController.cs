@@ -66,6 +66,13 @@ public class MedicationStocksController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetStockOverview(CancellationToken cancellationToken)
+    {
+        var items = await _stockService.GetStockOverviewAsync(cancellationToken);
+        return Ok(items);
+    }
+
     [HttpGet("alertas")]
     public async Task<IActionResult> GetStockAlerts(CancellationToken cancellationToken)
     {
