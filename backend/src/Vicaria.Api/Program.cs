@@ -110,6 +110,7 @@ builder.Services.AddScoped<IValidator<CreateMedicationSchemeDto>, CreateMedicati
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IValidator<CreateActivityDto>, CreateActivityValidator>();
 builder.Services.AddScoped<IValidator<UpdateActivityDto>, UpdateActivityValidator>();
+builder.Services.AddScoped<ICalendarActivitySyncService, CalendarActivitySyncService>();
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
