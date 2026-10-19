@@ -65,7 +65,7 @@ export type AdministrationStatus = 'administered' | 'not-administered';
 
 /** Registro de una toma de un esquema en una fecha (YYYY-MM-DD). */
 export interface MedicationAdministration {
-  schemeId: string;
+  intakeId: string;
   date: string;
   status: AdministrationStatus;
   /** Opcional. */
@@ -77,7 +77,8 @@ export interface MedicationAdministration {
 
 /** Una toma de la agenda: esquema + persona + (si ya se registró) su administración. */
 export interface AgendaItem {
-  schemeId: string;
+  /** Id de la toma del día (no del esquema): es el que se usa para registrar la administración. */
+  intakeId: string;
   personId: string;
   personName: string;
   medicationName: string;
@@ -101,7 +102,7 @@ export interface MedicationAgenda {
 }
 
 export interface RecordAdministrationRequest {
-  schemeId: string;
+  intakeId: string;
   date: string;
   status: AdministrationStatus;
   observation: string | null;

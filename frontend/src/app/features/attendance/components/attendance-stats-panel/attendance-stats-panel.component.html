@@ -23,7 +23,7 @@
           (change)="exportMonth.set($any($event.target).value)"
         />
       </ui-form-field>
-      <button uiButton type="button" variant="secondary" [disabled]="!exportMonth() || loading()" (click)="exportMonthlyPdf()">
+      <button uiButton type="button" variant="secondary" [disabled]="!exportMonth() || exporting()" (click)="exportMonthlyPdf()">
         Exportar a PDF
       </button>
     </div>
@@ -32,13 +32,13 @@
   <!-- FILTROS -->
   <div class="no-print grid grid-cols-1 gap-3 md:grid-cols-3">
     <ui-form-field label="Desde" for="stats-from">
-      <input id="stats-from" uiInput type="date" [value]="dateFrom()" [attr.max]="today" (change)="dateFrom.set($any($event.target).value)" />
+      <input id="stats-from" uiInput type="date" [value]="dateFrom()" [attr.max]="today" (change)="setFrom($any($event.target).value)" />
     </ui-form-field>
     <ui-form-field label="Hasta" for="stats-to">
-      <input id="stats-to" uiInput type="date" [value]="dateTo()" [attr.max]="today" (change)="dateTo.set($any($event.target).value)" />
+      <input id="stats-to" uiInput type="date" [value]="dateTo()" [attr.max]="today" (change)="setTo($any($event.target).value)" />
     </ui-form-field>
     <ui-form-field label="Actividad" for="stats-activity">
-      <select id="stats-activity" uiInput [value]="activityFilter()" (change)="activityFilter.set($any($event.target).value)">
+      <select id="stats-activity" uiInput [value]="activityFilter()" (change)="setActivity($any($event.target).value)">
         <option value="" [selected]="activityFilter() === ''">Todas</option>
         @for (option of activities(); track option.id) {
           <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.name }}</option>
@@ -62,7 +62,7 @@
     </div>
   } @else if (!invalidRange()) {
 
-    @if (overview().daysWithData === 0) {
+    @if (overview().totalPresences === 0) {
       <p class="rounded-lg border border-slate-200 bg-white px-4 py-6 text-center text-[13px] text-slate-400">
         No hay asistencias cargadas en este período.
       </p>
@@ -73,7 +73,13 @@
         <div class="rounded-lg border border-slate-200 bg-white p-4">
           <p class="text-[11px] font-semibold uppercase text-slate-400">Presencias totales</p>
           <p class="mt-1 text-[26px] font-bold text-slate-800">{{ overview().totalPresences }}</p>
-          <p class="text-[11px] text-slate-400">en {{ overview().daysWithData }} días con datos</p>
+          <p class="text-[11px] text-slate-400">
+            @if (comparisonPercentage() !== null) {
+              {{ comparisonPercentage()! > 0 ? "+" : "" }}{{ comparisonPercentage() }}% vs. período anterior ({{ previousPeriodTotal() }})
+            } @else {
+              con y sin ficha
+            }
+          </p>
         </div>
         <div class="rounded-lg border border-slate-200 bg-white p-4">
           <p class="text-[11px] font-semibold uppercase text-slate-400">Promedio por día</p>
@@ -101,8 +107,7 @@
               <div class="mb-1 flex items-baseline justify-between text-[13px]">
                 <span class="font-semibold text-slate-700">{{ item.label }}</span>
                 <span class="text-slate-500">
-                  <strong class="text-slate-800">{{ item.totalPresences }}</strong> presencias ·
-                  {{ item.averagePerDay }} por día · {{ item.daysWithData }} días
+                  <strong class="text-slate-800">{{ item.totalPresences }}</strong> presencias
                 </span>
               </div>
               <div class="h-3 w-full overflow-hidden rounded-full bg-slate-100">
@@ -113,25 +118,6 @@
                   [attr.aria-label]="item.label + ': ' + item.totalPresences + ' presencias'"
                 ></div>
               </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- PERSONAS POR DÍA -->
-      <div class="rounded-lg border border-slate-200 bg-white p-5">
-        <h3 class="mb-4 text-[14px] font-bold text-slate-800">Personas por día</h3>
-        <div class="flex h-40 items-end gap-1.5 overflow-x-auto">
-          @for (day of overview().perDay; track day.date) {
-            <div class="flex h-full min-w-[26px] flex-1 flex-col items-center justify-end gap-1">
-              <span class="text-[10px] font-semibold text-slate-500">{{ day.total }}</span>
-              <div
-                class="w-full rounded-t bg-[#6B8DF5]"
-                [style.height.%]="pct(day.total, maxDayTotal()) * 0.8"
-                role="img"
-                [attr.aria-label]="(toDate(day.date) | date: 'dd/MM') + ': ' + day.total + ' personas'"
-              ></div>
-              <span class="text-[10px] text-slate-400">{{ toDate(day.date) | date: 'dd/MM' }}</span>
             </div>
           }
         </div>

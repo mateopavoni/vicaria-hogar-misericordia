@@ -32,7 +32,7 @@ public class AttendanceService : IAttendanceService
             .ToListAsync(cancellationToken);
 
         var persons = rows
-            .Select(r => new DailyAttendancePersonDto(r.Id, r.PersonId, $"{r.FirstName} {r.LastName}".Trim(), r.Dni))
+            .Select(r => new DailyAttendancePersonDto(r.Id, r.PersonId, $"{r.FirstName} {r.LastName}".Trim(), r.Dni, r.AnonymousCount))
             .OrderBy(p => p.FullName)
             .ToList();
 

@@ -94,7 +94,7 @@
                   <button
                     type="button"
                     class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
-                    (click)="toggleActive(scheme)"
+                    (click)="deactivate(scheme)"
                   >
                     Desactivar
                   </button>
@@ -127,15 +127,6 @@
                   </p>
                 }
               </div>
-              @if (canCreate()) {
-                <button
-                  type="button"
-                  class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
-                  (click)="toggleActive(scheme)"
-                >
-                  Volver a vigente
-                </button>
-              }
             </li>
           } @empty {
             <li class="px-4 py-4 text-[13px] text-slate-400">No hay esquemas anteriores.</li>
