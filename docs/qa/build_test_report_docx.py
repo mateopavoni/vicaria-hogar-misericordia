@@ -111,6 +111,8 @@ def main():
     s4 = sum(stats["Ciclo - Sprint 4"].values())
     api = stats["Ciclo - Sprint 4 (API)"]
     api_n, api_ok = sum(api.values()), api["PASÓ"]
+    wired = stats.get("Ciclo - Sprint 4 (integración)", {})
+    wired_n, wired_ok = sum(wired.values()), wired.get("PASÓ", 0)
     first_fail = [k for k, v in run.UI_RESULTS.items() if v[2]]
 
     defects = [r for r in openpyxl.load_workbook(plan)["Defectos y pendientes"].iter_rows(min_row=2, values_only=True) if r[0]]
@@ -153,7 +155,7 @@ def main():
     doc.add_paragraph(
         "El software es estable en sus funciones críticas (acceso y roles, fichas, observaciones, historia de vida, Casa de Convivencia, calendario, "
         "colaboradores y visitas), resiste 50 usuarios concurrentes sin errores y pasó las verificaciones básicas de seguridad. "
-        f"Quedan {len(open_defects)} hallazgos abiertos, ninguno crítico. El Sprint 4 (asistencia y medicación) se evalúa solo en lo que ya tiene backend: {api_n} pruebas de API, {api_ok} en PASÓ; las pantallas y el resto de las historias no se pueden probar todavía."
+        f"Quedan {len(open_defects)} hallazgos abiertos, ninguno crítico. El Sprint 4 (asistencia y medicación) tiene el backend completo integrado en dev y el frontend conectado a la API real: {api_n} pruebas de API de los primeros endpoints ({api_ok} PASÓ) y {wired_n} pruebas de integración front-back ({wired_ok} PASÓ); los {s4} casos manuales de interfaz siguen sin ejecutar."
     )
     p = doc.add_paragraph(); r = p.add_run("Recomendación: APROBADO CON CONDICIONES para los Sprint 1 a 3 (ver sección 8)."); r.bold = True
 
@@ -172,7 +174,7 @@ def main():
     )
     doc.add_heading("2.2 Qué NO se probó", 2)
     table(doc, ["Exclusión", "Motivo", "Riesgo / mitigación"], [
-        [f"Sprint 4: asistencia y medicación ({s4} casos, TC-147 a TC-194)", f"El backend tiene 2 de 18 subtareas hechas (SCRUM-216 y SCRUM-232), probadas por API ({api_n} pruebas, {api_ok} PASÓ); las pantallas usan servicios simulados y el resto de las historias no tiene backend, así que los {s4} casos de interfaz quedan BLOQUEADOS (la UI no llama a las APIs que sí existen: asistencia diaria y carga de esquema). Además faltan en el backend los GET de asistencia, el catálogo de medicamentos y el cierre de día.", "Sin riesgo sobre Sprint 1-3. Se destraban al conectar el frontend y al entregar el backend; vence el 24/10."],
+        [f"Sprint 4: asistencia y medicación ({s4} casos, TC-147 a TC-194)", f"El backend (18 de 18 subtareas) y el frontend (9 de 9) están integrados en dev desde el 19/10 y la integración se probó con {wired_n} verificaciones automáticas ({wired_ok} PASÓ). Los {s4} casos manuales de interfaz (TC-147 a TC-194) no se ejecutaron a mano: quedan NO EJECUTADOS, con parte de su cobertura en las pruebas automáticas. Límites conocidos: el backend solo registra asistencia de Hogar de día y Casa de Convivencia (no de actividades configurables), no permite quitar una persona ya registrada ni reactivar un esquema, y no calcula el contador de esquemas pendientes de stock.", "Sin riesgo sobre Sprint 1-3. Ejecutar los casos manuales antes del cierre del sprint (24/10) y resolver los límites con el equipo."],
         ["Criterios de Sprint 4 con preguntas abiertas", "Cierre del día de asistencia, actividades configurables, permisos del Coordinador y stock en farmacia vs. Centro Barrial no están definidos.", "Confirmar con el equipo antes de implementar o probar."],
         ["Pruebas de penetración y seguridad avanzada", "Fuera del alcance del plan; se hicieron verificaciones básicas (sección 6), no un pentest.", "Antes de salir a producción real conviene un análisis de dependencias y una revisión de configuración (HTTPS, CORS, secretos)."],
         ["Carga sostenida y dimensionamiento", "La prueba se hizo en Docker local con SQL Server Express limitado; sirve de referencia, no de dimensionamiento.", "Repetir en el entorno de despliegue si se espera más de 50 usuarios simultáneos."],
@@ -219,6 +221,7 @@ def main():
         ["UI en navegador real, Sprint 1-2 (Playwright)", f"{S['ui_checks']} de {S['ui_checks']} verificaciones OK (tras corregir 6 defectos)"],
         ["Seguridad y carga (Node)", f"{S['security_checks'] + S['load_checks']} de {S['security_checks'] + S['load_checks']} OK"],
         ["Sprint 4 por API: asistencia diaria y esquema de medicación (Node)", f"{api_ok} de {api_n} OK"],
+        ["Sprint 4 integración front-back: cadena por API y pantallas en navegador (Node + Playwright)", f"{wired_ok} de {wired_n} OK"],
     ], widths=[4.4, 2.3])
     doc.add_heading("Cobertura por módulo", 2)
     mrows = []
@@ -269,6 +272,18 @@ def main():
         f"(evaluación psiquiátrica vigente, duplicado, medicamento sin stock, hora y dosis inválidas, permisos). Resultado: {api_ok} de {api_n} en PASÓ. "
         "Observación para el frontend: la actividad de asistencia viaja como número (0 = Hogar de día, 1 = Casa de Convivencia); con texto la API responde 400."
     )
+    doc.add_heading("Sprint 4: integración frontend-backend (19/10/2026)", 2)
+    doc.add_paragraph(
+        f"Con el backend completo del Sprint 4 en dev y el frontend conectado a la API real se ejecutaron {wired_n} verificaciones automáticas (e2e/sprint4-wired-flows.mjs): "
+        "una cadena por API (ingreso de stock, carga de esquema, asistencia, agenda del día, toma administrada con descuento automático de stock, historial, estadísticas, "
+        "inactivos, PDF mensual y actividades) y la apertura de las cinco pantallas del Sprint 4 en un navegador real, incluido guardar una asistencia desde la pantalla. "
+        f"Resultado: {wired_ok} de {wired_n} en PASÓ."
+    )
+    doc.add_paragraph(
+        "Hallazgos de esta corrida (corregidos en dev): el PDF mensual de asistencia y el del historial de medicación respondían 500 (PDFsharp 6.5.0 exige licencia y no había "
+        "fuente instalada; ahora PDFsharp 6.2.4 y fuentes en la imagen de la API, con tests nuevos); la lista de personas inactivas rompía el panel de estadísticas cuando alguien nunca "
+        "había asistido (fecha vacía). Además, la agenda del día se genera al registrar la asistencia: un esquema cargado después de la asistencia no aparece hasta el día siguiente."
+    )
 
     # ---- 7
     doc.add_heading("7. Riesgos y recomendaciones", 1)
@@ -302,7 +317,7 @@ def main():
         "Definir con el equipo las reglas de DNI duplicado y los permisos del Coordinador.",
         "Repetir los flujos de UI en un navegador adicional y en un celular antes del uso real.",
     ])
-    doc.add_paragraph(f"Sprint 4: sin veredicto. Los endpoints ya desarrollados (asistencia diaria y carga de esquema de medicación) pasan {api_ok} de {api_n} pruebas de API; el resto se evaluará cuando el backend esté integrado y se resuelvan las preguntas abiertas.")
+    doc.add_paragraph(f"Sprint 4: veredicto parcial. La integración front-back pasa {wired_ok} de {wired_n} verificaciones automáticas y los endpoints iniciales {api_ok} de {api_n}; faltan por ejecutar a mano los {s4} casos de interfaz y resolver las preguntas abiertas (actividades configurables, cierre del día, quitar personas, reactivar esquemas).")
 
     # ---- Anexo
     doc.add_heading("Anexo A. Evidencia y cómo repetir las pruebas", 1)
