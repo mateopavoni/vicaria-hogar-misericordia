@@ -11,5 +11,6 @@ public class Attendance
     public DateTime Date { get; set; }
     public AttendanceActivity Activity { get; set; }
     public int AnonymousCount { get; set; }
+    public string? Justification { get; set; }
     public Guid CreatedByUserId { get; set; }
 }
