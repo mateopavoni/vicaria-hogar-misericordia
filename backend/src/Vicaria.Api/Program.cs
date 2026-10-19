@@ -118,6 +118,7 @@ builder.Services.AddScoped<IMedicationAgendaService, MedicationAgendaService>();
 builder.Services.AddScoped<IValidator<UpdateMedicationIntakeStatusDto>, UpdateMedicationIntakeStatusDtoValidator>();
 builder.Services.AddScoped<IMedicationStockService, MedicationStockService>();
 builder.Services.AddScoped<IValidator<RegisterMedicationStockEntryDto>, RegisterMedicationStockEntryDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateMedicationStockThresholdDto>, UpdateMedicationStockThresholdDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

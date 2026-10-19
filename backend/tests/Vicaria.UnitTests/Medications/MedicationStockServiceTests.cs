@@ -147,4 +147,68 @@ public class MedicationStockServiceTests
         Assert.False(result.Success);
         Assert.Equal(GetMedicationStockHistoryError.MedicationNotFound, result.Error);
     }
+
+    [Fact]
+    public async Task GetStockAlertsAsync_ReturnsOnlyMedicationsAtOrBelowThreshold()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new MedicationStockService(context);
+
+        var med1 = new MedicationCatalog { Id = Guid.NewGuid(), Name = "Aspirina", Stock = 3, MinimumStockThreshold = 5 }; // Alerta
+        var med2 = new MedicationCatalog { Id = Guid.NewGuid(), Name = "Paracetamol", Stock = 0, MinimumStockThreshold = 2 }; // Alerta (Sin stock)
+        var med3 = new MedicationCatalog { Id = Guid.NewGuid(), Name = "Ibuprofeno", Stock = 10, MinimumStockThreshold = 5 }; // OK
+
+        context.MedicationCatalogs.AddRange(med1, med2, med3);
+        await context.SaveChangesAsync();
+
+        var alerts = await service.GetStockAlertsAsync();
+
+        Assert.Equal(2, alerts.Count);
+        Assert.Equal("Paracetamol", alerts[0].MedicationName);
+        Assert.True(alerts[0].IsOutOfStock);
+        Assert.Equal("Aspirina", alerts[1].MedicationName);
+        Assert.False(alerts[1].IsOutOfStock);
+    }
+
+    [Fact]
+    public async Task UpdateThresholdAsync_WhenMedicationExists_UpdatesThresholdAndCreatesAuditLog()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new MedicationStockService(context);
+
+        var actorId = Guid.NewGuid();
+        var med = new MedicationCatalog { Id = Guid.NewGuid(), Name = "Sertralina", Stock = 20, MinimumStockThreshold = 5 };
+        context.MedicationCatalogs.Add(med);
+        await context.SaveChangesAsync();
+
+        var dto = new UpdateMedicationStockThresholdDto(10);
+
+        var result = await service.UpdateThresholdAsync(med.Id, dto, actorId);
+
+        Assert.True(result.Success);
+
+        var updated = await context.MedicationCatalogs.FindAsync(med.Id);
+        Assert.NotNull(updated);
+        Assert.Equal(10, updated.MinimumStockThreshold);
+
+        var auditLog = await context.AuditLogs
+            .FirstOrDefaultAsync(a => a.Action.Contains("Umbral mínimo de stock actualizado a 10"));
+        Assert.NotNull(auditLog);
+        Assert.Equal(actorId, auditLog.UserId);
+        Assert.Equal($"MedicationCatalog:{med.Id}", auditLog.AffectedEntity);
+    }
+
+    [Fact]
+    public async Task UpdateThresholdAsync_WhenMedicationNotFound_ReturnsNotFound()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new MedicationStockService(context);
+
+        var dto = new UpdateMedicationStockThresholdDto(10);
+
+        var result = await service.UpdateThresholdAsync(Guid.NewGuid(), dto, Guid.NewGuid());
+
+        Assert.False(result.Success);
+        Assert.Equal(UpdateMedicationStockThresholdError.MedicationNotFound, result.Error);
+    }
 }

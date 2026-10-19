@@ -37,3 +37,21 @@ public class GetMedicationStockHistoryResult
     public static GetMedicationStockHistoryResult NotFound() =>
         new() { Success = false, Error = GetMedicationStockHistoryError.MedicationNotFound, ErrorMessage = "El medicamento no existe." };
 }
+
+public enum UpdateMedicationStockThresholdError
+{
+    MedicationNotFound
+}
+
+public class UpdateMedicationStockThresholdResult
+{
+    public bool Success { get; init; }
+    public UpdateMedicationStockThresholdError? Error { get; init; }
+    public string? ErrorMessage { get; init; }
+
+    public static UpdateMedicationStockThresholdResult Ok() =>
+        new() { Success = true };
+
+    public static UpdateMedicationStockThresholdResult NotFound() =>
+        new() { Success = false, Error = UpdateMedicationStockThresholdError.MedicationNotFound, ErrorMessage = "El medicamento no existe." };
+}

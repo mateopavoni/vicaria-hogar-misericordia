@@ -28,3 +28,15 @@ public record MedicationStockHistoryDto(
     int CurrentStock,
     IReadOnlyList<MedicationStockMovementItemDto> Movements
 );
+
+public record MedicationStockAlertDto(
+    Guid MedicationId,
+    string MedicationName,
+    int CurrentStock,
+    int MinimumStockThreshold,
+    bool IsOutOfStock
+);
+
+public record UpdateMedicationStockThresholdDto(
+    int MinimumStockThreshold
+);
