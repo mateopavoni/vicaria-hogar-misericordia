@@ -90,6 +90,8 @@ builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 builder.Services.AddScoped<IStaleRecordAlertService, StaleRecordAlertService>();
 builder.Services.AddScoped<IPersonAccessService, PersonAccessService>();
 builder.Services.AddHostedService<StaleRecordAlertBackgroundService>();
+builder.Services.AddScoped<IMedicationReviewAlertService, MedicationReviewAlertService>();
+builder.Services.AddHostedService<MedicationReviewAlertBackgroundService>();
 builder.Services.AddScoped<IObservationService, ObservationService>();
 builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDtoValidator>();
 builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
