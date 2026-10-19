@@ -17,10 +17,12 @@ public class MedicationHistoryService : IMedicationHistoryService
 
     public async Task<MedicationHistoryResult> GetPersonHistoryAsync(Guid personId, GetMedicationHistoryDto filter, IEnumerable<string> actorRoles, CancellationToken cancellationToken = default)
     {
-        var personExists = await _dbContext.People
+        var person = await _dbContext.People
             .AsNoTracking()
-            .AnyAsync(p => p.Id == personId, cancellationToken);
-        if (!personExists)
+            .Where(p => p.Id == personId)
+            .Select(p => new { p.FirstName, p.LastName, p.Dni })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (person is null)
         {
             return MedicationHistoryResult.PersonNotFound();
         }
@@ -98,6 +100,7 @@ public class MedicationHistoryService : IMedicationHistoryService
             ))
             .ToList();
 
-        return MedicationHistoryResult.Ok(entries);
+        var personName = $"{person.FirstName} {person.LastName}".Trim();
+        return MedicationHistoryResult.Ok(entries, personName, person.Dni);
     }
 }
