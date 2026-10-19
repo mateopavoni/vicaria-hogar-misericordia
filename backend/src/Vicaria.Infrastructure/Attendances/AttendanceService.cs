@@ -126,6 +126,55 @@ public class AttendanceService : IAttendanceService
         return RegisterAttendanceResult.Ok();
     }
 
+    public async Task<UpdateAttendanceResult> UpdateAsync(Guid attendanceId, UpdateAttendanceDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var attendance = await _dbContext.Attendances
+            .FirstOrDefaultAsync(a => a.Id == attendanceId, cancellationToken);
+        if (attendance is null)
+        {
+            return UpdateAttendanceResult.NotFound();
+        }
+
+        // día cerrado (SCRUM-217): fecha anterior a hoy; la justificación es obligatoria
+        var isClosedDay = attendance.Date.Date < DateTime.UtcNow.Date;
+        var justification = dto.Justification?.Trim();
+        if (isClosedDay && string.IsNullOrWhiteSpace(justification))
+        {
+            return UpdateAttendanceResult.JustificationRequired();
+        }
+
+        if (dto.AnonymousCount.HasValue)
+        {
+            attendance.AnonymousCount = dto.AnonymousCount.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(justification))
+        {
+            attendance.Justification = justification;
+        }
+
+        var action = isClosedDay
+            ? $"Modificación de asistencia de día cerrado con justificación: {justification}"
+            : "Modificación de asistencia";
+        if (action.Length > 500)
+        {
+            action = action[..500];
+        }
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = action,
+            AffectedEntity = $"Attendance:{attendance.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdateAttendanceResult.Ok();
+    }
+
     public async Task<GetPersonAttendanceHistoryResult> GetPersonAttendanceHistoryAsync(Guid personId, GetPersonAttendanceHistoryFilterDto filter, Guid actorId, IEnumerable<string> actorRoles, CancellationToken cancellationToken = default)
     {
         var personExists = await _dbContext.People
