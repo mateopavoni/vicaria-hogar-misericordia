@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
+using Vicaria.Application.MedicationHistories;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
@@ -24,6 +25,8 @@ public class PersonsController : ControllerBase
     private readonly IProfileTimelineService _profileTimelineService;
     private readonly IMedicationSchemeService _medicationSchemeService;
     private readonly IValidator<CreateMedicationSchemeDto> _createMedicationSchemeValidator;
+    private readonly IMedicationHistoryService _medicationHistoryService;
+    private readonly IValidator<GetMedicationHistoryDto> _getMedicationHistoryValidator;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
@@ -32,8 +35,12 @@ public class PersonsController : ControllerBase
         ICasaConvivenciaStayService casaConvivenciaStayService,
         IProfileTimelineService profileTimelineService,
         IMedicationSchemeService medicationSchemeService,
-        IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator)
+        IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator,
+        IMedicationHistoryService medicationHistoryService,
+        IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator)
     {
+        _medicationHistoryService = medicationHistoryService;
+        _getMedicationHistoryValidator = getMedicationHistoryValidator;
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
@@ -165,6 +172,40 @@ public class PersonsController : ControllerBase
         {
             null => Ok(result.Schemes),
             GetPersonMedicationSchemesError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // historial de tomas de la persona por fecha, con filtros opcionales from/to/medicationId (SCRUM-240)
+    [HttpGet("{id}/medication-history")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetMedicationHistory(
+        Guid id,
+        [FromQuery(Name = "from")] DateOnly? from,
+        [FromQuery(Name = "to")] DateOnly? to,
+        [FromQuery(Name = "medicationId")] Guid? medicationId,
+        CancellationToken cancellationToken)
+    {
+        var filter = new GetMedicationHistoryDto(from, to, medicationId);
+
+        var validationResult = await _getMedicationHistoryValidator.ValidateAsync(filter, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var actorRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        var result = await _medicationHistoryService.GetPersonHistoryAsync(id, filter, actorRoles, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Entries),
+            MedicationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
