@@ -160,13 +160,14 @@ public class PersonsController : ControllerBase
         };
     }
 
-    // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75)
+    // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75).
+    // Con needsReview=true devuelve solo los vigentes con más de 30 días sin revisión (SCRUM-249).
     [HttpGet("{id}/medication-schemes")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
-    public async Task<IActionResult> GetMedicationSchemes(Guid id, [FromQuery] bool? onlyActive, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMedicationSchemes(Guid id, [FromQuery] bool? onlyActive, [FromQuery] bool? needsReview, CancellationToken cancellationToken)
     {
-        var result = await _medicationSchemeService.GetByPersonIdAsync(id, onlyActive, cancellationToken);
+        var result = await _medicationSchemeService.GetByPersonIdAsync(id, onlyActive, needsReview, cancellationToken);
 
         return result.Error switch
         {
