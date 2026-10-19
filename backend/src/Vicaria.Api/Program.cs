@@ -33,6 +33,8 @@ using Vicaria.Application.Collaborators;
 using Vicaria.Infrastructure.Collaborators;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Infrastructure.MedicationSchemes;
+using Vicaria.Application.MedicationHistories;
+using Vicaria.Infrastructure.MedicationHistories;
 using Vicaria.Application.Activities;
 using Vicaria.Infrastructure.Activities;
 using Vicaria.Application.MedicationAgendas;
@@ -109,6 +111,8 @@ builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaborator
 builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaboratorsDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
 builder.Services.AddScoped<IMedicationSchemeService, MedicationSchemeService>();
+builder.Services.AddScoped<IMedicationHistoryService, MedicationHistoryService>();
+builder.Services.AddScoped<IValidator<GetMedicationHistoryDto>, GetMedicationHistoryDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateMedicationSchemeDto>, CreateMedicationSchemeDtoValidator>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IValidator<CreateActivityDto>, CreateActivityValidator>();
