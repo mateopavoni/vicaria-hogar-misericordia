@@ -20,6 +20,7 @@ public class AttendancesController : ControllerBase
     private readonly IValidator<CreateAttendanceDto> _validator;
     private readonly IValidator<GetInactivePeopleQueryDto> _inactiveValidator;
     private readonly IValidator<GetMonthlySummaryQueryDto> _monthlySummaryValidator;
+    private readonly IValidator<GetStatisticsQueryDto> _statisticsValidator;
 
     public AttendancesController(
         IAttendanceService attendanceService,
@@ -28,7 +29,8 @@ public class AttendancesController : ControllerBase
         IPersonAccessService personAccessService,
         IValidator<CreateAttendanceDto> validator,
         IValidator<GetInactivePeopleQueryDto> inactiveValidator,
-        IValidator<GetMonthlySummaryQueryDto> monthlySummaryValidator)
+        IValidator<GetMonthlySummaryQueryDto> monthlySummaryValidator,
+        IValidator<GetStatisticsQueryDto> statisticsValidator)
     {
         _attendanceService = attendanceService;
         _statisticsService = statisticsService;
@@ -37,6 +39,7 @@ public class AttendancesController : ControllerBase
         _validator = validator;
         _inactiveValidator = inactiveValidator;
         _monthlySummaryValidator = monthlySummaryValidator;
+        _statisticsValidator = statisticsValidator;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -92,6 +95,34 @@ public class AttendancesController : ControllerBase
         }
 
         var result = await _statisticsService.GetInactivePeopleAsync(days, null, cancellationToken);
+        return Ok(result.Data);
+    }
+
+    // estadísticas de asistencia por rango de fechas y actividad (SCRUM-224);
+    // promedios por día + desglose semanal/mensual, totales por actividad y
+    // comparativa contra el período anterior equivalente, solo Referente
+    [HttpGet("statistics")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> GetStatistics(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] string? activity,
+        CancellationToken cancellationToken = default)
+    {
+        var toDate = (to ?? DateTime.UtcNow).Date;
+        var fromDate = (from ?? toDate.AddDays(-29)).Date;
+        var query = new GetStatisticsQueryDto(fromDate, toDate, activity);
+        var validationResult = await _statisticsValidator.ValidateAsync(query, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _statisticsService.GetStatisticsAsync(query.From, query.To, query.Activity, cancellationToken);
         return Ok(result.Data);
     }
 
