@@ -32,6 +32,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Collaborator> Collaborators => Set<Collaborator>();
     public DbSet<MedicationCatalog> MedicationCatalogs => Set<MedicationCatalog>();
     public DbSet<MedicationScheme> MedicationSchemes => Set<MedicationScheme>();
+    public DbSet<Activity> Activities => Set<Activity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
