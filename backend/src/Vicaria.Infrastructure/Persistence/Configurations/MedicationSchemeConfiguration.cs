@@ -48,7 +48,15 @@ public class MedicationSchemeConfiguration : IEntityTypeConfiguration<Medication
             .HasForeignKey(e => e.LoadedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // 1:N — usuario que revisó por última vez (SCRUM-249); opcional y
+        // Restrict por el mismo motivo que LoadedBy
+        builder.HasOne(e => e.ReviewedBy)
+            .WithMany()
+            .HasForeignKey(e => e.ReviewedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(e => e.PersonId);
         builder.HasIndex(e => e.MedicationId);
+        builder.HasIndex(e => e.ReviewedByUserId);
     }
 }

@@ -160,13 +160,14 @@ public class PersonsController : ControllerBase
         };
     }
 
-    // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75)
+    // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75).
+    // Con needsReview=true devuelve solo los vigentes con más de 30 días sin revisión (SCRUM-249).
     [HttpGet("{id}/medication-schemes")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
-    public async Task<IActionResult> GetMedicationSchemes(Guid id, [FromQuery] bool? onlyActive, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMedicationSchemes(Guid id, [FromQuery] bool? onlyActive, [FromQuery] bool? needsReview, CancellationToken cancellationToken)
     {
-        var result = await _medicationSchemeService.GetByPersonIdAsync(id, onlyActive, cancellationToken);
+        var result = await _medicationSchemeService.GetByPersonIdAsync(id, onlyActive, needsReview, cancellationToken);
 
         return result.Error switch
         {
@@ -224,6 +225,25 @@ public class PersonsController : ControllerBase
             DeactivateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             DeactivateMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
             DeactivateMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // marca el esquema como revisado (SCRUM-249): registra ReviewedAt y ReviewedBy a partir
+    // del actor autenticado. Solo esquemas vigentes; el histórico responde 409.
+    [HttpPatch("{id}/medication-schemes/{schemeId:guid}/review")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> ReviewMedicationScheme(Guid id, Guid schemeId, CancellationToken cancellationToken)
+    {
+        var result = await _medicationSchemeService.ReviewAsync(id, schemeId, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            ReviewMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            ReviewMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
+            ReviewMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
