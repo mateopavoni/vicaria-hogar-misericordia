@@ -11,11 +11,15 @@ public class MedicationHistoryResult
     public MedicationHistoryError? Error { get; init; }
     public string? ErrorMessage { get; init; }
     public IReadOnlyList<MedicationHistoryEntryDto>? Entries { get; init; }
+    public string? PersonName { get; init; }
+    public string? PersonDni { get; init; }
 
-    public static MedicationHistoryResult Ok(IReadOnlyList<MedicationHistoryEntryDto> entries) => new()
+    public static MedicationHistoryResult Ok(IReadOnlyList<MedicationHistoryEntryDto> entries, string? personName = null, string? personDni = null) => new()
     {
         Success = true,
-        Entries = entries
+        Entries = entries,
+        PersonName = personName,
+        PersonDni = personDni
     };
 
     // también se usa cuando una Directora o Coordinadora consulta a una persona que no es
