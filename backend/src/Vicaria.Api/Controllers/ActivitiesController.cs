@@ -13,15 +13,18 @@ namespace Vicaria.Api.Controllers;
 public class ActivitiesController : ControllerBase
 {
     private readonly IActivityService _activityService;
+    private readonly ICalendarActivitySyncService _syncService;
     private readonly IValidator<CreateActivityDto> _createValidator;
     private readonly IValidator<UpdateActivityDto> _updateValidator;
 
     public ActivitiesController(
         IActivityService activityService,
+        ICalendarActivitySyncService syncService,
         IValidator<CreateActivityDto> createValidator,
         IValidator<UpdateActivityDto> updateValidator)
     {
         _activityService = activityService;
+        _syncService = syncService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
@@ -70,6 +73,14 @@ public class ActivitiesController : ControllerBase
             CreateActivityError.DuplicateName => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
+    }
+
+    [HttpPost("sincronizar-calendario")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> SyncCalendarActivities(CancellationToken cancellationToken)
+    {
+        var result = await _syncService.SyncRecurringActivitiesAsync(ActorId, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPut("{id:guid}")]
