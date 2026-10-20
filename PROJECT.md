@@ -135,6 +135,10 @@ Organizadas por épica/sprint según la planificación del proyecto:
 - Listado general de usuarios con paginación y filtro por fecha (hoy el listado de pendientes/activos/inactivos no pagina).
 - Tests automatizados de frontend.
 
+**Actualización (2026-10-14, SCRUM-232 — rama `feature/SCRUM-232-endpoint-esquema-medicacion`, sin mergear):**
+- **Esquema de medicación, carga (EP-11 parcial)**: `POST /api/persons/{id}/medication-schemes` crea un esquema (medicamento del catálogo + dosis en texto libre + hora `HH:mm`). Solo para personas Residentes con evaluación psiquiátrica vigente (sin ella responde 400); medicamento fuera de catálogo → 404; esquema vigente duplicado (misma persona + medicamento + hora) → 409. Devuelve 201 con el esquema completo, según el contrato del front (SCRUM-234, rama `dev-frontend-belen`). Con `AuditLog`, autorizado para Referente, DirectoraDeCasaConvivencia y CoordinadorDeCasaConvivencia (`DirectorResidentsOnly`; Escucha → 403). Entidades nuevas `MedicationScheme`/`MedicationCatalog` (migración `AddMedicationScheme`) + seed demo del catálogo solo en Development. Tests: 13 unitarios nuevos en verde; 8 de integración escritos, pendientes de ejecución con Docker.
+- Sigue pendiente de EP-11: agenda automática (`MedicationAgenda`), GETs de esquemas/catálogo, gestión de stock de farmacia (ver SCRUM-233/235).
+
 *(Actualizar a medida que avanze el proyecto y los sprints)*
 
 ---
@@ -186,9 +190,9 @@ Según el diagrama de clases original del proyecto (diseño lógico vigente, map
 | 6 | ObservationCategory (CategoriaObservacion) | Categorías para clasificar observaciones | ❌ Pendiente (EP-02) |
 | 7 | LifeHistory (HistoriaVida) | Registro de historia de vida en 3 etapas | ❌ Pendiente (EP-02) |
 | 8 | Attendance (Asistencia) | Registro diario de asistencia | ❌ Pendiente (EP-10) |
-| 9 | MedicationSchedule (EsquemaMedicacion) | Esquema de medicamentos por persona | ❌ Pendiente (EP-11) |
+| 9 | MedicationSchedule (EsquemaMedicacion) | Esquema de medicamentos por persona | ✅ Carga implementada (SCRUM-232: modelo + `POST /api/persons/{id}/medication-schemes`); agenda automática pendiente |
 | 10 | MedicationAgenda (AgendaMedicamentos) | Agenda diaria generada automáticamente | ❌ Pendiente (EP-11) |
-| 11 | MedicationCatalog (MedicamentoCatalogo) | Catálogo de medicamentos disponibles | ❌ Pendiente (EP-11) |
+| 11 | MedicationCatalog (MedicamentoCatalogo) | Catálogo de medicamentos disponibles | ✅ Modelo implementado (SCRUM-232 + seed demo solo en Development); CRUD de farmacia pendiente |
 | 12 | CasonaStay (EstadiasCasona) | Registro de estadías en la casona | ✅ Implementada (SCRUM-140 modelo/persistencia + SCRUM-146 egreso) |
 | 13 | CasonaVisit (VisitasCasona) | Registro de visitas de residentes | ❌ Pendiente |
 | 14 | PsychiatricEvaluation (EvaluacionesPsiquiatricas) | Evaluaciones psicológicas documentadas | ✅ Modelo y persistencia (SCRUM-134); falta el CRUD (EP-12) |

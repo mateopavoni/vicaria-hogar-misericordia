@@ -1,351 +1,141 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { todayLocalIso } from '../../../shared/utils/date.util';
-import { AttendanceService } from '../../attendance/services/attendance.service';
-import { MedicationStockService } from '../../medication-stock/services/medication-stock.service';
 import { MedicationService } from './medication.service';
 
 describe('MedicationService', () => {
   let service: MedicationService;
-  const actor = { id: 'u1', name: 'Belén Test' };
-  const request = (overrides = {}) => ({
+  let httpMock: HttpTestingController;
+  const today = todayLocalIso();
+  const schemeDto = (overrides = {}) => ({
+    id: 's1',
     personId: 'p1',
-    medicationId: 'med-1',
-    dose: '500 mg',
+    medicationId: 'm1',
+    medicationName: 'Aspirina',
+    dose: '1 comprimido',
     time: '08:00',
+    loadedAt: '2026-10-19T10:00:00',
+    loadedByUserId: 'u1',
+    loadedByName: 'Ref Test',
+    reviewedAt: null,
+    reviewedByUserId: null,
+    reviewedByName: null,
+    isActive: true,
+    pendingStock: false,
+    stockAlert: null,
     ...overrides,
   });
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     service = TestBed.inject(MedicationService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('bloquea la carga si la persona no tiene evaluación psiquiátrica vigente', () =>
-    new Promise<void>((done) => {
-      service.create(request(), false, actor).subscribe({
-        error: (err) => {
-          expect(err.error.message).toContain('evaluación psiquiátrica vigente');
-          done();
-        },
-      });
-    }));
+  afterEach(() => httpMock.verify());
 
-  it('solo acepta medicamentos del catálogo', () =>
-    new Promise<void>((done) => {
-      service.create(request({ medicationId: 'inexistente' }), true, actor).subscribe({
-        error: (err) => {
-          expect(err.error.message).toContain('catálogo');
-          done();
-        },
-      });
-    }));
-
-  it('registra medicamento, dosis, hora, quién lo cargó y cuándo, como vigente', () =>
-    new Promise<void>((done) => {
-      service.create(request(), true, actor).subscribe((scheme) => {
-        expect(scheme.dose).toBe('500 mg');
-        expect(scheme.time).toBe('08:00');
-        expect(scheme.loadedByName).toBe('Belén Test');
-        expect(scheme.loadedAt).toBeTruthy();
-        expect(scheme.active).toBe(true);
-        expect(scheme.pendingStock).toBe(false);
-        done();
-      });
-    }));
-
-  it('con stock 0 permite cargar pero lo marca pendiente de stock', () =>
-    new Promise<void>((done) => {
-      service.create(request({ medicationId: 'med-3' }), true, actor).subscribe((scheme) => {
-        expect(scheme.pendingStock).toBe(true);
-        done();
-      });
-    }));
-
-  it('valida dosis y hora', () =>
-    new Promise<void>((done) => {
-      service.create(request({ dose: '  ' }), true, actor).subscribe({
-        error: (err) => {
-          expect(err.error.message).toContain('dosis');
-          service.create(request({ time: '25:00' }), true, actor).subscribe({
-            error: (err2) => {
-              expect(err2.error.message).toContain('hora');
-              done();
-            },
-          });
-        },
-      });
-    }));
-
-  it('pasa un esquema a histórico y lo lista por persona, más nuevo primero', () =>
-    new Promise<void>((done) => {
-      service.create(request(), true, actor).subscribe((first) => {
-        service.create(request({ personId: 'otra' }), true, actor).subscribe(() => {
-          service.setActive(first.id, false).subscribe((updated) => {
-            expect(updated.active).toBe(false);
-            service.getSchemes('p1').subscribe((list) => {
-              expect(list.length).toBe(1);
-              expect(list[0].active).toBe(false);
-              done();
-            });
-          });
-        });
-      });
-    }));
-
-  describe('agenda diaria (SCRUM-238)', () => {
-    const today = todayLocalIso();
-    const person = (id: string, fullName: string) => ({ personId: id, fullName, dni: null });
-
-    const attend = (persons: { personId: string; fullName: string; dni: null }[], date = today) =>
-      TestBed.inject(AttendanceService).save({
-        activity: 'desayuno',
-        date,
-        persons,
-        anonymousCount: 0,
-        justification: 'prueba',
-      });
-
-    it('agrupa por hora y solo incluye a quienes asistieron y tienen medicación', () =>
-      new Promise<void>((done) => {
-        attend([person('p1', 'Juan Pérez'), person('p2', 'José Reyes')]).subscribe(() => {
-          service.create(request({ personId: 'p1', time: '08:00' }), true, actor).subscribe(() => {
-            service
-              .create(
-                request({ personId: 'p2', medicationId: 'med-2', time: '08:00' }),
-                true,
-                actor,
-              )
-              .subscribe(() => {
-                // p3 tiene medicación pero no asistió
-                service
-                  .create(request({ personId: 'p3', time: '12:00' }), true, actor)
-                  .subscribe(() => {
-                    service.getAgenda(today).subscribe((agenda) => {
-                      expect(agenda.slots.length).toBe(1);
-                      expect(agenda.slots[0].time).toBe('08:00');
-                      expect(agenda.slots[0].items.map((i) => i.personName)).toEqual([
-                        'José Reyes',
-                        'Juan Pérez',
-                      ]);
-                      done();
-                    });
-                  });
-              });
-          });
-        });
-      }));
-
-    it('no incluye esquemas pendientes de stock pero los cuenta aparte', () =>
-      new Promise<void>((done) => {
-        attend([person('p1', 'Juan Pérez')]).subscribe(() => {
-          service.create(request({ medicationId: 'med-3' }), true, actor).subscribe(() => {
-            service.getAgenda(today).subscribe((agenda) => {
-              expect(agenda.slots.length).toBe(0);
-              expect(agenda.pendingStockCount).toBe(1);
-              done();
-            });
-          });
-        });
-      }));
-
-    it('registra la toma con observación opcional y la devuelve en la agenda', () =>
-      new Promise<void>((done) => {
-        attend([person('p1', 'Juan Pérez')]).subscribe(() => {
-          service.create(request(), true, actor).subscribe((scheme) => {
-            service
-              .recordAdministration(
-                {
-                  schemeId: scheme.id,
-                  date: today,
-                  status: 'not-administered',
-                  observation: ' Rechazó la toma ',
-                },
-                actor,
-              )
-              .subscribe(() => {
-                service.getAgenda(today).subscribe((agenda) => {
-                  const adm = agenda.slots[0].items[0].administration;
-                  expect(adm?.status).toBe('not-administered');
-                  expect(adm?.observation).toBe('Rechazó la toma');
-                  expect(adm?.recordedByName).toBe('Belén Test');
-                  done();
-                });
-              });
-          });
-        });
-      }));
-
-    it('no permite registrar tomas de días anteriores', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor).subscribe((scheme) => {
-          service
-            .recordAdministration(
-              {
-                schemeId: scheme.id,
-                date: '2020-01-01',
-                status: 'administered',
-                observation: null,
-              },
-              actor,
-            )
-            .subscribe({
-              error: (err) => {
-                expect(err.error.message).toContain('día actual');
-                done();
-              },
-            });
-        });
-      }));
-
-    it('un día anterior conserva el historial aunque el esquema pase a histórico', () =>
-      new Promise<void>((done) => {
-        // la fecha pasada no tiene toma registrada (solo se registra hoy): no aparece
-        attend([person('p1', 'Juan Pérez')], '2020-01-01').subscribe(() => {
-          service.create(request(), true, actor).subscribe((scheme) => {
-            service.setActive(scheme.id, false).subscribe(() => {
-              service.getAgenda('2020-01-01').subscribe((agenda) => {
-                expect(agenda.slots.length).toBe(0);
-                done();
-              });
-            });
-          });
-        });
-      }));
+  it('getCatalog() lee el catálogo con stock de farmacia', () => {
+    let catalog: unknown;
+    service.getCatalog().subscribe((r) => (catalog = r));
+    httpMock.expectOne('/api/medication-schemes/catalog').flush([{ id: 'm1', name: 'Aspirina', pharmacyStock: 4 }]);
+    expect(catalog).toEqual([{ id: 'm1', name: 'Aspirina', pharmacyStock: 4 }]);
   });
 
-  describe('stock (SCRUM-246)', () => {
-    const today = todayLocalIso();
-    const stock = () => TestBed.inject(MedicationStockService);
-
-    it('marcar una toma como administrada descuenta una unidad y corregirla la devuelve', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor).subscribe((scheme) => {
-          const mark = (status: 'administered' | 'not-administered') =>
-            service.recordAdministration(
-              { schemeId: scheme.id, date: today, status, observation: null },
-              actor,
-            );
-          mark('administered').subscribe(() => {
-            expect(stock().quantityOf('med-1')).toBe(39);
-            mark('administered').subscribe(() => {
-              expect(stock().quantityOf('med-1')).toBe(39); // no descuenta dos veces
-              mark('not-administered').subscribe(() => {
-                expect(stock().quantityOf('med-1')).toBe(40);
-                done();
-              });
-            });
-          });
-        });
-      }));
-
-    it('no descuenta si la toma queda como no administrada', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor).subscribe((scheme) => {
-          service
-            .recordAdministration(
-              { schemeId: scheme.id, date: today, status: 'not-administered', observation: null },
-              actor,
-            )
-            .subscribe(() => {
-              expect(stock().quantityOf('med-1')).toBe(40);
-              done();
-            });
-        });
-      }));
-
-    it('un ingreso de stock libera los esquemas pendientes de stock', () =>
-      new Promise<void>((done) => {
-        service.create(request({ medicationId: 'med-3' }), true, actor).subscribe((scheme) => {
-          expect(scheme.pendingStock).toBe(true);
-          stock()
-            .registerEntry(
-              {
-                medicationId: 'med-3',
-                newName: null,
-                quantity: 5,
-                expirationDate: '2999-01-01',
-                supplier: 'Proveedor',
-              },
-              actor,
-            )
-            .subscribe(() => {
-              service.getSchemes('p1').subscribe((schemes) => {
-                expect(schemes[0].pendingStock).toBe(false);
-                done();
-              });
-            });
-        });
-      }));
+  it('getEvaluationStatus() anticipa vigencia según residente y vencimiento a 6 meses', () => {
+    const results: boolean[] = [];
+    service.getEvaluationStatus('p1', true).subscribe((s) => results.push(s.valid));
+    service.getEvaluationStatus('p1', false).subscribe((s) => results.push(s.valid));
+    service.getEvaluationStatus('p1', true, '2020-01-01').subscribe((s) => results.push(s.valid));
+    expect(results).toEqual([true, false, false]);
   });
 
-  describe('revisión mensual y evaluación vencida (SCRUM-250)', () => {
-    it('un esquema nuevo queda vigente y sin revisar', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor).subscribe((scheme) => {
-          expect(scheme.active).toBe(true);
-          expect(scheme.reviewedAt).toBeNull();
-          expect(scheme.reviewedByName).toBeNull();
-          done();
-        });
-      }));
+  it('getSchemes() renombra isActive a active', () => {
+    let schemes: { active: boolean }[] = [];
+    service.getSchemes('p1').subscribe((r) => (schemes = r));
+    httpMock.expectOne('/api/persons/p1/medication-schemes').flush([schemeDto(), schemeDto({ id: 's2', isActive: false })]);
+    expect(schemes.map((s) => s.active)).toEqual([true, false]);
+  });
 
-    it('marcar como revisado guarda la fecha y el usuario', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor).subscribe((scheme) => {
-          service
-            .markReviewed(scheme.id, { id: 'u2', name: 'Otra Persona' })
-            .subscribe((reviewed) => {
-              expect(reviewed.reviewedAt).toBeTruthy();
-              expect(reviewed.reviewedByName).toBe('Otra Persona');
-              expect(reviewed.reviewedByUserId).toBe('u2');
-              done();
-            });
-        });
-      }));
+  it('create() manda dosis y hora a la persona y valida antes de llamar', () => {
+    const base = { personId: 'p1', medicationId: 'm1', dose: ' 1 comprimido ', time: '08:00' };
+    let created: { pendingStock: boolean } | undefined;
+    service.create(base).subscribe((r) => (created = r));
+    const post = httpMock.expectOne('/api/persons/p1/medication-schemes');
+    expect(post.request.body).toEqual({ medicationId: 'm1', dose: '1 comprimido', time: '08:00' });
+    post.flush(schemeDto({ pendingStock: true }), { status: 200, statusText: 'OK' });
+    expect(created?.pendingStock).toBe(true);
 
-    it('no se puede revisar un esquema desactivado, que se conserva como historial', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor).subscribe((scheme) => {
-          service.setActive(scheme.id, false).subscribe((off) => {
-            expect(off.active).toBe(false);
-            service.markReviewed(scheme.id, actor).subscribe({
-              error: (err) => {
-                expect(err.error.message).toContain('vigente');
-                service.getSchemes('p1').subscribe((all) => {
-                  expect(all.length).toBe(1);
-                  done();
-                });
-              },
-            });
-          });
-        });
-      }));
+    const messages: string[] = [];
+    service.create({ ...base, dose: '  ' }).subscribe({ error: (e) => messages.push(e.error.message) });
+    service.create({ ...base, time: '25:99' }).subscribe({ error: (e) => messages.push(e.error.message) });
+    expect(messages).toEqual(['La dosis es obligatoria.', 'La hora no es válida.']);
+  });
 
-    it('bloquea agregar medicamentos si la evaluación venció (más de 6 meses)', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor, '2020-01-01').subscribe({
-          error: (err) => {
-            expect(err.error.message).toContain('venció');
-            done();
-          },
-        });
-      }));
+  it('markReviewed() hace PATCH y devuelve el esquema releído', () => {
+    let scheme: { reviewedAt: string | null } | undefined;
+    service.markReviewed('p1', 's1').subscribe((r) => (scheme = r));
+    httpMock.expectOne('/api/persons/p1/medication-schemes/s1/review').flush(null, { status: 204, statusText: 'No Content' });
+    httpMock.expectOne('/api/persons/p1/medication-schemes').flush([schemeDto({ reviewedAt: '2026-10-19T12:00:00' })]);
+    expect(scheme?.reviewedAt).toBe('2026-10-19T12:00:00');
+  });
 
-    it('con una evaluación reciente permite cargar', () =>
-      new Promise<void>((done) => {
-        service.create(request(), true, actor, todayLocalIso()).subscribe((scheme) => {
-          expect(scheme.id).toBeTruthy();
-          done();
-        });
-      }));
+  it('deactivate() pasa el esquema a histórico', () => {
+    let scheme: { active: boolean } | undefined;
+    service.deactivate('p1', 's1').subscribe((r) => (scheme = r));
+    httpMock.expectOne('/api/persons/p1/medication-schemes/s1/deactivate').flush(null, { status: 204, statusText: 'No Content' });
+    httpMock.expectOne('/api/persons/p1/medication-schemes').flush([schemeDto({ isActive: false })]);
+    expect(scheme?.active).toBe(false);
+  });
 
-    it('el estado de la evaluación informa si está vencida', () =>
-      new Promise<void>((done) => {
-        service.getEvaluationStatus('p1', true, '2020-01-01').subscribe((status) => {
-          expect(status.valid).toBe(false);
-          expect(status.expired).toBe(true);
-          done();
-        });
-      }));
+  it('getAgenda() agrupa por hora y traduce el estado de cada toma', () => {
+    let agenda: { slots: { time: string; items: { intakeId: string; time: string; administration: { status: string } | null }[] }[] } | undefined;
+    service.getAgenda(today).subscribe((r) => (agenda = r));
+    const req = httpMock.expectOne((r) => r.url === '/api/medicamentos/agenda');
+    expect(req.request.params.get('fecha')).toBe(today);
+    const intake = (id: string, status: number) => ({
+      id,
+      personId: 'p1',
+      personFullName: 'Ana',
+      medicationName: 'Aspirina',
+      dose: '1',
+      status,
+      observation: null,
+      administeredAt: status === 1 ? null : `${today}T09:00:00`,
+      administeredByUserId: status === 1 ? null : 'u1',
+    });
+    req.flush({ date: today, groups: [{ time: '08:00', intakes: [intake('t1', 1), intake('t2', 2), intake('t3', 3)] }] });
+
+    const items = agenda!.slots[0].items;
+    expect(items.map((i) => i.intakeId)).toEqual(['t1', 't2', 't3']);
+    expect(items.every((i) => i.time === '08:00')).toBe(true);
+    expect(items.map((i) => i.administration?.status ?? null)).toEqual([null, 'administered', 'not-administered']);
+  });
+
+  it('recordAdministration() manda el estado numérico a la toma, solo del día actual', () => {
+    service.recordAdministration({ intakeId: 't1', date: today, status: 'administered', observation: ' ok ' }).subscribe();
+    const patch = httpMock.expectOne('/api/medicamentos/agenda/t1');
+    expect(patch.request.body).toEqual({ status: 2, observation: 'ok' });
+    patch.flush(null, { status: 204, statusText: 'No Content' });
+
+    service.recordAdministration({ intakeId: 't1', date: today, status: 'not-administered', observation: null }).subscribe();
+    expect(httpMock.expectOne('/api/medicamentos/agenda/t1').request.body.status).toBe(3);
+
+    const messages: string[] = [];
+    service
+      .recordAdministration({ intakeId: 't1', date: '2020-01-01', status: 'administered', observation: null })
+      .subscribe({ error: (e) => messages.push(e.error.message) });
+    service
+      .recordAdministration({ intakeId: 't1', date: today, status: 'administered', observation: 'x'.repeat(501) })
+      .subscribe({ error: (e) => messages.push(e.error.message) });
+    expect(messages[0]).toContain('día actual');
+    expect(messages[1]).toContain('500');
+  });
+
+  it('getPersonHistory() devuelve lo que manda el backend', () => {
+    let history: unknown;
+    service.getPersonHistory('p1').subscribe((r) => (history = r));
+    httpMock.expectOne('/api/persons/p1/medication-history').flush([{ date: today, status: 'administered' }]);
+    expect(history).toEqual([{ date: today, status: 'administered' }]);
   });
 });
