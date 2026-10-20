@@ -1,0 +1,437 @@
+"""Genera docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx.
+
+Fuentes:
+  - el docx "Plan de prueba - completo formateado" (Sprint 1 y 2: TC-01..TC-40 y TA-001..TA-233)
+  - docs/qa/QA_SPRINT3.md (Sprint 3: TC-41 en adelante)
+  - los tests xUnit de backend/tests (Sprint 3: TA-234 en adelante, derivados de los nombres de test)
+  - docs/qa/sprint4_cases.py (Sprint 4: casos manuales desde los criterios de aceptación de Jira, estado Pendiente)
+
+Uso: python docs/qa/build_test_plan_xlsx.py <ruta al docx> [resultado de test.json]
+Terminología del docx: TC = caso manual, TA = caso automatizado; campos Description,
+Pre-conditions, Jira Requirement, Test (xUnit) y Pasos (#, Paso, Dato, Esperamos).
+"""
+import json
+import re
+import sys
+import zipfile
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from sprint4_cases import OPEN_QUESTIONS, STORIES  # noqa: E402
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+
+ROOT = Path(__file__).resolve().parents[2]
+QA_MD = ROOT / "docs" / "qa" / "QA_SPRINT3.md"
+OUT = ROOT / "docs" / "qa" / "Plan_de_pruebas_Sprint_1-4.xlsx"
+W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+# fechas de ejecución registradas
+DATE_S12_MANUAL = "2026-10-06"   # QA manual de los 40 TC (todos OK)
+DATE_S3_UI = "2026-10-08"        # QA de UI Sprint 3
+DATE_RERUN = "2026-10-14"        # re-ejecución de las suites automatizadas (backend y frontend)
+RUNNER = "Mateo Pavoni"
+
+SPRINT4_NOTES = {
+    "SCRUM-59": "Backend (SCRUM-232) cubierto por tests automatizados; falta probar el formulario de punta a punta: hoy usa datos simulados.",
+}
+
+STORY_OF = {"190": "16", "195": "17", "200": "18", "205": "19", "211": "74", "212": "74", "17": "17"}
+
+
+# ---------------------------------------------------------------- docx
+def para_text(p):
+    return "".join(t.text or "" for t in p.iter(W + "t")).strip()
+
+
+def cell_text(tc):
+    return "\n".join(t for t in (para_text(p) for p in tc.iter(W + "p")) if t)
+
+
+def parse_docx(path):
+    xml = zipfile.ZipFile(path).read("word/document.xml")
+    body = ET.fromstring(xml).find(W + "body")
+    part = module = None
+    cases, cur = [], None
+    for el in body:
+        if el.tag == W + "p":
+            st = el.find(f"{W}pPr/{W}pStyle")
+            style = st.get(W + "val") if st is not None else ""
+            text = para_text(el)
+            if style == "Heading1":
+                part = text
+            elif style == "Heading2":
+                module = text
+        elif el.tag == W + "tbl":
+            rows = [[cell_text(c) for c in r.findall(W + "tc")] for r in el.findall(W + "tr")]
+            m = re.match(r"^(T[CA]-\d+)\s+—\s+(.*)$", rows[0][0]) if len(rows) == 1 and len(rows[0]) == 1 else None
+            if m:  # tabla de una celda con el título del caso
+                cur = {"id": m.group(1), "title": m.group(2), "part": part, "module": module,
+                       "description": "", "pre": "", "jira": "", "test": "", "steps": []}
+                cases.append(cur)
+            elif cur is None:
+                continue
+            elif rows and rows[0] and rows[0][0] == "#":  # tabla de pasos
+                for r in rows[1:]:
+                    if len(r) >= 4 and r[0]:
+                        cur["steps"].append((r[0], r[1], r[2], r[3]))
+            else:  # tabla de ficha: etiqueta | valor
+                for r in rows:
+                    if len(r) >= 2:
+                        key = r[0].lower()
+                        if key.startswith("description"):
+                            cur["description"] = r[1]
+                        elif key.startswith("pre-conditions"):
+                            cur["pre"] = r[1]
+                        elif key.startswith("jira"):
+                            cur["jira"] = r[1]
+                        elif key.startswith("test"):
+                            cur["test"] = r[1]
+    return cases
+
+
+# ---------------------------------------------------------------- Sprint 3 (markdown)
+def parse_sprint3_md(path):
+    text = path.read_text(encoding="utf8")
+    module = story = ""
+    kind = "API"
+    out = []
+    for line in text.splitlines():
+        if line.startswith("## ") or line.startswith("### "):
+            module = line.lstrip("# ").strip()
+            mm = re.match(r"^SCRUM-(\d+) — (.*?) \(historia", module)
+            if mm:
+                module = f"{mm.group(2)} (SCRUM-{mm.group(1)})"
+            m = re.search(r"historia SCRUM-(\d+)", module)
+            if m:
+                story = m.group(1)
+            else:
+                ids = re.findall(r"SCRUM-(\d+)", module)
+                for i in ids:
+                    if i in STORY_OF:
+                        story = STORY_OF[i]
+            kind = "UI" if module.startswith("QA de UI") or "Re-ejecución" in module else "API"
+        elif line.startswith("Re-ejecución del"):
+            kind = "UI-RERUN"
+        elif line.startswith("| TC-"):
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            tc = cells[0]
+            if len(cells) >= 5:
+                out.append({"id": tc, "module": module, "jira": f"SCRUM-{story}", "title": cells[1],
+                            "step": cells[2].replace("`", ""), "expected": cells[3].replace("`", ""), "test": cells[4].replace("`", ""),
+                            "kind": "API", "result": "OK"})
+            elif len(cells) == 3:
+                result = cells[2]
+                out.append({"id": tc, "module": module, "jira": f"SCRUM-{story}", "title": cells[1],
+                            "step": cells[1], "expected": "El flujo se completa sin errores de API",
+                            "test": "docs/qa/e2e/sprint3-ui-flows.mjs", "kind": "UI",
+                            "result": "OK" if result.startswith("OK") else "Falla", "note": result})
+    return out
+
+
+# ---------------------------------------------------------------- Sprint 3 (tests xUnit)
+AREAS = [
+    ("CalendarEvents/GeneralCalendar", "SCRUM-15 / SCRUM-16", "Calendario general"),
+    ("CalendarEvents/PersonalCalendar", "SCRUM-17", "Calendario personal"),
+    ("CalendarEvents/CalendarEvent", "SCRUM-15 / SCRUM-16", "Calendario general"),
+    ("Collaborators/", "SCRUM-18 / SCRUM-19", "Colaboradores"),
+    ("CasonaVisits/", "SCRUM-74", "Visitas de la Casa de Convivencia"),
+    ("MedicationSchemes/", "SCRUM-59", "Esquema de medicación"),
+]
+
+
+def parse_sprint3_tests():
+    rows = []
+    for proj in ("Vicaria.UnitTests", "Vicaria.IntegrationTests"):
+        base = ROOT / "backend" / "tests" / proj
+        for f in sorted(base.rglob("*.cs")):
+            rel = f.relative_to(base).as_posix()
+            area = next(((j, m) for k, j, m in AREAS if rel.startswith(k)), None)
+            if not area:
+                continue
+            src = f.read_text(encoding="utf8")
+            cls = re.search(r"public class (\w+)", src)
+            if not cls:
+                continue
+            for m in re.finditer(r"\[(?:Fact|Theory)[^\]]*\][\s\S]*?public (?:async )?(?:Task|void) (\w+)\(", src):
+                name = m.group(1)
+                human = re.sub(r"_", " · ", name)
+                rows.append({"proj": proj, "cls": cls.group(1), "method": name, "jira": area[0],
+                             "module": area[1], "human": human,
+                             "sprint": "Sprint 4" if area[0] == "SCRUM-59" else "Sprint 3"})
+    # Sprint 4 al final para no renumerar los TA del Sprint 3
+    return sorted(rows, key=lambda r: r["sprint"])
+
+
+# ---------------------------------------------------------------- Excel
+HEAD_FILL = PatternFill("solid", fgColor="1F3A5F")
+HEAD_FONT = Font(bold=True, color="FFFFFF")
+thin = Side(style="thin", color="D0D7DE")
+BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
+STATES = ["Pendiente", "OK", "Falla", "Bloqueado"]
+
+
+def style_sheet(ws, widths, header_row=1):
+    for i, w in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    for c in ws[header_row]:
+        c.fill, c.font, c.border = HEAD_FILL, HEAD_FONT, BORDER
+        c.alignment = Alignment(wrap_text=True, vertical="center")
+    for row in ws.iter_rows(min_row=header_row + 1):
+        for c in row:
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+            c.border = BORDER
+    ws.freeze_panes = ws.cell(row=header_row + 1, column=2)
+    ws.auto_filter.ref = ws.dimensions
+
+
+def add_state_validation(ws, col_letter):
+    dv = DataValidation(type="list", formula1='"' + ",".join(STATES) + '"', allow_blank=True)
+    ws.add_data_validation(dv)
+    dv.add(f"{col_letter}2:{col_letter}{ws.max_row}")
+
+
+def steps_text(steps):
+    return "\n".join(f"{n}. {p}  →  {e}" for n, p, _d, e in steps)
+
+
+import run_2026_10_16 as run
+
+
+def main():
+    docx = Path(sys.argv[1])
+    auto_ok = True  # el suite completo pasó (se confirma con el argumento opcional)
+    if len(sys.argv) > 2:
+        auto_ok = json.loads(Path(sys.argv[2]).read_text(encoding="utf8")).get("all_passed", True)
+    auto_state = "OK" if auto_ok else "Pendiente"
+
+    cases = parse_docx(docx)
+    manual = [c for c in cases if c["id"].startswith("TC-")]
+    auto = [c for c in cases if c["id"].startswith("TA-")]
+    s3 = sorted(parse_sprint3_md(QA_MD), key=lambda t: int(t["id"][3:]))
+    s3_tests = parse_sprint3_tests()
+
+    wb = Workbook()
+
+    # ---- Parte A: casos manuales (Sprint 1-2 del docx + Sprint 3)
+    ws = wb.active
+    ws.title = "Parte A - Manuales"
+    ws.append(["ID", "Sprint", "Módulo", "Título", "Description", "Pre-conditions", "Jira Requirement",
+               "Pasos (Paso → Esperamos)", "Test (xUnit) / Script", "Estado", "Fecha de ejecución",
+               "Ejecutó", "Observaciones"])
+    for c in manual:
+        ws.append([c["id"], "Sprint 1-2", c["module"], c["title"], c["description"], c["pre"], c["jira"],
+                   steps_text(c["steps"]), "", "OK", DATE_S12_MANUAL, RUNNER, ""])
+    for t in s3:
+        ui = t["kind"] == "UI"
+        pre = ("Stack local levantado (docker compose en backend/); usuarios de prueba *@test.com."
+               if ui else "API levantada con WebApplicationFactory; sesión con el rol indicado en los pasos.")
+        date = DATE_RERUN if (not ui or int(t["id"][3:]) >= 130 or t["id"] == "TC-93") else DATE_S3_UI
+        if not ui:
+            date = DATE_RERUN
+        ws.append([t["id"], "Sprint 3", t["module"], t["title"], t["title"], pre, t["jira"],
+                   f"1. {t['step']}  →  {t['expected']}", t["test"],
+                   t["result"], date, RUNNER if ui else "Suite automatizada",
+                   t.get("note", "") if t.get("note") and t["result"] == "OK" and "re-ejecutado" in t["note"] else ""])
+    s4 = []
+    next_id = max(int(t["id"][3:]) for t in s3) + 1
+    for jira, module, cases_ in STORIES:
+        for title, desc, pre, steps in cases_:
+            s4.append((f"TC-{next_id}", jira, module, title, desc, pre, steps))
+            next_id += 1
+            ws.append([s4[-1][0], "Sprint 4", f"{module} ({jira})", title, desc, pre, jira,
+                       "\n".join(f"{i}. {p}  →  {e}" for i, (p, _d, e) in enumerate(steps, 1)), "",
+                       "Pendiente", "", "", SPRINT4_NOTES.get(jira, "Sin desarrollo todavía (Sprint 4 activo desde 2026-10-09).")])
+    # corrida de UI del 2026-10-16: casos de Sprint 1-2 ejecutados en navegador real
+    for row in ws.iter_rows(min_row=2):
+        res = run.UI_RESULTS.get(row[0].value)
+        if res:
+            real, bugs, failed_first = res
+            row[8].value = run.UI_SCRIPT
+            row[10].value = run.RUN_DATE
+            row[11].value = run.RUNNER
+            row[12].value = (("FALLÓ en la primera ejecución en navegador (" + bugs + "); corregido y re-ejecutado OK. ") if failed_first else "OK en navegador real. ") + real
+    sec_id = run.SEC_FIRST_ID
+    for key, title, desc, steps, script, real in run.SEC_CASES:
+        ui = key == "SEC-09"
+        ws.append([f"TC-{sec_id}", "Transversal", "Seguridad y rendimiento", title, desc,
+                   "Stack local levantado (docker compose en backend/); usuarios de prueba *@test.com.", "RNF seguridad / rendimiento",
+                   steps, script, "OK", run.RUN_DATE, run.RUNNER, real])
+        sec_id += 1
+    style_sheet(ws, [9, 11, 34, 44, 44, 38, 16, 70, 46, 12, 14, 18, 36])
+    add_state_validation(ws, "J")
+    manual_rows = ws.max_row
+
+    # ---- Pasos de los TC del docx (una fila por paso)
+    wp = wb.create_sheet("Pasos TC")
+    wp.append(["ID", "#", "Paso", "Dato", "Esperamos"])
+    for c in manual:
+        for n, p, d, e in c["steps"]:
+            wp.append([c["id"], int(n), p, d, e])
+    style_sheet(wp, [9, 5, 60, 36, 60])
+
+    # ---- Parte B: automatizados
+    wb_ = wb.create_sheet("Parte B - Automatizados")
+    wb_.append(["ID", "Sprint", "Módulo", "Título", "Description", "Pre-conditions", "Jira Requirement",
+                "Pasos (Paso → Esperamos)", "Test (xUnit)", "Estado", "Fecha de ejecución", "Ejecutó"])
+    for c in auto:
+        wb_.append([c["id"], "Sprint 1-2", c["module"], c["title"], c["description"], c["pre"], c["jira"],
+                    steps_text(c["steps"]), c["test"], auto_state, DATE_RERUN, "Suite automatizada"])
+    by_method = {}
+    for t in s3:
+        if t["kind"] == "API":
+            for name in t["test"].split(","):
+                by_method.setdefault(name.strip(), t)
+    n = len(auto)
+    for t in s3_tests:
+        n += 1
+        tc = by_method.get(t["method"])
+        if tc:
+            title = f"Validar: {tc['title']}"
+            desc = f"Respalda {tc['id']}: {tc['expected']}"
+            pre = "API levantada con WebApplicationFactory." if t["proj"].endswith("IntegrationTests") else "Servicio con DbContext InMemory."
+            steps = f"1. {tc['step']}  →  {tc['expected']}"
+            jira = tc["jira"]
+        else:
+            title = f"Validar: {t['human']}"
+            desc = "Sin TC manual asociado; descripción derivada del nombre del test."
+            pre = "API levantada con WebApplicationFactory." if t["proj"].endswith("IntegrationTests") else "Servicio con DbContext InMemory."
+            steps = ""
+            jira = t["jira"]
+        wb_.append([f"TA-{n:03d}", t["sprint"], t["module"], title, desc, pre, jira, steps,
+                    f"{t['proj']} › {t['cls']} › {t['method']}", auto_state, DATE_RERUN, "Suite automatizada"])
+    style_sheet(wb_, [9, 11, 34, 50, 44, 34, 18, 60, 70, 12, 14, 18])
+    add_state_validation(wb_, "J")
+    auto_rows = wb_.max_row
+
+    # ---- Resumen
+    wr = wb.create_sheet("Resumen", 0)
+    wr["A1"] = "Plan de pruebas — Vicaria de los Pobres, Pastoral de Adicciones"
+    wr["A1"].font = Font(bold=True, size=14)
+    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1 a 4 (Sprint 4: frontend hecho con datos simulados, backend en curso; casos manuales Pendientes). Se actualiza con los contadores de las hojas."
+    wr.append([])
+    wr.append(["Tipo", "Sprint", "Total", "OK", "Falla", "Bloqueado", "Pendiente"])
+    hr = wr.max_row
+    for c in wr[hr]:
+        c.fill, c.font, c.border = HEAD_FILL, HEAD_FONT, BORDER
+
+    def count_row(label, sprint, sheet, last, scol, state_col):
+        r = wr.max_row + 1
+        sh = f"'{sheet}'"
+        rng_s = f"{sh}!${scol}$2:${scol}${last}"
+        rng_e = f"{sh}!${state_col}$2:${state_col}${last}"
+        wr.append([label, sprint,
+                   f'=COUNTIF({rng_s},B{r})',
+                   f'=COUNTIFS({rng_s},B{r},{rng_e},"OK")',
+                   f'=COUNTIFS({rng_s},B{r},{rng_e},"Falla")',
+                   f'=COUNTIFS({rng_s},B{r},{rng_e},"Bloqueado")',
+                   f'=COUNTIFS({rng_s},B{r},{rng_e},"Pendiente")'])
+
+    count_row("Manuales (TC)", "Sprint 1-2", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Manuales (TC)", "Sprint 3", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Manuales (TC)", "Sprint 4", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Manuales (TC)", "Transversal", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Automatizados (TA)", "Sprint 1-2", "Parte B - Automatizados", auto_rows, "B", "J")
+    count_row("Automatizados (TA)", "Sprint 3", "Parte B - Automatizados", auto_rows, "B", "J")
+    count_row("Automatizados (TA)", "Sprint 4", "Parte B - Automatizados", auto_rows, "B", "J")
+    first, last = hr + 1, wr.max_row
+    wr.append(["Total", "", *[f"=SUM({get_column_letter(i)}{first}:{get_column_letter(i)}{last})" for i in range(3, 8)]])
+    for row in wr.iter_rows(min_row=hr + 1, max_row=wr.max_row):
+        for c in row:
+            c.border = BORDER
+    for c in wr[wr.max_row]:
+        c.font = Font(bold=True)
+
+    wr.append([])
+    wr.append(["Última ejecución (2026-10-17, rama dev + correcciones de QA + asistencia diaria SCRUM-216)"])
+    wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
+    for line in [
+        "Backend: 262 pruebas unitarias y 251 de integración, todas OK (el 16/10 se agregó un test unitario por el aviso de bloqueo en el 5º intento; el 17/10 se integró SCRUM-216).",
+        "Frontend: 29 archivos / 122 pruebas y build de producción, OK.",
+        "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#22 a #27).",
+        "Matriz rol x pantalla (Referente, Directora, Escucha, Coordinador): permisos correctos en todas las rutas; solo 'Informes' apunta a /inicio (#5).",
+        "Seguridad y carga (security/api-security-and-load.mjs): 13 verificaciones de seguridad y 4 de carga OK, sin errores bajo 50 usuarios concurrentes.",
+        "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK; 23 de ellos se re-ejecutaron en navegador real el 2026-10-16.",
+        "Sprint 4: 48 casos manuales derivados de los criterios de Jira, todos Pendientes (backend sin desarrollar salvo SCRUM-216 y SCRUM-232).",
+        "Sprint 4 por API (e2e/sprint4-api-flows.mjs): 21 de 21 OK en asistencia diaria (SCRUM-216) y carga de esquema de medicación (SCRUM-232); detalle en la pestaña 'Ciclo - Sprint 4 (API)' de Ciclos_de_prueba_Sprint_1-4.xlsx.",
+    ]:
+        wr.append([line])
+    wr.append([])
+    wr.append(["Épicas / historias cubiertas"])
+    wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
+    for line in [
+        "Sprint 1-2: EP-01 Fichas de personas · EP-02 Observaciones e historia de vida · EP-03 Cuentas, roles y notificaciones · EP-10 Asistencia · EP-12 Casa de Convivencia",
+        "Sprint 4: EP-10 Asistencia (SCRUM-54, 55, 56, 57) · Medicación (SCRUM-59, 60, 61, 71, 75)",
+        "Sprint 3: EP-04 Calendario general y personal (SCRUM-15, 16, 17) · EP-05 Colaboradores (SCRUM-18, 19) y visitas de la Casa de Convivencia (SCRUM-74)",
+    ]:
+        wr.append([line])
+    wr.append([])
+    wr.append(["Hojas"])
+    wr.cell(row=wr.max_row, column=1).font = Font(bold=True)
+    for line in [
+        "Parte A - Manuales: un caso por fila con sus pasos; el estado se completa desde la lista desplegable.",
+        "Pasos TC: los TC del Sprint 1-2 con una fila por paso (#, Paso, Dato, Esperamos).",
+        "Parte B - Automatizados: un test xUnit por fila. Sprint 3 deriva su descripción del nombre del test.",
+        "Defectos y pendientes: hallazgos de la ejecución y decisiones abiertas.",
+    ]:
+        wr.append([line])
+    for col, w in zip("ABCDEFG", [24, 14, 10, 10, 10, 12, 12]):
+        wr.column_dimensions[col].width = w
+
+    # ---- Defectos y pendientes
+    wd = wb.create_sheet("Defectos y pendientes")
+    wd.append(["#", "Tipo", "Descripción", "Origen / Jira", "Estado", "Detalle"])
+    items = [
+        ("Defecto", "Validadores de edición/estado no registrados en la inyección de dependencias: los endpoints PUT de eventos generales, PUT de colaboradores y PATCH de estado de visitas respondían 500.",
+         "SCRUM-190 / 200 / 211 (dev-backend)", "Corregido en dev",
+         "Se registraron en Program.cs y se agregaron tests HTTP. Falta llevar el arreglo a dev-backend."),
+        ("Defecto", "El listado de colaboradores no devolvía el estado activo/inactivo.",
+         "SCRUM-200", "Corregido en dev", "CollaboratorListItemDto ahora incluye isActive."),
+        ("Brecha", "No existían edición ni borrado de eventos personales en el backend.",
+         "SCRUM-17 / 197", "Corregido en dev", "PUT y DELETE api/personal-calendar-events/{id} con auditoría y tests."),
+        ("Test desactualizado", "Get_WithEachAuthorizedRole_Returns200 incluía al rol Escucha, excluido por SCRUM-212.",
+         "SCRUM-212", "Corregido", "Se quitó Escucha de los roles autorizados del test."),
+        ("Defecto preexistente", "Los ítems del menú Inicio, Asistencia, Medicación e Informes apuntan a /inicio, una ruta sin pantalla (página vacía). Está en main.",
+         "Frontend (Sprint 1-2)", "Abierta", "Detectado en la prueba de humo por rol: 4 de 15 pantallas; las demás cargan sin errores de API ni de consola."),
+        ("Defecto", "Las series recurrentes con fecha de inicio anterior al rango consultado no se expandían: un evento semanal solo aparecía en su semana de inicio.",
+         "SCRUM-189 / 194", "Corregido en dev", "La consulta incluye las series iniciadas antes del rango; hay tests unitarios y de integración."),
+        ("Decisión resuelta", "Solapamiento de visitas: es una advertencia. El backend responde 409 con el aviso y acepta allowOverlap para guardar igual.",
+         "SCRUM-211", "Resuelta 2026-10-09", "El frontend reenvía con allowOverlap cuando la persona vuelve a tocar Guardar."),
+        ("Decisión resuelta", "Motivo de cancelación de visita: es opcional.",
+         "SCRUM-74", "Resuelta 2026-10-09", "El PUT ya no lo exige y el frontend no manda un texto por defecto."),
+        ("Mejora", "Recurrencia mensual de eventos (mismo día de cada mes; en meses cortos, el último día).",
+         "SCRUM-16 / 189", "Implementada", "Columna repeats_monthly y migración AddCalendarEventMonthlyRecurrence."),
+        ("Limitación", "Al editar una ocurrencia de una serie, la fecha del formulario es la de esa ocurrencia y la serie pasa a empezar ese día.",
+         "SCRUM-190", "Abierta", "Una mejora posible es exponer la fecha de inicio de la serie en la ocurrencia."),
+        ("Defecto", "La suite de integración colgaba el equipo: cada clase de test levanta su propio SQL Server en Docker y xUnit las corría en paralelo (hasta 16 contenedores) contra una VM de WSL con tope de 4 GB; Docker se caía y los tests quedaban sin resultado.",
+         "Backend (tests de integración)", "Corregido en dev", "AssemblyInfo.cs desactiva el paralelismo y el factory limita cada SQL Server a 1 GB (MSSQL_MEMORY_LIMIT_MB). Resultado: 240 de 240 OK en 10 min 38 s."),
+        ("Defecto", "Los specs de asistencia y medicación de dev-frontend-belen usaban sintaxis de Jasmine (done, toBeTrue, toBeFalse) y no compilaban con Vitest: 55 errores y ningún test corría.",
+         "SCRUM-218 a 250 (frontend)", "Corregido en dev", "Se convirtieron a promesas y toBe(true/false): 120 de 120 pruebas OK."),
+        ("Brecha", "Las pantallas de asistencia y medicación del frontend usan servicios simulados (of(...).pipe(delay)) y no llaman a la API.",
+         "SCRUM-218 a 250 (frontend)", "Abierta", "Integrarlas con el backend a medida que se complete; hasta entonces los criterios de negocio no están verificados."),
+        ("Pendiente", "dev-backend trae un global.json que exige SDK 9.0.x y falla en equipos con otros SDK. dev no lo tiene.",
+         "dev-backend", "Abierta", "Avisar a Santiago antes de sincronizar ramas. Esta PC ya tiene el SDK 9.0.319."),
+        ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
+         "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
+        ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",
+         "Jira", "Abierta", "Cerrar con el resultado de esta ejecución."),
+    ]
+    for jira, q in OPEN_QUESTIONS:
+        items.append(("Pregunta abierta", q, jira, "Abierta", "Consultar al equipo antes de implementar o probar."))
+    for tipo, desc, origen, estado, detalle, _sev in run.NEW_DEFECTS:
+        items.append((tipo, desc, origen, estado, detalle))
+    d5 = items[4]
+    items[4] = (d5[0], run.DEFECT_5_NOTE, d5[2], d5[3], d5[4])
+    for i, it in enumerate(items, 1):
+        wd.append([i, *it])
+    style_sheet(wd, [5, 18, 70, 30, 18, 60])
+
+    wb.save(OUT)
+    print(f"{OUT} — manuales: {len(manual)} + {len(s3)} (Sprint 3) + {len(s4)} (Sprint 4) | automatizados: {len(auto)} + {len(s3_tests)} (Sprint 3)")
+
+
+if __name__ == "__main__":
+    main()

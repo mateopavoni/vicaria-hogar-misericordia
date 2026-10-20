@@ -80,6 +80,25 @@ public class AttendancesController : ControllerBase
         };
     }
 
+    // asistencia cargada de una actividad en una fecha; la Directora solo ve a los Residentes
+    [HttpGet]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetDaily([FromQuery] AttendanceActivity activity, [FromQuery] DateTime date, CancellationToken cancellationToken)
+    {
+        var day = await _attendanceService.GetDailyAsync(activity, date, cancellationToken);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        var visible = new List<DailyAttendancePersonDto>();
+        foreach (var person in day.Persons)
+        {
+            if (await _personAccessService.CanAccessPersonAsync(person.PersonId, role, cancellationToken))
+            {
+                visible.Add(person);
+            }
+        }
+
+        return Ok(day with { Persons = visible });
+    }
+
     // modificación de una asistencia de día cerrado con justificación (SCRUM-217),
     // restringido a Referente; día cerrado = fecha anterior a hoy
     [HttpPut("{id:guid}")]

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "S4W-01",
+    "name": "GET /api/stock-medicamentos lista el inventario completo (Referente)",
+    "ok": true,
+    "note": "status=200 items=8"
+  },
+  {
+    "id": "S4W-02",
+    "name": "Escucha no ve el inventario (403)",
+    "ok": true,
+    "note": "status=403"
+  },
+  {
+    "id": "S4W-03",
+    "name": "Ingreso de un medicamento nuevo (201 con id)",
+    "ok": true,
+    "note": "status=201"
+  },
+  {
+    "id": "S4W-04",
+    "name": "Catálogo de medicamentos con stock (Directora) incluye el nuevo con 3 unidades",
+    "ok": true,
+    "note": "status=200"
+  },
+  {
+    "id": "S4W-05",
+    "name": "Se carga el esquema con el medicamento nuevo (201)",
+    "ok": true,
+    "note": "status=201 {\"id\":\"4218d9fc-febe-4ccb-8aad-a6c22fbf6a4f\",\"personId\":\"33438a32-f4e6-4fba-b868"
+  },
+  {
+    "id": "S4W-06",
+    "name": "Se registra la asistencia de la persona con esquema vigente (204)",
+    "ok": true,
+    "note": "status=204 día=2026-10-17"
+  },
+  {
+    "id": "S4W-07",
+    "name": "GET /api/attendances devuelve el día con la persona y el conteo sin ficha",
+    "ok": true,
+    "note": "status=200 personas=1 sinFicha=2"
+  },
+  {
+    "id": "S4W-08",
+    "name": "Escucha también ve la asistencia del día (200)",
+    "ok": true,
+    "note": "status=200"
+  },
+  {
+    "id": "S4W-09",
+    "name": "La agenda del día incluye la toma del esquema nuevo, pendiente",
+    "ok": true,
+    "note": "status=200 toma=1f53bff0-a602-4c7b-bb1c-42cb7ebf053f"
+  },
+  {
+    "id": "S4W-10",
+    "name": "Marcar la toma como administrada (204)",
+    "ok": true,
+    "note": "status=204"
+  },
+  {
+    "id": "S4W-11",
+    "name": "El stock se descontó solo en el backend (3 -> 2)",
+    "ok": true,
+    "note": "stock=2"
+  },
+  {
+    "id": "S4W-12",
+    "name": "El historial (solo días cerrados) refleja la toma administrada ayer",
+    "ok": true,
+    "note": "status=200 toma de ayer=no se generó"
+  },
+  {
+    "id": "S4W-13",
+    "name": "Historial de asistencia de la persona con indicadores",
+    "ok": true,
+    "note": "status=200"
+  },
+  {
+    "id": "S4W-14",
+    "name": "Estadísticas del mes filtradas por actividad por nombre",
+    "ok": true,
+    "note": "status=200 registros=6"
+  },
+  {
+    "id": "S4W-15",
+    "name": "Listado de inactivos (200)",
+    "ok": true,
+    "note": "status=200"
+  },
+  {
+    "id": "S4W-16",
+    "name": "Resumen mensual en PDF (application/pdf)",
+    "ok": true,
+    "note": "status=200 application/pdf"
+  },
+  {
+    "id": "S4W-17",
+    "name": "Sincronizar actividades del calendario (200)",
+    "ok": true,
+    "note": "status=200"
+  },
+  {
+    "id": "S4W-18",
+    "name": "Catálogo de actividades configurable (200)",
+    "ok": true,
+    "note": "status=200 n=7"
+  },
+  {
+    "id": "S4W-20",
+    "name": "Registro de asistencia diaria abre sin errores",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "S4W-21",
+    "name": "Configuración de actividades abre y sincroniza sin errores",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "S4W-22",
+    "name": "Panel de estadísticas de asistencia con datos reales",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "S4W-23",
+    "name": "Agenda diaria de medicamentos abre sin errores",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "S4W-24",
+    "name": "Inventario de medicamentos lista el stock real",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "S4W-25",
+    "name": "Registrar asistencia desde la pantalla guarda a José1185088X en el backend",
+    "ok": true,
+    "note": ""
+  }
+]

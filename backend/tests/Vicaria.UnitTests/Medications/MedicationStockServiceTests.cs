@@ -171,6 +171,25 @@ public class MedicationStockServiceTests
     }
 
     [Fact]
+    public async Task GetStockOverviewAsync_ReturnsAllMedicationsOrderedByName()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new MedicationStockService(context);
+
+        context.MedicationCatalogs.AddRange(
+            new MedicationCatalog { Id = Guid.NewGuid(), Name = "Paracetamol", Stock = 0, MinimumStockThreshold = 2 },
+            new MedicationCatalog { Id = Guid.NewGuid(), Name = "Aspirina", Stock = 3, MinimumStockThreshold = 5 },
+            new MedicationCatalog { Id = Guid.NewGuid(), Name = "Ibuprofeno", Stock = 10, MinimumStockThreshold = 5 });
+        await context.SaveChangesAsync();
+
+        var items = await service.GetStockOverviewAsync();
+
+        Assert.Equal(new[] { "Aspirina", "Ibuprofeno", "Paracetamol" }, items.Select(i => i.MedicationName));
+        Assert.True(items[2].IsOutOfStock);
+        Assert.False(items[1].IsOutOfStock);
+    }
+
+    [Fact]
     public async Task UpdateThresholdAsync_WhenMedicationExists_UpdatesThresholdAndCreatesAuditLog()
     {
         using var context = CreateInMemoryDbContext();

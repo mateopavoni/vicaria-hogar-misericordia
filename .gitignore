@@ -29,3 +29,10 @@ appsettings.*.local.json
 opencode.json
 .opencode/
 TestResults/
+
+# archivos de bloqueo de Office
+~$*
+
+# entregables de QA generados (Excel/Word): se regeneran con los scripts de docs/qa, no se versionan
+docs/qa/*.xlsx
+docs/qa/*.docx

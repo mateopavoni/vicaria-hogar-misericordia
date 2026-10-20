@@ -103,6 +103,22 @@ public class MedicationStockService : IMedicationStockService
         return GetMedicationStockHistoryResult.Ok(dto);
     }
 
+    // inventario completo (no solo las alertas): lo usa la pantalla de stock del frontend
+    public async Task<IReadOnlyList<MedicationStockAlertDto>> GetStockOverviewAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.MedicationCatalogs
+            .AsNoTracking()
+            .OrderBy(m => m.Name)
+            .Select(m => new MedicationStockAlertDto(
+                m.Id,
+                m.Name,
+                m.Stock,
+                m.MinimumStockThreshold,
+                m.Stock == 0
+            ))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<MedicationStockAlertDto>> GetStockAlertsAsync(CancellationToken cancellationToken = default)
     {
         var lowStockMedications = await _dbContext.MedicationCatalogs

@@ -1,0 +1,142 @@
+<section class="print-target mt-6 flex flex-col gap-4">
+
+  <div class="no-print flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-[15px] font-bold text-slate-800">Historial de tomas</h2>
+    <button
+      type="button"
+      class="rounded-md border border-[#D5DDF3] bg-white px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+      [disabled]="loading() || filtered().length === 0"
+      (click)="exportPdf()"
+    >
+      Exportar PDF
+    </button>
+  </div>
+
+  <!-- Encabezado que solo aparece en el PDF -->
+  <div class="hidden print:block">
+    <h1 class="text-[20px] font-bold text-slate-900">Historial de medicación</h1>
+    @if (personName()) {
+      <p class="text-[14px] text-slate-700">{{ personName() }}</p>
+    }
+    <p class="text-[12px] text-slate-500">{{ filterLabel() }} · Emitido el {{ today.split('-').reverse().join('/') }}</p>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="no-print flex flex-wrap items-end gap-3">
+    <div>
+      <label for="mh-from" class="mb-1 block text-[12px] font-semibold text-slate-600">Desde</label>
+      <input
+        id="mh-from"
+        type="date"
+        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-2 text-[13px] text-slate-700"
+        [value]="dateFrom()"
+        [attr.max]="today"
+        (change)="dateFrom.set($any($event.target).value)"
+      />
+    </div>
+    <div>
+      <label for="mh-to" class="mb-1 block text-[12px] font-semibold text-slate-600">Hasta</label>
+      <input
+        id="mh-to"
+        type="date"
+        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-2 text-[13px] text-slate-700"
+        [value]="dateTo()"
+        [attr.max]="today"
+        (change)="dateTo.set($any($event.target).value)"
+      />
+    </div>
+    <div>
+      <label for="mh-med" class="mb-1 block text-[12px] font-semibold text-slate-600">Medicamento</label>
+      <select
+        id="mh-med"
+        class="rounded-md border border-[#D5DDF3] bg-white px-3 py-2 text-[13px] text-slate-700"
+        [value]="medicationId()"
+        (change)="medicationId.set($any($event.target).value)"
+      >
+        <option value="">Todos</option>
+        @for (m of medications(); track m.id) {
+          <option [value]="m.id" [selected]="m.id === medicationId()">{{ m.name }}</option>
+        }
+      </select>
+    </div>
+    <button
+      type="button"
+      class="rounded-md border border-[#D5DDF3] bg-white px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+      (click)="clearFilters()"
+    >
+      Limpiar filtros
+    </button>
+  </div>
+
+  @if (rangeInvalid()) {
+    <p class="no-print text-[12px] font-semibold text-rose-500" role="alert">La fecha "Desde" no puede ser posterior a "Hasta".</p>
+  }
+
+  @if (errorMessage()) {
+    <div class="rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="text-[13px] text-slate-400">Cargando historial...</p>
+  } @else {
+    <!-- RESUMEN -->
+    <div class="flex flex-wrap gap-3 text-[12px] font-semibold">
+      <span class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Administradas: {{ summary().administered }}</span>
+      <span class="rounded-full bg-red-100 px-3 py-1 text-red-700">No administradas: {{ summary().notAdministered }}</span>
+      <span class="rounded-full bg-slate-100 px-3 py-1 text-slate-600">Sin registrar: {{ summary().unregistered }}</span>
+      <span class="px-1 py-1 text-slate-500">Total programadas: {{ summary().total }}</span>
+    </div>
+
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <table class="w-full text-left text-[13px]">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="px-4 py-2.5 font-bold">Fecha</th>
+            <th class="px-4 py-2.5 font-bold">Hora</th>
+            <th class="px-4 py-2.5 font-bold">Medicamento</th>
+            <th class="px-4 py-2.5 font-bold">Dosis</th>
+            <th class="px-4 py-2.5 font-bold">Estado</th>
+            <th class="px-4 py-2.5 font-bold">Observación</th>
+            <th class="px-4 py-2.5 font-bold">Registró</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (e of filtered(); track e.date + e.schemeId) {
+            <tr [class]="e.status === 'not-administered' ? 'bg-red-50' : ''">
+              <td class="px-4 py-2.5 text-slate-800">{{ e.date.split('-').reverse().join('/') }}</td>
+              <td class="px-4 py-2.5 text-slate-800">{{ e.time }}</td>
+              <td class="px-4 py-2.5 text-slate-800">{{ e.medicationName }}</td>
+              <td class="px-4 py-2.5 text-slate-800">{{ e.dose }}</td>
+              <td class="px-4 py-2.5">
+                <span
+                  class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  [class]="e.status === 'administered'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : e.status === 'not-administered'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-slate-100 text-slate-500'"
+                >
+                  {{ statusLabel(e.status) }}
+                </span>
+              </td>
+              <td class="px-4 py-2.5 text-slate-600">{{ e.observation ?? '—' }}</td>
+              <td class="px-4 py-2.5 text-slate-500">
+                @if (e.recordedByName) {
+                  {{ e.recordedByName }} · {{ e.recordedAt | date: 'dd/MM HH:mm' }}
+                } @else {
+                  —
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-6 text-center text-slate-400">
+                No hay tomas para los filtros elegidos.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

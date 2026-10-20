@@ -1,0 +1,97 @@
+<div class="mt-4 flex flex-col gap-5">
+
+  @if (hasAbsenceAlert()) {
+    <div class="rounded-md bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-700" role="alert">
+      ⚠ Lleva {{ stats().daysSinceLast }} días sin asistir (más de {{ alertDays }}).
+    </div>
+  } @else if (stats().lastAttendance === null) {
+    <div class="rounded-md bg-slate-50 px-4 py-3 text-[13px] text-slate-500" role="status">
+      Todavía no hay asistencias registradas para esta persona.
+    </div>
+  }
+
+  <!-- INDICADORES -->
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div class="rounded-lg border border-slate-200 bg-white p-4">
+      <p class="text-[11px] font-semibold uppercase text-slate-400">Días asistidos</p>
+      <p class="mt-1 text-[24px] font-bold text-slate-800">{{ stats().totalDays }}</p>
+    </div>
+
+    <div class="rounded-lg border border-slate-200 bg-white p-4">
+      <p class="text-[11px] font-semibold uppercase text-slate-400">Racha actual</p>
+      <p class="mt-1 text-[24px] font-bold text-slate-800">
+        {{ stats().currentStreak }}
+        <span class="text-[13px] font-semibold text-slate-400">{{ stats().currentStreak === 1 ? 'día' : 'días' }}</span>
+      </p>
+    </div>
+
+    <div class="rounded-lg border border-slate-200 bg-white p-4">
+      <p class="text-[11px] font-semibold uppercase text-slate-400">Última asistencia</p>
+      @if (stats().lastAttendance; as last) {
+        <p class="mt-1 text-[18px] font-bold" [class]="hasAbsenceAlert() ? 'text-amber-600' : 'text-slate-800'">
+          {{ toDate(last) | date: 'dd/MM/yyyy' }}
+        </p>
+      } @else {
+        <p class="mt-1 text-[18px] font-bold text-slate-300">—</p>
+      }
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="grid grid-cols-1 items-end gap-3 md:grid-cols-4">
+    <ui-form-field label="Actividad" for="history-activity">
+      <select
+        id="history-activity"
+        uiInput
+        [value]="activityFilter()"
+        (change)="activityFilter.set($any($event.target).value)"
+      >
+        <option value="" [selected]="activityFilter() === ''">Todas</option>
+        @for (option of activities(); track option.id) {
+          <option [value]="option.id" [selected]="activityFilter() === option.id">{{ option.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Desde" for="history-from">
+      <input id="history-from" uiInput type="date" [value]="dateFrom()" [attr.max]="today" (change)="dateFrom.set($any($event.target).value)" />
+    </ui-form-field>
+
+    <ui-form-field label="Hasta" for="history-to">
+      <input id="history-to" uiInput type="date" [value]="dateTo()" [attr.max]="today" (change)="dateTo.set($any($event.target).value)" />
+    </ui-form-field>
+
+    @if (hasFilters()) {
+      <button
+        type="button"
+        class="h-10 rounded-md border border-[#D5DDF3] bg-white px-3 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+        (click)="clearFilters()"
+      >
+        Limpiar filtros
+      </button>
+    }
+  </div>
+
+  @if (invalidRange()) {
+    <p class="text-[12px] font-semibold text-rose-500" role="alert">La fecha "Desde" no puede ser posterior a "Hasta".</p>
+  }
+
+  <!-- LISTA AGRUPADA POR ACTIVIDAD -->
+  @for (group of groups(); track group.id) {
+    <section class="overflow-hidden rounded-lg border border-slate-200">
+      <header class="flex items-center justify-between bg-slate-50 px-4 py-2.5">
+        <h3 class="text-[13px] font-bold text-slate-700">{{ group.label }}</h3>
+        <span class="text-[12px] font-semibold text-slate-400">{{ group.dates.length }}</span>
+      </header>
+      <ul class="divide-y divide-slate-100">
+        @for (date of group.dates; track date) {
+          <li class="px-4 py-2 text-[13px] text-slate-600">{{ longDate(date) }}</li>
+        }
+      </ul>
+    </section>
+  } @empty {
+    @if (stats().totalDays > 0) {
+      <p class="text-[13px] text-slate-400">No hay asistencias que coincidan con los filtros.</p>
+    }
+  }
+</div>

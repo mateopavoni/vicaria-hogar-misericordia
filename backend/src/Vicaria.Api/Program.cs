@@ -15,6 +15,7 @@ using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.CasaConvivenciaStays;
+using Vicaria.Infrastructure.Pdf;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persons;
 using Vicaria.Infrastructure.Persistence;
@@ -88,6 +89,7 @@ builder.Services.AddScoped<IValidator<GetPersonAttendanceHistoryFilterDto>, GetP
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
 builder.Services.AddScoped<IAttendanceStatisticsService, AttendanceStatisticsService>();
+PdfFontResolver.Register();
 builder.Services.AddScoped<IAttendanceSummaryPdfGenerator, AttendanceSummaryPdfGenerator>();
 builder.Services.AddScoped<IValidator<GetInactivePeopleQueryDto>, GetInactivePeopleQueryValidator>();
 builder.Services.AddScoped<IValidator<GetMonthlySummaryQueryDto>, GetMonthlySummaryQueryValidator>();

@@ -44,7 +44,11 @@ public class MedicationSchemeService : IMedicationSchemeService
             "Hora de Córdoba");
     }
 
-    public async Task<CreateMedicationSchemeResult> CreateAsync(Guid personId, CreateMedicationSchemeDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    public async Task<CreateMedicationSchemeResult> CreateAsync(
+        Guid personId,
+        CreateMedicationSchemeDto dto,
+        Guid actorId,
+        CancellationToken cancellationToken = default)
     {
         var personExists = await _dbContext.People
             .AsNoTracking()
@@ -202,6 +206,15 @@ public class MedicationSchemeService : IMedicationSchemeService
             .ToListAsync(cancellationToken);
 
         return GetPersonMedicationSchemesResult.Ok(schemes);
+    }
+
+    public async Task<IReadOnlyList<MedicationCatalogItemDto>> GetCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.MedicationCatalogs
+            .AsNoTracking()
+            .OrderBy(m => m.Name)
+            .Select(m => new MedicationCatalogItemDto(m.Id, m.Name, m.Stock))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<MedicationReviewAlertDto>> GetNeedsReviewAsync(CancellationToken cancellationToken = default)
