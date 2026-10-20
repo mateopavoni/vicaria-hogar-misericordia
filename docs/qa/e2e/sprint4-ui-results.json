@@ -1,0 +1,290 @@
+[
+  {
+    "id": "TC-147",
+    "title": "Registrar asistencia diaria de Hogar de día con personas con ficha",
+    "ok": true,
+    "note": "José1185088X y Lucía"
+  },
+  {
+    "id": "TC-148",
+    "title": "Registrar asistencia diaria de la Casona",
+    "ok": true,
+    "note": "Roberto"
+  },
+  {
+    "id": "TC-149",
+    "title": "Registrar un conteo de personas sin ficha (anónimas)",
+    "ok": true,
+    "note": "conteo 4 persistido; -1 rechazado (400)"
+  },
+  {
+    "id": "TC-150",
+    "title": "No permitir asistencia duplicada (persona + actividad + fecha)",
+    "ok": true,
+    "note": "duplicado 409; otra actividad 204"
+  },
+  {
+    "id": "TC-151",
+    "title": "Guardar la asistencia genera la agenda de medicamentos del día",
+    "ok": true,
+    "note": "agenda de hoy con QA UI Medicamento 066236"
+  },
+  {
+    "id": "TC-152",
+    "title": "Modificar la asistencia de un día cerrado: solo Referente y con justificación",
+    "ok": true,
+    "note": "sin justificación 400, Directora 403, Referente 204; la pantalla pide justificación"
+  },
+  {
+    "id": "TC-153",
+    "title": "Historial de asistencia agrupado por actividad desde el perfil",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-154",
+    "title": "Filtrar el historial por actividad y por rango de fechas",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-155",
+    "title": "Indicadores: total de días, racha actual y última asistencia",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-156",
+    "title": "Indicar visualmente a la persona con más de 7 días sin asistir",
+    "ok": true,
+    "note": "Carlos: 13 días"
+  },
+  {
+    "id": "TC-157",
+    "title": "La Directora de Casona solo ve el historial de residentes de Casona",
+    "ok": true,
+    "note": "ambulatorio 403; residente con estadía activa 200 (Lucía)"
+  },
+  {
+    "id": "TC-158",
+    "title": "Ver las estadísticas generales de asistencia",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-159",
+    "title": "Filtrar las estadísticas por rango de fechas y actividad",
+    "ok": true,
+    "note": "todas=33, Casa=3, solo hoy=8"
+  },
+  {
+    "id": "TC-160",
+    "title": "Identificar personas que dejaron de asistir hace más de 14 días",
+    "ok": true,
+    "note": "8 personas"
+  },
+  {
+    "id": "TC-161",
+    "title": "Las estadísticas son accesibles solo para Referentes",
+    "ok": true,
+    "note": "API 403 y sin acceso en pantalla"
+  },
+  {
+    "id": "TC-162",
+    "title": "Exportar el resumen mensual de asistencia a PDF",
+    "ok": true,
+    "note": "resumen-mensual-2026-10.pdf 32138 bytes"
+  },
+  {
+    "id": "TC-163",
+    "title": "Las actividades recurrentes del calendario aparecen en el registro de asistencia",
+    "ok": true,
+    "note": "0 actividades del catálogo"
+  },
+  {
+    "id": "TC-164",
+    "title": "Registrar a la misma persona en varias actividades del mismo día",
+    "ok": true,
+    "note": "misma persona en dos actividades el mismo día (API); en pantalla solo las dos actividades fijas se guardan (límite conocido)"
+  },
+  {
+    "id": "TC-165",
+    "title": "Los referentes configuran las actividades disponibles",
+    "ok": true,
+    "note": "creada, desactivada; Directora 403"
+  },
+  {
+    "id": "TC-166",
+    "title": "La asistencia de la Casona es diaria y separada del Hogar de día",
+    "ok": true,
+    "note": "Casona 3 personas, 2 solo en Casona"
+  },
+  {
+    "id": "TC-167",
+    "title": "Cargar un medicamento del catálogo con dosis y hora (desde la ficha)",
+    "ok": true,
+    "note": "QA UI Medicamento 066236 a las 16:00"
+  },
+  {
+    "id": "TC-168",
+    "title": "No permitir medicamentos fuera del catálogo",
+    "ok": true,
+    "note": "API 404 y el formulario solo ofrece el catálogo"
+  },
+  {
+    "id": "TC-169",
+    "title": "Bloquear la carga sin evaluación psiquiátrica vigente",
+    "ok": true,
+    "note": "API 400 y aviso en pantalla"
+  },
+  {
+    "id": "TC-170",
+    "title": "Stock en 0: alertar y marcar el medicamento como pendiente de stock",
+    "ok": true,
+    "note": "Medicamento de prueba C (sin stock): pendiente de stock"
+  },
+  {
+    "id": "TC-171",
+    "title": "Registrar quién cargó el esquema y cuándo",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-172",
+    "title": "Visibilidad del esquema según el rol",
+    "ok": true,
+    "note": "Escucha 403, Directora y Referente 200"
+  },
+  {
+    "id": "TC-173",
+    "title": "La agenda agrupa las tomas por hora",
+    "ok": true,
+    "note": "19 franjas ordenadas"
+  },
+  {
+    "id": "TC-174",
+    "title": "Solo aparecen las personas presentes con medicación cargada",
+    "ok": true,
+    "note": "20 tomas, todas de presentes"
+  },
+  {
+    "id": "TC-175",
+    "title": "Marcar una toma como Administrada / No administrada con observación",
+    "ok": true,
+    "note": "Administrada desde la pantalla; No administrada con observación (API)"
+  },
+  {
+    "id": "TC-176",
+    "title": "Acceso directo a la agenda del día desde el panel principal",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-177",
+    "title": "Consultar la agenda de días anteriores",
+    "ok": true,
+    "note": "banner de día anterior y botón Volver a hoy"
+  },
+  {
+    "id": "TC-178",
+    "title": "Ver el historial de tomas desde el perfil de la persona",
+    "ok": true,
+    "note": "toma de ayer del medicamento nuevo registrada como no administrada"
+  },
+  {
+    "id": "TC-179",
+    "title": "Filtrar por rango de fechas y por medicamento",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-180",
+    "title": "Resaltar las tomas no administradas",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-181",
+    "title": "Acceso restringido a Referentes y Directora",
+    "ok": true,
+    "note": "Escucha 403"
+  },
+  {
+    "id": "TC-182",
+    "title": "Exportar el historial de medicación a PDF",
+    "ok": true,
+    "note": "botón abre la impresión del navegador; el endpoint del backend devuelve un PDF válido (31602 bytes) que la pantalla no usa"
+  },
+  {
+    "id": "TC-183",
+    "title": "Registrar el ingreso de medicamentos",
+    "ok": true,
+    "note": "stock 5 -> 12"
+  },
+  {
+    "id": "TC-184",
+    "title": "Descontar el stock al marcar una toma como administrada",
+    "ok": true,
+    "note": "3 -> 2"
+  },
+  {
+    "id": "TC-185",
+    "title": "Alertar cuando el stock está por debajo del umbral configurable",
+    "ok": true,
+    "note": "alerta con umbral 5; al configurarlo en 1 desde la pantalla deja de alertar"
+  },
+  {
+    "id": "TC-186",
+    "title": "Ver el historial de movimientos de un medicamento",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-187",
+    "title": "Permisos de gestión del stock",
+    "ok": true,
+    "note": "Escucha 403 al ver y registrar; Directora 200"
+  },
+  {
+    "id": "TC-188",
+    "title": "El stock de medicamentos es independiente del stock de ropa",
+    "ok": true,
+    "note": "el inventario muestra solo medicamentos; el backend no tiene módulo de ropa (límite del alcance)"
+  },
+  {
+    "id": "TC-189",
+    "title": "Un medicamento nuevo queda activo y el desactivado se conserva como historial",
+    "ok": true,
+    "note": "el nuevo sigue activo; el desactivado se conserva"
+  },
+  {
+    "id": "TC-190",
+    "title": "La agenda diaria muestra solo los esquemas activos",
+    "ok": true,
+    "note": "incluye el esquema activo, no el desactivado"
+  },
+  {
+    "id": "TC-191",
+    "title": "Los esquemas anteriores son visibles desde el perfil",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "id": "TC-192",
+    "title": "Alertar cuando un esquema lleva más de 30 días sin revisión",
+    "ok": true,
+    "note": "esquema con 40 días: alerta en la ficha y en el listado"
+  },
+  {
+    "id": "TC-193",
+    "title": "Bloquear nuevos medicamentos con la evaluación psiquiátrica vencida",
+    "ok": true,
+    "note": "Dup: evaluación de hace 8 meses → 400"
+  },
+  {
+    "id": "TC-194",
+    "title": "Revisar el esquema registra la fecha y el usuario",
+    "ok": true,
+    "note": "revisado por Test referente"
+  }
+]

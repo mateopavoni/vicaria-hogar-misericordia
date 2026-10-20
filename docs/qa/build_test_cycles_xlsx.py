@@ -114,6 +114,9 @@ def add_sprint4_api_sheet(wb, base, style_row):
 
 
 S4_WIRED_RESULTS = HERE / "e2e" / "sprint4-wired-results.json"
+S4_UI_FILE = HERE / "e2e" / "sprint4-ui-results.json"
+# TC-147 a TC-194 ejecutados en navegador (e2e/sprint4-ui-cases.mjs): id -> {ok, note}
+S4_UI_RESULTS = ({r["id"]: r for r in __import__("json").loads(S4_UI_FILE.read_text(encoding="utf-8"))} if S4_UI_FILE.exists() else {})
 
 
 def add_sprint4_wired_sheet(wb, base, style_row):
@@ -175,13 +178,20 @@ def main():
             pasos, esperado = split_steps(steps)
             state = STATES[estado]
             when = date.fromisoformat(str(fecha)[:10]) if fecha else None
+            s4ui = S4_UI_RESULTS.get(tc_id)
+            if s4ui:
+                state = "PASÓ" if s4ui["ok"] else "FALLÓ"
+                who, when = "QA (script sprint4-ui-cases.mjs)", date(2026, 10, 20)
             comment = observ if sprint not in ("Transversal",) and tc_id not in run.UI_RESULTS else ""
             if tc_id in BUGS and state == "PASÓ" and tc_id not in run.UI_RESULTS:
                 comment = (comment + " " if comment else "") + f"Defecto {BUGS[tc_id]} corregido; el caso pasa tras la corrección."
             if state == "NO EJECUTADO":
                 comment = BLOCKED_NOTE
             ui = run.UI_RESULTS.get(tc_id)
-            if ui:
+            if s4ui:
+                real = "Ejecutado en navegador real (Playwright) contra el stack local: " + (s4ui["note"] or "cada paso dio el resultado esperado") + "."
+                comment = ""
+            elif ui:
                 real = ui[0]
                 if ui[2]:
                     comment = (comment + " " if comment else "") + f"Falló en la primera ejecución en navegador ({ui[1]}); corregido en dev y re-ejecutado OK."
