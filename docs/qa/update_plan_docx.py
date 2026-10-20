@@ -1,5 +1,5 @@
 """Agrega al Word "Plan de prueba - completo formateado" los casos de la corrida del 16-17/10:
-transversales de seguridad y carga (TC-195 a TC-211), pruebas de API del Sprint 4 (S4-A01..S4-M10) y los defectos #22 a #29.
+transversales de seguridad y carga (TC-195 a TC-211), pruebas de API del Sprint 4 (S4-A01..S4-M10) y los defectos hallados en la corrida.
 
 Uso: python docs/qa/update_plan_docx.py <docx de entrada> <docx de salida>
 Clona las tablas del último caso (TC-194) para conservar el formato; inserta todo antes de "Parte B".
@@ -102,10 +102,10 @@ def main():
                  [("1", "Iniciar sesión con el rol indicado en el título (Referente por defecto)", "—", "Se obtiene el token"),
                   ("2", call, "—", r["name"])])
 
-    heading("Defectos hallados en la corrida del 2026-10-16 (#22 a #29)")
+    heading("Defectos hallados en la corrida (#14 en adelante)")
     for k, d in enumerate(run.NEW_DEFECTS):
         tipo, desc, hist, estado, nota, sev = d[:6]
-        case(f"Hallazgo #{22 + k}", desc[:110] + ("…" if len(desc) > 110 else ""), desc, f"Severidad: {sev}. Tipo: {tipo}.", hist,
+        case(f"Hallazgo #{14 + k}", desc[:110] + ("…" if len(desc) > 110 else ""), desc, f"Severidad: {sev}. Tipo: {tipo}.", hist,
              f"Estado: {estado}", [("1", nota, "—", estado)])
 
     doc.save(dst)

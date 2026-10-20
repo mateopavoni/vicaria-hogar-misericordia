@@ -351,7 +351,7 @@ def main():
     for line in [
         "Backend: 262 pruebas unitarias y 251 de integración, todas OK (el 16/10 se agregó un test unitario por el aviso de bloqueo en el 5º intento; el 17/10 se integró SCRUM-216).",
         "Frontend: 29 archivos / 122 pruebas y build de producción, OK.",
-        "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#22 a #27).",
+        "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#14 a #19).",
         "Matriz rol x pantalla (Referente, Directora, Escucha, Coordinador): permisos correctos en todas las rutas; solo 'Informes' apunta a /inicio (#5).",
         "Seguridad y carga (security/api-security-and-load.mjs): 13 verificaciones de seguridad y 4 de carga OK, sin errores bajo 50 usuarios concurrentes.",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK; 23 de ellos se re-ejecutaron en navegador real el 2026-10-16.",
@@ -412,15 +412,7 @@ def main():
          "SCRUM-218 a 250 (frontend)", "Corregido en dev", "Se convirtieron a promesas y toBe(true/false): 120 de 120 pruebas OK."),
         ("Brecha", "Las pantallas de asistencia y medicación del frontend usan servicios simulados (of(...).pipe(delay)) y no llaman a la API.",
          "SCRUM-218 a 250 (frontend)", "Abierta", "Integrarlas con el backend a medida que se complete; hasta entonces los criterios de negocio no están verificados."),
-        ("Pendiente", "dev-backend trae un global.json que exige SDK 9.0.x y falla en equipos con otros SDK. dev no lo tiene.",
-         "dev-backend", "Abierta", "Avisar a Santiago antes de sincronizar ramas. Esta PC ya tiene el SDK 9.0.319."),
-        ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
-         "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
-        ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",
-         "Jira", "Abierta", "Cerrar con el resultado de esta ejecución."),
     ]
-    for jira, q in OPEN_QUESTIONS:
-        items.append(("Pregunta abierta", q, jira, "Abierta", "Consultar al equipo antes de implementar o probar."))
     for tipo, desc, origen, estado, detalle, _sev in run.NEW_DEFECTS:
         items.append((tipo, desc, origen, estado, detalle))
     d5 = items[4]

@@ -13,7 +13,7 @@ RUNNER = "Mateo Pavoni"
 UI_SCRIPT = "docs/qa/e2e/sprint1-2-ui-flows.mjs"
 SEC_SCRIPT = "docs/qa/security/api-security-and-load.mjs"
 
-# Defectos nuevos de esta corrida. Se agregan al final de la hoja "Defectos y pendientes" (#22 en adelante).
+# Defectos nuevos de esta corrida. Se agregan al final de la hoja "Defectos y pendientes" (#14 en adelante).
 # (tipo, descripción, origen, estado, detalle, severidad)
 NEW_DEFECTS = [
     ("Defecto", "Cuenta bloqueada: el login navegaba a /auth/blocked, una ruta que no existe, y dejaba la pantalla en blanco sin ningún mensaje.",
@@ -34,10 +34,6 @@ NEW_DEFECTS = [
     ("Defecto", "Una observación con solo espacios habilitaba el botón Guardar; el backend la rechazaba con 400.",
      "SCRUM-9 (frontend)", "Corregido en dev",
      "El formulario valida el largo mínimo sobre el texto recortado.", "Menor"),
-    ("Pregunta abierta", "La API acepta crear dos fichas con el mismo DNI (201 y 201). Los colaboradores sí rechazan DNI duplicado (409).",
-     "SCRUM-5 / EP-01", "Abierta", "Confirmar si el DNI debe ser único en fichas antes de agregar la regla.", "Menor"),
-    ("Pregunta abierta", "La API permite crear fichas al Coordinador de Casa de Convivencia (POST api/social-records), pero la UI le deniega /fichas/crear.",
-     "SCRUM-13 / 64", "Abierta", "Se suma a la pregunta #20 sobre los permisos del Coordinador.", "Menor"),
     ("Defecto", "Los PDF del resumen mensual de asistencia y del historial de medicación respondían 500: PDFsharp 6.5.0 exige una licencia y la imagen de la API no tenía ninguna fuente instalada.",
      "SCRUM-225 / 241 (backend)", "Corregido en dev",
      "PDFsharp 6.2.4, resolvedor de fuentes (Arial en Windows, Liberation Sans en Linux), fuentes en la imagen Docker y tests unitarios y de integración nuevos.", "Mayor"),
@@ -60,15 +56,15 @@ UI_RESULTS = {
     "TC-03": ("Con clave incorrecta se muestra 'Correo o contraseña incorrectos.', no se ingresa y se limpia la contraseña.", "", False),
     "TC-04": ("Primera ejecución: el 5º intento respondía 401 sin avisar del bloqueo y, con la clave correcta, el login navegaba a /auth/blocked (ruta inexistente, pantalla en blanco). "
               "Tras la corrección: el 5º intento devuelve 403 y muestra 'Alcanzaste el máximo de intentos permitidos: tu cuenta quedó bloqueada por 30 minutos.'; con la clave correcta la cuenta sigue bloqueada.",
-     "DEF-22, DEF-23", True),
+     "DEF-14, DEF-15", True),
     "TC-07": ("Primera ejecución: la cuenta desactivada no ingresaba pero veía 'No pudimos iniciar sesión. Probá de nuevo en unos minutos.'. "
-              "Tras la corrección muestra 'Tu cuenta está desactivada. Contactá a un Referente para reactivarla.'.", "DEF-24", True),
+              "Tras la corrección muestra 'Tu cuenta está desactivada. Contactá a un Referente para reactivarla.'.", "DEF-16", True),
     "TC-08": ("Inactivar desde Usuarios mueve la cuenta a Inactivos; al reactivarla vuelve a ingresar al dashboard.", "", False),
     "TC-09": ("Al registrarse una cuenta, el Referente ve la notificación en la campana y el contador de no leídas aumenta.", "", False),
     "TC-11": ("Alta mínima (nombre, apellido, DNI): la ficha se crea y aparece en el listado y el detalle. Una ficha vacía muestra los obligatorios y un DNI con letras muestra 'El DNI solo puede tener números, sin puntos ni espacios.'.", "", False),
-    "TC-12": ("Primera ejecución: Escucha veía 'Editar ficha' en el detalle y el ícono de editar en el listado. Tras la corrección no los ve, no ve 'Nueva ficha' y /edit lo redirige a acceso denegado.", "DEF-26", True),
+    "TC-12": ("Primera ejecución: Escucha veía 'Editar ficha' en el detalle y el ícono de editar en el listado. Tras la corrección no los ve, no ve 'Nueva ficha' y /edit lo redirige a acceso denegado.", "DEF-18", True),
     "TC-13": ("Buscar 'jose<n> nunez' encuentra 'José<n> Núñez'; la búsqueda por DNI la encuentra y una búsqueda sin coincidencias no lista fichas.", "", False),
-    "TC-14": ("Primera ejecución: con fecha futura la UI mostraba el mensaje genérico 'Ocurrió un error al guardar la ficha.'. Tras la corrección muestra el motivo de la API ('...no puede ser futura.') y no guarda.", "DEF-25", True),
+    "TC-14": ("Primera ejecución: con fecha futura la UI mostraba el mensaje genérico 'Ocurrió un error al guardar la ficha.'. Tras la corrección muestra el motivo de la API ('...no puede ser futura.') y no guarda.", "DEF-17", True),
     "TC-15": ("El filtro por DNI del listado se aplica sin errores de API y muestra el filtro activo.", "", False),
     "TC-16": ("Se registra una observación con categoría (6 disponibles) y aparece en la línea de tiempo con su autor.", "", False),
     "TC-17": ("Filtrar por categoría deja solo las observaciones de esa categoría y el filtro por autor responde sin errores.", "", False),
@@ -79,7 +75,7 @@ UI_RESULTS = {
     "TC-32": ("Registrar un correo existente muestra 'Ya existe un usuario registrado con ese email.' y permanece en el formulario.", "", False),
     "TC-34": ("La edición carga el nombre guardado y los cambios se guardan y se ven en el detalle.", "", False),
     "TC-37": ("Con el texto vacío el botón Guardar está deshabilitado y el modal sigue abierto.", "", False),
-    "TC-38": ("Primera ejecución: con solo espacios el botón quedaba habilitado y la API respondía 400. Tras la corrección el botón queda deshabilitado.", "DEF-27", True),
+    "TC-38": ("Primera ejecución: con solo espacios el botón quedaba habilitado y la API respondía 400. Tras la corrección el botón queda deshabilitado.", "DEF-19", True),
     "TC-39": ("En 390 px de ancho no hay desborde horizontal en el inicio ni en el listado de fichas.", "", False),
     "TC-40": ("En pantalla chica el menú se abre con el botón y se oculta al elegir una opción.", "", False),
 }

@@ -24,12 +24,12 @@ VERSION = "rama dev, Sprint 4 integrado (20/10/2026)"
 REPORT_DATE = "20/10/2026"
 NAVY = "1F3864"
 
-# Severidad de los hallazgos de la hoja de defectos (# de fila -> severidad); los #22+ vienen de run.NEW_DEFECTS
+# Severidad de los hallazgos de la hoja de defectos (# de fila -> severidad); los #14+ vienen de run.NEW_DEFECTS
 SEVERITY = {"1": "Mayor", "2": "Menor", "3": "Mayor", "4": "Menor", "5": "Mayor", "6": "Mayor",
             "10": "Menor", "11": "Mayor", "12": "Menor", "13": "Mayor"}
 for i, d in enumerate(run.NEW_DEFECTS):
     if d[0] == "Defecto":
-        SEVERITY[str(22 + i)] = d[5]
+        SEVERITY[str(14 + i)] = d[5]
 ORDER = ["Crítico / Bloqueante", "Mayor", "Menor / Estético"]
 DEF_TYPES = ("Defecto", "Defecto preexistente", "Brecha", "Test desactualizado", "Limitación")
 
