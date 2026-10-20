@@ -94,19 +94,19 @@ export class MedicationAgendaComponent {
 
   /** Muestra los botones si la toma está pendiente o se la está corrigiendo. */
   isEditable(item: AgendaItem): boolean {
-    return this.canRecord() && (!item.administration || this.correcting().has(item.schemeId));
+    return this.canRecord() && (!item.administration || this.correcting().has(item.intakeId));
   }
 
   draftOf(item: AgendaItem): string {
-    return this.drafts()[item.schemeId] ?? item.administration?.observation ?? '';
+    return this.drafts()[item.intakeId] ?? item.administration?.observation ?? '';
   }
 
   setDraft(item: AgendaItem, value: string): void {
-    this.drafts.update((d) => ({ ...d, [item.schemeId]: value }));
+    this.drafts.update((d) => ({ ...d, [item.intakeId]: value }));
   }
 
   startCorrection(item: AgendaItem): void {
-    this.correcting.update((set) => new Set(set).add(item.schemeId));
+    this.correcting.update((set) => new Set(set).add(item.intakeId));
   }
 
   mark(item: AgendaItem, status: AdministrationStatus): void {
@@ -115,14 +115,11 @@ export class MedicationAgendaComponent {
       return;
     }
 
-    this.savingId.set(item.schemeId);
+    this.savingId.set(item.intakeId);
     this.errorMessage.set(null);
 
     this.medicationService
-      .recordAdministration(
-        { schemeId: item.schemeId, date: this.date(), status, observation: this.draftOf(item) || null },
-        { id: user.id, name: `${user.name} ${user.lastname}`.trim() },
-      )
+      .recordAdministration({ intakeId: item.intakeId, date: this.date(), status, observation: this.draftOf(item) || null })
       .subscribe({
         next: () => {
           this.savingId.set(null);

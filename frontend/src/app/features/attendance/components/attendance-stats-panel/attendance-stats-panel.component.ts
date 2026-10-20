@@ -1,16 +1,33 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { extractApiError } from '../../../../core/http/api-error';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
-import { AttendanceActivity, DailyAttendance } from '../../interfaces/attendance.interface';
+import {
+  AttendanceActivity,
+  AttendanceOverview,
+  InactivePerson,
+  SYSTEM_ACTIVITIES,
+} from '../../interfaces/attendance.interface';
 import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
-import { AttendanceService } from '../../services/attendance.service';
-import { INACTIVE_AFTER_DAYS, computeOverview, findInactivePersons } from '../../utils/attendance-overview.util';
+import { AttendanceService, AttendanceStatistics } from '../../services/attendance.service';
+import { INACTIVE_AFTER_DAYS } from '../../utils/attendance-overview.util';
+
+const EMPTY_OVERVIEW: AttendanceStatistics = {
+  totalPresences: 0,
+  daysWithData: 0,
+  dailyAverage: 0,
+  weeklyAverage: 0,
+  monthlyAverage: 0,
+  byActivity: [],
+  perDay: [],
+  previousPeriodTotal: 0,
+  comparisonPercentage: null,
+};
 
 /**
  * SCRUM-226 (front de SCRUM-56): panel de estadísticas de asistencia del Centro Barrial.
- * Números destacados y barras simples, filtros de fechas y actividad, listado de personas
- * que dejaron de asistir hace más de 14 días y exportación del resumen mensual a PDF.
+ * Los números los calcula el backend (/api/attendances/statistics, /inactive y el PDF mensual).
  * Solo para Referente (permiso asistencia.stats): lo protege la ruta y el que lo monta.
  */
 @Component({
@@ -22,13 +39,15 @@ export class AttendanceStatsPanelComponent implements OnInit {
   private attendanceService = inject(AttendanceService);
   private activitiesService = inject(AttendanceActivitiesService);
 
-  // todas, también las desactivadas: tienen registros viejos que se siguen contando
-  readonly activities = this.activitiesService.all;
+  // el backend solo lleva estadísticas de las dos actividades fijas
+  readonly activities = signal(SYSTEM_ACTIVITIES);
   readonly inactiveAfterDays = INACTIVE_AFTER_DAYS;
   readonly today = todayLocalIso();
 
-  private records = signal<DailyAttendance[]>([]);
+  private stats = signal<AttendanceStatistics>(EMPTY_OVERVIEW);
+  inactivePersons = signal<InactivePerson[]>([]);
   loading = signal(true);
+  exporting = signal(false);
   errorMessage = signal<string | null>(null);
 
   // por defecto: el mes en curso hasta hoy
@@ -41,31 +60,55 @@ export class AttendanceStatsPanelComponent implements OnInit {
 
   invalidRange = computed(() => !!this.dateFrom() && !!this.dateTo() && this.dateFrom() > this.dateTo());
 
-  overview = computed(() =>
-    computeOverview(this.records(), {
-      from: this.dateFrom() || '0000-01-01',
-      to: this.dateTo() || '9999-12-31',
-      activity: this.activityFilter() || null,
-    }, this.activities()),
-  );
-
-  inactivePersons = computed(() => findInactivePersons(this.records(), this.today));
+  overview = computed<AttendanceOverview>(() => this.stats());
+  previousPeriodTotal = computed(() => this.stats().previousPeriodTotal);
+  comparisonPercentage = computed(() => this.stats().comparisonPercentage);
 
   // alturas relativas de las barras (0-100) respecto del máximo del período
   maxActivityTotal = computed(() => Math.max(1, ...this.overview().byActivity.map((a) => a.totalPresences)));
-  maxDayTotal = computed(() => Math.max(1, ...this.overview().perDay.map((d) => d.total)));
 
   ngOnInit(): void {
-    this.attendanceService.getAll().subscribe({
-      next: (records) => {
-        this.records.set(records);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.errorMessage.set('No se pudieron cargar las estadísticas de asistencia.');
-      },
+    this.reload();
+    this.attendanceService.getInactive(INACTIVE_AFTER_DAYS).subscribe({
+      next: (people) => this.inactivePersons.set(people),
+      error: (err) => this.errorMessage.set(extractApiError(err, 'No se pudo cargar la lista de personas inactivas.')),
     });
+  }
+
+  /** Vuelve a pedir las estadísticas con los filtros actuales. */
+  reload(): void {
+    if (this.invalidRange() || !this.dateFrom() || !this.dateTo()) {
+      return;
+    }
+    this.loading.set(true);
+    this.errorMessage.set(null);
+    this.attendanceService
+      .getStatistics(this.dateFrom(), this.dateTo(), this.activityFilter() || null)
+      .subscribe({
+        next: (stats) => {
+          this.stats.set(stats);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.errorMessage.set(extractApiError(err, 'No se pudieron cargar las estadísticas de asistencia.'));
+        },
+      });
+  }
+
+  setFrom(value: string): void {
+    this.dateFrom.set(value);
+    this.reload();
+  }
+
+  setTo(value: string): void {
+    this.dateTo.set(value);
+    this.reload();
+  }
+
+  setActivity(value: string): void {
+    this.activityFilter.set(value);
+    this.reload();
   }
 
   activityName(id: AttendanceActivity): string {
@@ -81,24 +124,28 @@ export class AttendanceStatsPanelComponent implements OnInit {
     return Math.round((value / max) * 100);
   }
 
-  /**
-   * Exportar el resumen mensual a PDF: se fija el rango en el mes elegido y se abre el
-   * diálogo de impresión del navegador ("Guardar como PDF"), igual que "Exportar ficha".
-   * Los estilos de impresión (styles.css) ocultan menú, barra y los elementos .no-print.
-   */
+  /** Exportar el resumen mensual: el backend genera el PDF y se descarga. */
   exportMonthlyPdf(): void {
     const month = this.exportMonth();
-    if (!month) {
+    if (!month || this.exporting()) {
       return;
     }
-    const [y, m] = month.split('-').map(Number);
-    const lastDay = new Date(y, m, 0).getDate();
-    const end = `${month}-${String(lastDay).padStart(2, '0')}`;
-
-    this.dateFrom.set(`${month}-01`);
-    this.dateTo.set(end > this.today ? this.today : end);
-
-    // esperar a que Angular repinte con el nuevo rango antes de imprimir
-    setTimeout(() => window.print(), 100);
+    const [year, monthNumber] = month.split('-').map(Number);
+    this.exporting.set(true);
+    this.attendanceService.getMonthlySummaryPdf(year, monthNumber).subscribe({
+      next: (blob) => {
+        this.exporting.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `resumen-mensual-${month}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.exporting.set(false);
+        this.errorMessage.set('No se pudo generar el resumen mensual en PDF.');
+      },
+    });
   }
 }

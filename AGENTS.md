@@ -154,8 +154,11 @@ Estado del código real (rama `dev`). Antes de tocar un dominio, verificar si ya
 | **Notificaciones internas** (pendiente, bloqueo, marcado leído) | Api `NotificationController`, Application `Notifications/`, Infrastructure `NotificationService` | `api/notifications` |
 | **Fichas de personas (Social Records)** | Api `SocialRecordsController`, Application `SocialRecords/`, Infrastructure `SocialRecordService` | `api/social-records` |
 | **Personas - tipo (SCRUM-134)** | Api `PersonsController`, Application `Persons/` + `SocialRecords/`, Infrastructure `SocialRecordService` | `api/persons/{id}/type` |
+| **Asistencia diaria y estadísticas (Sprint 4, EP-10)** | Api `AttendancesController`, `PersonAttendancesController`, Application `Attendances/`, Infrastructure `AttendanceService`, `AttendanceStatisticsService`, `AttendanceSummaryPdfGenerator` | `api/attendances` (registro, día, modificación, `statistics`, `inactive`, `monthly-summary/pdf`), `api/personas/{id}/asistencias` |
+| **Actividades configurables (Sprint 4)** | Api `ActivitiesController`, Application `Activities/` | `api/actividades` (CRUD, `sincronizar-calendario`) |
+| **Medicación: esquemas, agenda, historial y stock (Sprint 4)** | Api `PersonsController` (`medication-schemes`, `medication-history`), `MedicationSchemesController`, `MedicationsAgendaController`, `MedicationStocksController`; Application `MedicationSchemes/`, `MedicationAgendas/`, `MedicationHistories/`, `MedicationStocks/` | `api/persons/{id}/medication-schemes`, `api/medication-schemes/{catalog,needs-review}`, `api/medicamentos/agenda`, `api/stock-medicamentos` |
 
-Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`, `CasonaStay`, `PsychiatricEvaluation`.
+Entidades de dominio ya implementadas: `User`, `Role`, `AuditLog`, `Permission`, `RolePermission`, `Notification`, `Person`, `SocialRecord`, `Contact`, `CasonaStay`, `PsychiatricEvaluation`, `Attendance`, `Activity`, `MedicationCatalog`, `MedicationScheme`, `DailyMedicationSchedule`, `MedicationStockMovement`.
 
 ---
 

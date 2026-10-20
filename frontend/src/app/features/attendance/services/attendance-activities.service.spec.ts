@@ -1,87 +1,87 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { CalendarEventsService } from '../../calendar/services/calendar-events.service';
-import { CalendarEvent } from '../../calendar/interfaces/calendar-event.interface';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AttendanceActivitiesService } from './attendance-activities.service';
 
 describe('AttendanceActivitiesService', () => {
   let service: AttendanceActivitiesService;
-  let calendarEvents: CalendarEvent[];
-
-  const event = (title: string, extra: Partial<CalendarEvent> = {}): CalendarEvent => ({
-    id: title,
-    title,
-    start: '2026-10-05T08:00:00',
-    end: '2026-10-05T09:00:00',
-    authorName: '',
-    authorId: '',
-    scope: 'general',
-    ...extra,
-  });
+  let httpMock: HttpTestingController;
+  const backendList = [
+    { id: 'g-1', name: 'Desayuno', isActive: true, isFromCalendar: true, createdAt: '2026-10-01T00:00:00' },
+    { id: 'g-2', name: 'Taller de huerta', isActive: false, isFromCalendar: false, createdAt: '2026-10-02T00:00:00' },
+  ];
 
   beforeEach(() => {
-    calendarEvents = [];
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: CalendarEventsService, useValue: { getByRange: () => of(calendarEvents) } },
-      ],
-    });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     service = TestBed.inject(AttendanceActivitiesService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('arranca con las dos actividades fijas, activas', () => {
+  afterEach(() => httpMock.verify());
+
+  it('arranca con las dos actividades fijas', () => {
     expect(service.all().map((a) => a.id)).toEqual(['hogar-de-dia', 'casa-convivencia']);
-    expect(service.active().length).toBe(2);
   });
 
-  it('no deja desactivar las actividades fijas', () => {
-    const result = service.setActive('casa-convivencia', false);
-    expect(result.ok).toBe(false);
-    expect(service.active().length).toBe(2);
+  it('refresh() suma el catálogo del backend a las fijas y marca el origen', () => {
+    service.refresh().subscribe();
+    const req = httpMock.expectOne((r) => r.url === '/api/actividades');
+    expect(req.request.params.get('includeInactive')).toBe('true');
+    req.flush(backendList);
+
+    expect(service.all().length).toBe(4);
+    expect(service.all().find((a) => a.id === 'g-1')?.source).toBe('calendar');
+    expect(service.all().find((a) => a.id === 'g-2')?.source).toBe('custom');
+    expect(service.active().map((a) => a.id)).toEqual(['hogar-de-dia', 'casa-convivencia', 'g-1']);
+    expect(service.name('g-2')).toBe('Taller de huerta');
   });
 
-  it('crea una actividad propia del Hogar de día y la puede desactivar y reactivar', () => {
-    const created = service.create('  Taller   de costura ');
-    expect(created.ok).toBe(true);
-    const id = created.ok ? created.activity.id : '';
-    expect(service.name(id)).toBe('Taller de costura');
+  it('create() valida largo y duplicados antes de llamar a la API', () => {
+    service.refresh().subscribe();
+    httpMock.expectOne((r) => r.url === '/api/actividades').flush(backendList);
 
-    service.setActive(id, false);
-    expect(service.active().some((a) => a.id === id)).toBe(false);
-    service.setActive(id, true);
-    expect(service.active().some((a) => a.id === id)).toBe(true);
+    const messages: string[] = [];
+    for (const name of ['ab', 'x'.repeat(61), '  desayuno ']) {
+      service.create(name).subscribe({ error: (e) => messages.push(e.error.message) });
+    }
+    expect(messages[0]).toContain('al menos 3');
+    expect(messages[1]).toContain('no puede superar');
+    expect(messages[2]).toContain('Ya existe');
   });
 
-  it('rechaza nombres cortos, largos o repetidos', () => {
-    expect(service.create('ab').ok).toBe(false);
-    expect(service.create('x'.repeat(61)).ok).toBe(false);
-    service.create('Taller de costura');
-    expect(service.create('taller DE costura').ok).toBe(false);
-    expect(service.create('hogar de día').ok).toBe(false);
+  it('create() hace POST y devuelve la actividad creada', () => {
+    let created: { id: string; name: string } | undefined;
+    service.create('  Taller   de música ').subscribe((a) => (created = a));
+    const post = httpMock.expectOne('/api/actividades');
+    expect(post.request.body).toEqual({ name: 'Taller de música' });
+    post.flush({ id: 'g-9' });
+    httpMock.expectOne((r) => r.method === 'GET').flush([
+      ...backendList,
+      { id: 'g-9', name: 'Taller de música', isActive: true, isFromCalendar: false, createdAt: '' },
+    ]);
+    expect(created?.id).toBe('g-9');
   });
 
-  it('sincroniza las actividades recurrentes del calendario sin duplicarlas', () =>
-    new Promise<void>((done) => {
-      calendarEvents = [
-        event('Desayuno', { isRecurring: true }),
-        event('Desayuno', { isRecurring: true }), // misma serie, otro día
-        event('Taller de música', { recurrence: 'weekly' }),
-        event('Reunión de equipo', { recurrence: 'none' }), // evento puntual: no es una actividad
-      ];
+  it('setActive() manda el nombre actual y no deja desactivar una fija', () => {
+    service.refresh().subscribe();
+    httpMock.expectOne((r) => r.method === 'GET').flush(backendList);
 
-      service.syncFromCalendar().subscribe((added) => {
-        expect(added).toBe(2);
-        expect(
-          service
-            .all()
-            .filter((a) => a.source === 'calendar')
-            .map((a) => a.name),
-        ).toEqual(['Desayuno', 'Taller de música']);
+    let message = '';
+    service.setActive('hogar-de-dia', false).subscribe({ error: (e) => (message = e.error.message) });
+    expect(message).toContain('actividad fija');
 
-        service.syncFromCalendar().subscribe((again) => {
-          expect(again).toBe(0);
-          done();
-        });
-      });
-    }));
+    service.setActive('g-1', false).subscribe();
+    const put = httpMock.expectOne('/api/actividades/g-1');
+    expect(put.request.body).toEqual({ name: 'Desayuno', isActive: false });
+    put.flush(null);
+    httpMock.expectOne((r) => r.method === 'GET').flush(backendList);
+  });
+
+  it('syncFromCalendar() devuelve la cantidad sincronizada por el backend', () => {
+    let count = -1;
+    service.syncFromCalendar().subscribe((n) => (count = n));
+    httpMock.expectOne('/api/actividades/sincronizar-calendario').flush({ syncedCount: 2, syncedActivityNames: ['A', 'B'] });
+    httpMock.expectOne((r) => r.method === 'GET').flush(backendList);
+    expect(count).toBe(2);
+  });
 });

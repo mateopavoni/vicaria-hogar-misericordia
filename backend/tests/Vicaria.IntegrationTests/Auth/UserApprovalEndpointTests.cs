@@ -1,0 +1,157 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Vicaria.Application.Auth;
+using Vicaria.Application.Common;
+using Vicaria.Domain.Entities;
+using Vicaria.Infrastructure.Persistence;
+
+namespace Vicaria.IntegrationTests.Auth;
+
+public class UserApprovalEndpointTests : IClassFixture<VicariaWebApplicationFactory>
+{
+    private readonly VicariaWebApplicationFactory _factory;
+    private readonly HttpClient _client;
+
+    public UserApprovalEndpointTests(VicariaWebApplicationFactory factory)
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+    }
+
+    private static void UsarToken(HttpClient client, string rol, Guid? usuarioId = null) =>
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", TestJwtFactory.CreateToken("Test", "test@mail.com", rol, usuarioId));
+
+    // el token ahora se valida contra un usuario real en la base (chequeo de sesion activa)
+    private async Task<Guid> SembrarActorAsync(string rol)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var roleId = db.Roles.First(r => r.Name == rol).Id;
+
+        var actor = new User
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "Actor",
+            LastName = "Test",
+            Email = $"{Guid.NewGuid()}@mail.com",
+            PasswordHash = "x",
+            Status = UserStatus.Active,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(actor);
+        await db.SaveChangesAsync();
+        return actor.Id;
+    }
+
+    private async Task<Guid> RegistrarUsuarioPendienteAsync()
+    {
+        var dto = new RegisterDto("Ana", "Perez", $"{Guid.NewGuid()}@mail.com", "password123");
+        var response = await _client.PostAsJsonAsync("/api/auth/register", dto);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, Guid>>();
+        return body!["id"];
+    }
+
+    private Guid ObtenerRolIdSembrado()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        return db.Roles.First().Id;
+    }
+
+    [Fact]
+    public async Task Pending_SinRolReferente_Retorna403()
+    {
+        UsarToken(_client, RoleNames.Listener, await SembrarActorAsync(RoleNames.Listener));
+
+        var response = await _client.GetAsync("/api/auth/users/pending");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Pending_ConRolReferente_IncluyeElUsuarioRecienRegistrado()
+    {
+        var usuarioId = await RegistrarUsuarioPendienteAsync();
+        UsarToken(_client, RoleNames.Referent, await SembrarActorAsync(RoleNames.Referent));
+
+        var response = await _client.GetAsync("/api/auth/users/pending");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var pendientes = await response.Content.ReadFromJsonAsync<PagedResult<PendingUserDto>>();
+        Assert.Contains(pendientes!.Items, u => u.Id == usuarioId);
+    }
+
+    [Fact]
+    public async Task Approve_UsuarioNoExiste_Retorna404()
+    {
+        UsarToken(_client, RoleNames.Referent, await SembrarActorAsync(RoleNames.Referent));
+        var rolId = ObtenerRolIdSembrado();
+
+        var response = await _client.PostAsJsonAsync($"/api/auth/users/{Guid.NewGuid()}/approve", new ApproveUserDto(rolId));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Approve_SinRolReferente_Retorna403()
+    {
+        var usuarioId = await RegistrarUsuarioPendienteAsync();
+        UsarToken(_client, RoleNames.CasaConvivenciaDirector, await SembrarActorAsync(RoleNames.CasaConvivenciaDirector));
+        var rolId = ObtenerRolIdSembrado();
+
+        var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Approve_ConRolReferenteYRolValido_Retorna204()
+    {
+        var usuarioId = await RegistrarUsuarioPendienteAsync();
+        UsarToken(_client, RoleNames.Referent, await SembrarActorAsync(RoleNames.Referent));
+        var rolId = ObtenerRolIdSembrado();
+
+        var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Approve_UsuarioYaAprobado_Retorna409()
+    {
+        var usuarioId = await RegistrarUsuarioPendienteAsync();
+        UsarToken(_client, RoleNames.Referent, await SembrarActorAsync(RoleNames.Referent));
+        var rolId = ObtenerRolIdSembrado();
+        await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
+
+        var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/approve", new ApproveUserDto(rolId));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Reject_ConMotivo_Retorna204()
+    {
+        var usuarioId = await RegistrarUsuarioPendienteAsync();
+        UsarToken(_client, RoleNames.Referent, await SembrarActorAsync(RoleNames.Referent));
+
+        var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/reject", new RejectUserDto("no cumple los requisitos"));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Reject_SinMotivo_Retorna400()
+    {
+        var usuarioId = await RegistrarUsuarioPendienteAsync();
+        UsarToken(_client, RoleNames.Referent, await SembrarActorAsync(RoleNames.Referent));
+
+        var response = await _client.PostAsJsonAsync($"/api/auth/users/{usuarioId}/reject", new RejectUserDto(""));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+}

@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
 import { AREA_LABELS, AttendanceActivityDef, AttendanceActivitySource } from '../../interfaces/attendance.interface';
+import { extractApiError } from '../../../../core/http/api-error';
 import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
 
 const SOURCE_LABELS: Record<AttendanceActivitySource, string> = {
@@ -65,24 +66,23 @@ export class ActivitySettingsComponent implements OnInit {
   }
 
   toggle(activity: AttendanceActivityDef): void {
-    const result = this.activitiesService.setActive(activity.id, !activity.active);
-    if (!result.ok) {
-      this.errorMessage.set(result.message);
-      return;
-    }
     this.errorMessage.set(null);
-    this.showSuccess(result.activity.active ? `"${activity.name}" activada.` : `"${activity.name}" desactivada.`);
+    this.activitiesService.setActive(activity.id, !activity.active).subscribe({
+      next: (updated) =>
+        this.showSuccess(updated.active ? `"${activity.name}" activada.` : `"${activity.name}" desactivada.`),
+      error: (err) => this.errorMessage.set(extractApiError(err, 'No se pudo actualizar la actividad.')),
+    });
   }
 
   create(): void {
     this.formError.set(null);
-    const result = this.activitiesService.create(this.nameControl.value);
-    if (!result.ok) {
-      this.formError.set(result.message);
-      return;
-    }
-    this.nameControl.setValue('');
-    this.showSuccess(`Actividad "${result.activity.name}" creada.`);
+    this.activitiesService.create(this.nameControl.value).subscribe({
+      next: (created) => {
+        this.nameControl.setValue('');
+        this.showSuccess(`Actividad "${created.name}" creada.`);
+      },
+      error: (err) => this.formError.set(extractApiError(err, 'No se pudo crear la actividad.')),
+    });
   }
 
   private showSuccess(message: string): void {

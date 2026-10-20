@@ -136,7 +136,7 @@ export class MedicationSchemesComponent implements OnInit {
     this.formError.set(null);
 
     this.medicationService
-      .create(request, this.isResident(), { id: user.id, name: `${user.name} ${user.lastname}`.trim() }, this.evaluatedAt())
+      .create(request)
       .subscribe({
         next: (scheme) => {
           this.saving.set(false);
@@ -176,7 +176,7 @@ export class MedicationSchemesComponent implements OnInit {
     }
     this.reviewingId.set(scheme.id);
     this.errorMessage.set(null);
-    this.medicationService.markReviewed(scheme.id, { id: user.id, name: `${user.name} ${user.lastname}`.trim() }).subscribe({
+    this.medicationService.markReviewed(this.personId(), scheme.id).subscribe({
       next: () => {
         this.reviewingId.set(null);
         this.showSuccess('Esquema marcado como revisado.');
@@ -189,12 +189,12 @@ export class MedicationSchemesComponent implements OnInit {
     });
   }
 
-  toggleActive(scheme: MedicationScheme): void {
+  deactivate(scheme: MedicationScheme): void {
     if (!this.canCreate()) {
       return;
     }
     this.errorMessage.set(null);
-    this.medicationService.setActive(scheme.id, !scheme.active).subscribe({
+    this.medicationService.deactivate(this.personId(), scheme.id).subscribe({
       next: () => this.reload(),
       error: (err) => this.errorMessage.set(extractApiError(err, 'No se pudo actualizar el esquema.')),
     });
