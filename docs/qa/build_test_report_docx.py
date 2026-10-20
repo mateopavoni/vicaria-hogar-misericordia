@@ -109,6 +109,7 @@ def main():
         tc.update(stats[k])
     executed = tot - tc["NO EJECUTADO"]
     s4 = sum(stats["Ciclo - Sprint 4"].values())
+    s4_ok = stats["Ciclo - Sprint 4"].get("PASÓ", 0)
     api = stats["Ciclo - Sprint 4 (API)"]
     api_n, api_ok = sum(api.values()), api["PASÓ"]
     wired = stats.get("Ciclo - Sprint 4 (integración)", {})
@@ -155,7 +156,7 @@ def main():
     doc.add_paragraph(
         "El software es estable en sus funciones críticas (acceso y roles, fichas, observaciones, historia de vida, Casa de Convivencia, calendario, "
         "colaboradores y visitas), resiste 50 usuarios concurrentes sin errores y pasó las verificaciones básicas de seguridad. "
-        f"Quedan {len(open_defects)} hallazgos abiertos, ninguno crítico. El Sprint 4 (asistencia y medicación) tiene el backend completo integrado en dev y el frontend conectado a la API real: {api_n} pruebas de API de los primeros endpoints ({api_ok} PASÓ) y {wired_n} pruebas de integración front-back ({wired_ok} PASÓ); los {s4} casos manuales de interfaz siguen sin ejecutar."
+        f"Quedan {len(open_defects)} hallazgos abiertos, ninguno crítico. El Sprint 4 (asistencia y medicación) tiene el backend completo integrado en dev y el frontend conectado a la API real: {api_n} pruebas de API de los primeros endpoints ({api_ok} PASÓ) y {wired_n} pruebas de integración front-back ({wired_ok} PASÓ); los {s4} casos de interfaz se ejecutaron en navegador el 20/10 y {s4_ok} pasan."
     )
     p = doc.add_paragraph(); r = p.add_run("Recomendación: APROBADO CON CONDICIONES para los Sprint 1 a 3 (ver sección 8)."); r.bold = True
 
@@ -174,7 +175,7 @@ def main():
     )
     doc.add_heading("2.2 Qué NO se probó", 2)
     table(doc, ["Exclusión", "Motivo", "Riesgo / mitigación"], [
-        [f"Sprint 4: asistencia y medicación ({s4} casos, TC-147 a TC-194)", f"El backend (18 de 18 subtareas) y el frontend (9 de 9) están integrados en dev desde el 19/10 y la integración se probó con {wired_n} verificaciones automáticas ({wired_ok} PASÓ). Los {s4} casos manuales de interfaz (TC-147 a TC-194) no se ejecutaron a mano: quedan NO EJECUTADOS, con parte de su cobertura en las pruebas automáticas. Límites conocidos: el backend solo registra asistencia de Hogar de día y Casa de Convivencia (no de actividades configurables), no permite quitar una persona ya registrada ni reactivar un esquema, y no calcula el contador de esquemas pendientes de stock.", "Sin riesgo sobre Sprint 1-3. Ejecutar los casos manuales antes del cierre del sprint (24/10) y resolver los límites con el equipo."],
+        [f"Sprint 4: asistencia y medicación ({s4} casos, TC-147 a TC-194)", f"El backend (18 de 18 subtareas) y el frontend (9 de 9) están integrados en dev desde el 19/10 y la integración se probó con {wired_n} verificaciones automáticas ({wired_ok} PASÓ). Los {s4} casos de interfaz (TC-147 a TC-194) se ejecutaron el 20/10 en un navegador real con un script (e2e/sprint4-ui-cases.mjs): {s4_ok} en PASÓ. No son una prueba manual de una persona, pero recorren las pantallas y verifican contra la API. Límites conocidos: el backend solo registra asistencia de Hogar de día y Casa de Convivencia (no de actividades configurables), no permite quitar una persona ya registrada ni reactivar un esquema, y no calcula el contador de esquemas pendientes de stock.", "Sin riesgo sobre Sprint 1-3. Resolver los hallazgos abiertos con el equipo antes del cierre del sprint (24/10)."],
         ["Criterios de Sprint 4 con preguntas abiertas", "Cierre del día de asistencia, actividades configurables, permisos del Coordinador y stock en farmacia vs. Centro Barrial no están definidos.", "Confirmar con el equipo antes de implementar o probar."],
         ["Pruebas de penetración y seguridad avanzada", "Fuera del alcance del plan; se hicieron verificaciones básicas (sección 6), no un pentest.", "Antes de salir a producción real conviene un análisis de dependencias y una revisión de configuración (HTTPS, CORS, secretos)."],
         ["Carga sostenida y dimensionamiento", "La prueba se hizo en Docker local con SQL Server Express limitado; sirve de referencia, no de dimensionamiento.", "Repetir en el entorno de despliegue si se espera más de 50 usuarios simultáneos."],
@@ -317,7 +318,7 @@ def main():
         "Definir con el equipo las reglas de DNI duplicado y los permisos del Coordinador.",
         "Repetir los flujos de UI en un navegador adicional y en un celular antes del uso real.",
     ])
-    doc.add_paragraph(f"Sprint 4: veredicto parcial. La integración front-back pasa {wired_ok} de {wired_n} verificaciones automáticas y los endpoints iniciales {api_ok} de {api_n}; faltan por ejecutar a mano los {s4} casos de interfaz y resolver las preguntas abiertas (actividades configurables, cierre del día, quitar personas, reactivar esquemas).")
+    doc.add_paragraph(f"Sprint 4: veredicto parcial. La integración front-back pasa {wired_ok} de {wired_n} verificaciones automáticas y los endpoints iniciales {api_ok} de {api_n}; los {s4} casos de interfaz pasan {s4_ok} en navegador (script) y falta resolver las preguntas abiertas (actividades configurables, cierre del día, quitar personas, reactivar esquemas).")
 
     # ---- Anexo
     doc.add_heading("Anexo A. Evidencia y cómo repetir las pruebas", 1)
