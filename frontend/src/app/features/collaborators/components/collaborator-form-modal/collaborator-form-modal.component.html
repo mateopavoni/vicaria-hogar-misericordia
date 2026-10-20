@@ -1,0 +1,49 @@
+<ui-modal [title]="title()" size="sm" [closeOnBackdrop]="false" (closed)="onClose()">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+
+    <ui-form-field label="Nombre" for="collaborator-first-name" [required]="true" [error]="firstNameError">
+      <input id="collaborator-first-name" uiInput type="text" formControlName="firstName" placeholder="Ej: María" maxlength="100" />
+    </ui-form-field>
+
+    <ui-form-field label="Apellido" for="collaborator-last-name" [error]="lastNameError">
+      <input id="collaborator-last-name" uiInput type="text" formControlName="lastName" placeholder="Ej: González" maxlength="100" />
+    </ui-form-field>
+
+    <div class="grid grid-cols-2 gap-4">
+      <ui-form-field label="DNI" for="collaborator-dni" [error]="dniError">
+        <input id="collaborator-dni" uiInput type="text" formControlName="dni" placeholder="Ej: 30123456" maxlength="20" />
+      </ui-form-field>
+
+      <ui-form-field label="Teléfono" for="collaborator-phone" [error]="phoneError">
+        <input id="collaborator-phone" uiInput type="text" formControlName="phone" placeholder="Ej: 11 5555-5555" maxlength="30" />
+      </ui-form-field>
+    </div>
+
+    <ui-form-field label="Email" for="collaborator-email" [error]="emailError">
+      <input id="collaborator-email" uiInput type="email" formControlName="email" placeholder="Ej: maria@ejemplo.com" maxlength="150" />
+    </ui-form-field>
+
+    <div class="grid grid-cols-2 gap-4">
+      <ui-form-field label="Tipo" for="collaborator-type">
+        <select id="collaborator-type" uiInput formControlName="type">
+          <option value="">Sin especificar</option>
+          <option [value]="CollaboratorType.Volunteer">Voluntario</option>
+          <option [value]="CollaboratorType.Employee">Empleado</option>
+        </select>
+      </ui-form-field>
+
+      <ui-form-field label="Área de trabajo" for="collaborator-work-area" [error]="workAreaError">
+        <input id="collaborator-work-area" uiInput type="text" formControlName="workArea" placeholder="Ej: Cocina" maxlength="100" />
+      </ui-form-field>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="text-[12px] font-semibold text-rose-500" role="alert">{{ errorMessage() }}</p>
+    }
+  </form>
+
+  <ng-container ngProjectAs="[modal-footer]">
+    <button uiButton variant="secondary" type="button" [disabled]="saving()" (click)="onClose()">Cancelar</button>
+    <button uiButton type="button" [loading]="saving()" [disabled]="saving()" (click)="submit()">Guardar</button>
+  </ng-container>
+</ui-modal>

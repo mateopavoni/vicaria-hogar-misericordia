@@ -1,0 +1,212 @@
+[
+ {
+  "tc": "TC-01",
+  "name": "Registro: la cuenta queda Pendiente",
+  "ok": true,
+  "note": "/auth/pending-approval "
+ },
+ {
+  "tc": "TC-32",
+  "name": "Registro con correo ya registrado",
+  "ok": true,
+  "note": "Crear cuenta Por favor completa los datos para solicitar acceso. Ya existe un usuario registrado con ese email. Nombre Apellido Correo electrónico Contraseña Re"
+ },
+ {
+  "tc": "TC-31",
+  "name": "Login con campos vacíos no se envía",
+  "ok": true,
+  "note": "¡Bienvenido de nuevo! Correo electrónico El correo electrónico es obligatorio. Contraseña La contraseña es obligatoria. Recordar mi usuario "
+ },
+ {
+  "tc": "TC-03",
+  "name": "Login con credenciales incorrectas muestra error y no entra",
+  "ok": true,
+  "note": "¡Bienvenido de nuevo! Correo o contraseña incorrectos. Correo electrónico Contraseña Recordar mi usuario ¿Olvidaste tu contraseña? Iniciar s"
+ },
+ {
+  "tc": "TC-01",
+  "name": "Una cuenta Pendiente no inicia sesión",
+  "ok": true,
+  "note": "/auth/pending-approval"
+ },
+ {
+  "tc": "TC-09",
+  "name": "El Referente recibe notificación de cuenta pendiente",
+  "ok": true,
+  "note": "Inicio Fichas Asistencia Medicación Stock de medicamentos Calendario Colaboradores Informes Usuarios Cerrar sesión Sede actual: Centro Barrial ¡Hola, Test! REFERENTE 12 Notificaciones Marcar todas com"
+ },
+ {
+  "tc": "TC-02",
+  "name": "Un Referente aprueba una cuenta pendiente asignando rol",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-02",
+  "name": "La cuenta aprobada inicia sesión",
+  "ok": true,
+  "note": "/dashboard"
+ },
+ {
+  "tc": "TC-26",
+  "name": "Los botones Reasignar Rol e Inactivar de la propia cuenta están deshabilitados",
+  "ok": true,
+  "note": "rol=true inactivar=true"
+ },
+ {
+  "tc": "TC-07",
+  "name": "Al inactivar, la cuenta pasa a la pestaña de inactivos",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-07",
+  "name": "La cuenta desactivada no ingresa y el mensaje informa que está desactivada",
+  "ok": true,
+  "note": "activada. Contactá a un Referente para reactivarla. Correo electrónico Contraseña Recordar mi usuario ¿Olvidaste tu cont"
+ },
+ {
+  "tc": "TC-08",
+  "name": "Una cuenta reactivada vuelve a ingresar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-04",
+  "name": "Con la clave correcta la cuenta bloqueada no ingresa y se informa el bloqueo",
+  "ok": true,
+  "note": "URL /auth/login | HTTP 401,401,401,401,403,403 | msgs: Correo o contraseña incorrectos / Correo o contraseña incorrectos / Correo o contraseña incorrectos / Correo o contraseña incorrectos / bloqueada por 30 minutos. | 6º: mo de intentos permitidos: tu cuenta quedó bloqueada por 30 minutos. Correo electrónico Co"
+ },
+ {
+  "tc": "TC-04",
+  "name": "El quinto intento fallido informa que se alcanzó el máximo de intentos",
+  "ok": true,
+  "note": "5º intento: bloqueada por 30 minutos."
+ },
+ {
+  "tc": "TC-11",
+  "name": "Un Referente crea una ficha con los datos mínimos y la ve en el listado y el detalle",
+  "ok": true,
+  "note": "/dashboard/fichas/f8ca33dc-0744-4724-9415-995a547e69e9 "
+ },
+ {
+  "tc": "TC-11",
+  "name": "No se guarda una ficha vacía y se muestran los obligatorios",
+  "ok": true,
+  "note": "Inicio Fichas Asistencia Medicación Stock de medicamentos Calendario Colaboradores Informes Usuarios Cerrar sesión Sede actual: Centro Barri"
+ },
+ {
+  "tc": "TC-11",
+  "name": "El DNI solo admite dígitos",
+  "ok": true,
+  "note": " Apellido DNI El DNI solo puede tener números, sin puntos ni espacios."
+ },
+ {
+  "tc": "TC-14",
+  "name": "No se acepta una fecha futura en la ficha",
+  "ok": true,
+  "note": "Inicio Fichas Asistencia Medicación Stock de medicamentos Calendario Colaboradores Informes Usuarios Cerrar sesión Sede actual: Centro Barri"
+ },
+ {
+  "tc": "TC-13",
+  "name": "La búsqueda ignora tildes y mayúsculas (\"jose nunez\")",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-13",
+  "name": "La búsqueda por DNI encuentra la ficha",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-13",
+  "name": "Una búsqueda sin coincidencias no lista fichas y lo informa",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-15",
+  "name": "El listado se filtra por DNI sin errores de API",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-34",
+  "name": "La edición de una ficha carga los datos guardados",
+  "ok": true,
+  "note": "firstName=\"José0090965\""
+ },
+ {
+  "tc": "TC-34",
+  "name": "Los cambios editados se guardan",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-16",
+  "name": "Se registra una observación con categoría y aparece en la línea de tiempo",
+  "ok": true,
+  "note": "categorías=6 "
+ },
+ {
+  "tc": "TC-37",
+  "name": "Una observación sin texto no se guarda",
+  "ok": true,
+  "note": "botón deshabilitado=true modal abierto=true "
+ },
+ {
+  "tc": "TC-38",
+  "name": "Un texto solo con espacios en blanco tampoco se guarda",
+  "ok": true,
+  "note": "botón deshabilitado=true "
+ },
+ {
+  "tc": "TC-17",
+  "name": "Filtrar por categoría deja solo las observaciones de esa categoría",
+  "ok": true,
+  "note": "opciones=7"
+ },
+ {
+  "tc": "TC-17",
+  "name": "Filtrar por autor muestra las observaciones del autor sin errores de API",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "tc": "TC-18",
+  "name": "Exportar informe descarga un archivo con las observaciones",
+  "ok": true,
+  "note": "archivo=observaciones_dd3d49c4-a0fe-4bea-8996-c314363a7c06.csv"
+ },
+ {
+  "tc": "TC-20",
+  "name": "La historia de vida tiene 3 etapas y se agrega una entrada",
+  "ok": true,
+  "note": "etapas=3 "
+ },
+ {
+  "tc": "SEC-08b",
+  "name": "Una observación con HTML/script se muestra como texto y no ejecuta código",
+  "ok": true,
+  "note": "__xss=undefined"
+ },
+ {
+  "tc": "TC-12",
+  "name": "Escucha no ve \"Nueva ficha\" ni \"Editar ficha\" y /edit lo deniega",
+  "ok": true,
+  "note": "nueva=0 editar=0 url=/access-denied"
+ },
+ {
+  "tc": "TC-39",
+  "name": "En 390 px no hay desborde horizontal en inicio ni en fichas",
+  "ok": true,
+  "note": "inicio=false fichas=false"
+ },
+ {
+  "tc": "TC-40",
+  "name": "Al elegir una opción el menú lateral se oculta en pantalla chica",
+  "ok": true,
+  "note": "burger=1 box={\"x\":-218,\"y\":0,\"width\":218,\"height\":780}"
+ }
+]

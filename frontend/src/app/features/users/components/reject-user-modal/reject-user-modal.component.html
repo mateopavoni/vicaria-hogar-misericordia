@@ -1,0 +1,232 @@
+<!-- FONDO -->
+
+<div
+  class="fixed inset-0 z-50
+         flex items-center justify-center
+         bg-slate-950/40
+         p-4"
+>
+
+  <!-- MODAL -->
+
+  <div
+    class="w-full max-w-md
+           rounded-2xl
+           border border-[#E3E8F5]
+           bg-white
+           shadow-[0_20px_50px_rgba(15,23,42,0.15)]"
+  >
+
+    <!-- ================================= -->
+    <!-- ENCABEZADO -->
+    <!-- ================================= -->
+
+    <div
+      class="flex items-start
+             justify-between
+             border-b border-slate-100
+             px-6 py-5"
+    >
+
+      <div>
+
+        <h2
+          class="text-[17px]
+                 font-bold
+                 text-slate-900"
+        >
+          Rechazar solicitud
+        </h2>
+
+        <p
+          class="mt-1
+                 text-[11px]
+                 text-slate-400"
+        >
+          Indicá el motivo por el cual se rechaza la solicitud.
+        </p>
+
+      </div>
+
+
+      <!-- CERRAR -->
+
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="flex
+               h-8
+               w-8
+               items-center
+               justify-center
+               rounded-md
+               text-slate-400
+               transition
+               hover:bg-slate-100
+               hover:text-slate-600"
+        aria-label="Cerrar"
+      >
+
+        <svg
+          class="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+
+          <path d="M6 6l12 12" />
+          <path d="M18 6L6 18" />
+
+        </svg>
+
+      </button>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- CONTENIDO -->
+    <!-- ================================= -->
+
+    <div class="px-6 py-6">
+
+      @if (user) {
+
+        <!-- USUARIO -->
+
+        <div
+          class="mb-5
+                 rounded-xl
+                 bg-[#F7F8FC]
+                 px-4 py-3"
+        >
+
+          <p
+            class="text-[12px]
+                   font-bold
+                   text-slate-700"
+          >
+            {{ user.name }}
+            {{ user.lastname }}
+          </p>
+
+          <p
+            class="mt-1
+                   text-[10px]
+                   text-slate-400"
+          >
+            {{ user.email }}
+          </p>
+
+        </div>
+
+
+        <!-- MOTIVO -->
+
+        <div>
+
+          <label
+            for="rejectionReason"
+            class="mb-2 block
+                   text-[12px]
+                   font-semibold
+                   text-slate-700"
+          >
+            Motivo del rechazo
+          </label>
+
+          <textarea
+            id="rejectionReason"
+            rows="4"
+            [value]="reason()"
+            (input)="updateReason($any($event.target).value)"
+            placeholder="Escribí el motivo del rechazo..."
+            class="w-full
+                   resize-none
+                   rounded-lg
+                   border border-[#D5DDF3]
+                   bg-white
+                   px-3 py-2.5
+                   text-[12px]
+                   text-slate-700
+                   outline-none
+                   placeholder:text-slate-400
+                   focus:border-[#6B8DF5]
+                   focus:ring-1
+                   focus:ring-[#6B8DF5]"
+          ></textarea>
+
+
+          @if (reason().trim().length === 0) {
+
+            <p
+              class="mt-1.5
+                     text-[10px]
+                     text-slate-400"
+            >
+              El motivo es obligatorio.
+            </p>
+
+          }
+
+        </div>
+
+      }
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- BOTONES -->
+    <!-- ================================= -->
+
+    <div
+      class="flex
+             justify-end
+             gap-3
+             border-t border-slate-100
+             px-6 py-4"
+    >
+
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="rounded-md
+               border border-[#D5DDF3]
+               bg-white
+               px-4 py-2
+               text-[11px]
+               font-semibold
+               text-slate-600
+               transition
+               hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+
+
+      <button
+        type="button"
+        (click)="rejectUser()"
+        [disabled]="!reason().trim()"
+        class="rounded-md
+               bg-red-500
+               px-4 py-2
+               text-[11px]
+               font-semibold
+               text-white
+               shadow-sm
+               transition
+               hover:bg-red-600
+               disabled:cursor-not-allowed
+               disabled:opacity-50"
+      >
+        Rechazar solicitud
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

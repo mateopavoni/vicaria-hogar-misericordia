@@ -1,0 +1,154 @@
+<div class="mt-4 flex flex-col gap-4">
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-[15px] font-bold text-slate-800">Esquema de medicación</h2>
+    @if (canCreate()) {
+      <button uiButton type="button" [disabled]="blocked() || evaluationValid() === null" (click)="openForm()">
+        Cargar medicamento
+      </button>
+    }
+  </div>
+
+  @if (blocked()) {
+    <div class="rounded-md bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-700" role="alert">
+      @if (evaluationExpired()) {
+        No se pueden agregar medicamentos: la evaluación psiquiátrica venció el {{ expiredOn() }} (pasaron más de 6 meses).
+        Hace falta una evaluación nueva.
+      } @else {
+        No se pueden cargar medicamentos: la persona no tiene una evaluación psiquiátrica vigente.
+      }
+    </div>
+  }
+
+  @if (staleSchemes().length > 0 && canReview()) {
+    <div class="rounded-md bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-700" role="alert">
+      ⚠ {{ staleSchemes().length }}
+      {{ staleSchemes().length === 1 ? 'esquema lleva' : 'esquemas llevan' }}
+      más de {{ reviewAlertDays }} días sin revisión. Revisalos y marcalos como revisados.
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="rounded-md bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <ui-tabs [tabs]="tabs()" [active]="activeTab()" (tabChange)="activeTab.set($event)" />
+  </div>
+
+  @if (loading()) {
+    <p class="text-[13px] text-slate-400">Cargando esquema...</p>
+  } @else {
+
+    <!-- VIGENTES -->
+    @if (activeTab() === 'vigentes') {
+      <section class="overflow-hidden rounded-lg border border-slate-200">
+        <ul class="divide-y divide-slate-100">
+          @for (scheme of activeSchemes(); track scheme.id) {
+            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3" [class]="isStale(scheme) ? 'bg-amber-50/50' : ''">
+              <div>
+                <p class="text-[14px] font-semibold text-slate-800">
+                  {{ scheme.medicationName }} · {{ scheme.dose }} · {{ scheme.time }} hs
+                  @if (scheme.pendingStock) {
+                    <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                      Pendiente de stock
+                    </span>
+                  }
+                  @if (isStale(scheme)) {
+                    <span class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                      Sin revisar hace {{ daysWithoutReview(scheme) }} días
+                    </span>
+                  }
+                </p>
+                <p class="mt-0.5 text-[12px] text-slate-400">
+                  Cargado por {{ scheme.loadedByName }} el {{ scheme.loadedAt | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+                <p class="text-[12px] text-slate-400">
+                  @if (scheme.reviewedAt) {
+                    Revisado por {{ scheme.reviewedByName }} el {{ scheme.reviewedAt | date: 'dd/MM/yyyy HH:mm' }}
+                  } @else {
+                    Todavía no se revisó
+                  }
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                @if (canReview()) {
+                  <button
+                    type="button"
+                    class="rounded-md border border-[#B8C8FA] bg-[#EEF2FF] px-3 py-1.5 text-[12px] font-semibold text-[#4167D9] hover:bg-[#E0E8FF] disabled:opacity-50"
+                    [disabled]="reviewingId() !== null"
+                    (click)="markReviewed(scheme)"
+                  >
+                    Marcar como revisado
+                  </button>
+                }
+                @if (canCreate()) {
+                  <button
+                    type="button"
+                    class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+                    (click)="deactivate(scheme)"
+                  >
+                    Desactivar
+                  </button>
+                }
+              </div>
+            </li>
+          } @empty {
+            <li class="px-4 py-4 text-[13px] text-slate-400">No hay medicación vigente cargada.</li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- ESQUEMAS ANTERIORES (activo = false): se conservan como historial -->
+    @if (activeTab() === 'anteriores') {
+      <section class="overflow-hidden rounded-lg border border-slate-200">
+        <ul class="divide-y divide-slate-100">
+          @for (scheme of historicSchemes(); track scheme.id) {
+            <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <p class="text-[14px] font-semibold text-slate-500">
+                  {{ scheme.medicationName }} · {{ scheme.dose }} · {{ scheme.time }} hs
+                </p>
+                <p class="mt-0.5 text-[12px] text-slate-400">
+                  Cargado por {{ scheme.loadedByName }} el {{ scheme.loadedAt | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+                @if (scheme.reviewedAt) {
+                  <p class="text-[12px] text-slate-400">
+                    Última revisión: {{ scheme.reviewedByName }} el {{ scheme.reviewedAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </p>
+                }
+              </div>
+            </li>
+          } @empty {
+            <li class="px-4 py-4 text-[13px] text-slate-400">No hay esquemas anteriores.</li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  @if (canViewHistory() && activeTab() === 'tomas') {
+    <app-medication-history [personId]="personId()" [personName]="personName()" />
+  }
+
+  @if (showForm()) {
+    <app-medication-scheme-form-modal
+      [personId]="personId()"
+      [catalog]="catalog()"
+      [catalogLoading]="catalogLoading()"
+      [saving]="saving()"
+      [errorMessage]="formError()"
+      (saved)="save($event)"
+      (closed)="closeForm()"
+    />
+  }
+</div>

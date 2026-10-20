@@ -14,6 +14,31 @@ public class AttendanceService : IAttendanceService
         _dbContext = dbContext;
     }
 
+    public async Task<DailyAttendanceDto> GetDailyAsync(AttendanceActivity activity, DateTime date, CancellationToken cancellationToken = default)
+    {
+        var day = date.Date;
+        var rows = await _dbContext.Attendances
+            .AsNoTracking()
+            .Where(a => a.Activity == activity && a.Date == day)
+            .Select(a => new
+            {
+                a.Id,
+                a.PersonId,
+                a.AnonymousCount,
+                a.Person!.FirstName,
+                a.Person.LastName,
+                a.Person.Dni
+            })
+            .ToListAsync(cancellationToken);
+
+        var persons = rows
+            .Select(r => new DailyAttendancePersonDto(r.Id, r.PersonId, $"{r.FirstName} {r.LastName}".Trim(), r.Dni, r.AnonymousCount))
+            .OrderBy(p => p.FullName)
+            .ToList();
+
+        return new DailyAttendanceDto(activity, day, rows.Sum(r => r.AnonymousCount), persons);
+    }
+
     public async Task<RegisterAttendanceResult> RegisterAsync(CreateAttendanceDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
         var person = await _dbContext.People

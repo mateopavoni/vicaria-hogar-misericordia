@@ -1,0 +1,34 @@
+@import "tailwindcss";
+/* "Exportar ficha": se imprime/guarda como PDF desde el navegador, sin menú lateral ni barra superior */
+@media print {
+  app-sidebar,
+  app-topbar,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    margin-left: 0 !important;
+    padding-top: 0 !important;
+    background: #fff !important;
+  }
+}
+
+/* SCRUM-242: exportar un bloque puntual (historial de medicación) a PDF: solo se imprime .print-target */
+@media print {
+  body.print-only-target * {
+    visibility: hidden !important;
+  }
+
+  body.print-only-target .print-target,
+  body.print-only-target .print-target * {
+    visibility: visible !important;
+  }
+
+  body.print-only-target .print-target {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
