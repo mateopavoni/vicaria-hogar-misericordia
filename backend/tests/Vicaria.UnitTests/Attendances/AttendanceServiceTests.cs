@@ -212,4 +212,26 @@ public class AttendanceServiceTests
         Assert.Equal(SocialRecordStatus.Inactive, stillInactive.Status);
         Assert.Empty(await db.AuditLogs.ToListAsync());
     }
+
+    [Fact]
+    public async Task GetDailyAsync_ReturnsPersonsAndSumsAnonymousCountOfThatActivityAndDate()
+    {
+        using var db = CrearDbContext();
+        var anaId = await CrearPersonaConFichaActiva(db);
+        var otherId = await CrearPersonaConFichaActiva(db);
+        var day = new DateTime(2026, 10, 19);
+        db.Attendances.AddRange(
+            new Attendance { Id = Guid.NewGuid(), PersonId = anaId, Date = day, Activity = AttendanceActivity.DayCenter, AnonymousCount = 3 },
+            new Attendance { Id = Guid.NewGuid(), PersonId = otherId, Date = day, Activity = AttendanceActivity.DayCenter, AnonymousCount = 0 },
+            new Attendance { Id = Guid.NewGuid(), PersonId = anaId, Date = day, Activity = AttendanceActivity.CasaConvivencia, AnonymousCount = 9 },
+            new Attendance { Id = Guid.NewGuid(), PersonId = anaId, Date = day.AddDays(-1), Activity = AttendanceActivity.DayCenter, AnonymousCount = 9 });
+        await db.SaveChangesAsync();
+
+        var service = new AttendanceService(db);
+        var result = await service.GetDailyAsync(AttendanceActivity.DayCenter, day.AddHours(15));
+
+        Assert.Equal(2, result.Persons.Count);
+        Assert.Equal(3, result.AnonymousCount);
+        Assert.Equal(day, result.Date);
+    }
 }

@@ -22,7 +22,7 @@
    "id": "SEC-04",
    "name": "Un intento de inyección SQL en la búsqueda no da 500 ni devuelve todo el listado",
    "ok": true,
-   "note": "total=15 con inyección=4 (coincidencias de texto, no un OR 1=1) drop=200"
+   "note": "total=17 con inyección=5 (coincidencias de texto, no un OR 1=1) drop=200"
   },
   {
    "id": "SEC-05",
@@ -82,25 +82,25 @@
    "id": "PERF-01",
    "name": "Listado de fichas con 50 usuarios concurrentes: sin errores y p95 < 2000 ms",
    "ok": true,
-   "note": "p95=195 ms, 486.9 req/s"
+   "note": "p95=422 ms, 439.8 req/s"
   },
   {
    "id": "PERF-02",
    "name": "Notificaciones con 50 usuarios concurrentes: sin errores y p95 < 2000 ms",
    "ok": true,
-   "note": "p95=101 ms, 756.9 req/s"
+   "note": "p95=108 ms, 817.2 req/s"
   },
   {
    "id": "PERF-03",
    "name": "Calendario con 30 usuarios concurrentes: sin errores y p95 < 2000 ms",
    "ok": true,
-   "note": "p95=89 ms, 545.1 req/s"
+   "note": "p95=76 ms, 584.4 req/s"
   },
   {
    "id": "PERF-04",
    "name": "Login con 20 usuarios concurrentes: sin errores y p95 < 3000 ms",
    "ok": true,
-   "note": "p95=2781 ms, 11.6 req/s"
+   "note": "p95=2604 ms, 12 req/s"
   }
  ],
  "loads": [
@@ -109,40 +109,40 @@
    "concurrentes": 50,
    "requests": 500,
    "errores": 0,
-   "rps": 486.9,
-   "p50": 89,
-   "p95": 195,
-   "max": 318
+   "rps": 439.8,
+   "p50": 63,
+   "p95": 422,
+   "max": 725
   },
   {
    "name": "GET /api/notifications",
    "concurrentes": 50,
    "requests": 500,
    "errores": 0,
-   "rps": 756.9,
-   "p50": 62,
-   "p95": 101,
-   "max": 161
+   "rps": 817.2,
+   "p50": 56,
+   "p95": 108,
+   "max": 174
   },
   {
    "name": "GET /api/general-calendar-events",
    "concurrentes": 30,
    "requests": 300,
    "errores": 0,
-   "rps": 545.1,
+   "rps": 584.4,
    "p50": 49,
-   "p95": 89,
-   "max": 101
+   "p95": 76,
+   "max": 115
   },
   {
    "name": "POST /api/auth/login (bcrypt)",
    "concurrentes": 20,
    "requests": 100,
    "errores": 0,
-   "rps": 11.6,
-   "p50": 1674,
-   "p95": 2781,
-   "max": 3110
+   "rps": 12,
+   "p50": 1586,
+   "p95": 2604,
+   "max": 2808
   }
  ]
 }

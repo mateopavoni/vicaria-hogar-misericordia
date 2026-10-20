@@ -38,6 +38,18 @@ NEW_DEFECTS = [
      "SCRUM-5 / EP-01", "Abierta", "Confirmar si el DNI debe ser único en fichas antes de agregar la regla.", "Menor"),
     ("Pregunta abierta", "La API permite crear fichas al Coordinador de Casa de Convivencia (POST api/social-records), pero la UI le deniega /fichas/crear.",
      "SCRUM-13 / 64", "Abierta", "Se suma a la pregunta #20 sobre los permisos del Coordinador.", "Menor"),
+    ("Defecto", "Los PDF del resumen mensual de asistencia y del historial de medicación respondían 500: PDFsharp 6.5.0 exige una licencia y la imagen de la API no tenía ninguna fuente instalada.",
+     "SCRUM-225 / 241 (backend)", "Corregido en dev",
+     "PDFsharp 6.2.4, resolvedor de fuentes (Arial en Windows, Liberation Sans en Linux), fuentes en la imagen Docker y tests unitarios y de integración nuevos.", "Mayor"),
+    ("Defecto", "El panel de estadísticas de asistencia se rompía (NG02100) cuando la lista de inactivos incluía a alguien que nunca asistió: la fecha llegaba vacía al formato de fecha.",
+     "SCRUM-226 (frontend)", "Corregido en dev",
+     "La lista muestra 'nunca registró asistencia' cuando no hay fecha; verificado en navegador.", "Menor"),
+    ("Pregunta abierta", "El backend solo registra asistencia de Hogar de día y Casa de Convivencia; las actividades configurables (SCRUM-57) existen en el catálogo pero no se pueden usar al registrar asistencia.",
+     "SCRUM-57 / 216", "Abierta", "Definir si la asistencia por actividad se guarda con el id de la actividad del catálogo (cambio en el modelo de Attendance).", "Mayor"),
+    ("Pregunta abierta", "No existe forma de quitar a una persona ya registrada en un día, ni de reactivar un esquema de medicación desactivado, ni el backend informa cuántos esquemas están pendientes de stock en la agenda.",
+     "SCRUM-54 / 59 / 60", "Abierta", "El frontend lo informa con un mensaje; confirmar si se necesitan esos endpoints.", "Menor"),
+    ("Pregunta abierta", "La agenda del día se genera al registrar la asistencia: un esquema cargado después de la asistencia no tiene tomas ese día.",
+     "SCRUM-236", "Abierta", "Confirmar si al cargar un esquema debe generarse la toma del día para quienes ya asistieron.", "Menor"),
 ]
 
 # Defectos de la hoja del plan que cambiaron de estado: el menú ya no tiene 4 ítems rotos sino uno (Informes).
@@ -149,5 +161,5 @@ SEC_FIRST_ID = 195  # TC-195 en adelante
 SEC_NOTE = "Entorno local en Docker (SQL Server Express limitado); las cifras sirven de referencia, no de dimensionamiento de producción."
 
 # Cifras de las suites automatizadas de la corrida (se completan con los resultados reales de `dotnet test` y `ng test`)
-SUITES = {"backend_unit": 262, "backend_integration": 251, "frontend_tests": 122, "frontend_files": 29,
+SUITES = {"backend_unit": 318, "backend_integration": 258, "frontend_tests": 114, "frontend_files": 29,
           "ui_checks": 35, "security_checks": 13, "load_checks": 4}

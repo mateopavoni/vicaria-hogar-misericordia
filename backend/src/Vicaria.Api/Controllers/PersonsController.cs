@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
+using Vicaria.Application.MedicationHistories;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Application.Persons;
 using Vicaria.Application.SocialRecords;
@@ -24,6 +25,9 @@ public class PersonsController : ControllerBase
     private readonly IProfileTimelineService _profileTimelineService;
     private readonly IMedicationSchemeService _medicationSchemeService;
     private readonly IValidator<CreateMedicationSchemeDto> _createMedicationSchemeValidator;
+    private readonly IMedicationHistoryService _medicationHistoryService;
+    private readonly IMedicationHistoryPdfGenerator _medicationHistoryPdfGenerator;
+    private readonly IValidator<GetMedicationHistoryDto> _getMedicationHistoryValidator;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
@@ -32,8 +36,14 @@ public class PersonsController : ControllerBase
         ICasaConvivenciaStayService casaConvivenciaStayService,
         IProfileTimelineService profileTimelineService,
         IMedicationSchemeService medicationSchemeService,
-        IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator)
+        IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator,
+        IMedicationHistoryService medicationHistoryService,
+        IMedicationHistoryPdfGenerator medicationHistoryPdfGenerator,
+        IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator)
     {
+        _medicationHistoryService = medicationHistoryService;
+        _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
+        _getMedicationHistoryValidator = getMedicationHistoryValidator;
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
@@ -128,6 +138,7 @@ public class PersonsController : ControllerBase
 
         return result.Error switch
         {
+            null when result.Scheme?.StockAlert is not null => Ok(result.Scheme),
             null => StatusCode(StatusCodes.Status201Created, result.Scheme),
             CreateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.MedicationNotFound => NotFound(new { message = result.ErrorMessage }),
@@ -148,6 +159,147 @@ public class PersonsController : ControllerBase
         {
             null => Ok(result.Data),
             ProfileTimelineError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75).
+    // Con needsReview=true devuelve solo los vigentes con más de 30 días sin revisión (SCRUM-249).
+    [HttpGet("{id}/medication-schemes")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetMedicationSchemes(Guid id, [FromQuery] bool? onlyActive, [FromQuery] bool? needsReview, CancellationToken cancellationToken)
+    {
+        var result = await _medicationSchemeService.GetByPersonIdAsync(id, onlyActive, needsReview, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Schemes),
+            GetPersonMedicationSchemesError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // historial de tomas de la persona por fecha, con filtros opcionales from/to/medicationId (SCRUM-240)
+    [HttpGet("{id}/medication-history")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetMedicationHistory(
+        Guid id,
+        [FromQuery(Name = "from")] DateOnly? from,
+        [FromQuery(Name = "to")] DateOnly? to,
+        [FromQuery(Name = "medicationId")] Guid? medicationId,
+        CancellationToken cancellationToken)
+    {
+        var filter = new GetMedicationHistoryDto(from, to, medicationId);
+
+        var validationResult = await _getMedicationHistoryValidator.ValidateAsync(filter, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var actorRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        var result = await _medicationHistoryService.GetPersonHistoryAsync(id, filter, actorRoles, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Entries),
+            MedicationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // exportación del historial a PDF para presentar a un profesional de salud (SCRUM-241):
+    // mismos filtros, misma autorización y mismo conjunto que el JSON (SCRUM-240)
+    [HttpGet("{id}/medication-history/pdf")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> GetMedicationHistoryPdf(
+        Guid id,
+        [FromQuery(Name = "from")] DateOnly? from,
+        [FromQuery(Name = "to")] DateOnly? to,
+        [FromQuery(Name = "medicationId")] Guid? medicationId,
+        CancellationToken cancellationToken)
+    {
+        var filter = new GetMedicationHistoryDto(from, to, medicationId);
+
+        var validationResult = await _getMedicationHistoryValidator.ValidateAsync(filter, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var actorRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        var result = await _medicationHistoryService.GetPersonHistoryAsync(id, filter, actorRoles, cancellationToken);
+
+        return result.Error switch
+        {
+            MedicationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            not null => BadRequest(new { message = result.ErrorMessage }),
+            _ => File(
+                _medicationHistoryPdfGenerator.GeneratePersonHistoryPdf(new MedicationHistoryPdfDocument(
+                    PersonName: result.PersonName ?? string.Empty,
+                    PersonDni: result.PersonDni,
+                    From: filter.From,
+                    To: filter.To,
+                    Entries: result.Entries ?? [],
+                    GeneratedAt: DateTime.UtcNow)),
+                "application/pdf",
+                $"medication-history-{id}-{FormatPdfRange(filter.From, filter.To)}.pdf")
+        };
+    }
+
+    private static string FormatPdfRange(DateOnly? from, DateOnly? to) =>
+        (from, to) switch
+        {
+            (not null, not null) => $"{from.Value:yyyyMMdd}-{to.Value:yyyyMMdd}",
+            (not null, null) => $"{from.Value:yyyyMMdd}-all",
+            (null, not null) => $"all-{to.Value:yyyyMMdd}",
+            _ => "all"
+        };
+
+    // desactiva un esquema de medicación manteniendo el registro histórico (SCRUM-248 / SCRUM-75)
+    [HttpPatch("{id}/medication-schemes/{schemeId:guid}/deactivate")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> DeactivateMedicationScheme(Guid id, Guid schemeId, CancellationToken cancellationToken)
+    {
+        var result = await _medicationSchemeService.DeactivateAsync(id, schemeId, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            DeactivateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            DeactivateMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
+            DeactivateMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // marca el esquema como revisado (SCRUM-249): registra ReviewedAt y ReviewedBy a partir
+    // del actor autenticado. Solo esquemas vigentes; el histórico responde 409.
+    [HttpPatch("{id}/medication-schemes/{schemeId:guid}/review")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> ReviewMedicationScheme(Guid id, Guid schemeId, CancellationToken cancellationToken)
+    {
+        var result = await _medicationSchemeService.ReviewAsync(id, schemeId, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            ReviewMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            ReviewMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
+            ReviewMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

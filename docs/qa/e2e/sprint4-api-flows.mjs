@@ -57,7 +57,7 @@ rec('S4-M01', 'Referente carga un esquema a un Residente con evaluación vigente
 const m2 = await med(T.ref, LUCIA, { time: m1.json?.time ?? '08:00' });
 rec('S4-M02', 'Un esquema duplicado vigente se rechaza (409)', m2.status === 409, `status=${m2.status} ${m2.json?.message ?? ''}`);
 const m3 = await med(T.dir, CARLOS, { medicationId: MED_C, time: hhmm(10 + rnd(9)) });
-rec('S4-M03', 'Un medicamento sin stock se carga igual y queda marcado como pendiente de stock (201)', m3.status === 201 && m3.json?.pendingStock === true, `status=${m3.status} pendingStock=${m3.json?.pendingStock}`);
+rec('S4-M03', 'Un medicamento sin stock se carga igual y queda marcado como pendiente de stock (200 con alerta de stock)', (m3.status === 200 || m3.status === 201) && m3.json?.pendingStock === true, `status=${m3.status} pendingStock=${m3.json?.pendingStock}`);
 const m4 = await med(T.ref, ROBERTO, {});
 rec('S4-M04', 'Sin evaluación psiquiátrica vigente no se puede cargar el esquema (4xx)', m4.status >= 400 && m4.status < 500, `status=${m4.status} ${m4.json?.message ?? m4.text.slice(0, 120)}`);
 const m5 = await med(T.esc, LUCIA, { time: '07:15' });

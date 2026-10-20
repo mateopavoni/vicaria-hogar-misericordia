@@ -79,9 +79,9 @@
  },
  {
   "id": "S4-M03",
-  "name": "Un medicamento sin stock se carga igual y queda marcado como pendiente de stock (201)",
+  "name": "Un medicamento sin stock se carga igual y queda marcado como pendiente de stock (200 con alerta de stock)",
   "ok": true,
-  "note": "status=201 pendingStock=true"
+  "note": "status=200 pendingStock=true"
  },
  {
   "id": "S4-M04",

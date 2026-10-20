@@ -14,6 +14,8 @@ import run_2026_10_16 as run
 from openpyxl.worksheet.datavalidation import DataValidation
 
 HERE = Path(__file__).parent
+BLOCKED_NOTE = ("Pendiente de ejecución manual: el backend de la historia está integrado en dev y el frontend consume la API real desde el 19/10. "
+                "Parte del caso se cubre con las pruebas automáticas de la pestaña 'Ciclo - Sprint 4 (integración)'.")
 STATES = {"OK": "PASÓ", "Falla": "FALLÓ", "Bloqueado": "BLOQUEADO", "Pendiente": "NO EJECUTADO"}
 
 # Sprint 1 = EP-03 (registro, login, roles, notificaciones); el resto del Sprint 1-2 es Sprint 2.
@@ -38,7 +40,7 @@ CYCLES = [
     ("Ciclo - Sprint 1", "Sprint 1 — Acceso y roles (EP-03)"),
     ("Ciclo - Sprint 2", "Sprint 2 — Fichas, observaciones e historia de vida (EP-01, EP-02, EP-12)"),
     ("Ciclo - Sprint 3", "Sprint 3 — Calendario, colaboradores y visitas (EP-04, EP-05, EP-06)"),
-    ("Ciclo - Sprint 4", "Sprint 4 — Asistencia y medicación (EP-10) — pendiente de backend"),
+    ("Ciclo - Sprint 4", "Sprint 4 — Asistencia y medicación (EP-10) — integración front-back lista, ejecución manual pendiente"),
     ("Ciclo - Seguridad y carga", "Transversal — Seguridad básica y rendimiento (API local, 2026-10-16)"),
 ]
 
@@ -65,8 +67,8 @@ def split_steps(text):
 def actual_result(state, expected, test, observ, sprint, who, when):
     last = expected.splitlines()[-1] if expected else ""
     last = re.sub(r"^\d+\.\s*", "", last)
-    if state == "NO EJECUTADO":
-        return "Sin ejecutar: el caso depende de funcionalidad de Sprint 4 todavía no desarrollada en el backend."
+    if state in ("NO EJECUTADO", "BLOQUEADO"):
+        return BLOCKED_NOTE
     if who == "Suite automatizada":
         base = f"Prueba automatizada {test or ''} en verde (dotnet test); se cumple cada resultado esperado. Último: {last}"
     elif sprint == "Sprint 1-2":
@@ -98,6 +100,39 @@ def add_sprint4_api_sheet(wb, base, style_row):
         vals = [r["id"], module, r["name"], pasos, r["name"],
                 f"Respuesta de la API: {r['note']}".strip(), "PASÓ" if r["ok"] else "FALLÓ", None, "QA (script sprint4-api-flows.mjs)", when,
                 "Observación: la actividad viaja como número (0 = Hogar de día, 1 = Casa de Convivencia) y no como texto; el front debe enviarla así." if r["id"] == "S4-A01" else None]
+        for c, v in enumerate(vals, start=1):
+            cell = ws.cell(row=4 + n, column=c, value=v)
+            s = style_row[c - 1]
+            cell.font, cell.fill, cell.border = copy(s.font), copy(s.fill), copy(s.border)
+            cell.alignment, cell.number_format = copy(s.alignment), s.number_format
+            if c == 10:
+                cell.number_format = "dd/mm/yyyy"
+    ws.data_validations.dataValidation = []
+    dv = DataValidation(type="list", formula1='"PASÓ,FALLÓ,BLOQUEADO,NO EJECUTADO"', allow_blank=False)
+    ws.add_data_validation(dv)
+    dv.add(f"G4:G{3 + len(results)}")
+
+
+S4_WIRED_RESULTS = HERE / "e2e" / "sprint4-wired-results.json"
+
+
+def add_sprint4_wired_sheet(wb, base, style_row):
+    """Pestaña con la integración front-back del Sprint 4 (e2e/sprint4-wired-flows.mjs): cadena por API y pantallas en navegador."""
+    if not S4_WIRED_RESULTS.exists():
+        return
+    import json
+    results = json.loads(S4_WIRED_RESULTS.read_text(encoding="utf-8"))
+    ws = wb.copy_worksheet(base)
+    ws.title = "Ciclo - Sprint 4 (integración)"
+    ws["A1"] = "PLANILLA DE EJECUCIÓN DE CICLO DE PRUEBAS — Sprint 4 — integración frontend-backend (asistencia, actividades, medicación y stock), stack local, 19/10/2026"
+    ws.delete_rows(4, ws.max_row)
+    when = date(2026, 10, 19)
+    for n, r in enumerate(results):
+        ui = int(r["id"].split("-")[1]) >= 20
+        module = "Pantallas del Sprint 4 (navegador)" if ui else "Cadena stock - esquema - asistencia - agenda - toma (API)"
+        pasos = "1. Iniciar sesión como Referente" + chr(10) + ("2. Abrir la pantalla y revisar respuestas de la API y consola" if ui else "2. Ejecutar la llamada indicada en el título contra la API real")
+        vals = [r["id"], module, r["name"], pasos, r["name"], f"Resultado: {r['note'] or 'según lo esperado'}".strip(),
+                "PASÓ" if r["ok"] else "FALLÓ", None, "QA (script sprint4-wired-flows.mjs)", when, None]
         for c, v in enumerate(vals, start=1):
             cell = ws.cell(row=4 + n, column=c, value=v)
             s = style_row[c - 1]
@@ -143,8 +178,8 @@ def main():
             comment = observ if sprint not in ("Transversal",) and tc_id not in run.UI_RESULTS else ""
             if tc_id in BUGS and state == "PASÓ" and tc_id not in run.UI_RESULTS:
                 comment = (comment + " " if comment else "") + f"Defecto {BUGS[tc_id]} corregido; el caso pasa tras la corrección."
-            if state == "NO EJECUTADO" and not comment:
-                comment = "Sin desarrollo todavía (Sprint 4)."
+            if state == "NO EJECUTADO":
+                comment = BLOCKED_NOTE
             ui = run.UI_RESULTS.get(tc_id)
             if ui:
                 real = ui[0]
@@ -171,6 +206,7 @@ def main():
         dv.add(f"G4:G{3 + len(data)}")
 
     add_sprint4_api_sheet(wb, base, style_row)
+    add_sprint4_wired_sheet(wb, base, style_row)
     wb.save(out)
     print(out, [len(b) for b in buckets], sum(len(b) for b in buckets))
 

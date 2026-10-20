@@ -15,6 +15,7 @@ using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Auth;
 using Vicaria.Infrastructure.CasaConvivenciaStays;
+using Vicaria.Infrastructure.Pdf;
 using Vicaria.Infrastructure.Notifications;
 using Vicaria.Infrastructure.Persons;
 using Vicaria.Infrastructure.Persistence;
@@ -33,7 +34,14 @@ using Vicaria.Application.Collaborators;
 using Vicaria.Infrastructure.Collaborators;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Infrastructure.MedicationSchemes;
-
+using Vicaria.Application.MedicationHistories;
+using Vicaria.Infrastructure.MedicationHistories;
+using Vicaria.Application.Activities;
+using Vicaria.Infrastructure.Activities;
+using Vicaria.Application.MedicationAgendas;
+using Vicaria.Infrastructure.MedicationAgendas;
+using Vicaria.Application.MedicationStocks;
+using Vicaria.Infrastructure.MedicationStocks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,12 +84,22 @@ builder.Services.AddScoped<IValidator<UpdatePersonTypeDto>, UpdatePersonTypeDtoV
 builder.Services.AddScoped<IValidator<UpdatePersonProfileStatusDto>, UpdatePersonProfileStatusValidator>();
 builder.Services.AddScoped<IValidator<CasaConvivenciaStayExitDto>, CasaConvivenciaStayExitDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateAttendanceDto>, CreateAttendanceDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateAttendanceDto>, UpdateAttendanceDtoValidator>();
+builder.Services.AddScoped<IValidator<GetPersonAttendanceHistoryFilterDto>, GetPersonAttendanceHistoryValidator>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IAttendanceInactivityService, AttendanceInactivityService>();
+builder.Services.AddScoped<IAttendanceStatisticsService, AttendanceStatisticsService>();
+PdfFontResolver.Register();
+builder.Services.AddScoped<IAttendanceSummaryPdfGenerator, AttendanceSummaryPdfGenerator>();
+builder.Services.AddScoped<IValidator<GetInactivePeopleQueryDto>, GetInactivePeopleQueryValidator>();
+builder.Services.AddScoped<IValidator<GetMonthlySummaryQueryDto>, GetMonthlySummaryQueryValidator>();
+builder.Services.AddScoped<IValidator<GetStatisticsQueryDto>, GetStatisticsQueryValidator>();
 builder.Services.AddHostedService<AttendanceInactivityBackgroundService>();
 builder.Services.AddScoped<IStaleRecordAlertService, StaleRecordAlertService>();
 builder.Services.AddScoped<IPersonAccessService, PersonAccessService>();
 builder.Services.AddHostedService<StaleRecordAlertBackgroundService>();
+builder.Services.AddScoped<IMedicationReviewAlertService, MedicationReviewAlertService>();
+builder.Services.AddHostedService<MedicationReviewAlertBackgroundService>();
 builder.Services.AddScoped<IObservationService, ObservationService>();
 builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDtoValidator>();
 builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
@@ -103,9 +121,19 @@ builder.Services.AddScoped<IValidator<CreateCollaboratorDto>, CreateCollaborator
 builder.Services.AddScoped<IValidator<SearchCollaboratorsDto>, SearchCollaboratorsDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCollaboratorDto>, UpdateCollaboratorDtoValidator>();
 builder.Services.AddScoped<IMedicationSchemeService, MedicationSchemeService>();
+builder.Services.AddScoped<IMedicationHistoryService, MedicationHistoryService>();
+builder.Services.AddScoped<IMedicationHistoryPdfGenerator, MedicationHistoryPdfGenerator>();
+builder.Services.AddScoped<IValidator<GetMedicationHistoryDto>, GetMedicationHistoryDtoValidator>();
 builder.Services.AddScoped<IValidator<CreateMedicationSchemeDto>, CreateMedicationSchemeDtoValidator>();
-
-
+builder.Services.AddScoped<IActivityService, ActivityService>();
+builder.Services.AddScoped<IValidator<CreateActivityDto>, CreateActivityValidator>();
+builder.Services.AddScoped<IValidator<UpdateActivityDto>, UpdateActivityValidator>();
+builder.Services.AddScoped<ICalendarActivitySyncService, CalendarActivitySyncService>();
+builder.Services.AddScoped<IMedicationAgendaService, MedicationAgendaService>();
+builder.Services.AddScoped<IValidator<UpdateMedicationIntakeStatusDto>, UpdateMedicationIntakeStatusDtoValidator>();
+builder.Services.AddScoped<IMedicationStockService, MedicationStockService>();
+builder.Services.AddScoped<IValidator<RegisterMedicationStockEntryDto>, RegisterMedicationStockEntryDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateMedicationStockThresholdDto>, UpdateMedicationStockThresholdDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -186,6 +214,7 @@ using (var scope = app.Services.CreateScope())
         SeedExtraTestUsers(dbContext);
         SeedDemoData(dbContext);
         SeedDemoMedicationCatalog(dbContext);
+        SeedDemoMedicationSchemes(dbContext);
     }
 }
 
@@ -523,6 +552,40 @@ static void SeedDemoMedicationCatalog(VicariaDbContext dbContext)
         new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba B", Stock = 12 },
         new MedicationCatalog { Id = Guid.NewGuid(), Name = "Medicamento de prueba C (sin stock)", Stock = 0 }
     );
+
+    dbContext.SaveChanges();
+}
+
+// esquema de ejemplo para ver la alerta de revisión mensual (SCRUM-249): cargado hace 45
+// días y nunca revisado, así supera el umbral de 30 días. Idempotente e independiente
+// de los otros seed.
+static void SeedDemoMedicationSchemes(VicariaDbContext dbContext)
+{
+    if (dbContext.MedicationSchemes.Any())
+    {
+        return;
+    }
+
+    var referente = dbContext.Users.FirstOrDefault(u => u.Email == "referente@test.com");
+    var resident = dbContext.People.FirstOrDefault(p => p.FirstName == "Carlos" && p.LastName == "Rodríguez");
+    var medication = dbContext.MedicationCatalogs.OrderBy(m => m.Name).FirstOrDefault();
+    if (referente is null || resident is null || medication is null)
+    {
+        return;
+    }
+
+    dbContext.MedicationSchemes.Add(new MedicationScheme
+    {
+        Id = Guid.NewGuid(),
+        PersonId = resident.Id,
+        MedicationId = medication.Id,
+        Dose = "1 comprimido",
+        Time = new TimeSpan(8, 0, 0),
+        LoadedAt = DateTime.UtcNow.AddDays(-45),
+        LoadedByUserId = referente.Id,
+        IsActive = true,
+        PendingStock = medication.Stock <= 0
+    });
 
     dbContext.SaveChanges();
 }
