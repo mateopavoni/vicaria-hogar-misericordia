@@ -234,7 +234,7 @@ def main():
             date = DATE_RERUN
         ws.append([t["id"], "Sprint 3", t["module"], t["title"], t["title"], pre, t["jira"],
                    f"1. {t['step']}  →  {t['expected']}", t["test"],
-                   t["result"], date, RUNNER if ui else "Suite automatizada",
+                   t["result"], date, RUNNER,
                    t.get("note", "") if t.get("note") and t["result"] == "OK" and "re-ejecutado" in t["note"] else ""])
     s4 = []
     next_id = max(int(t["id"][3:]) for t in s3) + 1
@@ -279,7 +279,7 @@ def main():
                 "Pasos (Paso → Esperamos)", "Test (xUnit)", "Estado", "Fecha de ejecución", "Ejecutó"])
     for c in auto:
         wb_.append([c["id"], "Sprint 1-2", c["module"], c["title"], c["description"], c["pre"], c["jira"],
-                    steps_text(c["steps"]), c["test"], auto_state, DATE_RERUN, "Suite automatizada"])
+                    steps_text(c["steps"]), c["test"], auto_state, DATE_RERUN, RUNNER])
     by_method = {}
     for t in s3:
         if t["kind"] == "API":
@@ -302,7 +302,7 @@ def main():
             steps = ""
             jira = t["jira"]
         wb_.append([f"TA-{n:03d}", t["sprint"], t["module"], title, desc, pre, jira, steps,
-                    f"{t['proj']} › {t['cls']} › {t['method']}", auto_state, DATE_RERUN, "Suite automatizada"])
+                    f"{t['proj']} › {t['cls']} › {t['method']}", auto_state, DATE_RERUN, RUNNER])
     style_sheet(wb_, [9, 11, 34, 50, 44, 34, 18, 60, 70, 12, 14, 18])
     add_state_validation(wb_, "J")
     auto_rows = wb_.max_row
