@@ -50,6 +50,13 @@ NEW_DEFECTS = [
      "SCRUM-54 / 59 / 60", "Abierta", "El frontend lo informa con un mensaje; confirmar si se necesitan esos endpoints.", "Menor"),
     ("Pregunta abierta", "La agenda del día se genera al registrar la asistencia: un esquema cargado después de la asistencia no tiene tomas ese día.",
      "SCRUM-236", "Abierta", "Confirmar si al cargar un esquema debe generarse la toma del día para quienes ya asistieron.", "Menor"),
+    ("Defecto", "Una actividad del calendario desactivada vuelve a aparecer: al abrir la pantalla de actividades se sincroniza con el calendario y se crea una actividad nueva con el mismo nombre, activa, en lugar de respetar la desactivada.",
+     "SCRUM-57 (backend: sincronizar-calendario)", "Abierto",
+     "Visto en la ejecución en navegador del 20/10 (TC-165): se desactivó 'Almuerzo' y el auditor registró una sincronización dos segundos después con una 'Almuerzo' nueva. La sincronización debería ignorar o reactivar la existente.", "Menor"),
+    ("Pregunta abierta", "'Exportar PDF' del historial de medicación abre la impresión del navegador (window.print); el endpoint del backend api/persons/{id}/medication-history/pdf devuelve un PDF válido pero la pantalla no lo usa.",
+     "SCRUM-241 / 242", "Abierta", "Confirmar si la exportación debe descargar el PDF del backend (con datos de la persona y filtros) en lugar de imprimir la pantalla.", "Menor"),
+    ("Pregunta abierta", "No existe stock de ropa en el backend: la independencia entre stock de medicamentos y de ropa (TC-188) solo se pudo verificar mostrando que el inventario de medicamentos no lista otro tipo de ítems.",
+     "SCRUM-71", "Abierta", "Confirmar si el stock de ropa está fuera del alcance del Sprint 4.", "Menor"),
 ]
 
 # Defectos de la hoja del plan que cambiaron de estado: el menú ya no tiene 4 ítems rotos sino uno (Informes).
