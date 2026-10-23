@@ -7,6 +7,7 @@ using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.MedicationHistories;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Application.Persons;
+using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Application.Timelines;
 using Vicaria.Domain.Entities;
@@ -28,6 +29,8 @@ public class PersonsController : ControllerBase
     private readonly IMedicationHistoryService _medicationHistoryService;
     private readonly IMedicationHistoryPdfGenerator _medicationHistoryPdfGenerator;
     private readonly IValidator<GetMedicationHistoryDto> _getMedicationHistoryValidator;
+    private readonly IPsychiatricEvaluationService _psychiatricEvaluationService;
+    private readonly IValidator<CreatePsychiatricEvaluationDto> _createPsychiatricEvaluationValidator;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
@@ -39,11 +42,15 @@ public class PersonsController : ControllerBase
         IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator,
         IMedicationHistoryService medicationHistoryService,
         IMedicationHistoryPdfGenerator medicationHistoryPdfGenerator,
-        IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator)
+        IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator,
+        IPsychiatricEvaluationService psychiatricEvaluationService,
+        IValidator<CreatePsychiatricEvaluationDto> createPsychiatricEvaluationValidator)
     {
         _medicationHistoryService = medicationHistoryService;
         _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
         _getMedicationHistoryValidator = getMedicationHistoryValidator;
+        _psychiatricEvaluationService = psychiatricEvaluationService;
+        _createPsychiatricEvaluationValidator = createPsychiatricEvaluationValidator;
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
@@ -143,6 +150,35 @@ public class PersonsController : ControllerBase
             CreateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.MedicationNotFound => NotFound(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.DuplicateScheme => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    // alta de evaluación psiquiátrica con unicidad de vigente (SCRUM-258): invalida las
+    // anteriores de la persona, actualiza HasPsychiatricEvaluation en la ficha y calcula
+    // el vencimiento (fecha + 6 meses). Solo Referente, Directora y Coordinador; Escucha → 403.
+    [HttpPost("{id}/psychiatric-evaluations")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> CreatePsychiatricEvaluation(Guid id, [FromBody] CreatePsychiatricEvaluationDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _createPsychiatricEvaluationValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _psychiatricEvaluationService.CreateAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => StatusCode(StatusCodes.Status201Created, result.Evaluation),
+            CreatePsychiatricEvaluationError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreatePsychiatricEvaluationError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreatePsychiatricEvaluationError.DuplicateValidEvaluation => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

@@ -42,6 +42,8 @@ using Vicaria.Application.MedicationAgendas;
 using Vicaria.Infrastructure.MedicationAgendas;
 using Vicaria.Application.MedicationStocks;
 using Vicaria.Infrastructure.MedicationStocks;
+using Vicaria.Application.PsychiatricEvaluations;
+using Vicaria.Infrastructure.PsychiatricEvaluations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -134,6 +136,8 @@ builder.Services.AddScoped<IValidator<UpdateMedicationIntakeStatusDto>, UpdateMe
 builder.Services.AddScoped<IMedicationStockService, MedicationStockService>();
 builder.Services.AddScoped<IValidator<RegisterMedicationStockEntryDto>, RegisterMedicationStockEntryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateMedicationStockThresholdDto>, UpdateMedicationStockThresholdDtoValidator>();
+builder.Services.AddScoped<IPsychiatricEvaluationService, PsychiatricEvaluationService>();
+builder.Services.AddScoped<IValidator<CreatePsychiatricEvaluationDto>, CreatePsychiatricEvaluationDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
