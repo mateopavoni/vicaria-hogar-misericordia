@@ -992,7 +992,9 @@ namespace Vicaria.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonId");
+                    b.HasIndex("PersonId")
+                        .IsUnique()
+                        .HasFilter("[IsValid] = 1");
 
                     b.HasIndex("RegisteredByUserId");
 
@@ -1105,6 +1107,9 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasColumnType("nvarchar(2000)");
 
                     b.Property<bool>("HasDocumentation")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasPsychiatricEvaluation")
                         .HasColumnType("bit");
 
                     b.Property<string>("HousingSituation")
