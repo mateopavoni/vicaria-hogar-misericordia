@@ -15,6 +15,9 @@ public class SocialRecord
     public string? OvernightLocation { get; set; }
     public string? Occupation { get; set; }
     public bool HasDocumentation { get; set; }
+    // refleja si la persona tiene una evaluación psiquiátrica vigente (SCRUM-258);
+    // lo actualiza el alta de evaluaciones, no se edita desde la ficha
+    public bool HasPsychiatricEvaluation { get; set; }
     public string? GeneralNotes { get; set; }
     public Guid CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
