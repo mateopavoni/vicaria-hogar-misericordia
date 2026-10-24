@@ -6,6 +6,7 @@ using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.MedicationHistories;
 using Vicaria.Application.MedicationSchemes;
+using Vicaria.Application.PersonAttachments;
 using Vicaria.Application.Persons;
 using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Application.SocialRecords;
@@ -31,6 +32,7 @@ public class PersonsController : ControllerBase
     private readonly IValidator<GetMedicationHistoryDto> _getMedicationHistoryValidator;
     private readonly IPsychiatricEvaluationService _psychiatricEvaluationService;
     private readonly IValidator<CreatePsychiatricEvaluationDto> _createPsychiatricEvaluationValidator;
+    private readonly IPersonAttachmentService _personAttachmentService;
 
     public PersonsController(
         ISocialRecordService socialRecordService,
@@ -44,13 +46,9 @@ public class PersonsController : ControllerBase
         IMedicationHistoryPdfGenerator medicationHistoryPdfGenerator,
         IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator,
         IPsychiatricEvaluationService psychiatricEvaluationService,
-        IValidator<CreatePsychiatricEvaluationDto> createPsychiatricEvaluationValidator)
+        IValidator<CreatePsychiatricEvaluationDto> createPsychiatricEvaluationValidator,
+        IPersonAttachmentService personAttachmentService)
     {
-        _medicationHistoryService = medicationHistoryService;
-        _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
-        _getMedicationHistoryValidator = getMedicationHistoryValidator;
-        _psychiatricEvaluationService = psychiatricEvaluationService;
-        _createPsychiatricEvaluationValidator = createPsychiatricEvaluationValidator;
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
@@ -58,6 +56,12 @@ public class PersonsController : ControllerBase
         _profileTimelineService = profileTimelineService;
         _medicationSchemeService = medicationSchemeService;
         _createMedicationSchemeValidator = createMedicationSchemeValidator;
+        _medicationHistoryService = medicationHistoryService;
+        _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
+        _getMedicationHistoryValidator = getMedicationHistoryValidator;
+        _psychiatricEvaluationService = psychiatricEvaluationService;
+        _createPsychiatricEvaluationValidator = createPsychiatricEvaluationValidator;
+        _personAttachmentService = personAttachmentService;
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -336,6 +340,99 @@ public class PersonsController : ControllerBase
             ReviewMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             ReviewMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
             ReviewMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPost("{id}/attachments")]
+    [HttpPost("/api/personas/{id}/adjuntos")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    [RequestSizeLimit(100 * 1024 * 1024)]
+    public async Task<IActionResult> UploadAttachments(Guid id, [FromForm] IFormFileCollection files, CancellationToken cancellationToken)
+    {
+        if (files is null || files.Count == 0)
+        {
+            return BadRequest(new { message = "Debe proporcionar al menos un archivo para adjuntar." });
+        }
+
+        var uploadItems = new List<UploadPersonAttachmentItem>();
+        foreach (var file in files)
+        {
+            uploadItems.Add(new UploadPersonAttachmentItem(
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                file.OpenReadStream()
+            ));
+        }
+
+        var result = await _personAttachmentService.UploadAsync(id, uploadItems, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => StatusCode(StatusCodes.Status201Created, result.Attachments),
+            UploadPersonAttachmentsError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            UploadPersonAttachmentsError.NoFilesProvided => BadRequest(new { message = result.ErrorMessage }),
+            UploadPersonAttachmentsError.InvalidFileType => BadRequest(new { message = result.ErrorMessage }),
+            UploadPersonAttachmentsError.FileTooLarge => BadRequest(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("{id}/attachments")]
+    [HttpGet("/api/personas/{id}/adjuntos")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetAttachments(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _personAttachmentService.GetByPersonIdAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Attachments),
+            GetPersonAttachmentsError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("{id}/attachments/{attachmentId:guid}")]
+    [HttpGet("/api/personas/{id}/adjuntos/{attachmentId:guid}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetAttachmentFile(Guid id, Guid attachmentId, [FromQuery] bool download = false, CancellationToken cancellationToken = default)
+    {
+        var result = await _personAttachmentService.GetFileAsync(id, attachmentId, cancellationToken);
+
+        if (!result.Success || result.FileStream is null)
+        {
+            return result.Error switch
+            {
+                GetPersonAttachmentFileError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+                GetPersonAttachmentFileError.AttachmentNotFound => NotFound(new { message = result.ErrorMessage }),
+                GetPersonAttachmentFileError.FileNotFoundOnDisk => NotFound(new { message = result.ErrorMessage }),
+                _ => BadRequest(new { message = result.ErrorMessage })
+            };
+        }
+
+        var fileDto = result.FileStream;
+        if (download)
+        {
+            return File(fileDto.Stream, fileDto.ContentType, fileDto.FileName);
+        }
+
+        return File(fileDto.Stream, fileDto.ContentType);
+    }
+
+    [HttpDelete("{id}/attachments/{attachmentId:guid}")]
+    [HttpDelete("/api/personas/{id}/adjuntos/{attachmentId:guid}")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> DeleteAttachment(Guid id, Guid attachmentId, CancellationToken cancellationToken)
+    {
+        var result = await _personAttachmentService.DeleteAsync(id, attachmentId, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            DeletePersonAttachmentError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            DeletePersonAttachmentError.AttachmentNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
