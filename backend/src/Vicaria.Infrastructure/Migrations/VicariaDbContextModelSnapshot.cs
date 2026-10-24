@@ -874,6 +874,52 @@ namespace Vicaria.Infrastructure.Migrations
                     b.ToTable("people", (string)null);
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.PersonStatusChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("changed_at");
+
+                    b.Property<Guid?>("ChangedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("new_status");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("person_id");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("previous_status");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("reason");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("person_status_changes", (string)null);
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.PersonTypeChange", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1444,6 +1490,24 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("AuthorUser");
 
                     b.Navigation("Category");
+
+                    b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("Vicaria.Domain.Entities.PersonStatusChange", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.User", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
 
                     b.Navigation("Person");
                 });
