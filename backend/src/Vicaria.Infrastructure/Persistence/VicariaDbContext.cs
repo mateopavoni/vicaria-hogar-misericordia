@@ -26,6 +26,7 @@ public class VicariaDbContext : DbContext
     public DbSet<LifeStory> LifeStories => Set<LifeStory>();
     public DbSet<LifeStoryEntry> LifeStoryEntries => Set<LifeStoryEntry>();
     public DbSet<PersonTypeChange> PersonTypeChanges => Set<PersonTypeChange>();
+    public DbSet<PersonStatusChange> PersonStatusChanges => Set<PersonStatusChange>();
     public DbSet<GeneralCalendarEvent> GeneralCalendarEvents => Set<GeneralCalendarEvent>();
     public DbSet<PersonalCalendarEvent> PersonalCalendarEvents => Set<PersonalCalendarEvent>();
     public DbSet<CasonaVisit> CasonaVisits => Set<CasonaVisit>();
