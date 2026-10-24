@@ -10,12 +10,35 @@ public class PsychiatricEvaluationService : IPsychiatricEvaluationService
     // meses de vigencia de una evaluación desde su fecha (SCRUM-258); el vencimiento
     // se calcula, no se persiste, igual que el chequeo de MedicationSchemeService
     private const int ValidityMonths = 6;
+    private static readonly TimeZoneInfo CordobaTimeZone = ResolveCordobaTimeZone();
 
     private readonly VicariaDbContext _dbContext;
 
     public PsychiatricEvaluationService(VicariaDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public static DateTime GetCordobaToday() =>
+        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CordobaTimeZone).Date;
+
+    private static TimeZoneInfo ResolveCordobaTimeZone()
+    {
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("America/Argentina/Cordoba", out var ianaTimeZone))
+        {
+            return ianaTimeZone;
+        }
+
+        if (TimeZoneInfo.TryFindSystemTimeZoneById("Argentina Standard Time", out var windowsTimeZone))
+        {
+            return windowsTimeZone;
+        }
+
+        return TimeZoneInfo.CreateCustomTimeZone(
+            "America/Argentina/Cordoba",
+            TimeSpan.FromHours(-3),
+            "Hora de Córdoba",
+            "Hora de Córdoba");
     }
 
     public async Task<CreatePsychiatricEvaluationResult> CreateAsync(
@@ -98,5 +121,88 @@ public class PsychiatricEvaluationService : IPsychiatricEvaluationService
             await transaction.RollbackAsync(cancellationToken);
             return CreatePsychiatricEvaluationResult.DuplicateValidEvaluation();
         }
+    }
+
+    public async Task<GetPsychiatricEvaluationStatusResult> GetStatusAsync(Guid personId, CancellationToken cancellationToken = default)
+    {
+        var personExists = await _dbContext.People
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == personId, cancellationToken);
+
+        if (!personExists)
+        {
+            return GetPsychiatricEvaluationStatusResult.PersonNotFound();
+        }
+
+        var evaluation = await _dbContext.PsychiatricEvaluations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.PersonId == personId && e.IsValid, cancellationToken);
+
+        if (evaluation is null)
+        {
+            return GetPsychiatricEvaluationStatusResult.Ok(new PsychiatricEvaluationStatusDto(
+                HasEvaluation: false,
+                EvaluationId: null,
+                Date: null,
+                ExpiresAt: null,
+                DiasParaVencer: null,
+                EstaVencida: true,
+                AlertaVencimientoProximo: false,
+                Professional: null,
+                Diagnosis: null
+            ));
+        }
+
+        var expiresAt = evaluation.Date.Date.AddMonths(ValidityMonths);
+        var today = GetCordobaToday();
+        var diasParaVencer = (int)(expiresAt - today).TotalDays;
+        var estaVencida = diasParaVencer < 0;
+        var alertaProxima = !estaVencida && diasParaVencer <= 30;
+
+        var statusDto = new PsychiatricEvaluationStatusDto(
+            HasEvaluation: true,
+            EvaluationId: evaluation.Id,
+            Date: evaluation.Date,
+            ExpiresAt: expiresAt,
+            DiasParaVencer: diasParaVencer,
+            EstaVencida: estaVencida,
+            AlertaVencimientoProximo: alertaProxima,
+            Professional: evaluation.Professional,
+            Diagnosis: evaluation.Diagnosis
+        );
+
+        return GetPsychiatricEvaluationStatusResult.Ok(statusDto);
+    }
+
+    public async Task<GetPsychiatricEvaluationHistoryResult> GetHistoryAsync(Guid personId, CancellationToken cancellationToken = default)
+    {
+        var personExists = await _dbContext.People
+            .AsNoTracking()
+            .AnyAsync(p => p.Id == personId, cancellationToken);
+
+        if (!personExists)
+        {
+            return GetPsychiatricEvaluationHistoryResult.PersonNotFound();
+        }
+
+        var history = await _dbContext.PsychiatricEvaluations
+            .AsNoTracking()
+            .Include(e => e.RegisteredBy)
+            .Where(e => e.PersonId == personId && !e.IsValid)
+            .OrderByDescending(e => e.Date)
+            .Select(e => new PsychiatricEvaluationHistoryItemDto(
+                e.Id,
+                e.PersonId,
+                e.Date,
+                e.Date.AddMonths(ValidityMonths),
+                e.Professional,
+                e.Diagnosis,
+                e.IsValid,
+                e.RegisteredByUserId,
+                e.RegisteredBy != null ? $"{e.RegisteredBy.FirstName} {e.RegisteredBy.LastName}".Trim() : string.Empty
+            ))
+            .ToListAsync(cancellationToken);
+
+        return GetPsychiatricEvaluationHistoryResult.Ok(history);
     }
 }
