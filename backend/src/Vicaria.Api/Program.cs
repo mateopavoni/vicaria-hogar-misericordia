@@ -46,6 +46,8 @@ using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Infrastructure.PsychiatricEvaluations;
 using Vicaria.Application.CaritasCatalogs;
 using Vicaria.Infrastructure.CaritasCatalogs;
+using Vicaria.Application.PersonAttachments;
+using Vicaria.Infrastructure.PersonAttachments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +145,8 @@ builder.Services.AddScoped<IValidator<RegisterMedicationStockEntryDto>, Register
 builder.Services.AddScoped<IValidator<UpdateMedicationStockThresholdDto>, UpdateMedicationStockThresholdDtoValidator>();
 builder.Services.AddScoped<IPsychiatricEvaluationService, PsychiatricEvaluationService>();
 builder.Services.AddScoped<IValidator<CreatePsychiatricEvaluationDto>, CreatePsychiatricEvaluationDtoValidator>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IPersonAttachmentService, PersonAttachmentService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
