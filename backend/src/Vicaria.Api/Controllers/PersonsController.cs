@@ -149,10 +149,10 @@ public class PersonsController : ControllerBase
 
         return result.Error switch
         {
-            null when result.Scheme?.StockAlert is not null => Ok(result.Scheme),
             null => StatusCode(StatusCodes.Status201Created, result.Scheme),
             CreateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.MedicationNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreateMedicationSchemeError.MissingPsychiatricEvaluation => Conflict(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.DuplicateScheme => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
@@ -433,6 +433,38 @@ public class PersonsController : ControllerBase
             null => NoContent(),
             DeletePersonAttachmentError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             DeletePersonAttachmentError.AttachmentNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    
+    [HttpGet("{id}/psychiatric-evaluations/status")]
+    [HttpGet("/api/personas/{id}/evaluacion-estado")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetPsychiatricEvaluationStatus(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _psychiatricEvaluationService.GetStatusAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Data),
+            GetPsychiatricEvaluationStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("{id}/psychiatric-evaluations/history")]
+    [HttpGet("/api/personas/{id}/evaluaciones-historial")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetPsychiatricEvaluationHistory(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _psychiatricEvaluationService.GetHistoryAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.History),
+            GetPsychiatricEvaluationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
