@@ -23,6 +23,7 @@ public class VicariaDbContext : DbContext
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<Observation> Observations => Set<Observation>();
     public DbSet<ObservationCategory> ObservationCategories => Set<ObservationCategory>();
+    public DbSet<CaritasCatalogValue> CaritasCatalogValues => Set<CaritasCatalogValue>();
     public DbSet<LifeStory> LifeStories => Set<LifeStory>();
     public DbSet<LifeStoryEntry> LifeStoryEntries => Set<LifeStoryEntry>();
     public DbSet<PersonTypeChange> PersonTypeChanges => Set<PersonTypeChange>();

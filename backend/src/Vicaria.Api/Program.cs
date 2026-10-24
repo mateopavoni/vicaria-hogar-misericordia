@@ -44,6 +44,8 @@ using Vicaria.Application.MedicationStocks;
 using Vicaria.Infrastructure.MedicationStocks;
 using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Infrastructure.PsychiatricEvaluations;
+using Vicaria.Application.CaritasCatalogs;
+using Vicaria.Infrastructure.CaritasCatalogs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,6 +109,9 @@ builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDt
 builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
 builder.Services.AddScoped<IValidator<CreateObservationCategoryDto>, CreateObservationCategoryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObservationCategoryDtoValidator>();
+builder.Services.AddScoped<ICaritasCatalogService, CaritasCatalogService>();
+builder.Services.AddScoped<IValidator<CreateCaritasCatalogValueDto>, CreateCaritasCatalogValueDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateCaritasCatalogValueDto>, UpdateCaritasCatalogValueDtoValidator>();
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
