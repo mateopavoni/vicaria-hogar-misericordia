@@ -23,6 +23,7 @@ public class PersonsController : ControllerBase
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<UpdatePersonTypeDto> _updatePersonTypeValidator;
     private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
+    private readonly IValidator<UpdatePersonStatusDto> _updatePersonStatusValidator;
     private readonly ICasaConvivenciaStayService _casaConvivenciaStayService;
     private readonly IProfileTimelineService _profileTimelineService;
     private readonly IMedicationSchemeService _medicationSchemeService;
@@ -33,11 +34,13 @@ public class PersonsController : ControllerBase
     private readonly IPsychiatricEvaluationService _psychiatricEvaluationService;
     private readonly IValidator<CreatePsychiatricEvaluationDto> _createPsychiatricEvaluationValidator;
     private readonly IPersonAttachmentService _personAttachmentService;
+    
 
     public PersonsController(
         ISocialRecordService socialRecordService,
         IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
         IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator,
+        IValidator<UpdatePersonStatusDto> updatePersonStatusValidator,
         ICasaConvivenciaStayService casaConvivenciaStayService,
         IProfileTimelineService profileTimelineService,
         IMedicationSchemeService medicationSchemeService,
@@ -48,10 +51,12 @@ public class PersonsController : ControllerBase
         IPsychiatricEvaluationService psychiatricEvaluationService,
         IValidator<CreatePsychiatricEvaluationDto> createPsychiatricEvaluationValidator,
         IPersonAttachmentService personAttachmentService)
+       
     {
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
+        _updatePersonStatusValidator = updatePersonStatusValidator;
         _casaConvivenciaStayService = casaConvivenciaStayService;
         _profileTimelineService = profileTimelineService;
         _medicationSchemeService = medicationSchemeService;
@@ -62,6 +67,7 @@ public class PersonsController : ControllerBase
         _psychiatricEvaluationService = psychiatricEvaluationService;
         _createPsychiatricEvaluationValidator = createPsychiatricEvaluationValidator;
         _personAttachmentService = personAttachmentService;
+        
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -465,6 +471,34 @@ public class PersonsController : ControllerBase
         {
             null => Ok(result.History),
             GetPsychiatricEvaluationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPatch("{id}/status")]
+    [HttpPatch("/api/personas/{id}/estado")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdatePersonStatusDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _updatePersonStatusValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _socialRecordService.UpdateStatusAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdatePersonStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonStatusError.SameStatus => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

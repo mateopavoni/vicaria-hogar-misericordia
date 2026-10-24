@@ -147,6 +147,7 @@ builder.Services.AddScoped<IPsychiatricEvaluationService, PsychiatricEvaluationS
 builder.Services.AddScoped<IValidator<CreatePsychiatricEvaluationDto>, CreatePsychiatricEvaluationDtoValidator>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IPersonAttachmentService, PersonAttachmentService>();
+builder.Services.AddScoped<IValidator<UpdatePersonStatusDto>, UpdatePersonStatusDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

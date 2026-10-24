@@ -644,4 +644,69 @@ public class SocialRecordService : ISocialRecordService
         var digitsOnly = DigitsOnly(dni);
         return digitsOnly.Length > 0 ? digitsOnly : dni.Trim();
     }
+    
+     public async Task<UpdatePersonStatusResult> UpdateStatusAsync(Guid personId, UpdatePersonStatusDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.People.FirstOrDefaultAsync(p => p.Id == personId, cancellationToken);
+        if (person is null)
+        {
+            return UpdatePersonStatusResult.PersonNotFound();
+        }
+
+        var socialRecord = await _dbContext.SocialRecords
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (socialRecord is null)
+        {
+            return UpdatePersonStatusResult.SocialRecordNotFound();
+        }
+
+        if (socialRecord.Status == dto.Status)
+        {
+            return UpdatePersonStatusResult.SameStatus();
+        }
+
+        var previousStatus = socialRecord.Status;
+        socialRecord.Status = dto.Status;
+        socialRecord.UpdatedAt = DateTime.UtcNow;
+
+        var statusChange = new PersonStatusChange
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personId,
+            PreviousStatus = previousStatus,
+            NewStatus = dto.Status,
+            Reason = dto.Reason.Trim(),
+            ChangedByUserId = actorId,
+            ChangedAt = DateTime.UtcNow
+        };
+        _dbContext.PersonStatusChanges.Add(statusChange);
+
+        if (dto.Status == SocialRecordStatus.Inactive)
+        {
+            var fullName = $"{person.FirstName} {person.LastName}".Trim();
+            _dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                Description = $"La persona {fullName} pasó a estado Inactivo. Motivo: {dto.Reason.Trim()}",
+                EventType = "PersonStatusInactive",
+                LinkUrl = $"/personas/{personId}",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                TargetRole = RoleNames.Referent
+            });
+        }
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = $"Estado de persona cambiado manualmente de {previousStatus} a {dto.Status}",
+            AffectedEntity = $"Person:{personId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return UpdatePersonStatusResult.Ok();
+    }
 }
