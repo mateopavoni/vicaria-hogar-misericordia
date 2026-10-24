@@ -108,6 +108,89 @@ namespace Vicaria.Infrastructure.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.CaritasCatalogValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category", "Name");
+
+                    b.ToTable("caritas_catalog_values", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222201"),
+                            Category = "HousingSituation",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "En situación de calle"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222202"),
+                            Category = "HousingSituation",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Con domicilio"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222203"),
+                            Category = "HousingSituation",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Transitorio"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222204"),
+                            Category = "DocumentationStatus",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Con DNI"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222205"),
+                            Category = "DocumentationStatus",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Sin DNI"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222206"),
+                            Category = "DocumentationStatus",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "En trámite"
+                        });
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.CasaConvivenciaStay", b =>
                 {
                     b.Property<Guid>("Id")
