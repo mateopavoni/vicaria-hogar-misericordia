@@ -15,6 +15,13 @@ public class SocialRecord
     public string? OvernightLocation { get; set; }
     public string? Occupation { get; set; }
     public bool HasDocumentation { get; set; }
+    // campos del informe Caritas (SCRUM-270): FKs opcionales al catálogo
+    // configurable (CaritasCatalogValue); nulos = dato pendiente, sin barrera de ingreso
+    public Guid? GenderId { get; set; }
+    public Guid? HousingSituationId { get; set; }
+    public Guid? OriginLocalityId { get; set; }
+    public Guid? DocumentationStatusId { get; set; }
+    public Guid? AttendanceReasonId { get; set; }
     // refleja si la persona tiene una evaluación psiquiátrica vigente (SCRUM-258);
     // lo actualiza el alta de evaluaciones, no se edita desde la ficha
     public bool HasPsychiatricEvaluation { get; set; }

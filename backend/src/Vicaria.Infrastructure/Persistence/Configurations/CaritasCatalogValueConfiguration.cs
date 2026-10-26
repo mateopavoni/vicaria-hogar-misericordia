@@ -84,6 +84,104 @@ public class CaritasCatalogValueConfiguration : IEntityTypeConfiguration<Caritas
                 Name = "En trámite",
                 IsActive = true,
                 CreatedAt = baseDate
+            },
+            // valores del informe Caritas (SCRUM-270): género, localidad de origen y
+            // motivo de asistencia, con las etiquetas del criterio de aceptación
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222207"),
+                Category = CaritasCatalogCategory.Gender,
+                Name = "Masculino",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222208"),
+                Category = CaritasCatalogCategory.Gender,
+                Name = "Femenino",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222209"),
+                Category = CaritasCatalogCategory.Gender,
+                Name = "Otro",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222210"),
+                Category = CaritasCatalogCategory.OriginLocality,
+                Name = "Misma ciudad",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222211"),
+                Category = CaritasCatalogCategory.OriginLocality,
+                Name = "Otra localidad de la provincia",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222212"),
+                Category = CaritasCatalogCategory.OriginLocality,
+                Name = "Otra provincia",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222213"),
+                Category = CaritasCatalogCategory.OriginLocality,
+                Name = "Otro país",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222214"),
+                Category = CaritasCatalogCategory.AttendanceReason,
+                Name = "Consumo de alcohol",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222215"),
+                Category = CaritasCatalogCategory.AttendanceReason,
+                Name = "Consumo de drogas",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222216"),
+                Category = CaritasCatalogCategory.AttendanceReason,
+                Name = "Violencia",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222217"),
+                Category = CaritasCatalogCategory.AttendanceReason,
+                Name = "Múltiple",
+                IsActive = true,
+                CreatedAt = baseDate
+            },
+            new CaritasCatalogValue
+            {
+                Id = Guid.Parse("22222222-2222-2222-2222-222222222218"),
+                Category = CaritasCatalogCategory.AttendanceReason,
+                Name = "No especificado",
+                IsActive = true,
+                CreatedAt = baseDate
             }
         );
     }
