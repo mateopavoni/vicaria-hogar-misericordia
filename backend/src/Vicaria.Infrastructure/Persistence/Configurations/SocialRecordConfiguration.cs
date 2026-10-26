@@ -27,6 +27,33 @@ public class SocialRecordConfiguration : IEntityTypeConfiguration<SocialRecord>
         builder.Property(r => r.Occupation).HasMaxLength(200);
         builder.Property(r => r.GeneralNotes).HasMaxLength(2000);
 
+        // FKs opcionales al catálogo del informe Caritas (SCRUM-270): sin cascada
+        // para no perder el dato histórico si el valor se desactiva o se borra
+        builder.HasOne<CaritasCatalogValue>()
+            .WithMany()
+            .HasForeignKey(r => r.GenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<CaritasCatalogValue>()
+            .WithMany()
+            .HasForeignKey(r => r.HousingSituationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<CaritasCatalogValue>()
+            .WithMany()
+            .HasForeignKey(r => r.OriginLocalityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<CaritasCatalogValue>()
+            .WithMany()
+            .HasForeignKey(r => r.DocumentationStatusId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<CaritasCatalogValue>()
+            .WithMany()
+            .HasForeignKey(r => r.AttendanceReasonId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(r => r.CreatedAt).IsRequired();
         builder.Property(r => r.UpdatedAt).IsRequired();
 

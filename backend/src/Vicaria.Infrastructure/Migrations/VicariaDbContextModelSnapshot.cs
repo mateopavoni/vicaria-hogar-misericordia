@@ -188,6 +188,102 @@ namespace Vicaria.Infrastructure.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsActive = true,
                             Name = "En trámite"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222207"),
+                            Category = "Gender",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Masculino"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222208"),
+                            Category = "Gender",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Femenino"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222209"),
+                            Category = "Gender",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Otro"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222210"),
+                            Category = "OriginLocality",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Misma ciudad"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222211"),
+                            Category = "OriginLocality",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Otra localidad de la provincia"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222212"),
+                            Category = "OriginLocality",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Otra provincia"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222213"),
+                            Category = "OriginLocality",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Otro país"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222214"),
+                            Category = "AttendanceReason",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Consumo de alcohol"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222215"),
+                            Category = "AttendanceReason",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Consumo de drogas"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222216"),
+                            Category = "AttendanceReason",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Violencia"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222217"),
+                            Category = "AttendanceReason",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Múltiple"
+                        },
+                        new
+                        {
+                            Id = new Guid("22222222-2222-2222-2222-222222222218"),
+                            Category = "AttendanceReason",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "No especificado"
                         });
                 });
 
@@ -957,6 +1053,50 @@ namespace Vicaria.Infrastructure.Migrations
                     b.ToTable("people", (string)null);
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.PersonAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId");
+
+                    b.HasIndex("UploadedAt");
+
+                    b.HasIndex("UploadedByUserId");
+
+                    b.ToTable("person_attachments", (string)null);
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.PersonStatusChange", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1222,14 +1362,23 @@ namespace Vicaria.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("AttendanceReasonId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("DocumentationStatusId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("EntryDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("GenderId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("GeneralNotes")
                         .HasMaxLength(2000)
@@ -1245,9 +1394,15 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<Guid?>("HousingSituationId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Occupation")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("OriginLocalityId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("OvernightLocation")
                         .HasMaxLength(200)
@@ -1273,6 +1428,16 @@ namespace Vicaria.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AttendanceReasonId");
+
+                    b.HasIndex("DocumentationStatusId");
+
+                    b.HasIndex("GenderId");
+
+                    b.HasIndex("HousingSituationId");
+
+                    b.HasIndex("OriginLocalityId");
 
                     b.HasIndex("PersonId");
 
@@ -1577,6 +1742,25 @@ namespace Vicaria.Infrastructure.Migrations
                     b.Navigation("Person");
                 });
 
+            modelBuilder.Entity("Vicaria.Domain.Entities.PersonAttachment", b =>
+                {
+                    b.HasOne("Vicaria.Domain.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vicaria.Domain.Entities.User", "UploadedBy")
+                        .WithMany()
+                        .HasForeignKey("UploadedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Person");
+
+                    b.Navigation("UploadedBy");
+                });
+
             modelBuilder.Entity("Vicaria.Domain.Entities.PersonStatusChange", b =>
                 {
                     b.HasOne("Vicaria.Domain.Entities.User", "ChangedByUser")
@@ -1646,6 +1830,31 @@ namespace Vicaria.Infrastructure.Migrations
 
             modelBuilder.Entity("Vicaria.Domain.Entities.SocialRecord", b =>
                 {
+                    b.HasOne("Vicaria.Domain.Entities.CaritasCatalogValue", null)
+                        .WithMany()
+                        .HasForeignKey("AttendanceReasonId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.CaritasCatalogValue", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentationStatusId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.CaritasCatalogValue", null)
+                        .WithMany()
+                        .HasForeignKey("GenderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.CaritasCatalogValue", null)
+                        .WithMany()
+                        .HasForeignKey("HousingSituationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vicaria.Domain.Entities.CaritasCatalogValue", null)
+                        .WithMany()
+                        .HasForeignKey("OriginLocalityId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Vicaria.Domain.Entities.Person", "Person")
                         .WithMany()
                         .HasForeignKey("PersonId")
