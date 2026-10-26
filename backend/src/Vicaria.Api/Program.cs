@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Backups;
 using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.Notifications;
 using Vicaria.Application.Persons;
@@ -14,6 +15,7 @@ using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Auth;
+using Vicaria.Infrastructure.Backups;
 using Vicaria.Infrastructure.CasaConvivenciaStays;
 using Vicaria.Infrastructure.Pdf;
 using Vicaria.Infrastructure.Notifications;
@@ -151,6 +153,21 @@ builder.Services.AddScoped<IValidator<UpdateMedicationStockThresholdDto>, Update
 builder.Services.AddScoped<IPsychiatricEvaluationService, PsychiatricEvaluationService>();
 builder.Services.AddScoped<IValidator<CreatePsychiatricEvaluationDto>, CreatePsychiatricEvaluationDtoValidator>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.Configure<BackupOptions>(builder.Configuration.GetSection(BackupOptions.SectionName));
+builder.Services.Configure<S3BackupOptions>(builder.Configuration.GetSection(S3BackupOptions.SectionName));
+builder.Services.Configure<BackupSmtpOptions>(builder.Configuration.GetSection(BackupSmtpOptions.SectionName));
+builder.Services.AddScoped<IBackupEmailService, SmtpBackupEmailService>();
+var backupStorageProvider = builder.Configuration.GetValue<string>("Backup:StorageProvider");
+if (string.Equals(backupStorageProvider, "S3", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHttpClient<IBackupStorageService, S3BackupStorageService>();
+}
+else
+{
+    builder.Services.AddScoped<IBackupStorageService, LocalBackupStorageService>();
+}
+builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddHostedService<BackupBackgroundService>();
 builder.Services.AddScoped<IPersonAttachmentService, PersonAttachmentService>();
 builder.Services.AddScoped<IValidator<UpdatePersonStatusDto>, UpdatePersonStatusDtoValidator>();
 
