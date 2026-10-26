@@ -46,6 +46,8 @@ using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Infrastructure.PsychiatricEvaluations;
 using Vicaria.Application.CaritasCatalogs;
 using Vicaria.Infrastructure.CaritasCatalogs;
+using Vicaria.Application.CaritasReports;
+using Vicaria.Infrastructure.CaritasReports;
 using Vicaria.Application.PersonAttachments;
 using Vicaria.Infrastructure.PersonAttachments;
 
@@ -114,6 +116,9 @@ builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObser
 builder.Services.AddScoped<ICaritasCatalogService, CaritasCatalogService>();
 builder.Services.AddScoped<IValidator<CreateCaritasCatalogValueDto>, CreateCaritasCatalogValueDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateCaritasCatalogValueDto>, UpdateCaritasCatalogValueDtoValidator>();
+builder.Services.AddScoped<ICaritasReportService, CaritasReportService>();
+builder.Services.AddScoped<ICaritasReportPdfGenerator, CaritasReportPdfGenerator>();
+builder.Services.AddScoped<IValidator<GetCaritasReportQueryDto>, GetCaritasReportQueryValidator>();
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
