@@ -282,7 +282,7 @@ export class SocialRecordDetailComponent implements OnInit {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      this.logExport(record.personId, sections, 'pdf');
+      this.logExport(record.id, sections, 'pdf');
     });
   }
 
@@ -290,7 +290,7 @@ export class SocialRecordDetailComponent implements OnInit {
   printExport(sections: ExportSections): void {
     this.prepareExport(sections, (doc, record) => {
       this.exportDoc.set(doc);
-      this.logExport(record.personId, sections, 'print');
+      this.logExport(record.id, sections, 'print');
 
       const body = document.body;
       const cleanup = () => {
@@ -346,16 +346,9 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  private logExport(personId: string, sections: ExportSections, format: 'pdf' | 'print'): void {
-    const user = this.authService.user();
-    if (!user) return;
-    this.exportLog.log({
-      personId,
-      sections,
-      format,
-      exportedById: user.id,
-      exportedByName: `${user.name} ${user.lastname}`.trim(),
-    });
+  // la auditoría no frena la descarga: si falla el registro, la ficha ya se exportó
+  private logExport(socialRecordId: string, sections: ExportSections, format: 'pdf' | 'print'): void {
+    this.exportLog.log(socialRecordId, { sections, format }).subscribe({ error: () => undefined });
   }
 
   handleLifeHistorySaved(event: { stage: LifeHistoryStage; text: string }): void {

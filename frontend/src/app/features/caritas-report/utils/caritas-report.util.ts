@@ -67,39 +67,11 @@ export interface ReportCategory {
 /** Las categorías del informe, en el orden del criterio de aceptación. */
 export function reportCategories(report: CaritasReport): ReportCategory[] {
   return [
-    {
-      title: 'Género',
-      rows: toRows([
-        { label: 'Masculino', count: report.gender.male },
-        { label: 'Femenino', count: report.gender.female },
-        { label: 'Otro', count: report.gender.other },
-      ]),
-    },
-    {
-      title: 'Situación de vivienda',
-      rows: toRows([
-        { label: 'En situación de calle', count: report.housing.street },
-        { label: 'Con domicilio', count: report.housing.housed },
-      ]),
-    },
-    {
-      title: 'Documentación',
-      rows: toRows([
-        { label: 'Con DNI', count: report.dni.withDni },
-        { label: 'Sin DNI', count: report.dni.withoutDni },
-      ]),
-    },
+    { title: 'Género', rows: toRows(report.gender) },
+    { title: 'Situación de vivienda', rows: toRows(report.housing) },
+    { title: 'Documentación', rows: toRows(report.dni) },
     { title: 'Distribución geográfica (de dónde son)', rows: toRows(report.geography) },
-    {
-      title: 'Motivo de asistencia',
-      rows: toRows([
-        { label: 'Consumo de alcohol', count: report.reasons.alcohol },
-        { label: 'Consumo de drogas', count: report.reasons.drugs },
-        { label: 'Violencia', count: report.reasons.violence },
-        { label: 'Múltiple', count: report.reasons.multiple },
-        { label: 'No especificado', count: report.reasons.unspecified },
-      ]),
-    },
+    { title: 'Motivo de asistencia', rows: toRows(report.reasons) },
   ];
 }
 

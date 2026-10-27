@@ -31,14 +31,30 @@ const report: CaritasReport = {
   to: '2026-09-30',
   isSample: true,
   totals: { attendedPersons: 50, averageAttendancesPerPerson: 7.4, newRegistrations: 11 },
-  gender: { male: 29, female: 19, other: 2 },
-  housing: { street: 22, housed: 28 },
-  dni: { withDni: 36, withoutDni: 14 },
+  gender: [
+    { label: 'Masculino', count: 29 },
+    { label: 'Femenino', count: 19 },
+    { label: 'No informado', count: 2 },
+  ],
+  housing: [
+    { label: 'En situación de calle', count: 22 },
+    { label: 'Con domicilio', count: 28 },
+  ],
+  dni: [
+    { label: 'Con DNI', count: 36 },
+    { label: 'Sin DNI', count: 14 },
+  ],
   geography: [
     { label: 'Misma ciudad', count: 30 },
     { label: 'Otra provincia', count: 20 },
   ],
-  reasons: { alcohol: 11, drugs: 9, violence: 6, multiple: 15, unspecified: 9 },
+  reasons: [
+    { label: 'Consumo de alcohol', count: 11 },
+    { label: 'Consumo de drogas', count: 9 },
+    { label: 'Violencia', count: 6 },
+    { label: 'Múltiple', count: 15 },
+    { label: 'No informado', count: 9 },
+  ],
 };
 
 describe('informe de Cáritas', () => {
@@ -48,6 +64,11 @@ describe('informe de Cáritas', () => {
     for (const category of reportCategories(report)) {
       expect(category.rows.reduce((s, r) => s + r.count, 0)).toBe(total);
     }
+  });
+
+  it('muestra los valores del catálogo tal como vienen, incluido "No informado"', () => {
+    const gender = reportCategories(report)[0];
+    expect(gender.rows.map((r) => r.label)).toEqual(['Masculino', 'Femenino', 'No informado']);
   });
 
   it('el documento exportable incluye el aviso de ejemplo, totales y las 5 categorías', () => {

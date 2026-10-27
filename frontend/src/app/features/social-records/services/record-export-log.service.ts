@@ -1,32 +1,23 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { ExportSections } from '../utils/record-export.util';
 
 export interface RecordExportLogEntry {
-  personId: string;
   sections: ExportSections;
   format: 'pdf' | 'print';
-  exportedById: string;
-  exportedByName: string;
-  /** ISO */
-  exportedAt: string;
 }
 
 /**
- * SCRUM-253: registro de quién exportó una ficha y cuándo.
- *
- * OJO — backend pendiente: no existe un endpoint de auditoría de exportaciones. Hasta entonces el
- * registro queda solo en memoria (se pierde al recargar). Cuando exista, `log` debe pasar a hacer
- * el POST correspondiente; el componente que lo llama no cambia.
+ * SCRUM-23 / SCRUM-253: registro de quién exportó una ficha y cuándo. El PDF se arma en el
+ * navegador; el backend deja la auditoría con el usuario del token y la fecha
+ * (POST /api/social-records/{id}/exports).
  */
 @Injectable({ providedIn: 'root' })
 export class RecordExportLogService {
-  private readonly entries: RecordExportLogEntry[] = [];
+  private http = inject(HttpClient);
 
-  log(entry: Omit<RecordExportLogEntry, 'exportedAt'>): void {
-    this.entries.push({ ...entry, exportedAt: new Date().toISOString() });
-  }
-
-  getAll(): RecordExportLogEntry[] {
-    return this.entries.map((e) => ({ ...e }));
+  log(socialRecordId: string, entry: RecordExportLogEntry): Observable<void> {
+    return this.http.post<void>(`/api/social-records/${socialRecordId}/exports`, entry);
   }
 }

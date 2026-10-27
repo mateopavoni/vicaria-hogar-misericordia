@@ -34,16 +34,14 @@ export interface CaritasReport {
     /** Nuevas altas en el período */
     newRegistrations: number;
   };
-  gender: { male: number; female: number; other: number };
-  housing: { street: number; housed: number };
-  dni: { withDni: number; withoutDni: number };
-  /** De dónde son (distribución geográfica) */
+  /**
+   * Cada categoría trae los valores del catálogo configurable (SCRUM-70) más
+   * "No informado", así que suma el total de personas atendidas.
+   */
+  gender: CountItem[];
+  housing: CountItem[];
+  dni: CountItem[];
+  /** De dónde son (distribución geográfica): solo las localidades con personas */
   geography: CountItem[];
-  reasons: {
-    alcohol: number;
-    drugs: number;
-    violence: number;
-    multiple: number;
-    unspecified: number;
-  };
+  reasons: CountItem[];
 }
