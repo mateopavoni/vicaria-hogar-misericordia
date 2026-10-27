@@ -2,7 +2,7 @@
 activo/inactivo, respaldos e informe de Cáritas), derivados de los criterios de aceptación de las
 historias en Jira y de los permisos reales de la API.
 
-Cada caso: (título, descripción, precondición, [(paso, dato, esperamos), ...]). Los IDs TC-195 en adelante
+Cada caso: (título, descripción, precondición, [(paso, dato, esperamos), ...]). Los IDs TC-212 en adelante
 se asignan al armar los planes, en el orden de STORIES.
 Roles: Referente, Directora de Casa de Convivencia (Dir), Coordinador de Casa de Convivencia (Coo), Escucha.
 """

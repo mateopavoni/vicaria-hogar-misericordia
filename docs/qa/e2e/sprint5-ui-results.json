@@ -1,0 +1,305 @@
+[
+  {
+    "id": "TC-212",
+    "title": "Exportar la ficha con solo los datos personales",
+    "ok": true,
+    "note": "ficha-ui-mvq6tho3-exporta-20261027.pdf"
+  },
+  {
+    "id": "TC-213",
+    "title": "Exportar la ficha con datos y observaciones",
+    "ok": true,
+    "note": "datos + observaciones, sin historia de vida"
+  },
+  {
+    "id": "TC-214",
+    "title": "Exportar la ficha completa",
+    "ok": true,
+    "note": "ficha, historia de vida y observaciones"
+  },
+  {
+    "id": "TC-215",
+    "title": "El PDF lleva nombre del sistema, fecha de exportación y referente",
+    "ok": true,
+    "note": "Exportado el 27/10/2026 por Test referente"
+  },
+  {
+    "id": "TC-216",
+    "title": "El PDF no incluye datos de otros usuarios ni de terceros",
+    "ok": true,
+    "note": "sin emails de usuarios ni datos del contacto"
+  },
+  {
+    "id": "TC-217",
+    "title": "La ficha se descarga directo y se puede imprimir",
+    "ok": true,
+    "note": "ficha-ui-mvq6tho3-exporta-20261027.pdf y vista de impresión"
+  },
+  {
+    "id": "TC-218",
+    "title": "Queda registrado quién exportó la ficha y cuándo",
+    "ok": false,
+    "note": "la exportación no queda registrada en el sistema: el front la guarda solo en memoria y no existe el endpoint de SCRUM-252"
+  },
+  {
+    "id": "TC-219",
+    "title": "Adjuntar una imagen JPG y una PNG a la ficha",
+    "ok": true,
+    "note": "2 adjuntos en el backend"
+  },
+  {
+    "id": "TC-220",
+    "title": "Adjuntar un documento PDF",
+    "ok": true,
+    "note": "con ícono de PDF"
+  },
+  {
+    "id": "TC-221",
+    "title": "Rechazar un tipo de archivo no permitido",
+    "ok": true,
+    "note": "rechazado en pantalla y por API (400)"
+  },
+  {
+    "id": "TC-222",
+    "title": "Cada adjunto muestra nombre, fecha, usuario e ícono según el tipo",
+    "ok": true,
+    "note": "nombre, fecha, usuario e ícono"
+  },
+  {
+    "id": "TC-223",
+    "title": "Rechazar un archivo de más de 10 MB",
+    "ok": true,
+    "note": "11 MB rechazado, 9 MB aceptado"
+  },
+  {
+    "id": "TC-224",
+    "title": "Adjuntar varios archivos en una sola carga",
+    "ok": true,
+    "note": "7 adjuntos en la ficha"
+  },
+  {
+    "id": "TC-225",
+    "title": "Ver una imagen en el sistema y descargar un PDF",
+    "ok": true,
+    "note": "visor de imagen y descarga de constancia.pdf"
+  },
+  {
+    "id": "TC-226",
+    "title": "Eliminar un adjunto como Referente con confirmación",
+    "ok": true,
+    "note": "cancelar no borra; confirmar borra"
+  },
+  {
+    "id": "TC-227",
+    "title": "Solo el Referente puede eliminar adjuntos",
+    "ok": true,
+    "note": "sin botón Eliminar y 403 por API"
+  },
+  {
+    "id": "TC-228",
+    "title": "Registrar una evaluación psiquiátrica con sus campos",
+    "ok": true,
+    "note": "vence el 2027-04-24"
+  },
+  {
+    "id": "TC-229",
+    "title": "Validar los campos obligatorios de la evaluación",
+    "ok": true,
+    "note": "sin profesional y con fecha futura no se guarda"
+  },
+  {
+    "id": "TC-230",
+    "title": "Una nueva evaluación deja no vigentes a las anteriores",
+    "ok": true,
+    "note": "una sola vigente; la anterior en el historial"
+  },
+  {
+    "id": "TC-231",
+    "title": "La ficha marca que tiene evaluación psiquiátrica",
+    "ok": true,
+    "note": "tiene_eval_psiq = true después de cargarla"
+  },
+  {
+    "id": "TC-232",
+    "title": "La evaluación vence a los 6 meses de su fecha",
+    "ok": true,
+    "note": "6 meses y 1 día: vencida; 5 meses: vigente"
+  },
+  {
+    "id": "TC-233",
+    "title": "Con evaluación vencida se bloquea cargar medicamentos nuevos",
+    "ok": true,
+    "note": "bloqueado (409); con evaluación nueva se permite"
+  },
+  {
+    "id": "TC-234",
+    "title": "Con evaluación vencida se bloquea el ingreso a la Casa de Convivencia",
+    "ok": false,
+    "note": "la pantalla lo bloquea, pero la API registra el ingreso con la evaluación vencida (204): solo valida que haya una evaluación marcada como vigente, no su vencimiento"
+  },
+  {
+    "id": "TC-235",
+    "title": "Alerta visual cuando la evaluación vence en menos de 30 días",
+    "ok": true,
+    "note": "21 días: alerta; 40 días: sin alerta"
+  },
+  {
+    "id": "TC-236",
+    "title": "Ver el historial de evaluaciones anteriores",
+    "ok": true,
+    "note": "fecha, profesional, diagnóstico y quién la cargó"
+  },
+  {
+    "id": "TC-237",
+    "title": "El Escucha no puede cargar evaluaciones",
+    "ok": true,
+    "note": "sin formulario y 403 por API"
+  },
+  {
+    "id": "TC-238",
+    "title": "Pasa a Inactivo a los 30 días sin asistencia",
+    "ok": true,
+    "note": "31 días: Inactiva; 29 días: Activa"
+  },
+  {
+    "id": "TC-239",
+    "title": "Vuelve a Activo al registrar una asistencia",
+    "ok": true,
+    "note": "Activa después de la asistencia"
+  },
+  {
+    "id": "TC-240",
+    "title": "La etiqueta Inactivo se ve en el perfil y en el listado",
+    "ok": true,
+    "note": "listado y perfil"
+  },
+  {
+    "id": "TC-241",
+    "title": "Los Referentes reciben una notificación cuando alguien pasa a Inactivo",
+    "ok": false,
+    "note": "el cambio manual notifica, pero el pase automático del proceso diario no genera notificación"
+  },
+  {
+    "id": "TC-242",
+    "title": "Cambiar el estado manualmente con justificación",
+    "ok": true,
+    "note": "sin motivo no guarda; con motivo pasa a Inactivo"
+  },
+  {
+    "id": "TC-243",
+    "title": "No permite cambiar al mismo estado",
+    "ok": true,
+    "note": "la pantalla ofrece solo el contrario; la API responde 409"
+  },
+  {
+    "id": "TC-244",
+    "title": "El historial de estados guarda fecha y motivo",
+    "ok": true,
+    "note": "2 cambios con fecha, motivo y usuario"
+  },
+  {
+    "id": "TC-245",
+    "title": "El Escucha no puede cambiar el estado",
+    "ok": true,
+    "note": "sin botón y 403 por API"
+  },
+  {
+    "id": "TC-246",
+    "title": "El sistema genera el respaldo diario",
+    "ok": false,
+    "note": "el respaldo diario corrió 3 veces y falló siempre: BACKUP DATABASE WITH COMPRESSION is not supported on Express Edition (64-bit)."
+  },
+  {
+    "id": "TC-247",
+    "title": "El respaldo se guarda fuera de la base",
+    "ok": false,
+    "blocked": true,
+    "note": "no hay respaldos exitosos para revisar el almacenamiento (ver TC-246)"
+  },
+  {
+    "id": "TC-248",
+    "title": "Se conservan los últimos 30 respaldos",
+    "ok": false,
+    "blocked": true,
+    "note": "la retención se aplica después de un respaldo exitoso y en el stack local no hay ninguno (ver TC-246)"
+  },
+  {
+    "id": "TC-249",
+    "title": "Descargar un respaldo desde el panel",
+    "ok": true,
+    "note": "respaldo-20261027-0433.bak; los fallidos no se descargan (409)"
+  },
+  {
+    "id": "TC-250",
+    "title": "Si el respaldo falla se avisa al administrador",
+    "ok": true,
+    "note": "banner, notificación y el email depende de la configuración SMTP y de destinatarios, que el stack local no tiene"
+  },
+  {
+    "id": "TC-251",
+    "title": "El sistema sigue funcionando durante el respaldo",
+    "ok": false,
+    "blocked": true,
+    "note": "el respaldo falla al instante en el stack local, no hay un respaldo en curso durante el cual operar (ver TC-246)"
+  },
+  {
+    "id": "TC-252",
+    "title": "Solo el Referente accede a los respaldos",
+    "ok": true,
+    "note": "sin menú, Acceso denegado y 403 por API"
+  },
+  {
+    "id": "TC-253",
+    "title": "Generar el informe de Cáritas de un período",
+    "ok": false,
+    "note": "con 30 personas atendidas, situación habitacional suma 4: las personas sin ese dato (o con un valor del catálogo agregado o renombrado) no se cuentan"
+  },
+  {
+    "id": "TC-254",
+    "title": "Validar el período del informe",
+    "ok": true,
+    "note": "fecha futura rechazada; período inválido 400 por API"
+  },
+  {
+    "id": "TC-255",
+    "title": "Exportar el informe de Cáritas a PDF",
+    "ok": true,
+    "note": "informe-caritas-trimestral-2026-07-28-a-2026-10-27.pdf"
+  },
+  {
+    "id": "TC-256",
+    "title": "Solo el Referente genera el informe de Cáritas",
+    "ok": true,
+    "note": "sin menú y 403 por API"
+  },
+  {
+    "id": "TC-257",
+    "title": "Agregar un valor al catálogo de un campo del informe",
+    "ok": true,
+    "note": "\"Situación QA mvq6tho3\" en Motivo principal de asistencia"
+  },
+  {
+    "id": "TC-258",
+    "title": "Editar y desactivar un valor del catálogo",
+    "ok": true,
+    "note": "editado y desactivado (sigue visible como inactivo)"
+  },
+  {
+    "id": "TC-259",
+    "title": "No permitir valores duplicados en el mismo campo",
+    "ok": true,
+    "note": "aviso en pantalla y 409 por API"
+  },
+  {
+    "id": "TC-260",
+    "title": "Indicadores de campos del informe sin completar en la ficha",
+    "ok": true,
+    "note": "pendientes → completos"
+  },
+  {
+    "id": "TC-261",
+    "title": "Solo el Referente modifica el catálogo",
+    "ok": true,
+    "note": "403 por API y Acceso denegado"
+  }
+]

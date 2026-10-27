@@ -1,0 +1,368 @@
+[
+ {
+  "id": "S5-A01",
+  "name": "Referente adjunta JPG, PNG y PDF en una sola carga (201 con los 3 archivos)",
+  "ok": true,
+  "note": "status=201 foto.jpg, recibo.png, constancia.pdf"
+ },
+ {
+  "id": "S5-A02",
+  "name": "Cada adjunto trae nombre, fecha de carga, usuario e ícono por tipo",
+  "ok": true,
+  "note": "foto.jpg:image:Test referente | recibo.png:image:Test referente | constancia.pdf:pdf:Test referente"
+ },
+ {
+  "id": "S5-A03",
+  "name": "Un archivo de texto se rechaza (400)",
+  "ok": true,
+  "note": "status=400 El archivo 'notas.txt' no tiene un formato permitido. Solo se aceptan JPG, PNG y PDF."
+ },
+ {
+  "id": "S5-A04",
+  "name": "Un archivo de 11 MB se rechaza con un mensaje que nombra el máximo de 10 MB (400)",
+  "ok": true,
+  "note": "status=400 El archivo 'grande.pdf' supera el tamaño máximo permitido de 10 MB."
+ },
+ {
+  "id": "S5-A05",
+  "name": "Un archivo de 9 MB se acepta (201)",
+  "ok": true,
+  "note": "status=201"
+ },
+ {
+  "id": "S5-A06",
+  "name": "El listado devuelve los 4 adjuntos de la ficha (Escucha puede verlos)",
+  "ok": true,
+  "note": "status=200 n=4"
+ },
+ {
+  "id": "S5-A07",
+  "name": "La imagen se puede ver: se sirve con su tipo image/png",
+  "ok": true,
+  "note": "status=200 type=image/png"
+ },
+ {
+  "id": "S5-A08",
+  "name": "El PDF se descarga con su nombre original",
+  "ok": true,
+  "note": "status=200 attachment; filename=constancia.pdf; filename*=UTF-8''constancia.pdf"
+ },
+ {
+  "id": "S5-A09-Esc",
+  "name": "Escucha no puede eliminar adjuntos (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-A09-Dir",
+  "name": "Directora no puede eliminar adjuntos (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-A09-Coo",
+  "name": "Coordinador no puede eliminar adjuntos (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-A10",
+  "name": "Referente elimina un adjunto (204) y deja de figurar",
+  "ok": true,
+  "note": "status=204 quedan=3"
+ },
+ {
+  "id": "S5-A11",
+  "name": "Sin sesión responde 401",
+  "ok": true,
+  "note": "status=401"
+ },
+ {
+  "id": "S5-E01",
+  "name": "Referente registra una evaluación: queda vigente y vence a los 6 meses de su fecha (201)",
+  "ok": true,
+  "note": "status=201 vence=2027-04-17 esperado=2027-04-17"
+ },
+ {
+  "id": "S5-E02",
+  "name": "Al guardar la evaluación la ficha queda con tiene_eval_psiq = true",
+  "ok": true,
+  "note": "HasPsychiatricEvaluation=1"
+ },
+ {
+  "id": "S5-E03",
+  "name": "Una nueva evaluación deja no vigente a la anterior: una sola vigente por persona",
+  "ok": true,
+  "note": "status=201 vigentes=1 actual=Dr. Paz"
+ },
+ {
+  "id": "S5-E04",
+  "name": "El historial muestra la evaluación anterior como no vigente, con quién la cargó",
+  "ok": true,
+  "note": "status=200 [[\"Dra. Gómez\",false,\"Test referente\"]]"
+ },
+ {
+  "id": "S5-E05",
+  "name": "Una fecha futura se rechaza (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S5-E06",
+  "name": "Escucha no puede registrar evaluaciones (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-E08",
+  "name": "Una evaluación de hace 6 meses y 1 día figura vencida",
+  "ok": true,
+  "note": "estaVencida=true dias=-1"
+ },
+ {
+  "id": "S5-E09",
+  "name": "Con la evaluación vencida se bloquea el ingreso a la Casa de Convivencia (409)",
+  "ok": false,
+  "note": "status=204 "
+ },
+ {
+  "id": "S5-E07",
+  "name": "Con evaluación vigente la persona ingresa a la Casa de Convivencia como Residente (204)",
+  "ok": true,
+  "note": "status=204 "
+ },
+ {
+  "id": "S5-E14",
+  "name": "Coordinador registra la evaluación de un residente (201)",
+  "ok": true,
+  "note": "status=201"
+ },
+ {
+  "id": "S5-E10",
+  "name": "Con la evaluación vencida se bloquea cargar un medicamento nuevo (409)",
+  "ok": true,
+  "note": "status=409 No se puede cargar medicación: la persona no tiene una evaluación psiquiátrica vigente."
+ },
+ {
+  "id": "S5-E11",
+  "name": "Con una evaluación nueva vigente se vuelve a permitir cargar el medicamento (201/200)",
+  "ok": true,
+  "note": "status=201"
+ },
+ {
+  "id": "S5-E12",
+  "name": "Una evaluación que vence en 20 días activa la alerta de vencimiento próximo",
+  "ok": true,
+  "note": "alerta=true dias=21"
+ },
+ {
+  "id": "S5-E13",
+  "name": "Una evaluación que vence en 40 días no activa la alerta",
+  "ok": true,
+  "note": "alerta=false dias=40"
+ },
+ {
+  "id": "S5-S01",
+  "name": "El cambio manual sin motivo se rechaza (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S5-S02",
+  "name": "Escucha no puede cambiar el estado (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-S03",
+  "name": "Referente pasa la persona a Inactivo con motivo (204) y la ficha queda Inactiva",
+  "ok": true,
+  "note": "status=204 estado=1"
+ },
+ {
+  "id": "S5-S04",
+  "name": "El historial de estados guarda estado anterior y nuevo, fecha, motivo y usuario",
+  "ok": true,
+  "note": "{\"id\":\"afecaad3-8466-4262-b7a7-f537b1218132\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T03:38:48.4958636\",\"reason\":\"Internación\"}"
+ },
+ {
+  "id": "S5-S05",
+  "name": "Cambiar al mismo estado se rechaza (409)",
+  "ok": true,
+  "note": "status=409 La persona ya se encuentra en ese estado."
+ },
+ {
+  "id": "S5-S06",
+  "name": "Los Referentes reciben una notificación al pasar a Inactivo",
+  "ok": true,
+  "note": "n=25"
+ },
+ {
+  "id": "S5-S07",
+  "name": "Al registrar una asistencia la persona vuelve a Activo y queda en el historial",
+  "ok": true,
+  "note": "asistencia=204 estado=0 ultimo={\"id\":\"351eff12-e97a-4ed6-b7f6-e368914cad75\",\"previousValue\":\"Inactivo\",\"newValue\":\"Activo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T03:38:48.613889\",\"reason\":\"Persona reactivada por nueva asistencia\"}"
+ },
+ {
+  "id": "S5-S08",
+  "name": "El listado de fichas permite filtrar por estado (la persona reactivada no figura como Inactiva)",
+  "ok": true,
+  "note": "status=200"
+ },
+ {
+  "id": "S5-C01",
+  "name": "El catálogo trae valores para los 5 campos del informe",
+  "ok": true,
+  "note": "3/3/4/3/7"
+ },
+ {
+  "id": "S5-C02",
+  "name": "Referente agrega un valor al motivo de asistencia (201)",
+  "ok": true,
+  "note": "status=201"
+ },
+ {
+  "id": "S5-C03",
+  "name": "Un valor repetido en el mismo campo se rechaza (409)",
+  "ok": true,
+  "note": "status=409 Ya existe un valor con ese nombre en esta categoría."
+ },
+ {
+  "id": "S5-C04",
+  "name": "Escucha no puede modificar el catálogo (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-C05",
+  "name": "Referente edita el nombre de un valor (200)",
+  "ok": true,
+  "note": "status=200"
+ },
+ {
+  "id": "S5-C06",
+  "name": "Los campos del informe se guardan en la ficha y se leen en el detalle",
+  "ok": true,
+  "note": "status=204 {\"genderId\":\"22222222-2222-2222-2222-222222222208\",\"housingSituationId\":null,\"originLocalityId\":null,\"documentationStatusId\":null,\"attendanceReasonId\":\"22222222-2222-2222-2222-222222222214\"}"
+ },
+ {
+  "id": "S5-C07",
+  "name": "Desactivar un valor (204) lo saca de las opciones activas sin borrarlo",
+  "ok": true,
+  "note": "status=204 sigue=true"
+ },
+ {
+  "id": "S5-C08",
+  "name": "Un valor desactivado no se puede asignar a una ficha (400)",
+  "ok": true,
+  "note": "status=400 El valor \"Situación QA mvq4yt8h editado\" está desactivado y no se puede asignar."
+ },
+ {
+  "id": "S5-C09",
+  "name": "Escucha no puede cargar los campos del informe (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-R01",
+  "name": "Referente genera el informe trimestral con totales y desglose por motivo (200, datos reales)",
+  "ok": true,
+  "note": "status=200 personas=17 motivos=17"
+ },
+ {
+  "id": "S5-R02",
+  "name": "Cada categoría del informe suma el total de personas atendidas",
+  "ok": false,
+  "note": "género=17 vivienda=0 dni=17"
+ },
+ {
+  "id": "S5-R03",
+  "name": "Un período que no es trimestral ni semestral se rechaza (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S5-R04",
+  "name": "Una fecha de corte futura se rechaza (400)",
+  "ok": true,
+  "note": "status=400"
+ },
+ {
+  "id": "S5-R05",
+  "name": "El informe se exporta a PDF (200, application/pdf)",
+  "ok": true,
+  "note": "status=200 type=application/pdf bytes=30085"
+ },
+ {
+  "id": "S5-R06",
+  "name": "Escucha no puede generar el informe (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-B01",
+  "name": "Referente consulta el listado de respaldos (200)",
+  "ok": true,
+  "note": "status=200 n=0"
+ },
+ {
+  "id": "S5-B02-Esc",
+  "name": "Escucha no accede a los respaldos (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-B02-Dir",
+  "name": "Directora no accede a los respaldos (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-B02-Coo",
+  "name": "Coordinador no accede a los respaldos (403)",
+  "ok": true,
+  "note": "status=403"
+ },
+ {
+  "id": "S5-B03",
+  "name": "Descargar un respaldo inexistente responde 404",
+  "ok": true,
+  "note": "status=404"
+ },
+ {
+  "id": "S5-X01",
+  "name": "El backend registra quién exportó la ficha y cuándo (endpoint de exportación de SCRUM-252)",
+  "ok": false,
+  "note": "status=404 (no existe el endpoint de SCRUM-252)"
+ },
+ {
+  "id": "S5-J01",
+  "name": "El proceso diario pasa a Inactivo a quien no asiste hace más de 30 días",
+  "ok": true,
+  "note": "estado=1"
+ },
+ {
+  "id": "S5-J02",
+  "name": "El pase automático queda en el historial como Sistema, con fecha y motivo",
+  "ok": true,
+  "note": "{\"id\":\"84a55f4c-a01b-404d-acdc-5b03293e9695\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Sistema\",\"modifiedAt\":\"2026-10-27T03:38:52.6471816\",\"reason\":\"Paso automático a inactivo por 30 días sin asistencia\"}"
+ },
+ {
+  "id": "S5-J03",
+  "name": "Quien asistió hace 29 días sigue Activo",
+  "ok": true,
+  "note": "estado=0"
+ },
+ {
+  "id": "S5-J05",
+  "name": "Una ficha dada de alta hoy, todavía sin asistencias, no pasa a Inactivo",
+  "ok": false,
+  "note": "estado=1"
+ },
+ {
+  "id": "S5-J04",
+  "name": "Los Referentes reciben una notificación cuando el proceso diario pasa a alguien a Inactivo",
+  "ok": false,
+  "note": "n=26"
+ }
+]

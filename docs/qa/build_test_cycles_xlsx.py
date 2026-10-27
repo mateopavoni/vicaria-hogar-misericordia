@@ -1,5 +1,5 @@
-"""Genera docs/qa/Ciclos_de_prueba_Sprint_1-4.xlsx con el formato de la Planilla de Ciclo de Pruebas
-(una pestaña por ciclo) a partir de Plan_de_pruebas_Sprint_1-4.xlsx.
+"""Genera docs/qa/Ciclos_de_prueba_Sprint_1-5.xlsx con el formato de la Planilla de Ciclo de Pruebas
+(una pestaña por ciclo) a partir de Plan_de_pruebas_Sprint_1-5.xlsx.
 
 Uso: python build_test_cycles_xlsx.py <planilla_limpia.xlsx> [plan.xlsx] [salida.xlsx]
 """
@@ -40,13 +40,14 @@ CYCLES = [
     ("Ciclo - Sprint 2", "Sprint 2 — Fichas, observaciones e historia de vida (EP-01, EP-02, EP-12)"),
     ("Ciclo - Sprint 3", "Sprint 3 — Calendario, colaboradores y visitas (EP-04, EP-05, EP-06)"),
     ("Ciclo - Sprint 4", "Sprint 4 — Asistencia y medicación (EP-10): casos de interfaz, pruebas de API, integración front-back, seguridad y carga"),
+    ("Ciclo - Sprint 5", "Sprint 5 — Ficha exportable, adjuntos, evaluación psiquiátrica, estado, respaldos e informe de Cáritas (EP-07, EP-12, EP-13): casos de interfaz y pruebas de API"),
 ]
 
 
 def cycle_of(tc_id, sprint):
     if sprint == "Sprint 1-2":
         return 0 if tc_id in SPRINT1_IDS else 1
-    return {"Sprint 3": 2, "Sprint 4": 3, "Transversal": 3}[sprint]
+    return {"Sprint 3": 2, "Sprint 4": 3, "Transversal": 3, "Sprint 5": 4}[sprint]
 
 
 def split_steps(text):
@@ -81,6 +82,14 @@ S4_WIRED_RESULTS = HERE / "e2e" / "sprint4-wired-results.json"
 S4_UI_FILE = HERE / "e2e" / "sprint4-ui-results.json"
 # TC-147 a TC-194 ejecutados en navegador (e2e/sprint4-ui-cases.mjs): id -> {ok, note}
 S4_UI_RESULTS = ({r["id"]: r for r in __import__("json").loads(S4_UI_FILE.read_text(encoding="utf-8"))} if S4_UI_FILE.exists() else {})
+S5_API_RESULTS = HERE / "e2e" / "sprint5-api-results.json"
+S5_UI_FILE = HERE / "e2e" / "sprint5-ui-results.json"
+# TC-212 a TC-261 ejecutados en navegador (e2e/sprint5-ui-cases.mjs): id -> {ok, blocked?, note}
+S5_UI_RESULTS = ({r["id"]: r for r in __import__("json").loads(S5_UI_FILE.read_text(encoding="utf-8"))} if S5_UI_FILE.exists() else {})
+S5_DATE = date(2026, 10, 27)
+S5_API_MODULES = {"A": "API - Adjuntos", "E": "API - Evaluación psiquiátrica", "S": "API - Estado activo/inactivo",
+                  "J": "API - Proceso diario de inactivación", "C": "API - Catálogo y campos de Cáritas",
+                  "R": "API - Informe de Cáritas", "B": "API - Respaldos", "X": "API - Exportación de la ficha"}
 RUNNER = "Mateo Pavoni"
 
 
@@ -108,6 +117,19 @@ def sprint4_script_rows():
     return out
 
 
+def sprint5_script_rows():
+    """Filas del Sprint 5 que salen del script de API (27/10). Devuelve [(valores A..K, fecha)]."""
+    import json
+    out = []
+    if S5_API_RESULTS.exists():
+        for r in json.loads(S5_API_RESULTS.read_text(encoding="utf-8")):
+            module = S5_API_MODULES[r["id"].split("-")[1][0]]
+            pasos = "1. Iniciar sesión con el rol indicado" + chr(10) + "2. Ejecutar la llamada a la API indicada en el título"
+            out.append(([r["id"], module, r["name"], pasos, r["name"], f"Ejecutado con script contra la API local. Respuesta: {r['note']}".strip(),
+                         "PASÓ" if r["ok"] else "FALLÓ", None, RUNNER, S5_DATE, None], S5_DATE))
+    return out
+
+
 def drop_empty_columns(wb):
     """Quita las columnas 'ID Bug' y 'Comentarios' de todas las pestañas."""
     from openpyxl.utils import get_column_letter
@@ -126,8 +148,8 @@ def drop_empty_columns(wb):
 
 def main():
     template = sys.argv[1]
-    plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-4.xlsx")
-    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Ciclos_de_prueba_Sprint_1-4.xlsx")
+    plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-5.xlsx")
+    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Ciclos_de_prueba_Sprint_1-5.xlsx")
 
     src = openpyxl.load_workbook(plan)["Parte A - Manuales"]
     rows = [r for r in src.iter_rows(min_row=2, values_only=True) if r[0]]
@@ -157,13 +179,21 @@ def main():
             if s4ui:
                 state = "PASÓ" if s4ui["ok"] else "FALLÓ"
                 who, when = RUNNER, date(2026, 10, 20)
+            s5ui = S5_UI_RESULTS.get(tc_id)
+            if s5ui:
+                state = "PASÓ" if s5ui["ok"] else "BLOQUEADO" if s5ui.get("blocked") else "FALLÓ"
+                who, when = RUNNER, S5_DATE
+                s4ui = s5ui
             comment = observ if sprint not in ("Transversal",) and tc_id not in run.UI_RESULTS else ""
             if tc_id in BUGS and state == "PASÓ" and tc_id not in run.UI_RESULTS:
                 comment = (comment + " " if comment else "") + f"Defecto {BUGS[tc_id]} corregido."
             if state == "NO EJECUTADO":
                 comment = BLOCKED_NOTE
             ui = run.UI_RESULTS.get(tc_id)
-            if s4ui:
+            if s4ui and state == "BLOQUEADO":
+                real = "No se pudo ejecutar: " + s4ui["note"] + "."
+                comment = ""
+            elif s4ui:
                 real = "Ejecutado con script en navegador contra el stack local: " + (s4ui["note"] or "cada paso dio el resultado esperado") + "."
                 comment = ""
             elif ui:
@@ -186,8 +216,8 @@ def main():
                 if c == 10 and when:
                     cell.number_format = "dd/mm/yyyy"
         total = len(data)
-        if name == "Ciclo - Sprint 4":
-            for vals, when in sprint4_script_rows():
+        if name in ("Ciclo - Sprint 4", "Ciclo - Sprint 5"):
+            for vals, when in (sprint4_script_rows() if name == "Ciclo - Sprint 4" else sprint5_script_rows()):
                 for c, v in enumerate(vals, start=1):
                     cell = ws.cell(row=4 + total, column=c, value=v)
                     s = style_row[c - 1]

@@ -1,6 +1,6 @@
-"""Genera docs/qa/Informe_de_pruebas_Sprint_1-3.docx (informe de resultados de pruebas).
-Las métricas se calculan leyendo Ciclos_de_prueba_Sprint_1-4.xlsx; los defectos, la hoja
-"Defectos y pendientes" de Plan_de_pruebas_Sprint_1-4.xlsx; el resto, run_2026_10_16.py.
+"""Genera docs/qa/Informe_de_pruebas_Sprint_1-5.docx (informe de resultados de pruebas).
+Las métricas se calculan leyendo Ciclos_de_prueba_Sprint_1-5.xlsx; los defectos, la hoja
+"Defectos y pendientes" de Plan_de_pruebas_Sprint_1-5.xlsx; el resto, run_2026_10_16.py.
 
 Uso: python build_test_report_docx.py [ciclos.xlsx] [plan.xlsx] [salida.docx]
 """
@@ -18,10 +18,14 @@ from docx.shared import Inches, Pt, RGBColor
 
 import run_2026_10_16 as run
 
+FRONT_TESTS = 188  # Vitest, 44 archivos (27/10)
+
 HERE = Path(__file__).parent
 EVIDENCE = HERE / "e2e" / "evidence"
-VERSION = "rama dev, Sprint 4 integrado (20/10/2026)"
-REPORT_DATE = "20/10/2026"
+VERSION = "rama dev, Sprint 5 integrado (27/10/2026)"
+REPORT_DATE = "27/10/2026"
+# suites automatizadas re-ejecutadas el 27/10 con el Sprint 5 integrado
+SUITES = {**run.SUITES, "backend_unit": 335, "backend_integration": 261, "frontend_tests": FRONT_TESTS}
 NAVY = "1F3864"
 
 # Severidad de los hallazgos de la hoja de defectos (# de fila -> severidad); los #14+ vienen de run.NEW_DEFECTS
@@ -91,9 +95,9 @@ def picture(doc, name, caption, width=5.6):
 
 
 def main():
-    ciclos = sys.argv[1] if len(sys.argv) > 1 else str(HERE / "Ciclos_de_prueba_Sprint_1-4.xlsx")
-    plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-4.xlsx")
-    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Informe_de_pruebas_Sprint_1-4.docx")
+    ciclos = sys.argv[1] if len(sys.argv) > 1 else str(HERE / "Ciclos_de_prueba_Sprint_1-5.xlsx")
+    plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-5.xlsx")
+    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Informe_de_pruebas_Sprint_1-5.docx")
 
     wbc = openpyxl.load_workbook(ciclos)
     stats = {ws.title: collections.Counter(ws.cell(row=r, column=7).value for r in range(4, ws.max_row + 1)) for ws in wbc}
@@ -105,7 +109,7 @@ def main():
     defects = [r for r in openpyxl.load_workbook(plan)["Defectos y pendientes"].iter_rows(min_row=2, values_only=True) if r[0]]
     defects = [(str(d[0]),) + tuple(d[1:]) for d in defects]
     bugs = [d for d in defects if d[1] in DEF_TYPES]
-    S = run.SUITES
+    S = SUITES
 
     doc = Document()
     sec = doc.sections[0]
@@ -115,7 +119,7 @@ def main():
 
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run("INFORME DE RESULTADOS DE PRUEBAS"); r.bold = True; r.font.size = Pt(22)
-    p = doc.add_paragraph("Vicaria de los Pobres, Pastoral de Adicciones — Sprint 1 a 4"); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p = doc.add_paragraph("Vicaria de los Pobres, Pastoral de Adicciones — Sprint 1 a 5"); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     table(doc, ["Dato", "Detalle"], [
         ["Proyecto", "Sistema de gestión de la Vicaria de los Pobres, Pastoral de Adicciones"],
         ["Institución / Cátedra", "Instituto Superior Cura Gabriel Brochero · Tecnicatura en Desarrollo de Software · Prácticas Profesionalizantes II (Docente: Karina Salto)"],
@@ -126,7 +130,7 @@ def main():
 
     doc.add_heading("1. Resumen", 1)
     doc.add_paragraph(
-        f"Se ejecutaron {tot} casos de prueba de los Sprint 1 a 4: {tc['PASÓ']} terminaron en PASÓ y {tc['FALLÓ']} en FALLÓ. "
+        f"Se ejecutaron {tot} casos de prueba de los Sprint 1 a 5: {tc['PASÓ']} terminaron en PASÓ, {tc['FALLÓ']} en FALLÓ y {tc['BLOQUEADO']} quedaron BLOQUEADOS. "
         "Todos los casos los ejecutó Mateo Pavoni, de forma manual en el navegador o con scripts automatizados, como se indica en cada ciclo. "
         f"Además se corrieron {S['backend_unit']} pruebas unitarias y {S['backend_integration']} de integración del backend y {S['frontend_tests']} del frontend, todas en verde."
     )
@@ -138,15 +142,16 @@ def main():
         ["Sprint 2", "Fichas, observaciones, historia de vida, estadías de Casa de Convivencia", c("Ciclo - Sprint 2"), "Manual (06/10) y flujos de UI con Playwright (16/10)", "Mateo Pavoni"],
         ["Sprint 3", "Calendario, colaboradores y visitas", c("Ciclo - Sprint 3"), "API y UI contra el stack local (08 al 14/10), con tests automatizados", "Mateo Pavoni"],
         ["Sprint 4", "Asistencia, estadísticas y medicación; pruebas de API, integración front-back, seguridad y carga", c("Ciclo - Sprint 4"), "Scripts con Playwright y Node contra el stack local (16 al 20/10)", "Mateo Pavoni"],
+        ["Sprint 5", "Ficha exportable, adjuntos, evaluación psiquiátrica, estado activo/inactivo, respaldos e informe de Cáritas; pruebas de API", c("Ciclo - Sprint 5"), "Scripts con Playwright y Node contra el stack local (27/10)", "Mateo Pavoni"],
     ], widths=[0.8, 2.7, 0.6, 2.0, 0.9], size=9)
 
     doc.add_heading("3. Resultados", 1)
     rows = []
     for k, cnt in stats.items():
         n = sum(cnt.values())
-        rows.append([k.replace("Ciclo - ", ""), n, cnt["PASÓ"], cnt["FALLÓ"]])
-    rows.append(["Total", tot, tc["PASÓ"], tc["FALLÓ"]])
-    table(doc, ["Ciclo", "Casos", "PASÓ", "FALLÓ"], rows, widths=[2.4, 1.2, 1.2, 1.2])
+        rows.append([k.replace("Ciclo - ", ""), n, cnt["PASÓ"], cnt["FALLÓ"], cnt["BLOQUEADO"]])
+    rows.append(["Total", tot, tc["PASÓ"], tc["FALLÓ"], tc["BLOQUEADO"]])
+    table(doc, ["Ciclo", "Casos", "PASÓ", "FALLÓ", "BLOQUEADO"], rows, widths=[2.2, 1.0, 1.0, 1.0, 1.2])
     doc.add_paragraph("")
     table(doc, ["Pruebas automatizadas", "Resultado"], [
         ["Backend unitarias (xUnit)", f"{S['backend_unit']} de {S['backend_unit']} OK"],
