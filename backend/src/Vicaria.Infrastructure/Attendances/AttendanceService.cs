@@ -87,6 +87,18 @@ public class AttendanceService : IAttendanceService
                 AffectedEntity = $"SocialRecord:{socialRecord.Id}",
                 Date = DateTime.UtcNow
             });
+
+            // SCRUM-262: la reactivación por asistencia queda en el historial de estados
+            _dbContext.PersonStatusChanges.Add(new PersonStatusChange
+            {
+                Id = Guid.NewGuid(),
+                PersonId = dto.PersonId,
+                PreviousStatus = SocialRecordStatus.Inactive,
+                NewStatus = SocialRecordStatus.Active,
+                Reason = "Persona reactivada por nueva asistencia",
+                ChangedByUserId = actorId,
+                ChangedAt = DateTime.UtcNow
+            });
         }
 
         // Generación automática de agenda diaria de medicamentos según asistencia (SCRUM-236)

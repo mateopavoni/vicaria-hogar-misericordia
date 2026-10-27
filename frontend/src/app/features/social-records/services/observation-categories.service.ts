@@ -35,7 +35,14 @@ export class ObservationCategoriesService {
 
   // Bug reportado 2026-09-23: apuntaba a .../toggle-status; la ruta real del backend es .../status
   // (ObservationCategoriesController.ToggleStatus, [HttpPatch("{id:guid}/status")]).
-  toggleActive(id: string, isActive: boolean): Observable<ObservationCategory> {
-    return this.http.patch<ObservationCategory>(`${this.apiUrl}/${id}/status`, { isActive });
+  // El backend responde 204 sin cuerpo.
+  toggleActive(id: string, isActive: boolean): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/status`, { isActive });
+  }
+
+  // SCRUM-180: solo se puede eliminar una categoría sin observaciones; si tiene, el backend
+  // responde 409 con { message } ("Debe desactivarla").
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

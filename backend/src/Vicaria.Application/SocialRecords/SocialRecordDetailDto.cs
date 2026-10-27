@@ -23,7 +23,9 @@ public record SocialRecordDetailDto(
     SocialRecordStatus Status,
     DateTime LastModifiedAt,
     IReadOnlyList<SocialRecordStayDto> StaysHistory,
-    IReadOnlyList<PersonTypeHistoryItemDto> PersonTypeHistory);
+    IReadOnlyList<PersonTypeHistoryItemDto> PersonTypeHistory,
+    IReadOnlyList<StatusHistoryItemDto> StatusHistory,
+    SocialRecordReportFieldsDto ReportFields);
 
 // item de historial de cambio de tipo de persona, con la misma forma que espera
 // el ChangeHistoryItem del frontend (bug reportado 2026-09-23: nunca existió este campo)
@@ -33,6 +35,16 @@ public record PersonTypeHistoryItemDto(
     string NewValue,
     string ModifiedBy,
     DateTime ModifiedAt);
+
+// item del historial de estados (SCRUM-262/263), con la forma del ChangeHistoryItem del
+// frontend; ModifiedBy es "Sistema" en los pases automáticos del job
+public record StatusHistoryItemDto(
+    Guid Id,
+    string PreviousValue,
+    string NewValue,
+    string ModifiedBy,
+    DateTime ModifiedAt,
+    string Reason);
 
 // estadia en la Casa de Convivencia, tal como la consume el timeline del perfil
 public record SocialRecordStayDto(

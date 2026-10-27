@@ -11,6 +11,8 @@ import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-fi
 })
 export class LifeHistoryComponent {
   history = input<LifeHistory | null>(null);
+  // solo el Referente puede cargar entradas (permiso historia.edit): lo decide el padre
+  canEdit = input(false);
 
   editingStage = signal<LifeHistoryStage | null>(null);
 

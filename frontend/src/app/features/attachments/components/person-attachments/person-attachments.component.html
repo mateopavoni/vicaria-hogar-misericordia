@@ -1,0 +1,125 @@
+<div class="mt-4 flex flex-col gap-4">
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-[15px] font-bold text-slate-800">Documentos</h2>
+      <p class="text-[12px] text-slate-400">Imágenes JPG o PNG y documentos PDF, de hasta 10 MB cada uno.</p>
+    </div>
+
+    @if (canCreate()) {
+      <label
+        class="inline-flex h-[34px] cursor-pointer items-center rounded-md bg-[#4167D9] px-4 text-[12px] font-semibold text-white hover:bg-[#3556C0]"
+        [class]="uploading() ? 'pointer-events-none opacity-60' : ''"
+      >
+        {{ uploading() ? 'Subiendo...' : 'Adjuntar archivos' }}
+        <input type="file" multiple class="sr-only" [accept]="accept" [disabled]="uploading()" (change)="onFilesSelected($event)" />
+      </label>
+    }
+  </div>
+
+  @if (uploadErrors().length > 0) {
+    <div class="rounded-md bg-red-50 px-4 py-3 text-[13px] text-red-600" role="alert">
+      <p class="font-semibold">No se pudieron adjuntar algunos archivos:</p>
+      <ul class="mt-1 list-disc pl-5">
+        @for (message of uploadErrors(); track $index) {
+          <li>{{ message }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="rounded-md bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-[13px] text-slate-400">Cargando documentos...</p>
+  } @else {
+    <ul class="divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200">
+      @for (file of attachments(); track file.id) {
+        <li class="flex flex-wrap items-center gap-3 px-4 py-3">
+
+          <!-- ícono según el tipo -->
+          @if (file.kind === 'pdf') {
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500" aria-label="PDF">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
+                <path d="M14 3v5h5"></path>
+                <path d="M9 13h6M9 17h4"></path>
+              </svg>
+            </span>
+          } @else {
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-500" aria-label="Imagen">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                <circle cx="9" cy="10" r="1.5"></circle>
+                <path d="m21 16-5-5-9 9"></path>
+              </svg>
+            </span>
+          }
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-[14px] font-semibold text-slate-800" [title]="file.name">{{ file.name }}</p>
+            <p class="text-[12px] text-slate-400">
+              {{ formatSize(file.size) }} · Cargado el {{ file.uploadedAt | date: 'dd/MM/yyyy HH:mm' }} por {{ file.uploadedByName }}
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            @if (file.kind === 'image') {
+              <button
+                type="button"
+                class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+                (click)="viewing.set(file)"
+              >
+                Ver
+              </button>
+            }
+            <a
+              [href]="file.url"
+              [attr.download]="file.name"
+              class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Descargar
+            </a>
+            @if (canDelete()) {
+              <button
+                type="button"
+                class="rounded-md border border-red-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-600 hover:bg-red-50"
+                (click)="pendingDelete.set(file)"
+              >
+                Eliminar
+              </button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li class="px-4 py-6 text-center text-[13px] text-slate-400">Todavía no hay documentos adjuntos.</li>
+      }
+    </ul>
+  }
+
+  @if (viewing(); as file) {
+    <app-attachment-viewer-modal [attachment]="file" (closed)="viewing.set(null)" />
+  }
+
+  @if (pendingDelete(); as file) {
+    <ui-confirm-dialog
+      title="Eliminar archivo"
+      [message]="'¿Seguro que querés eliminar «' + file.name + '»? Esta acción no se puede deshacer.'"
+      confirmLabel="Eliminar"
+      confirmVariant="danger"
+      [loading]="deleting()"
+      (confirmed)="confirmDelete()"
+      (cancelled)="pendingDelete.set(null)"
+    />
+  }
+</div>

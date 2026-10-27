@@ -36,3 +36,6 @@ TestResults/
 # entregables de QA generados (Excel/Word): se regeneran con los scripts de docs/qa, no se versionan
 docs/qa/*.xlsx
 docs/qa/*.docx
+
+# archivos que generan los tests de integración (adjuntos y respaldos en el ContentRoot de la API)
+backend/src/Vicaria.Api/uploads/

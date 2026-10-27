@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonProfileStatus, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
+import { CreateSocialRecordRequest, CreateSocialRecordResponse, PersonStatus, PersonType, SocialRecordDetail, SocialRecordsResponse } from '../interfaces/social-record.interface';
 import { SocialRecordFilters } from '../interfaces/social-record-filters.interface';
 import { CasaConvivenciaStayExitRequest } from '../interfaces/exit-stay.interface';
 
@@ -69,9 +69,10 @@ export class SocialRecordsService {
     return this.http.put<void>(`/api/casa-convivencia-stays/${stayId}/egreso`, payload);
   }
 
-  // marca manualmente a una persona ambulatoria como activa/inactiva (SCRUM-78/156)
-  updateProfileStatus(personId: string, status: PersonProfileStatus): Observable<void> {
-    return this.http.put<void>(`/api/persons/${personId}/status`, { status });
+  // SCRUM-264: cambio manual de estado Activo/Inactivo con motivo obligatorio (SCRUM-263). El backend
+  // lo guarda en el historial de estados y, al pasar a Inactivo, notifica a los Referentes
+  updateStatus(personId: string, status: PersonStatus, reason: string): Observable<void> {
+    return this.http.patch<void>(`/api/persons/${personId}/status`, { status, reason });
   }
 }
 
