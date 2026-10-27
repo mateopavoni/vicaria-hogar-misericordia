@@ -121,9 +121,9 @@
  },
  {
   "id": "S5-E09",
-  "name": "Con la evaluación vencida se bloquea el ingreso a la Casa de Convivencia (409)",
-  "ok": false,
-  "note": "status=204 "
+  "name": "Con la evaluación vencida se bloquea el ingreso a la Casa de Convivencia (400, falta evaluación vigente)",
+  "ok": true,
+  "note": "status=400 No se puede asignar el tipo Residente sin una evaluación psiquiátrica vigente cargada para la persona."
  },
  {
   "id": "S5-E07",
@@ -183,7 +183,7 @@
   "id": "S5-S04",
   "name": "El historial de estados guarda estado anterior y nuevo, fecha, motivo y usuario",
   "ok": true,
-  "note": "{\"id\":\"afecaad3-8466-4262-b7a7-f537b1218132\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T03:38:48.4958636\",\"reason\":\"Internación\"}"
+  "note": "{\"id\":\"191260be-f82e-4181-9de3-c198859c6e64\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T12:15:18.4578914\",\"reason\":\"Internación\"}"
  },
  {
   "id": "S5-S05",
@@ -195,13 +195,13 @@
   "id": "S5-S06",
   "name": "Los Referentes reciben una notificación al pasar a Inactivo",
   "ok": true,
-  "note": "n=25"
+  "note": "n=40"
  },
  {
   "id": "S5-S07",
   "name": "Al registrar una asistencia la persona vuelve a Activo y queda en el historial",
   "ok": true,
-  "note": "asistencia=204 estado=0 ultimo={\"id\":\"351eff12-e97a-4ed6-b7f6-e368914cad75\",\"previousValue\":\"Inactivo\",\"newValue\":\"Activo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T03:38:48.613889\",\"reason\":\"Persona reactivada por nueva asistencia\"}"
+  "note": "asistencia=204 estado=0 ultimo={\"id\":\"62d065e7-9367-426d-bcce-2ab8428e8c0b\",\"previousValue\":\"Inactivo\",\"newValue\":\"Activo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T12:15:18.5764053\",\"reason\":\"Persona reactivada por nueva asistencia\"}"
  },
  {
   "id": "S5-S08",
@@ -213,7 +213,7 @@
   "id": "S5-C01",
   "name": "El catálogo trae valores para los 5 campos del informe",
   "ok": true,
-  "note": "3/3/4/3/7"
+  "note": "3/3/4/3/13"
  },
  {
   "id": "S5-C02",
@@ -255,7 +255,7 @@
   "id": "S5-C08",
   "name": "Un valor desactivado no se puede asignar a una ficha (400)",
   "ok": true,
-  "note": "status=400 El valor \"Situación QA mvq4yt8h editado\" está desactivado y no se puede asignar."
+  "note": "status=400 El valor \"Situación QA mvqnf219 editado\" está desactivado y no se puede asignar."
  },
  {
   "id": "S5-C09",
@@ -267,13 +267,13 @@
   "id": "S5-R01",
   "name": "Referente genera el informe trimestral con totales y desglose por motivo (200, datos reales)",
   "ok": true,
-  "note": "status=200 personas=17 motivos=17"
+  "note": "status=200 personas=29 motivos=29"
  },
  {
   "id": "S5-R02",
   "name": "Cada categoría del informe suma el total de personas atendidas",
-  "ok": false,
-  "note": "género=17 vivienda=0 dni=17"
+  "ok": true,
+  "note": "género=29 vivienda=29 dni=29"
  },
  {
   "id": "S5-R03",
@@ -291,7 +291,7 @@
   "id": "S5-R05",
   "name": "El informe se exporta a PDF (200, application/pdf)",
   "ok": true,
-  "note": "status=200 type=application/pdf bytes=30085"
+  "note": "status=200 type=application/pdf bytes=31724"
  },
  {
   "id": "S5-R06",
@@ -303,7 +303,7 @@
   "id": "S5-B01",
   "name": "Referente consulta el listado de respaldos (200)",
   "ok": true,
-  "note": "status=200 n=0"
+  "note": "status=200 n=3"
  },
  {
   "id": "S5-B02-Esc",
@@ -331,9 +331,15 @@
  },
  {
   "id": "S5-X01",
-  "name": "El backend registra quién exportó la ficha y cuándo (endpoint de exportación de SCRUM-252)",
-  "ok": false,
-  "note": "status=404 (no existe el endpoint de SCRUM-252)"
+  "name": "El backend registra quién exportó la ficha y cuándo (204 y auditoría)",
+  "ok": true,
+  "note": "status=204"
+ },
+ {
+  "id": "S5-X02",
+  "name": "Escucha no puede exportar la ficha (403)",
+  "ok": true,
+  "note": "status=403"
  },
  {
   "id": "S5-J01",
@@ -345,7 +351,7 @@
   "id": "S5-J02",
   "name": "El pase automático queda en el historial como Sistema, con fecha y motivo",
   "ok": true,
-  "note": "{\"id\":\"84a55f4c-a01b-404d-acdc-5b03293e9695\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Sistema\",\"modifiedAt\":\"2026-10-27T03:38:52.6471816\",\"reason\":\"Paso automático a inactivo por 30 días sin asistencia\"}"
+  "note": "{\"id\":\"a0930036-6094-4916-b7ea-a09ccdc93c94\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Sistema\",\"modifiedAt\":\"2026-10-27T12:15:22.8785871\",\"reason\":\"Paso automático a inactivo por 30 días sin asistencia\"}"
  },
  {
   "id": "S5-J03",
@@ -356,13 +362,13 @@
  {
   "id": "S5-J05",
   "name": "Una ficha dada de alta hoy, todavía sin asistencias, no pasa a Inactivo",
-  "ok": false,
-  "note": "estado=1"
+  "ok": true,
+  "note": "estado=0"
  },
  {
   "id": "S5-J04",
   "name": "Los Referentes reciben una notificación cuando el proceso diario pasa a alguien a Inactivo",
-  "ok": false,
-  "note": "n=26"
+  "ok": true,
+  "note": "n=42"
  }
 ]

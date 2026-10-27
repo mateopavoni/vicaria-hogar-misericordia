@@ -18,14 +18,14 @@ from docx.shared import Inches, Pt, RGBColor
 
 import run_2026_10_16 as run
 
-FRONT_TESTS = 188  # Vitest, 44 archivos (27/10)
+FRONT_TESTS = 190  # Vitest, 45 archivos (27/10)
 
 HERE = Path(__file__).parent
 EVIDENCE = HERE / "e2e" / "evidence"
 VERSION = "rama dev, Sprint 5 integrado (27/10/2026)"
 REPORT_DATE = "27/10/2026"
 # suites automatizadas re-ejecutadas el 27/10 con el Sprint 5 integrado
-SUITES = {**run.SUITES, "backend_unit": 335, "backend_integration": 261, "frontend_tests": FRONT_TESTS}
+SUITES = {**run.SUITES, "backend_unit": 351, "backend_integration": 265, "frontend_tests": FRONT_TESTS}
 NAVY = "1F3864"
 
 # Severidad de los hallazgos de la hoja de defectos (# de fila -> severidad); los #14+ vienen de run.NEW_DEFECTS

@@ -3,7 +3,7 @@
     "id": "TC-212",
     "title": "Exportar la ficha con solo los datos personales",
     "ok": true,
-    "note": "ficha-ui-mvq6tho3-exporta-20261027.pdf"
+    "note": "ficha-ui-mvqpf2ys-exporta-20261027.pdf"
   },
   {
     "id": "TC-213",
@@ -33,13 +33,13 @@
     "id": "TC-217",
     "title": "La ficha se descarga directo y se puede imprimir",
     "ok": true,
-    "note": "ficha-ui-mvq6tho3-exporta-20261027.pdf y vista de impresión"
+    "note": "ficha-ui-mvqpf2ys-exporta-20261027.pdf y vista de impresión"
   },
   {
     "id": "TC-218",
     "title": "Queda registrado quién exportó la ficha y cuándo",
-    "ok": false,
-    "note": "la exportación no queda registrada en el sistema: el front la guarda solo en memoria y no existe el endpoint de SCRUM-252"
+    "ok": true,
+    "note": "Ficha exportada (PDF): solo datos personales"
   },
   {
     "id": "TC-219",
@@ -134,8 +134,8 @@
   {
     "id": "TC-234",
     "title": "Con evaluación vencida se bloquea el ingreso a la Casa de Convivencia",
-    "ok": false,
-    "note": "la pantalla lo bloquea, pero la API registra el ingreso con la evaluación vencida (204): solo valida que haya una evaluación marcada como vigente, no su vencimiento"
+    "ok": true,
+    "note": "pantalla bloqueada y la API lo rechaza (400, falta evaluación vigente)"
   },
   {
     "id": "TC-235",
@@ -176,8 +176,8 @@
   {
     "id": "TC-241",
     "title": "Los Referentes reciben una notificación cuando alguien pasa a Inactivo",
-    "ok": false,
-    "note": "el cambio manual notifica, pero el pase automático del proceso diario no genera notificación"
+    "ok": true,
+    "note": ""
   },
   {
     "id": "TC-242",
@@ -206,28 +206,26 @@
   {
     "id": "TC-246",
     "title": "El sistema genera el respaldo diario",
-    "ok": false,
-    "note": "el respaldo diario corrió 3 veces y falló siempre: BACKUP DATABASE WITH COMPRESSION is not supported on Express Edition (64-bit)."
+    "ok": true,
+    "note": ""
   },
   {
     "id": "TC-247",
     "title": "El respaldo se guarda fuera de la base",
-    "ok": false,
-    "blocked": true,
-    "note": "no hay respaldos exitosos para revisar el almacenamiento (ver TC-246)"
+    "ok": true,
+    "note": "archivo b1a7858442f14949863eaa805be3b66f.bak de 12374016 bytes en el almacenamiento de respaldos"
   },
   {
     "id": "TC-248",
     "title": "Se conservan los últimos 30 respaldos",
-    "ok": false,
-    "blocked": true,
-    "note": "la retención se aplica después de un respaldo exitoso y en el stack local no hay ninguno (ver TC-246)"
+    "ok": true,
+    "note": "30 exitosos; el más viejo se borró de la lista y del almacenamiento"
   },
   {
     "id": "TC-249",
     "title": "Descargar un respaldo desde el panel",
     "ok": true,
-    "note": "respaldo-20261027-0433.bak; los fallidos no se descargan (409)"
+    "note": "respaldo-20261027-1313.bak; los fallidos no se descargan (409)"
   },
   {
     "id": "TC-250",
@@ -238,9 +236,8 @@
   {
     "id": "TC-251",
     "title": "El sistema sigue funcionando durante el respaldo",
-    "ok": false,
-    "blocked": true,
-    "note": "el respaldo falla al instante en el stack local, no hay un respaldo en curso durante el cual operar (ver TC-246)"
+    "ok": true,
+    "note": "557 consultas al listado de fichas durante el respaldo de las 13:00 UTC, sin fallas (máx. 476 ms)"
   },
   {
     "id": "TC-252",
@@ -251,8 +248,8 @@
   {
     "id": "TC-253",
     "title": "Generar el informe de Cáritas de un período",
-    "ok": false,
-    "note": "con 30 personas atendidas, situación habitacional suma 4: las personas sin ese dato (o con un valor del catálogo agregado o renombrado) no se cuentan"
+    "ok": true,
+    "note": "36 personas"
   },
   {
     "id": "TC-254",
@@ -276,7 +273,7 @@
     "id": "TC-257",
     "title": "Agregar un valor al catálogo de un campo del informe",
     "ok": true,
-    "note": "\"Situación QA mvq6tho3\" en Motivo principal de asistencia"
+    "note": "\"Situación QA mvqpf2ys\" en Motivo principal de asistencia"
   },
   {
     "id": "TC-258",

@@ -137,11 +137,14 @@ await tc(217, 'La ficha se descarga directo y se puede imprimir', P.ref, async (
   return `${name} y vista de impresión`;
 });
 await tc(218, 'Queda registrado quién exportó la ficha y cuándo', P.ref, async () => {
-  const exportCount = () => Number(sql(`SELECT COUNT(*) FROM audit_logs WHERE Action LIKE '%xport%' AND (AffectedEntity LIKE '%${X.personId}%' OR AffectedEntity LIKE '%${X.recordId}%')`));
-  const before = exportCount();
+  const exportLogs = () => sql(`SELECT u.Email + '|' + a.Action FROM audit_logs a JOIN users u ON u.Id = a.UserId WHERE a.Action LIKE 'Ficha exportada%' AND a.AffectedEntity = 'SocialRecord:${X.recordId}' ORDER BY a.Date DESC`).split('\n').filter(Boolean);
+  const before = exportLogs().length;
   await exportRecord(X.recordId, 'Solo datos personales');
-  const after = exportCount();
-  must(after > before, 'la exportación no queda registrada en el sistema: el front la guarda solo en memoria y no existe el endpoint de SCRUM-252');
+  await sleep(1000);
+  const logs = exportLogs();
+  must(logs.length > before, 'la exportación no queda registrada en la auditoría');
+  must(logs[0].startsWith('referente@test.com|') && /solo datos personales/.test(logs[0]), `el registro no indica usuario y secciones: ${logs[0]}`);
+  return logs[0].split('|')[1];
 });
 
 // ======================= SCRUM-24 adjuntos =======================
@@ -325,7 +328,8 @@ await tc(234, 'Con evaluación vencida se bloquea el ingreso a la Casa de Conviv
   const api = await call('PUT', `/api/persons/${V.personId}/type`, { token: T.ref, body: { personType: 1 } });
   if (api.status === 204) await call('PUT', `/api/persons/${V.personId}/type`, { token: T.ref, body: { personType: 0 } });
   must(uiBlocked, 'la pantalla permite registrar el ingreso');
-  must(api.status === 409, `la pantalla lo bloquea, pero la API registra el ingreso con la evaluación vencida (${api.status}): solo valida que haya una evaluación marcada como vigente, no su vencimiento`);
+  must(api.status === 400 && /evaluaci/i.test(api.text), `la API respondió ${api.status} al ingreso con la evaluación vencida`);
+  return 'pantalla bloqueada y la API lo rechaza (400, falta evaluación vigente)';
 });
 const W = await newPerson('Alerta20'); await evalPost(W.personId, { date: monthsAgo(6, 20) });
 const W40 = await newPerson('Alerta40'); await evalPost(W40.personId, { date: monthsAgo(6, 40) });
@@ -357,6 +361,8 @@ await tc(237, 'El Escucha no puede cargar evaluaciones', P.esc, async () => {
 const J31 = await newPerson('Sin31dias'), J29 = await newPerson('Con29dias');
 const att = (p, date, tok = T.ref) => call('POST', '/api/attendances', { token: tok, body: { personId: p, activity: 0, date, anonymousCount: 0 } });
 await att(J31.personId, iso(ar(-31))); await att(J29.personId, iso(ar(-29)));
+// fichas dadas de alta hace 40 días: una ficha nueva tiene 30 días de gracia antes del pase automático
+sql(`UPDATE social_records SET CreatedAt = DATEADD(day, -40, GETUTCDATE()) WHERE Id IN ('${J31.recordId}', '${J29.recordId}')`);
 // los jobs diarios corren al arrancar la API
 execFileSync('docker', ['restart', 'vicaria-api'], { encoding: 'utf8' });
 for (let i = 0; i < 60; i++) { try { if ((await fetch(BASE + '/api/caritas-catalogs')).status === 401) break; } catch { /* arrancando */ } await sleep(1000); }
@@ -443,12 +449,25 @@ await tc(246, 'El sistema genera el respaldo diario', P.ref, async () => {
   must(allBackups.length > 0, 'todavía no corrió ningún respaldo diario');
   must(succeeded.length > 0, `el respaldo diario corrió ${allBackups.length} veces y falló siempre: ${lastFailure?.errorMessage ?? ''}`);
 });
+// el último exitoso es el real del proceso diario (los qa-ret-* son respaldos viejos sembrados para la retención)
+const realBackup = succeeded.find(b => !b.externalKey.startsWith('qa-'));
 await tc(247, 'El respaldo se guarda fuera de la base', null, async () => {
-  if (!succeeded.length) throw new Blocked('no hay respaldos exitosos para revisar el almacenamiento (ver TC-246)');
-  return succeeded[0].externalKey;
+  if (!realBackup) throw new Blocked('no hay respaldos exitosos para revisar el almacenamiento (ver TC-246)');
+  const head = execFileSync('docker', ['exec', 'vicaria-api', 'sh', '-c', `head -c 4 /app/uploads/backups/${realBackup.externalKey}; echo; stat -c %s /app/uploads/backups/${realBackup.externalKey}`], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).split('\n');
+  must(/^(TAPE|MSSQ)/.test(head[0]), `el archivo guardado no es un .bak de SQL Server (${head[0]})`);
+  must(Number(head[1]) === realBackup.sizeBytes, 'el tamaño del archivo no coincide con el registrado');
+  return `archivo ${realBackup.externalKey} de ${realBackup.sizeBytes} bytes en el almacenamiento de respaldos`;
 });
 await tc(248, 'Se conservan los últimos 30 respaldos', null, async () => {
-  if (!succeeded.length) throw new Blocked('la retención se aplica después de un respaldo exitoso y en el stack local no hay ninguno (ver TC-246)');
+  const seeded = Number(sql(`SELECT COUNT(*) FROM backups WHERE ExternalKey LIKE 'qa-ret-%'`));
+  if (!realBackup || !seeded) throw new Blocked('hace falta un respaldo exitoso del proceso diario con 30 respaldos anteriores sembrados');
+  const files = execFileSync('docker', ['exec', 'vicaria-api', 'sh', '-c', 'ls /app/uploads/backups'], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+  // el listado pagina de a 30 y mezcla los fallidos: se cuenta en la base
+  const kept = Number(sql('SELECT COUNT(*) FROM backups WHERE Status = 2'));
+  must(kept === 30, `quedan ${kept} respaldos exitosos`);
+  must(sql(`SELECT COUNT(*) FROM backups WHERE ExternalKey = 'qa-ret-60.bak'`) === '0' && !files.includes('qa-ret-60.bak'), 'el respaldo más viejo no se eliminó');
+  must(files.includes('qa-ret-31.bak'), 'se borró un respaldo que debía conservarse');
+  return '30 exitosos; el más viejo se borró de la lista y del almacenamiento';
 });
 await tc(249, 'Descargar un respaldo desde el panel', P.ref, async () => {
   // respaldo exitoso de prueba: fila y archivo en el almacenamiento local de la API
@@ -474,8 +493,15 @@ await tc(249, 'Descargar un respaldo desde el panel', P.ref, async () => {
 });
 await tc(250, 'Si el respaldo falla se avisa al administrador', P.ref, async () => {
   if (!lastFailure) throw new Blocked('todavía no corrió el respaldo diario');
-  await go(P.ref, '/dashboard/configuracion/respaldos');
-  expectText(await body(P.ref), /El último respaldo falló/, 'el banner de falla');
+  // el banner mira el último respaldo: si el último fue exitoso, se simula una falla posterior
+  const fakeId = '00000000-0000-4000-9100-' + Date.now().toString().slice(-12);
+  if (allBackups[0]?.status !== 3) sql(`INSERT INTO backups (Id, Status, CreatedAt, SizeBytes, ExternalKey, ErrorMessage) VALUES ('${fakeId}', 3, SYSUTCDATETIME(), 0, '', 'falla simulada QA')`);
+  try {
+    await go(P.ref, '/dashboard/configuracion/respaldos');
+    expectText(await body(P.ref), /El último respaldo falló/, 'el banner de falla');
+  } finally {
+    sql(`DELETE FROM backups WHERE Id='${fakeId}'`);
+  }
   const n = (await call('GET', '/api/notifications', { token: T.ref })).json ?? [];
   must(n.some(x => /respaldo/i.test(x.description)), 'no llegó la notificación interna de la falla');
   const env = execFileSync('docker', ['exec', 'vicaria-api', 'printenv'], { encoding: 'utf8' });
@@ -483,7 +509,11 @@ await tc(250, 'Si el respaldo falla se avisa al administrador', P.ref, async () 
   return `banner, notificación y ${mail}`;
 });
 await tc(251, 'El sistema sigue funcionando durante el respaldo', null, async () => {
-  if (!succeeded.length) throw new Blocked('el respaldo falla al instante en el stack local, no hay un respaldo en curso durante el cual operar (ver TC-246)');
+  const file = process.env.AVAIL || new URL('./sprint5-backup-availability.json', import.meta.url);
+  if (!realBackup || !fs.existsSync(file)) throw new Blocked('falta la medición de sprint5-backup-availability.mjs durante el respaldo diario');
+  const a = JSON.parse(fs.readFileSync(file, 'utf8'));
+  must(a.failures === 0, `${a.failures} consultas fallaron durante el respaldo`);
+  return `${a.requests} consultas al listado de fichas durante el respaldo de las ${a.runAt.slice(11, 16)} UTC, sin fallas (máx. ${a.maxMs} ms)`;
 });
 await tc(252, 'Solo el Referente accede a los respaldos', P.esc, async () => {
   await go(P.esc, '/dashboard/configuracion/respaldos');
@@ -564,9 +594,9 @@ await tc(253, 'Generar el informe de Cáritas de un período', P.ref, async () =
   must(!/DATOS DE EJEMPLO|de ejemplo/i.test(t), 'el informe sigue mostrando datos de ejemplo');
   const rep = (await call('GET', `/api/caritas-reports?type=trimestral&to=${today}`, { token: T.ref })).json;
   const total = rep.totals.attendedPersons;
-  const sum = o => Object.values(o).reduce((s, n) => s + n, 0);
-  const off = [['género', sum(rep.gender)], ['situación habitacional', sum(rep.housing)], ['documento', sum(rep.dni)], ['motivo', sum(rep.reasons)], ['origen', rep.geography.reduce((s, g) => s + g.count, 0)]].filter(([, n]) => n !== total);
-  must(!off.length, `con ${total} personas atendidas, ${off.map(([k, n]) => `${k} suma ${n}`).join(', ')}: las personas sin ese dato (o con un valor del catálogo agregado o renombrado) no se cuentan`);
+  const sum = items => items.reduce((s, i) => s + i.count, 0);
+  const off = [['género', sum(rep.gender)], ['situación habitacional', sum(rep.housing)], ['documento', sum(rep.dni)], ['motivo', sum(rep.reasons)], ['origen', sum(rep.geography)]].filter(([, n]) => n !== total);
+  must(!off.length, `con ${total} personas atendidas, ${off.map(([k, n]) => `${k} suma ${n}`).join(', ')}`);
   return `${total} personas`;
 });
 await tc(254, 'Validar el período del informe', P.ref, async () => {

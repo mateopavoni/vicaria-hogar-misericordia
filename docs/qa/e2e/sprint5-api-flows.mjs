@@ -101,7 +101,7 @@ r = await evalPost(V.personId, { date: monthsAgo(6, -1) });
 const vst = await evalStatus(V.personId);
 rec('S5-E08', 'Una evaluación de hace 6 meses y 1 día figura vencida', vst.json?.estaVencida === true, `estaVencida=${vst.json?.estaVencida} dias=${vst.json?.diasParaVencer}`);
 r = await call('PUT', `/api/persons/${V.personId}/type`, { token: T.ref, body: { personType: 1 } });
-rec('S5-E09', 'Con la evaluación vencida se bloquea el ingreso a la Casa de Convivencia (409)', r.status === 409, `status=${r.status} ${r.json?.message ?? ''}`);
+rec('S5-E09', 'Con la evaluación vencida se bloquea el ingreso a la Casa de Convivencia (400, falta evaluación vigente)', r.status === 400 && /evaluaci/i.test(r.text), `status=${r.status} ${r.json?.message ?? ''}`);
 const M = await newPerson('Medicacion');
 await evalPost(M.personId, { date: today });
 r = await call('PUT', `/api/persons/${M.personId}/type`, { token: T.ref, body: { personType: 1 } });
@@ -180,10 +180,10 @@ rec('S5-C09', 'Escucha no puede cargar los campos del informe (403)', r.status =
 await call('POST', '/api/attendances', { token: T.ref, body: { personId: R.personId, activity: 0, date: today, anonymousCount: 0 } });
 r = await call('GET', `/api/caritas-reports?type=trimestral&to=${today}`, { token: T.ref });
 const rep = r.json;
-const sum = o => Object.values(o ?? {}).reduce((s, n) => s + n, 0);
+const sum = items => (items ?? []).reduce((s, i) => s + i.count, 0);
 const total = rep?.totals?.attendedPersons;
 rec('S5-R01', 'Referente genera el informe trimestral con totales y desglose por motivo (200, datos reales)', r.status === 200 && rep?.isSample === false && total > 0 && sum(rep?.reasons) === total, `status=${r.status} personas=${total} motivos=${sum(rep?.reasons)}`);
-rec('S5-R02', 'Cada categoría del informe suma el total de personas atendidas', sum(rep?.gender) === total && sum(rep?.housing) === total && sum(rep?.dni) === total && (rep?.geography ?? []).reduce((s, g) => s + g.count, 0) === total, `género=${sum(rep?.gender)} vivienda=${sum(rep?.housing)} dni=${sum(rep?.dni)}`);
+rec('S5-R02', 'Cada categoría del informe suma el total de personas atendidas', sum(rep?.gender) === total && sum(rep?.housing) === total && sum(rep?.dni) === total && sum(rep?.geography) === total, `género=${sum(rep?.gender)} vivienda=${sum(rep?.housing)} dni=${sum(rep?.dni)}`);
 r = await call('GET', `/api/caritas-reports?type=anual&to=${today}`, { token: T.ref });
 rec('S5-R03', 'Un período que no es trimestral ni semestral se rechaza (400)', r.status === 400, `status=${r.status}`);
 r = await call('GET', `/api/caritas-reports?type=semestral&to=${iso(ar(5))}`, { token: T.ref });
@@ -204,9 +204,11 @@ r = await call('GET', '/api/admin/backups/00000000-0000-0000-0000-000000000001/d
 rec('S5-B03', 'Descargar un respaldo inexistente responde 404', r.status === 404, `status=${r.status}`);
 
 // ---------------- SCRUM-23 registro de la exportación de la ficha
-const auditBefore = sql(`SELECT COUNT(*) FROM audit_logs WHERE Action LIKE '%xport%'`);
-r = await call('GET', `/api/personas/${A.personId}/exportar-pdf?secciones=todo`, { token: T.ref });
-rec('S5-X01', 'El backend registra quién exportó la ficha y cuándo (endpoint de exportación de SCRUM-252)', r.status === 200 && Number(sql(`SELECT COUNT(*) FROM audit_logs WHERE Action LIKE '%xport%'`)) > Number(auditBefore), `status=${r.status} (no existe el endpoint de SCRUM-252)`);
+const auditBefore = sql(`SELECT COUNT(*) FROM audit_logs WHERE Action LIKE 'Ficha exportada%'`);
+r = await call('POST', `/api/social-records/${A.recordId}/exports`, { token: T.ref, body: { sections: 'todo', format: 'pdf' } });
+rec('S5-X01', 'El backend registra quién exportó la ficha y cuándo (204 y auditoría)', r.status === 204 && Number(sql(`SELECT COUNT(*) FROM audit_logs WHERE Action LIKE 'Ficha exportada%'`)) > Number(auditBefore), `status=${r.status}`);
+r = await call('POST', `/api/social-records/${A.recordId}/exports`, { token: T.esc, body: { sections: 'todo', format: 'pdf' } });
+rec('S5-X02', 'Escucha no puede exportar la ficha (403)', r.status === 403, `status=${r.status}`);
 
 // ---------------- SCRUM-67 job diario de inactivación (corre al arrancar la API)
 const J = await newPerson('Job');
