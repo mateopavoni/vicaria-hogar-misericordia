@@ -6,7 +6,9 @@ using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.MedicationHistories;
 using Vicaria.Application.MedicationSchemes;
+using Vicaria.Application.PersonAttachments;
 using Vicaria.Application.Persons;
+using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Application.SocialRecords;
 using Vicaria.Application.Timelines;
 using Vicaria.Domain.Entities;
@@ -21,6 +23,7 @@ public class PersonsController : ControllerBase
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<UpdatePersonTypeDto> _updatePersonTypeValidator;
     private readonly IValidator<UpdatePersonProfileStatusDto> _updateProfileStatusValidator;
+    private readonly IValidator<UpdatePersonStatusDto> _updatePersonStatusValidator;
     private readonly ICasaConvivenciaStayService _casaConvivenciaStayService;
     private readonly IProfileTimelineService _profileTimelineService;
     private readonly IMedicationSchemeService _medicationSchemeService;
@@ -28,29 +31,43 @@ public class PersonsController : ControllerBase
     private readonly IMedicationHistoryService _medicationHistoryService;
     private readonly IMedicationHistoryPdfGenerator _medicationHistoryPdfGenerator;
     private readonly IValidator<GetMedicationHistoryDto> _getMedicationHistoryValidator;
+    private readonly IPsychiatricEvaluationService _psychiatricEvaluationService;
+    private readonly IValidator<CreatePsychiatricEvaluationDto> _createPsychiatricEvaluationValidator;
+    private readonly IPersonAttachmentService _personAttachmentService;
+    
 
     public PersonsController(
         ISocialRecordService socialRecordService,
         IValidator<UpdatePersonTypeDto> updatePersonTypeValidator,
         IValidator<UpdatePersonProfileStatusDto> updateProfileStatusValidator,
+        IValidator<UpdatePersonStatusDto> updatePersonStatusValidator,
         ICasaConvivenciaStayService casaConvivenciaStayService,
         IProfileTimelineService profileTimelineService,
         IMedicationSchemeService medicationSchemeService,
         IValidator<CreateMedicationSchemeDto> createMedicationSchemeValidator,
         IMedicationHistoryService medicationHistoryService,
         IMedicationHistoryPdfGenerator medicationHistoryPdfGenerator,
-        IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator)
+        IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator,
+        IPsychiatricEvaluationService psychiatricEvaluationService,
+        IValidator<CreatePsychiatricEvaluationDto> createPsychiatricEvaluationValidator,
+        IPersonAttachmentService personAttachmentService)
+       
     {
-        _medicationHistoryService = medicationHistoryService;
-        _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
-        _getMedicationHistoryValidator = getMedicationHistoryValidator;
         _socialRecordService = socialRecordService;
         _updatePersonTypeValidator = updatePersonTypeValidator;
         _updateProfileStatusValidator = updateProfileStatusValidator;
+        _updatePersonStatusValidator = updatePersonStatusValidator;
         _casaConvivenciaStayService = casaConvivenciaStayService;
         _profileTimelineService = profileTimelineService;
         _medicationSchemeService = medicationSchemeService;
         _createMedicationSchemeValidator = createMedicationSchemeValidator;
+        _medicationHistoryService = medicationHistoryService;
+        _medicationHistoryPdfGenerator = medicationHistoryPdfGenerator;
+        _getMedicationHistoryValidator = getMedicationHistoryValidator;
+        _psychiatricEvaluationService = psychiatricEvaluationService;
+        _createPsychiatricEvaluationValidator = createPsychiatricEvaluationValidator;
+        _personAttachmentService = personAttachmentService;
+        
     }
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -138,11 +155,40 @@ public class PersonsController : ControllerBase
 
         return result.Error switch
         {
-            null when result.Scheme?.StockAlert is not null => Ok(result.Scheme),
             null => StatusCode(StatusCodes.Status201Created, result.Scheme),
             CreateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.MedicationNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreateMedicationSchemeError.MissingPsychiatricEvaluation => Conflict(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.DuplicateScheme => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    // alta de evaluación psiquiátrica con unicidad de vigente (SCRUM-258): invalida las
+    // anteriores de la persona, actualiza HasPsychiatricEvaluation en la ficha y calcula
+    // el vencimiento (fecha + 6 meses). Solo Referente, Directora y Coordinador; Escucha → 403.
+    [HttpPost("{id}/psychiatric-evaluations")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> CreatePsychiatricEvaluation(Guid id, [FromBody] CreatePsychiatricEvaluationDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _createPsychiatricEvaluationValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _psychiatricEvaluationService.CreateAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => StatusCode(StatusCodes.Status201Created, result.Evaluation),
+            CreatePsychiatricEvaluationError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreatePsychiatricEvaluationError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            CreatePsychiatricEvaluationError.DuplicateValidEvaluation => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
@@ -300,6 +346,159 @@ public class PersonsController : ControllerBase
             ReviewMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             ReviewMedicationSchemeError.SchemeNotFound => NotFound(new { message = result.ErrorMessage }),
             ReviewMedicationSchemeError.AlreadyInactive => Conflict(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPost("{id}/attachments")]
+    [HttpPost("/api/personas/{id}/adjuntos")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    [RequestSizeLimit(100 * 1024 * 1024)]
+    public async Task<IActionResult> UploadAttachments(Guid id, [FromForm] IFormFileCollection files, CancellationToken cancellationToken)
+    {
+        if (files is null || files.Count == 0)
+        {
+            return BadRequest(new { message = "Debe proporcionar al menos un archivo para adjuntar." });
+        }
+
+        var uploadItems = new List<UploadPersonAttachmentItem>();
+        foreach (var file in files)
+        {
+            uploadItems.Add(new UploadPersonAttachmentItem(
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                file.OpenReadStream()
+            ));
+        }
+
+        var result = await _personAttachmentService.UploadAsync(id, uploadItems, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => StatusCode(StatusCodes.Status201Created, result.Attachments),
+            UploadPersonAttachmentsError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            UploadPersonAttachmentsError.NoFilesProvided => BadRequest(new { message = result.ErrorMessage }),
+            UploadPersonAttachmentsError.InvalidFileType => BadRequest(new { message = result.ErrorMessage }),
+            UploadPersonAttachmentsError.FileTooLarge => BadRequest(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("{id}/attachments")]
+    [HttpGet("/api/personas/{id}/adjuntos")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetAttachments(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _personAttachmentService.GetByPersonIdAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Attachments),
+            GetPersonAttachmentsError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("{id}/attachments/{attachmentId:guid}")]
+    [HttpGet("/api/personas/{id}/adjuntos/{attachmentId:guid}")]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetAttachmentFile(Guid id, Guid attachmentId, [FromQuery] bool download = false, CancellationToken cancellationToken = default)
+    {
+        var result = await _personAttachmentService.GetFileAsync(id, attachmentId, cancellationToken);
+
+        if (!result.Success || result.FileStream is null)
+        {
+            return result.Error switch
+            {
+                GetPersonAttachmentFileError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+                GetPersonAttachmentFileError.AttachmentNotFound => NotFound(new { message = result.ErrorMessage }),
+                GetPersonAttachmentFileError.FileNotFoundOnDisk => NotFound(new { message = result.ErrorMessage }),
+                _ => BadRequest(new { message = result.ErrorMessage })
+            };
+        }
+
+        var fileDto = result.FileStream;
+        if (download)
+        {
+            return File(fileDto.Stream, fileDto.ContentType, fileDto.FileName);
+        }
+
+        return File(fileDto.Stream, fileDto.ContentType);
+    }
+
+    [HttpDelete("{id}/attachments/{attachmentId:guid}")]
+    [HttpDelete("/api/personas/{id}/adjuntos/{attachmentId:guid}")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> DeleteAttachment(Guid id, Guid attachmentId, CancellationToken cancellationToken)
+    {
+        var result = await _personAttachmentService.DeleteAsync(id, attachmentId, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            DeletePersonAttachmentError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            DeletePersonAttachmentError.AttachmentNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+    
+    [HttpGet("{id}/psychiatric-evaluations/status")]
+    [HttpGet("/api/personas/{id}/evaluacion-estado")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetPsychiatricEvaluationStatus(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _psychiatricEvaluationService.GetStatusAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.Data),
+            GetPsychiatricEvaluationStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpGet("{id}/psychiatric-evaluations/history")]
+    [HttpGet("/api/personas/{id}/evaluaciones-historial")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    public async Task<IActionResult> GetPsychiatricEvaluationHistory(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _psychiatricEvaluationService.GetHistoryAsync(id, cancellationToken);
+
+        return result.Error switch
+        {
+            null => Ok(result.History),
+            GetPsychiatricEvaluationHistoryError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    [HttpPatch("{id}/status")]
+    [HttpPatch("/api/personas/{id}/estado")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdatePersonStatusDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _updatePersonStatusValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _socialRecordService.UpdateStatusAsync(id, dto, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdatePersonStatusError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonStatusError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            UpdatePersonStatusError.SameStatus => Conflict(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }

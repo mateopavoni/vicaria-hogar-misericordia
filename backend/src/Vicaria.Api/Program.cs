@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Vicaria.Application.Auth;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Backups;
 using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.Notifications;
 using Vicaria.Application.Persons;
@@ -14,6 +15,7 @@ using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Auth;
+using Vicaria.Infrastructure.Backups;
 using Vicaria.Infrastructure.CasaConvivenciaStays;
 using Vicaria.Infrastructure.Pdf;
 using Vicaria.Infrastructure.Notifications;
@@ -42,6 +44,14 @@ using Vicaria.Application.MedicationAgendas;
 using Vicaria.Infrastructure.MedicationAgendas;
 using Vicaria.Application.MedicationStocks;
 using Vicaria.Infrastructure.MedicationStocks;
+using Vicaria.Application.PsychiatricEvaluations;
+using Vicaria.Infrastructure.PsychiatricEvaluations;
+using Vicaria.Application.CaritasCatalogs;
+using Vicaria.Infrastructure.CaritasCatalogs;
+using Vicaria.Application.CaritasReports;
+using Vicaria.Infrastructure.CaritasReports;
+using Vicaria.Application.PersonAttachments;
+using Vicaria.Infrastructure.PersonAttachments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,6 +115,12 @@ builder.Services.AddScoped<IValidator<CreateObservationDto>, CreateObservationDt
 builder.Services.AddScoped<IObservationCategoryService, ObservationCategoryService>();
 builder.Services.AddScoped<IValidator<CreateObservationCategoryDto>, CreateObservationCategoryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateObservationCategoryDto>, UpdateObservationCategoryDtoValidator>();
+builder.Services.AddScoped<ICaritasCatalogService, CaritasCatalogService>();
+builder.Services.AddScoped<IValidator<CreateCaritasCatalogValueDto>, CreateCaritasCatalogValueDtoValidator>();
+builder.Services.AddScoped<IValidator<UpdateCaritasCatalogValueDto>, UpdateCaritasCatalogValueDtoValidator>();
+builder.Services.AddScoped<ICaritasReportService, CaritasReportService>();
+builder.Services.AddScoped<ICaritasReportPdfGenerator, CaritasReportPdfGenerator>();
+builder.Services.AddScoped<IValidator<GetCaritasReportQueryDto>, GetCaritasReportQueryValidator>();
 builder.Services.AddScoped<ILifeStoryService, LifeStoryService>();
 builder.Services.AddScoped<IValidator<UpdateLifeStoryStageDto>, UpdateLifeStoryStageDtoValidator>();
 builder.Services.AddScoped<IProfileTimelineService, ProfileTimelineService>();
@@ -134,6 +150,26 @@ builder.Services.AddScoped<IValidator<UpdateMedicationIntakeStatusDto>, UpdateMe
 builder.Services.AddScoped<IMedicationStockService, MedicationStockService>();
 builder.Services.AddScoped<IValidator<RegisterMedicationStockEntryDto>, RegisterMedicationStockEntryDtoValidator>();
 builder.Services.AddScoped<IValidator<UpdateMedicationStockThresholdDto>, UpdateMedicationStockThresholdDtoValidator>();
+builder.Services.AddScoped<IPsychiatricEvaluationService, PsychiatricEvaluationService>();
+builder.Services.AddScoped<IValidator<CreatePsychiatricEvaluationDto>, CreatePsychiatricEvaluationDtoValidator>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.Configure<BackupOptions>(builder.Configuration.GetSection(BackupOptions.SectionName));
+builder.Services.Configure<S3BackupOptions>(builder.Configuration.GetSection(S3BackupOptions.SectionName));
+builder.Services.Configure<BackupSmtpOptions>(builder.Configuration.GetSection(BackupSmtpOptions.SectionName));
+builder.Services.AddScoped<IBackupEmailService, SmtpBackupEmailService>();
+var backupStorageProvider = builder.Configuration.GetValue<string>("Backup:StorageProvider");
+if (string.Equals(backupStorageProvider, "S3", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHttpClient<IBackupStorageService, S3BackupStorageService>();
+}
+else
+{
+    builder.Services.AddScoped<IBackupStorageService, LocalBackupStorageService>();
+}
+builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddHostedService<BackupBackgroundService>();
+builder.Services.AddScoped<IPersonAttachmentService, PersonAttachmentService>();
+builder.Services.AddScoped<IValidator<UpdatePersonStatusDto>, UpdatePersonStatusDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
