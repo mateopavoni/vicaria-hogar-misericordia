@@ -25,62 +25,50 @@ public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
         var graphics = XGraphics.FromPdfPage(page);
         var y = Margin;
 
-        y = WriteLine(graphics, page, y, titleFont, $"Informe estadístico para Cáritas — {report.PeriodType}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Período: {report.From} al {report.To}");
-        y = WriteLine(graphics, page, y, bodyFont, string.Empty);
+        y = WriteLine(ref graphics, ref page, y, titleFont, $"Informe estadístico para Cáritas — {report.PeriodType}");
+        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Período: {report.From} al {report.To}");
+        y = WriteLine(ref graphics, ref page, y, bodyFont, string.Empty);
 
-        y = WriteLine(graphics, page, y, sectionFont, "Totales");
-        y = WriteLine(graphics, page, y, bodyFont, $"Personas atendidas: {report.Totals.AttendedPersons}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Promedio de asistencias por persona: {report.Totals.AverageAttendancesPerPerson}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Nuevas altas en el período: {report.Totals.NewRegistrations}");
-        y = WriteLine(graphics, page, y, bodyFont, string.Empty);
+        y = WriteLine(ref graphics, ref page, y, sectionFont, "Totales");
+        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Personas atendidas: {report.Totals.AttendedPersons}");
+        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Promedio de asistencias por persona: {report.Totals.AverageAttendancesPerPerson}");
+        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Nuevas altas en el período: {report.Totals.NewRegistrations}");
+        y = WriteLine(ref graphics, ref page, y, bodyFont, string.Empty);
 
-        y = WriteLine(graphics, page, y, sectionFont, "Género");
-        y = WriteLine(graphics, page, y, bodyFont, $"Masculino: {report.Gender.Male}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Femenino: {report.Gender.Female}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Otro: {report.Gender.Other}");
-        y = WriteLine(graphics, page, y, bodyFont, string.Empty);
-
-        y = WriteLine(graphics, page, y, sectionFont, "Situación de vivienda");
-        y = WriteLine(graphics, page, y, bodyFont, $"En situación de calle: {report.Housing.Street}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Con domicilio: {report.Housing.Housed}");
-        y = WriteLine(graphics, page, y, bodyFont, string.Empty);
-
-        y = WriteLine(graphics, page, y, sectionFont, "Documentación");
-        y = WriteLine(graphics, page, y, bodyFont, $"Con DNI: {report.Dni.WithDni}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Sin DNI: {report.Dni.WithoutDni}");
-        y = WriteLine(graphics, page, y, bodyFont, string.Empty);
-
-        y = WriteLine(graphics, page, y, sectionFont, "Distribución geográfica");
-        if (report.Geography.Count == 0)
+        var categories = new (string Title, IReadOnlyList<CaritasReportCountItemDto> Items)[]
         {
-            y = WriteLine(graphics, page, y, bodyFont, "Sin datos.");
-        }
-        else
+            ("Género", report.Gender),
+            ("Situación de vivienda", report.Housing),
+            ("Documentación", report.Dni),
+            ("Distribución geográfica", report.Geography),
+            ("Motivo de asistencia", report.Reasons)
+        };
+
+        foreach (var (title, items) in categories)
         {
-            foreach (var item in report.Geography)
+            y = WriteLine(ref graphics, ref page, y, sectionFont, title);
+            if (items.Count == 0)
             {
-                y = WriteLine(graphics, page, y, bodyFont, $"{item.Label}: {item.Count}");
+                y = WriteLine(ref graphics, ref page, y, bodyFont, "Sin datos.");
             }
+            foreach (var item in items)
+            {
+                y = WriteLine(ref graphics, ref page, y, bodyFont, $"{item.Label}: {item.Count}");
+            }
+            y = WriteLine(ref graphics, ref page, y, bodyFont, string.Empty);
         }
-        y = WriteLine(graphics, page, y, bodyFont, string.Empty);
-
-        y = WriteLine(graphics, page, y, sectionFont, "Motivo de asistencia");
-        y = WriteLine(graphics, page, y, bodyFont, $"Consumo de alcohol: {report.Reasons.Alcohol}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Consumo de drogas: {report.Reasons.Drugs}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Violencia: {report.Reasons.Violence}");
-        y = WriteLine(graphics, page, y, bodyFont, $"Múltiple: {report.Reasons.Multiple}");
-        y = WriteLine(graphics, page, y, bodyFont, $"No especificado: {report.Reasons.Unspecified}");
 
         using var stream = new MemoryStream();
         document.Save(stream);
         return stream.ToArray();
     }
 
-    private static double WriteLine(XGraphics graphics, PdfPage page, double y, XFont font, string text)
+    // page y graphics por ref: al saltar de página, las líneas siguientes se escriben en la nueva
+    private static double WriteLine(ref XGraphics graphics, ref PdfPage page, double y, XFont font, string text)
     {
         if (y + LineHeight > page.Height.Point - Margin)
         {
+            graphics.Dispose();
             page = page.Owner.AddPage();
             graphics = XGraphics.FromPdfPage(page);
             y = Margin;

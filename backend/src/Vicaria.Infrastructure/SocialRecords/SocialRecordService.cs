@@ -290,6 +290,37 @@ public class SocialRecordService : ISocialRecordService
         return UpdateReportFieldsResult.Ok();
     }
 
+    private static readonly Dictionary<string, string> ExportSectionLabels = new()
+    {
+        ["datos"] = "solo datos personales",
+        ["datos-observaciones"] = "datos y observaciones",
+        ["todo"] = "datos, historia de vida y observaciones"
+    };
+
+    public async Task<LogRecordExportResult> LogExportAsync(Guid socialRecordId, LogRecordExportDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var exists = await _dbContext.SocialRecords.AnyAsync(r => r.Id == socialRecordId, cancellationToken);
+        if (!exists)
+        {
+            return LogRecordExportResult.NotFound();
+        }
+
+        var format = dto.Format == "print" ? "vista de impresión" : "PDF";
+        var sections = ExportSectionLabels.TryGetValue(dto.Sections, out var label) ? label : dto.Sections;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = $"Ficha exportada ({format}): {sections}",
+            AffectedEntity = $"SocialRecord:{socialRecordId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return LogRecordExportResult.Ok();
+    }
+
     private static string StatusLabel(SocialRecordStatus status) =>
         status == SocialRecordStatus.Active ? "Activo" : "Inactivo";
 
@@ -597,9 +628,14 @@ public class SocialRecordService : ISocialRecordService
 
         if (newType == PersonType.Resident)
         {
-            // SCRUM-134: pasar a Residente exige una evaluación psiquiátrica vigente
+            // SCRUM-134 / SCRUM-66: pasar a Residente exige una evaluación psiquiátrica vigente
+            // (IsValid y no vencida: menos de 6 meses en fecha de Córdoba, igual que medicación)
+            var minValidEvaluationDate = PsychiatricEvaluations.PsychiatricEvaluationService.GetCordobaToday().AddMonths(-6);
             var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
-                .AnyAsync(e => e.PersonId == socialRecord.PersonId && e.IsValid, cancellationToken);
+                .AnyAsync(e =>
+                    e.PersonId == socialRecord.PersonId &&
+                    e.IsValid &&
+                    e.Date.Date >= minValidEvaluationDate, cancellationToken);
 
             if (!hasValidEvaluation)
             {

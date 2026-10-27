@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Application.Common;
 using Vicaria.Application.SocialRecords;
@@ -349,6 +350,43 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
         await UsarTokenAsync(RoleNames.Referent);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{recordId}/report-fields", new { attendanceReasonId = genderId });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    // SCRUM-23: auditoría de la exportación de la ficha
+    [Fact]
+    public async Task LogExport_ComoReferente_RegistraAuditLog()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync($"/api/social-records/{recordId}/exports", new { sections = "todo", format = "pdf" });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        Assert.True(await db.AuditLogs.AnyAsync(a => a.AffectedEntity == $"SocialRecord:{recordId}" && a.Action.StartsWith("Ficha exportada")));
+    }
+
+    [Fact]
+    public async Task LogExport_ComoEscucha_Devuelve403()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Listener);
+
+        var response = await _client.PostAsJsonAsync($"/api/social-records/{recordId}/exports", new { sections = "todo", format = "pdf" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task LogExport_ConSeccionesInvalidas_Devuelve400()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync($"/api/social-records/{recordId}/exports", new { sections = "otra", format = "pdf" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
