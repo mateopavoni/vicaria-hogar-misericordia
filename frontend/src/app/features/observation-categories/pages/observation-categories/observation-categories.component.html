@@ -1,0 +1,98 @@
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+
+  <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <div class="flex items-center gap-3">
+        <svg class="h-7 w-7 text-[#4167D9]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"></path>
+          <circle cx="7.5" cy="7.5" r="1.5"></circle>
+        </svg>
+        <h1 class="text-[26px] font-bold text-slate-900">Categorías de observaciones</h1>
+      </div>
+      <p class="mt-1 text-[14px] text-slate-500">
+        Las ve todo el equipo. Las desactivadas no aparecen al cargar observaciones nuevas, pero siguen
+        visibles en las observaciones históricas. Una categoría con observaciones solo se puede desactivar.
+      </p>
+    </div>
+    <button uiButton type="button" (click)="openCreate()">Nueva categoría</button>
+  </div>
+
+  @if (successMessage()) {
+    <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">{{ successMessage() }}</div>
+  }
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[14px] font-semibold text-red-600" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <div class="overflow-hidden rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+    <ui-tabs [tabs]="tabs()" [active]="filter()" (tabChange)="filter.set($event)" />
+
+    @if (loading()) {
+      <p class="px-5 py-6 text-[13px] text-slate-400">Cargando categorías...</p>
+    } @else {
+      <ul class="divide-y divide-slate-100">
+        @for (category of visible(); track category.id) {
+          <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+            <div class="min-w-[220px] flex-1">
+              <p class="text-[14px] font-semibold" [class]="category.isActive ? 'text-slate-800' : 'text-slate-400'">
+                {{ category.name }}
+              </p>
+              @if (category.description) {
+                <p class="mt-0.5 text-[12px] text-slate-500">{{ category.description }}</p>
+              }
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span
+                class="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                [class]="category.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
+              >{{ category.isActive ? 'Activa' : 'Inactiva' }}</span>
+
+              <button type="button" class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50" (click)="openEdit(category)">Editar</button>
+              <button type="button" class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50" [disabled]="busy()" (click)="requestToggle(category)">
+                {{ category.isActive ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button type="button" class="rounded-md border border-red-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-red-600 hover:bg-red-50" [disabled]="busy()" (click)="pendingDelete.set(category)">Eliminar</button>
+            </div>
+          </li>
+        } @empty {
+          <li class="px-5 py-8 text-center text-[13px] text-slate-400">No hay categorías en esta vista.</li>
+        }
+      </ul>
+    }
+  </div>
+</div>
+
+@if (showForm()) {
+  <app-category-form-modal
+    [category]="editing()"
+    [saving]="saving()"
+    [errorMessage]="formError()"
+    (saved)="save($event)"
+    (closed)="showForm.set(false)"
+  />
+}
+
+@if (pendingDeactivate(); as category) {
+  <ui-confirm-dialog
+    title="Desactivar categoría"
+    [message]="'«' + category.name + '» dejará de ofrecerse al cargar observaciones nuevas. Las observaciones que ya la tienen la conservan.'"
+    confirmLabel="Desactivar"
+    confirmVariant="warning"
+    [loading]="busy()"
+    (confirmed)="confirmDeactivate()"
+    (cancelled)="pendingDeactivate.set(null)"
+  />
+}
+
+@if (pendingDelete(); as category) {
+  <ui-confirm-dialog
+    title="Eliminar categoría"
+    [message]="'¿Eliminar «' + category.name + '»? Solo se puede si no tiene observaciones; si las tiene, desactivala.'"
+    confirmLabel="Eliminar"
+    confirmVariant="danger"
+    [loading]="busy()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="pendingDelete.set(null)"
+  />
+}

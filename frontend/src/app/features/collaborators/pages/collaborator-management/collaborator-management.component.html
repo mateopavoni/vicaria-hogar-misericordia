@@ -3,13 +3,23 @@
   <!-- ENCABEZADO -->
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h1 class="text-[26px] font-bold text-slate-900">Colaboradores</h1>
+      <div class="flex items-center gap-3">
+        <svg class="h-7 w-7 text-[#4167D9]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <h1 class="text-[26px] font-bold text-slate-900">Colaboradores</h1>
+      </div>
       <p class="mt-1 text-[14px] text-slate-500">
         Registrá, editá y dá de baja a los voluntarios y empleados que apoyan al hogar.
       </p>
     </div>
 
-    <button uiButton type="button" (click)="openCreateModal()">Nuevo colaborador</button>
+    @if (permissionService.hasPermission('colaboradores.create')) {
+      <button uiButton type="button" (click)="openCreateModal()">Nuevo colaborador</button>
+    }
   </div>
 
   <!-- BUSCADOR (SCRUM-19/SCRUM-206): mismo look&feel que el buscador de fichas -->
@@ -97,9 +107,11 @@
           No hay nadie que coincida con "{{ searchTerm() }}". Probá con otro nombre, apellido o área, o registralo como nuevo colaborador.
         </p>
 
-        <button uiButton type="button" (click)="openCreateModalFromSearch()">
-          + Registrar colaborador
-        </button>
+        @if (permissionService.hasPermission('colaboradores.create')) {
+          <button uiButton type="button" (click)="openCreateModalFromSearch()">
+            + Registrar colaborador
+          </button>
+        }
       </div>
     } @else {
       <!-- TABLA -->
@@ -162,6 +174,7 @@
         </ng-template>
 
         <ng-template uiCell="actions" let-collaborator>
+          @if (permissionService.hasPermission('colaboradores.edit')) {
           <div class="flex justify-center gap-2">
             <button uiButton size="sm" variant="secondary" type="button" (click)="openEditModal(collaborator)">
               Editar
@@ -177,6 +190,7 @@
               </button>
             }
           </div>
+          }
         </ng-template>
       </ui-data-table>
     }

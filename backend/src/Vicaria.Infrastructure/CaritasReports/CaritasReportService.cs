@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.CaritasReports;
+using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.CaritasReports;
@@ -49,65 +50,28 @@ public class CaritasReportService : ICaritasReportService
                 r.HousingSituationId,
                 r.OriginLocalityId,
                 r.DocumentationStatusId,
-                r.AttendanceReasonId,
-                r.HasDocumentation
+                r.AttendanceReasonId
             })
             .ToListAsync(cancellationToken);
 
-        var catalogIds = records
-            .SelectMany(r => new[] { r.GenderId, r.HousingSituationId, r.OriginLocalityId, r.DocumentationStatusId, r.AttendanceReasonId })
-            .Where(id => id.HasValue)
-            .Select(id => id!.Value)
-            .ToHashSet();
-
-        var catalogNames = await _dbContext.CaritasCatalogValues
+        // todos los valores del catálogo: los activos aparecen aunque cuenten 0 y los dados
+        // de baja solo si alguna ficha todavía los usa (baja lógica, SCRUM-274)
+        var catalogValues = await _dbContext.CaritasCatalogValues
             .AsNoTracking()
-            .Where(v => catalogIds.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, v => v.Name, cancellationToken);
+            .OrderBy(v => v.CreatedAt)
+            .ThenBy(v => v.Name)
+            .ToListAsync(cancellationToken);
 
-        var male = 0;
-        var female = 0;
-        var other = 0;
-        var street = 0;
-        var housed = 0;
-        var withDni = 0;
-        var withoutDni = 0;
-        var alcohol = 0;
-        var drugs = 0;
-        var violence = 0;
-        var multiple = 0;
-        var unspecified = 0;
-        var origins = new Dictionary<string, int>(StringComparer.Ordinal);
-
-        foreach (var record in records)
-        {
-            var gender = NameOf(record.GenderId);
-            if (gender == "Masculino") male++;
-            else if (gender == "Femenino") female++;
-            else other++;
-
-            var housing = NameOf(record.HousingSituationId);
-            if (housing == "En situación de calle" || housing == "Transitorio") street++;
-            else if (housing == "Con domicilio") housed++;
-
-            var documentation = NameOf(record.DocumentationStatusId);
-            if (documentation == "Con DNI") withDni++;
-            else if (documentation == "Sin DNI" || documentation == "En trámite") withoutDni++;
-            else if (record.HasDocumentation) withDni++;
-            else withoutDni++;
-
-            var origin = NameOf(record.OriginLocalityId) ?? "No informado";
-            origins[origin] = origins.TryGetValue(origin, out var current) ? current + 1 : 1;
-
-            switch (NameOf(record.AttendanceReasonId))
-            {
-                case "Consumo de alcohol": alcohol++; break;
-                case "Consumo de drogas": drugs++; break;
-                case "Violencia": violence++; break;
-                case "Múltiple": multiple++; break;
-                default: unspecified++; break;
-            }
-        }
+        var gender = Breakdown(CaritasCatalogCategory.Gender, records.Select(r => r.GenderId));
+        var housing = Breakdown(CaritasCatalogCategory.HousingSituation, records.Select(r => r.HousingSituationId));
+        var dni = Breakdown(CaritasCatalogCategory.DocumentationStatus, records.Select(r => r.DocumentationStatusId));
+        var reasons = Breakdown(CaritasCatalogCategory.AttendanceReason, records.Select(r => r.AttendanceReasonId));
+        // la geografía puede tener muchas localidades: solo las que tienen personas, de mayor a menor
+        var geography = Breakdown(CaritasCatalogCategory.OriginLocality, records.Select(r => r.OriginLocalityId))
+            .Where(i => i.Count > 0)
+            .OrderByDescending(i => i.Count)
+            .ThenBy(i => i.Label, StringComparer.Ordinal)
+            .ToList();
 
         var report = new CaritasReportDto(
             type,
@@ -115,21 +79,38 @@ public class CaritasReportService : ICaritasReportService
             toDate.ToString("yyyy-MM-dd"),
             false,
             new CaritasReportTotalsDto(attendedPersons, average, newRegistrations),
-            new CaritasReportGenderDto(male, female, other),
-            new CaritasReportHousingDto(street, housed),
-            new CaritasReportDniDto(withDni, withoutDni),
-            origins
-                .OrderByDescending(kv => kv.Value)
-                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
-                .Select(kv => new CaritasReportCountItemDto(kv.Key, kv.Value))
-                .ToList(),
-            new CaritasReportReasonsDto(alcohol, drugs, violence, multiple, unspecified));
+            gender,
+            housing,
+            dni,
+            geography,
+            reasons);
 
         return CaritasReportResult.Ok(report);
 
-        string? NameOf(Guid? id) =>
-            id.HasValue && catalogNames.TryGetValue(id.Value, out var name) ? name : null;
+        // cuenta por id del catálogo (no por nombre, así un valor renombrado se sigue
+        // contando); lo que no tiene valor, o tiene uno de otra categoría, va a "No informado"
+        List<CaritasReportCountItemDto> Breakdown(CaritasCatalogCategory category, IEnumerable<Guid?> ids)
+        {
+            var values = catalogValues.Where(v => v.Category == category).ToList();
+            var counts = values.ToDictionary(v => v.Id, _ => 0);
+            var notInformed = 0;
+
+            foreach (var id in ids)
+            {
+                if (id.HasValue && counts.TryGetValue(id.Value, out var current)) counts[id.Value] = current + 1;
+                else notInformed++;
+            }
+
+            var items = values
+                .Where(v => v.IsActive || counts[v.Id] > 0)
+                .Select(v => new CaritasReportCountItemDto(v.Name, counts[v.Id]))
+                .ToList();
+            if (notInformed > 0) items.Add(new CaritasReportCountItemDto(NotInformedLabel, notInformed));
+            return items;
+        }
     }
+
+    private const string NotInformedLabel = "No informado";
 
     private static DateTime ResolveFrom(string type, DateTime toDate)
     {

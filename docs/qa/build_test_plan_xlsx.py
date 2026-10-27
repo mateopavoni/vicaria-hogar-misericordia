@@ -1,10 +1,11 @@
-"""Genera docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx.
+"""Genera docs/qa/Plan_de_pruebas_Sprint_1-5.xlsx.
 
 Fuentes:
   - el docx "Plan de prueba - completo formateado" (Sprint 1 y 2: TC-01..TC-40 y TA-001..TA-233)
   - docs/qa/QA_SPRINT3.md (Sprint 3: TC-41 en adelante)
   - los tests xUnit de backend/tests (Sprint 3: TA-234 en adelante, derivados de los nombres de test)
   - docs/qa/sprint4_cases.py (Sprint 4: casos manuales desde los criterios de aceptación de Jira, estado Pendiente)
+  - docs/qa/sprint5_cases.py y e2e/sprint5-ui-results.json (Sprint 5: TC-212 en adelante, con su resultado)
 
 Uso: python docs/qa/build_test_plan_xlsx.py <ruta al docx> [resultado de test.json]
 Terminología del docx: TC = caso manual, TA = caso automatizado; campos Description,
@@ -19,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from sprint4_cases import OPEN_QUESTIONS, STORIES  # noqa: E402
+from sprint5_cases import STORIES as S5_STORIES  # noqa: E402
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
@@ -26,7 +28,9 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 ROOT = Path(__file__).resolve().parents[2]
 QA_MD = ROOT / "docs" / "qa" / "QA_SPRINT3.md"
-OUT = ROOT / "docs" / "qa" / "Plan_de_pruebas_Sprint_1-4.xlsx"
+OUT = ROOT / "docs" / "qa" / "Plan_de_pruebas_Sprint_1-5.xlsx"
+S5_UI = ROOT / "docs" / "qa" / "e2e" / "sprint5-ui-results.json"
+DATE_S5 = "2026-10-27"            # ejecución de los casos del Sprint 5 (navegador + API)
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 # fechas de ejecución registradas
@@ -38,6 +42,30 @@ RUNNER = "Mateo Pavoni"
 SPRINT4_NOTES = {
     "SCRUM-59": "Backend (SCRUM-232) cubierto por tests automatizados; falta probar el formulario de punta a punta: hoy usa datos simulados.",
 }
+
+# hallazgos de la ejecución del Sprint 5 (27/10): (tipo, descripción, origen, estado, detalle)
+S5_DEFECTS = [
+    ("Brecha", "El frontend del Sprint 5 (adjuntos, evaluación psiquiátrica, cambio de estado, respaldos y Cáritas) usaba datos simulados y no llamaba a la API.",
+     "SCRUM-253 a 275 (frontend)", "Corregido en dev", "Se cablearon los servicios a los endpoints del backend; specs con HttpTestingController."),
+    ("Brecha", "El backend guardaba el historial de estados y los campos del informe de Cáritas de la ficha, pero ningún endpoint permitía leerlos ni cargar esos campos.",
+     "SCRUM-264 / 270 / 275", "Corregido en dev", "El detalle de la ficha devuelve statusHistory y reportFields; nuevo PUT api/social-records/{id}/report-fields con validación de catálogo y auditoría."),
+    ("Defecto", "Al cargar un esquema de medicación sin stock se perdió la respuesta 200 con alerta de stock (SCRUM-233) al integrar SCRUM-259; 3 tests de integración fallaban.",
+     "SCRUM-233 / 259", "Corregido en dev", "Se restauró el 200 con alerta y los tests pasan a esperar 409 por evaluación vencida, como pide SCRUM-259."),
+    ("Defecto", "En el stack de Docker nginx rechazaba con 413 cualquier adjunto de más de 1 MB (límite por defecto de client_max_body_size) y su política de seguridad (CSP) no dejaba mostrar las imágenes adjuntas en el visor.",
+     "SCRUM-24 (despliegue local)", "Corregido en dev", "nginx.local.conf: client_max_body_size 100m en /api/ e img-src con blob:."),
+    ("Defecto", "Con la evaluación psiquiátrica vencida la API registraba igual el ingreso a la Casa de Convivencia: solo validaba que existiera una evaluación marcada como vigente, no su vencimiento a 6 meses.",
+     "SCRUM-66 / 259", "Corregido en dev", "El cambio a Residente exige una evaluación vigente de menos de 6 meses, igual que la carga de medicación (S5-E09, TC-234)."),
+    ("Defecto", "El proceso diario que pasa a Inactivo a quien no asiste hace 30 días no notificaba a los Referentes (el cambio manual sí).",
+     "SCRUM-67 / 262", "Corregido en dev", "El pase automático genera la misma notificación que el manual (S5-J04, TC-241)."),
+    ("Defecto", "El proceso diario pasaba a Inactivo a fichas recién creadas que todavía no tenían asistencias, sin esperar 30 días desde el alta.",
+     "SCRUM-67 / 262", "Corregido en dev", "Los 30 días se cuentan desde la última asistencia, el alta o el último pase a Activo (S5-J05)."),
+    ("Defecto", "En el informe de Cáritas las personas sin situación habitacional cargada no se contaban y esa categoría no sumaba el total. El cálculo comparaba con nombres fijos del catálogo, así que un valor agregado o renombrado no se contaba.",
+     "SCRUM-69 / 270", "Corregido en dev", "Cada categoría lista los valores del catálogo por id más \"No informado\" y suma el total (S5-R02, TC-253)."),
+    ("Defecto", "El respaldo diario fallaba siempre en el stack de Docker: usaba BACKUP DATABASE WITH COMPRESSION, que SQL Server Express no admite, y buscaba el archivo en el disco de la API cuando SQL Server lo escribe en el suyo.",
+     "SCRUM-77 / 266", "Corregido en dev", "Sin compresión en Express; el .bak se genera en la carpeta de respaldos de SQL Server y se trae por la conexión (TC-246 a TC-251)."),
+    ("Brecha", "No había registro en el sistema de quién exportó la ficha y cuándo: el frontend genera el PDF y lo guardaba solo en memoria del navegador.",
+     "SCRUM-23 / 252", "Corregido en dev", "Nuevo POST api/social-records/{id}/exports que deja la auditoría con usuario, fecha, formato y secciones (S5-X01, TC-218)."),
+]
 
 STORY_OF = {"190": "16", "195": "17", "200": "18", "205": "19", "211": "74", "212": "74", "17": "17"}
 
@@ -234,7 +262,7 @@ def main():
             date = DATE_RERUN
         ws.append([t["id"], "Sprint 3", t["module"], t["title"], t["title"], pre, t["jira"],
                    f"1. {t['step']}  →  {t['expected']}", t["test"],
-                   t["result"], date, RUNNER if ui else "Suite automatizada",
+                   t["result"], date, RUNNER,
                    t.get("note", "") if t.get("note") and t["result"] == "OK" and "re-ejecutado" in t["note"] else ""])
     s4 = []
     next_id = max(int(t["id"][3:]) for t in s3) + 1
@@ -261,6 +289,20 @@ def main():
                    "Stack local levantado (docker compose en backend/); usuarios de prueba *@test.com.", "RNF seguridad / rendimiento",
                    steps, script, "OK", run.RUN_DATE, run.RUNNER, real])
         sec_id += 1
+    # Sprint 5: a continuación de los casos transversales (TC-212 en adelante)
+    s5_results = {r["id"]: r for r in json.loads(S5_UI.read_text(encoding="utf-8"))} if S5_UI.exists() else {}
+    s5 = []
+    for jira, module, cases_ in S5_STORIES:
+        for title, desc, pre, steps in cases_:
+            tc_id = f"TC-{sec_id}"
+            sec_id += 1
+            r = s5_results.get(tc_id)
+            state = "Pendiente" if r is None else "OK" if r["ok"] else "Bloqueado" if r.get("blocked") else "Falla"
+            s5.append(tc_id)
+            ws.append([tc_id, "Sprint 5", f"{module} ({jira})", title, desc, pre, jira,
+                       chr(10).join(f"{i}. {p}  →  {e}" for i, (p, _d, e) in enumerate(steps, 1)),
+                       "docs/qa/e2e/sprint5-ui-cases.mjs" if r else "", state,
+                       DATE_S5 if r else "", RUNNER if r else "", r["note"] if r and not r["ok"] else ""])
     style_sheet(ws, [9, 11, 34, 44, 44, 38, 16, 70, 46, 12, 14, 18, 36])
     add_state_validation(ws, "J")
     manual_rows = ws.max_row
@@ -279,7 +321,7 @@ def main():
                 "Pasos (Paso → Esperamos)", "Test (xUnit)", "Estado", "Fecha de ejecución", "Ejecutó"])
     for c in auto:
         wb_.append([c["id"], "Sprint 1-2", c["module"], c["title"], c["description"], c["pre"], c["jira"],
-                    steps_text(c["steps"]), c["test"], auto_state, DATE_RERUN, "Suite automatizada"])
+                    steps_text(c["steps"]), c["test"], auto_state, DATE_RERUN, RUNNER])
     by_method = {}
     for t in s3:
         if t["kind"] == "API":
@@ -302,7 +344,7 @@ def main():
             steps = ""
             jira = t["jira"]
         wb_.append([f"TA-{n:03d}", t["sprint"], t["module"], title, desc, pre, jira, steps,
-                    f"{t['proj']} › {t['cls']} › {t['method']}", auto_state, DATE_RERUN, "Suite automatizada"])
+                    f"{t['proj']} › {t['cls']} › {t['method']}", auto_state, DATE_RERUN, RUNNER])
     style_sheet(wb_, [9, 11, 34, 50, 44, 34, 18, 60, 70, 12, 14, 18])
     add_state_validation(wb_, "J")
     auto_rows = wb_.max_row
@@ -311,7 +353,7 @@ def main():
     wr = wb.create_sheet("Resumen", 0)
     wr["A1"] = "Plan de pruebas — Vicaria de los Pobres, Pastoral de Adicciones"
     wr["A1"].font = Font(bold=True, size=14)
-    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1 a 4 (Sprint 4: frontend hecho con datos simulados, backend en curso; casos manuales Pendientes). Se actualiza con los contadores de las hojas."
+    wr["A2"] = "Casos manuales (TC) y automatizados (TA) de los Sprint 1 a 5. Se actualiza con los contadores de las hojas."
     wr.append([])
     wr.append(["Tipo", "Sprint", "Total", "OK", "Falla", "Bloqueado", "Pendiente"])
     hr = wr.max_row
@@ -333,6 +375,7 @@ def main():
     count_row("Manuales (TC)", "Sprint 1-2", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Manuales (TC)", "Sprint 3", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Manuales (TC)", "Sprint 4", "Parte A - Manuales", manual_rows, "B", "J")
+    count_row("Manuales (TC)", "Sprint 5", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Manuales (TC)", "Transversal", "Parte A - Manuales", manual_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 1-2", "Parte B - Automatizados", auto_rows, "B", "J")
     count_row("Automatizados (TA)", "Sprint 3", "Parte B - Automatizados", auto_rows, "B", "J")
@@ -351,7 +394,7 @@ def main():
     for line in [
         "Backend: 262 pruebas unitarias y 251 de integración, todas OK (el 16/10 se agregó un test unitario por el aviso de bloqueo en el 5º intento; el 17/10 se integró SCRUM-216).",
         "Frontend: 29 archivos / 122 pruebas y build de producción, OK.",
-        "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#22 a #27).",
+        "UI en navegador real (Playwright): sprint1-2-ui-flows.mjs, 35 de 35 verificaciones OK tras corregir 6 defectos hallados en la primera pasada (#14 a #19).",
         "Matriz rol x pantalla (Referente, Directora, Escucha, Coordinador): permisos correctos en todas las rutas; solo 'Informes' apunta a /inicio (#5).",
         "Seguridad y carga (security/api-security-and-load.mjs): 13 verificaciones de seguridad y 4 de carga OK, sin errores bajo 50 usuarios concurrentes.",
         "QA manual Sprint 1-2 (TC-01 a TC-40): 40 de 40 OK; 23 de ellos se re-ejecutaron en navegador real el 2026-10-16.",
@@ -365,6 +408,7 @@ def main():
     for line in [
         "Sprint 1-2: EP-01 Fichas de personas · EP-02 Observaciones e historia de vida · EP-03 Cuentas, roles y notificaciones · EP-10 Asistencia · EP-12 Casa de Convivencia",
         "Sprint 4: EP-10 Asistencia (SCRUM-54, 55, 56, 57) · Medicación (SCRUM-59, 60, 61, 71, 75)",
+        "Sprint 5: EP-07 Ficha exportable, adjuntos y respaldos (SCRUM-23, 24, 77) · EP-12 Evaluación psiquiátrica y estado (SCRUM-66, 67) · EP-13 Informe de Cáritas (SCRUM-69, 70)",
         "Sprint 3: EP-04 Calendario general y personal (SCRUM-15, 16, 17) · EP-05 Colaboradores (SCRUM-18, 19) y visitas de la Casa de Convivencia (SCRUM-74)",
     ]:
         wr.append([line])
@@ -412,25 +456,18 @@ def main():
          "SCRUM-218 a 250 (frontend)", "Corregido en dev", "Se convirtieron a promesas y toBe(true/false): 120 de 120 pruebas OK."),
         ("Brecha", "Las pantallas de asistencia y medicación del frontend usan servicios simulados (of(...).pipe(delay)) y no llaman a la API.",
          "SCRUM-218 a 250 (frontend)", "Abierta", "Integrarlas con el backend a medida que se complete; hasta entonces los criterios de negocio no están verificados."),
-        ("Pendiente", "dev-backend trae un global.json que exige SDK 9.0.x y falla en equipos con otros SDK. dev no lo tiene.",
-         "dev-backend", "Abierta", "Avisar a Santiago antes de sincronizar ramas. Esta PC ya tiene el SDK 9.0.319."),
-        ("Pendiente", "Las ramas dev-backend y dev-frontend no tienen los cambios de dev.",
-         "Git", "Abierta", "Sincronizar por PR antes de que sigan Emir y Belén."),
-        ("Pendiente", "Jira: SCRUM-198 y SCRUM-215 (QA) siguen 'En curso'.",
-         "Jira", "Abierta", "Cerrar con el resultado de esta ejecución."),
     ]
-    for jira, q in OPEN_QUESTIONS:
-        items.append(("Pregunta abierta", q, jira, "Abierta", "Consultar al equipo antes de implementar o probar."))
     for tipo, desc, origen, estado, detalle, _sev in run.NEW_DEFECTS:
         items.append((tipo, desc, origen, estado, detalle))
     d5 = items[4]
     items[4] = (d5[0], run.DEFECT_5_NOTE, d5[2], d5[3], d5[4])
+    items.extend(S5_DEFECTS)
     for i, it in enumerate(items, 1):
         wd.append([i, *it])
     style_sheet(wd, [5, 18, 70, 30, 18, 60])
 
     wb.save(OUT)
-    print(f"{OUT} — manuales: {len(manual)} + {len(s3)} (Sprint 3) + {len(s4)} (Sprint 4) | automatizados: {len(auto)} + {len(s3_tests)} (Sprint 3)")
+    print(f"{OUT} — manuales: {len(manual)} + {len(s3)} (Sprint 3) + {len(s4)} (Sprint 4) + {len(s5)} (Sprint 5) | automatizados: {len(auto)} + {len(s3_tests)} (Sprint 3)")
 
 
 if __name__ == "__main__":
