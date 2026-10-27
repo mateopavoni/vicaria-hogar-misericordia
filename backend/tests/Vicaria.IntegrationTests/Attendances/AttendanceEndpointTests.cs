@@ -195,11 +195,14 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     [Fact]
     public async Task CheckInactivity_SinAsistenciaReciente_PasaAInactivo()
     {
-        // ficha con asistencia vieja (más de 30 días) y otra con asistencia reciente
+        // ficha dada de alta hace 60 días con asistencia vieja (más de 30 días) y otra con
+        // asistencia reciente; una ficha recién creada no cuenta (tiene 30 días de gracia)
         var personId = await CrearPersonaAsync();
         using (var scope = _factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+            var oldRecord = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
+            oldRecord.CreatedAt = DateTime.UtcNow.AddDays(-60);
             db.Attendances.Add(new Attendance
             {
                 Id = Guid.NewGuid(),

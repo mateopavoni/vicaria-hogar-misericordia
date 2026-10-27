@@ -16,15 +16,18 @@ public class SocialRecordsController : ControllerBase
     private readonly ISocialRecordService _socialRecordService;
     private readonly IValidator<CreateSocialRecordDto> _createValidator;
     private readonly IValidator<UpdateSocialRecordDto> _updateValidator;
+    private readonly IValidator<LogRecordExportDto> _exportValidator;
 
     public SocialRecordsController(
         ISocialRecordService socialRecordService,
         IValidator<CreateSocialRecordDto> createValidator,
-        IValidator<UpdateSocialRecordDto> updateValidator)
+        IValidator<UpdateSocialRecordDto> updateValidator,
+        IValidator<LogRecordExportDto> exportValidator)
     {
         _socialRecordService = socialRecordService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _exportValidator = exportValidator;
     }
 
     // SCRUM-137: Directora y Coordinador de Casa de Convivencia solo ven Residentes
@@ -123,6 +126,45 @@ public class SocialRecordsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
+    // campos del informe de Cáritas de la ficha (SCRUM-275); mismos roles que la edición
+    [HttpPut("{id:guid}/report-fields")]
+    [DirectorResidentsOnly("id", isSocialRecordId: true)]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
+    public async Task<IActionResult> UpdateReportFields(Guid id, [FromBody] SocialRecordReportFieldsDto dto, CancellationToken cancellationToken)
+    {
+        var result = await _socialRecordService.UpdateReportFieldsAsync(id, dto, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdateReportFieldsError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    // SCRUM-23: auditoría de la exportación de la ficha (el PDF lo arma el front); solo el
+    // Referente puede exportar
+    [HttpPost("{id:guid}/exports")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> LogExport(Guid id, [FromBody] LogRecordExportDto dto, CancellationToken cancellationToken)
+    {
+        var validationResult = await _exportValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await _socialRecordService.LogExportAsync(id, dto, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            _ => NotFound(new { message = result.ErrorMessage })
+        };
+    }
+
     [HttpGet("filter/count")]
     public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)
     {

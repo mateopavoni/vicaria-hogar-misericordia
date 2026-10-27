@@ -10,7 +10,7 @@
       </p>
     </div>
 
-    @if (permissionService.hasRole('Referente') || permissionService.hasRole('Escucha')) {
+    @if (permissionService.hasPermission('observaciones.create')) {
       <button
         type="button"
         (click)="showCreateModal.set(true)"

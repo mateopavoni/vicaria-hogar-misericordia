@@ -15,5 +15,8 @@ public interface ISocialRecordService
     // listado paginado con busqueda y filtros combinables (SCRUM-21/127)
     Task<PagedResult<SocialRecordListItemDto>> GetPagedAsync(int page, string? search, FilterSocialRecordsDto? filter, PersonType? personTypeFilter = null, CancellationToken cancellationToken = default);
     Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default);
-    Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId,UpdatePersonProfileStatusDto dto,Guid actorId,CancellationToken cancellationToken = default);
+    Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId, UpdatePersonProfileStatusDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    Task<UpdatePersonStatusResult> UpdateStatusAsync(Guid personId, UpdatePersonStatusDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    Task<UpdateReportFieldsResult> UpdateReportFieldsAsync(Guid socialRecordId, SocialRecordReportFieldsDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    Task<LogRecordExportResult> LogExportAsync(Guid socialRecordId, LogRecordExportDto dto, Guid actorId, CancellationToken cancellationToken = default);
 }

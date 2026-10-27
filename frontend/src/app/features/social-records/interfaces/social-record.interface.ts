@@ -1,3 +1,4 @@
+import { ReportFieldsDto } from '../../report-fields/services/person-report-data.service';
 import { ChangeHistoryItem } from "./change-history.interface";
 import { Stay } from "./stay.interface";
 
@@ -101,6 +102,10 @@ export interface SocialRecordsResponse {
 
     status: PersonStatus;
     lastModifiedAt?: string | null;
+    // SCRUM-264: historial de cambios de estado (automáticos del job y manuales con motivo)
+    statusHistory?: ChangeHistoryItem[];
+    // SCRUM-275: campos del informe de Cáritas (un id del catálogo por campo)
+    reportFields?: ReportFieldsDto;
   }
 
 // PersonProfileStatus del backend (Application/Persons/PersonProfileStatus.cs): distinto de PersonStatus,

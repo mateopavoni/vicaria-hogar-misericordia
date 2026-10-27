@@ -145,6 +145,33 @@ public class PersonTypeUpdateTests
     }
 
     [Fact]
+    public async Task SetResident_ConEvaluacionVencida_DevuelveMissingPsychiatricEvaluation()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true, date: DateTime.UtcNow.AddMonths(-6).AddDays(-2));
+
+        var resultado = await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+
+        Assert.False(resultado.Success);
+        Assert.Equal(UpdatePersonTypeError.MissingPsychiatricEvaluation, resultado.Error);
+    }
+
+    [Fact]
+    public async Task SetResident_ConEvaluacionDeHace5Meses_DevuelveOk()
+    {
+        using var db = CrearDbContext();
+        var service = new SocialRecordService(db);
+        var creada = await CrearPersonaConFicha(db);
+        await SeedEvaluation(db, creada.PersonId, isValid: true, date: DateTime.UtcNow.AddMonths(-5));
+
+        var resultado = await service.UpdatePersonTypeAsync(creada.PersonId, new UpdatePersonTypeDto(PersonType.Resident), Guid.NewGuid());
+
+        Assert.True(resultado.Success);
+    }
+
+    [Fact]
     public async Task SetAmbulatory_SinEvaluacion_DevuelveOk()
     {
         using var db = CrearDbContext();

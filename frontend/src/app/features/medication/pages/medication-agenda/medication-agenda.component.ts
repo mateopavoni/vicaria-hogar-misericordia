@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { extractApiError } from '../../../../core/http/api-error';
@@ -16,12 +17,12 @@ import { MedicationService } from '../../services/medication.service';
  */
 @Component({
   selector: 'app-medication-agenda',
-  imports: [DatePipe, UiButtonComponent],
+  imports: [DatePipe, RouterLink, UiButtonComponent],
   templateUrl: './medication-agenda.component.html',
 })
 export class MedicationAgendaComponent {
   private medicationService = inject(MedicationService);
-  private permissionService = inject(PermissionService);
+  readonly permissionService = inject(PermissionService);
   private authService = inject(AuthService);
 
   readonly today = todayLocalIso();

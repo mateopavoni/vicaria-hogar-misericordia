@@ -1,0 +1,86 @@
+<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+
+  <div class="mb-5">
+    <div class="flex items-center gap-3">
+      <svg class="h-7 w-7 text-[#4167D9]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+        <path d="M3 5v14a9 3 0 0 0 18 0V5"></path>
+        <path d="M3 12a9 3 0 0 0 18 0"></path>
+      </svg>
+      <h1 class="text-[26px] font-bold text-slate-900">Respaldos de la base de datos</h1>
+    </div>
+    <p class="mt-1 text-[14px] text-slate-500">
+      Se genera un respaldo automático por día en un almacenamiento externo y se conservan los últimos
+      {{ retention }}. El proceso no interrumpe el uso normal del sistema.
+    </p>
+  </div>
+
+  @if (!loading() && !errorMessage()) {
+    <div class="mb-4 rounded-md px-4 py-3 text-[13px]" [class]="bannerClass()" [attr.role]="banner().tone === 'danger' ? 'alert' : 'status'">
+      <p class="font-semibold">{{ banner().title }}</p>
+      <p class="mt-0.5">{{ banner().message }}</p>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-[13px] text-slate-400">Cargando respaldos...</p>
+  } @else {
+    <div class="overflow-x-auto rounded-2xl border border-[#E3E8F5] bg-white shadow-[0_8px_30px_rgba(79,115,232,0.08)]">
+      <table class="w-full text-left text-[13px]">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="px-4 py-3 font-bold">Fecha</th>
+            <th class="px-4 py-3 text-right font-bold">Tamaño</th>
+            <th class="px-4 py-3 font-bold">Estado</th>
+            <th class="px-4 py-3 font-bold">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (record of records(); track record.id) {
+            <tr [class]="record.status === 'Failed' ? 'bg-red-50/40' : ''">
+              <td class="px-4 py-3 font-semibold text-slate-800">{{ record.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="px-4 py-3 text-right text-slate-700">
+                {{ record.sizeBytes === null ? '—' : formatSize(record.sizeBytes) }}
+              </td>
+              <td class="px-4 py-3">
+                @if (record.status === 'Completed') {
+                  <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">Correcto</span>
+                } @else if (record.status === 'InProgress') {
+                  <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">En curso</span>
+                } @else {
+                  <span class="rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-semibold text-red-700" [title]="record.errorMessage ?? ''">Fallido</span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                @if (record.status === 'Completed') {
+                  <button
+                    uiButton
+                    variant="secondary"
+                    type="button"
+                    [loading]="downloadingId() === record.id"
+                    [disabled]="downloadingId() !== null"
+                    (click)="download(record)"
+                  >
+                    Descargar
+                  </button>
+                } @else {
+                  <span class="text-[12px] text-slate-400">Sin archivo</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="px-4 py-8 text-center text-slate-400">Todavía no hay respaldos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

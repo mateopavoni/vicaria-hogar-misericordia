@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
+import { UiBackButtonComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
 import { AREA_LABELS, AttendanceActivityDef, AttendanceActivitySource } from '../../interfaces/attendance.interface';
 import { extractApiError } from '../../../../core/http/api-error';
 import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
@@ -20,7 +19,7 @@ const SOURCE_LABELS: Record<AttendanceActivitySource, string> = {
  */
 @Component({
   selector: 'app-activity-settings',
-  imports: [ReactiveFormsModule, RouterLink, UiButtonComponent, UiFormFieldComponent, UiInputDirective],
+  imports: [ReactiveFormsModule, UiBackButtonComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],
   templateUrl: './activity-settings.component.html',
 })
 export class ActivitySettingsComponent implements OnInit {

@@ -50,4 +50,29 @@ describe('ObservationCategoriesService', () => {
     expect(req.request.body).toEqual({ isActive: false });
     req.flush({});
   });
+
+  it('create() hace POST con nombre y descripción', () => {
+    service.create({ name: 'Familia', description: 'Vínculos familiares' }).subscribe();
+
+    const req = httpMock.expectOne('/api/observation-categories');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ name: 'Familia', description: 'Vínculos familiares' });
+    req.flush({});
+  });
+
+  it('update() hace PUT a la categoría', () => {
+    service.update('cat-1', { name: 'Familia', description: null }).subscribe();
+
+    const req = httpMock.expectOne('/api/observation-categories/cat-1');
+    expect(req.request.method).toBe('PUT');
+    req.flush({});
+  });
+
+  it('delete() hace DELETE a la categoría', () => {
+    service.delete('cat-1').subscribe();
+
+    const req = httpMock.expectOne('/api/observation-categories/cat-1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
 });

@@ -146,6 +146,42 @@ export const routes: Routes = [
         canActivate: [permissionGuard('medicamentos.stock')]
       },
 
+      // SCRUM-267: respaldos de la base de datos, solo administrador técnico (Referente)
+      {
+        path: 'configuracion/respaldos',
+        loadComponent: () =>
+          import('./features/backups/pages/backups/backups.component')
+            .then(m => m.BackupsComponent),
+        canActivate: [permissionGuard('configuracion.respaldos')]
+      },
+
+      // SCRUM-271: informe estadístico para Cáritas, solo Referente
+      {
+        path: 'informes/caritas',
+        loadComponent: () =>
+          import('./features/caritas-report/pages/caritas-report/caritas-report.component')
+            .then(m => m.CaritasReportComponent),
+        canActivate: [permissionGuard('informes.caritas')]
+      },
+
+      // SCRUM-275: valores de los campos del informe de Cáritas, solo Referente
+      {
+        path: 'configuracion/campos-informe',
+        loadComponent: () =>
+          import('./features/report-fields/pages/report-fields-settings/report-fields-settings.component')
+            .then(m => m.ReportFieldsSettingsComponent),
+        canActivate: [permissionGuard('informes.config')]
+      },
+
+      // SCRUM-180: categorías de observaciones, solo Referente
+      {
+        path: 'configuracion/categorias',
+        loadComponent: () =>
+          import('./features/observation-categories/pages/observation-categories/observation-categories.component')
+            .then(m => m.ObservationCategoriesComponent),
+        canActivate: [permissionGuard('categorias.manage')]
+      },
+
       // RUTA DE EDICIÓN
       {
         path: 'fichas/:id/edit',
