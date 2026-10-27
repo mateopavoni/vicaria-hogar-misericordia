@@ -52,7 +52,8 @@ using Vicaria.Application.CaritasReports;
 using Vicaria.Infrastructure.CaritasReports;
 using Vicaria.Application.PersonAttachments;
 using Vicaria.Infrastructure.PersonAttachments;
-
+using Vicaria.Application.PersonExports;
+using Vicaria.Infrastructure.PersonExports;
 var builder = WebApplication.CreateBuilder(args);
 
 // secretos locales (connection string real, etc.), no versionado
@@ -170,6 +171,8 @@ else
 builder.Services.AddScoped<IBackupService, BackupService>();
 builder.Services.AddHostedService<BackupBackgroundService>();
 builder.Services.AddScoped<IPersonAttachmentService, PersonAttachmentService>();
+builder.Services.AddScoped<IPersonExportService, PersonExportService>();
+builder.Services.AddScoped<IPersonExportPdfGenerator, PersonExportPdfGenerator>();
 builder.Services.AddScoped<IValidator<UpdatePersonStatusDto>, UpdatePersonStatusDtoValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
