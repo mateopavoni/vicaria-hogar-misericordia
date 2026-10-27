@@ -169,7 +169,7 @@ public class AttendanceServiceTests
     public async Task CheckInactivity_AsistenciaVieja_PasaAInactivoConAuditLog()
     {
         using var db = CrearDbContext();
-        var personId = await CrearPersonaConFichaActiva(db);
+        var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-60));
         var record = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
         await SeedAttendance(db, personId, DateTime.UtcNow.AddDays(-31));
         var service = new AttendanceInactivityService(db);
@@ -187,13 +187,66 @@ public class AttendanceServiceTests
     public async Task CheckInactivity_SinNingunaAsistencia_PasaAInactivo()
     {
         using var db = CrearDbContext();
-        var personId = await CrearPersonaConFichaActiva(db);
+        var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-60));
         var service = new AttendanceInactivityService(db);
 
         await service.CheckAndProcessInactivityAsync();
 
         var record = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
         Assert.Equal(SocialRecordStatus.Inactive, record.Status);
+    }
+
+    [Fact]
+    public async Task CheckInactivity_FichaRecienCreadaSinAsistencias_SigueActiva()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-3));
+        var service = new AttendanceInactivityService(db);
+
+        await service.CheckAndProcessInactivityAsync();
+
+        var record = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
+        Assert.Equal(SocialRecordStatus.Active, record.Status);
+    }
+
+    [Fact]
+    public async Task CheckInactivity_ReactivadaHaceMenosDe30Dias_SigueActiva()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-90));
+        db.PersonStatusChanges.Add(new PersonStatusChange
+        {
+            Id = Guid.NewGuid(),
+            PersonId = personId,
+            PreviousStatus = SocialRecordStatus.Inactive,
+            NewStatus = SocialRecordStatus.Active,
+            Reason = "Volvió al centro",
+            ChangedByUserId = Guid.NewGuid(),
+            ChangedAt = DateTime.UtcNow.AddDays(-2)
+        });
+        await db.SaveChangesAsync();
+        var service = new AttendanceInactivityService(db);
+
+        await service.CheckAndProcessInactivityAsync();
+
+        var record = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
+        Assert.Equal(SocialRecordStatus.Active, record.Status);
+    }
+
+    [Fact]
+    public async Task CheckInactivity_PasaAInactivo_NotificaALosReferentes()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-60));
+        var service = new AttendanceInactivityService(db);
+
+        await service.CheckAndProcessInactivityAsync();
+
+        var notification = await db.Notifications.SingleAsync();
+        Assert.Equal("PersonStatusInactive", notification.EventType);
+        Assert.Equal(RoleNames.Referent, notification.TargetRole);
+        Assert.Contains("Ana", notification.Description);
+        Assert.Equal($"/personas/{personId}", notification.LinkUrl);
     }
 
     [Fact]

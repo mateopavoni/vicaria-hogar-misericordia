@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { extractApiError } from '../../../../core/http/api-error';
-import { UiButtonComponent } from '../../../../shared/ui';
+import { UiBackButtonComponent, UiButtonComponent } from '../../../../shared/ui';
 import { StockEntryModalComponent } from '../../components/stock-entry-modal/stock-entry-modal.component';
 import { StockMovementsModalComponent } from '../../components/stock-movements-modal/stock-movements-modal.component';
 import { StockThresholdModalComponent } from '../../components/stock-threshold-modal/stock-threshold-modal.component';
@@ -22,7 +22,7 @@ import { itemsNeedingAttention, stockLevel } from '../../utils/stock-level.util'
  */
 @Component({
   selector: 'app-medication-stock',
-  imports: [UiButtonComponent, StockEntryModalComponent, StockThresholdModalComponent, StockMovementsModalComponent],
+  imports: [UiBackButtonComponent, UiButtonComponent, StockEntryModalComponent, StockThresholdModalComponent, StockMovementsModalComponent],
   templateUrl: './medication-stock.component.html',
 })
 export class MedicationStockComponent implements OnInit {

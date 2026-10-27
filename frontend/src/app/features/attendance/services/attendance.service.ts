@@ -82,6 +82,14 @@ export class AttendanceService {
     return this.fetchDay(activity, code, date).pipe(map((result) => (result.attendance.persons.length ? result.attendance : null)));
   }
 
+  // asistencias de un día en todas las actividades con registro (resumen del Inicio)
+  getDay(date: string): Observable<DailyAttendance[]> {
+    const activities = Object.keys(BACKEND_ACTIVITY);
+    return forkJoin(activities.map((activity) => this.get(activity, date))).pipe(
+      map((days) => days.filter((day): day is DailyAttendance => day !== null)),
+    );
+  }
+
   // SCRUM-222: fechas en las que una persona asistió, de todas las actividades, de más
   // reciente a más antigua. Los filtros por actividad y rango se aplican en pantalla.
   getPersonHistory(personId: string): Observable<AttendanceHistoryEntry[]> {

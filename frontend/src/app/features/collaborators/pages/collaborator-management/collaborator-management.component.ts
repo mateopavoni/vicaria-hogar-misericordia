@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { PermissionService } from '../../../../core/auth/permission.service';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import {
   UiButtonComponent,
@@ -43,6 +44,7 @@ type CollaboratorTab = 'active' | 'inactive';
   templateUrl: './collaborator-management.component.html',
 })
 export class CollaboratorManagementComponent implements OnInit, OnDestroy {
+  readonly permissionService = inject(PermissionService);
   private collaboratorsService = inject(CollaboratorsService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();

@@ -7,6 +7,8 @@ const EVENT_TITLES: Record<string, string> = {
   NuevoUsuarioPendiente: 'Nueva solicitud de cuenta',
   CuentaBloqueada: 'Cuenta bloqueada',
   FichaSinObservaciones: 'Ficha sin seguimiento',
+  // SCRUM-264: aviso a referentes cuando una persona pasa a Inactivo (30 días sin asistir)
+  PersonaInactiva: 'Persona pasó a Inactiva',
 };
 
 // forma cruda que devuelve GET /api/notifications

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Application.Common;
 using Vicaria.Application.SocialRecords;
@@ -286,4 +287,107 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     }
 
     private record CreatedResponse(Guid PersonId, Guid Id);
+
+    // SCRUM-275: campos del informe de Cáritas de la ficha
+    private async Task<(Guid RecordId, Guid GenderId)> SembrarFichaYGeneroAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        var person = new Person { Id = Guid.NewGuid(), FirstName = "Caritas", LastName = "Test" };
+        var record = new SocialRecord
+        {
+            Id = Guid.NewGuid(),
+            PersonId = person.Id,
+            Status = SocialRecordStatus.Active,
+            PersonType = PersonType.Ambulatory,
+            CreatedByUserId = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        var gender = new CaritasCatalogValue
+        {
+            Id = Guid.NewGuid(),
+            Category = CaritasCatalogCategory.Gender,
+            Name = $"Genero {Guid.NewGuid():N}",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.People.Add(person);
+        db.SocialRecords.Add(record);
+        db.CaritasCatalogValues.Add(gender);
+        await db.SaveChangesAsync();
+        return (record.Id, gender.Id);
+    }
+
+    [Fact]
+    public async Task UpdateReportFields_ComoReferente_LosGuardaYSeVenEnElDetalle()
+    {
+        var (recordId, genderId) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{recordId}/report-fields", new { genderId });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var detail = await _client.GetFromJsonAsync<SocialRecordDetailDto>($"/api/social-records/{recordId}");
+        Assert.Equal(genderId, detail!.ReportFields.GenderId);
+    }
+
+    [Fact]
+    public async Task UpdateReportFields_ComoEscucha_Devuelve403()
+    {
+        var (recordId, genderId) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Listener);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{recordId}/report-fields", new { genderId });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateReportFields_ConValorDeOtroCampo_Devuelve400()
+    {
+        var (recordId, genderId) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PutAsJsonAsync($"/api/social-records/{recordId}/report-fields", new { attendanceReasonId = genderId });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    // SCRUM-23: auditoría de la exportación de la ficha
+    [Fact]
+    public async Task LogExport_ComoReferente_RegistraAuditLog()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync($"/api/social-records/{recordId}/exports", new { sections = "todo", format = "pdf" });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        Assert.True(await db.AuditLogs.AnyAsync(a => a.AffectedEntity == $"SocialRecord:{recordId}" && a.Action.StartsWith("Ficha exportada")));
+    }
+
+    [Fact]
+    public async Task LogExport_ComoEscucha_Devuelve403()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Listener);
+
+        var response = await _client.PostAsJsonAsync($"/api/social-records/{recordId}/exports", new { sections = "todo", format = "pdf" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task LogExport_ConSeccionesInvalidas_Devuelve400()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.PostAsJsonAsync($"/api/social-records/{recordId}/exports", new { sections = "otra", format = "pdf" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

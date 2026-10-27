@@ -148,18 +148,18 @@ public class MedicationSchemesEndpointTests : IClassFixture<VicariaWebApplicatio
     }
 
     [Fact]
-    public async Task Create_SinEvaluacionVigente_Devuelve400()
+    public async Task Create_SinEvaluacionVigente_Devuelve409()
     {
         var (personId, medicationId) = await SeedResidentAsync(validEvaluation: false);
         await UseTokenAsync(RoleNames.Referent);
 
         var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/medication-schemes", NewSchemeBody(medicationId));
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]
-    public async Task Create_ConEvaluacionVencidaMasDeSeisMeses_Devuelve400()
+    public async Task Create_ConEvaluacionVencidaMasDeSeisMeses_Devuelve409()
     {
         var expiredDate = DateTime.UtcNow.AddMonths(-6).AddDays(-2);
         var (personId, medicationId) = await SeedResidentAsync(validEvaluation: true, evaluationDate: expiredDate);
@@ -167,7 +167,7 @@ public class MedicationSchemesEndpointTests : IClassFixture<VicariaWebApplicatio
 
         var response = await _client.PostAsJsonAsync($"/api/persons/{personId}/medication-schemes", NewSchemeBody(medicationId));
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     [Fact]
