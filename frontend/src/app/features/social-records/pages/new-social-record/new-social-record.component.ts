@@ -2,6 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { SocialRecordsService } from '../../services/social-records.service';
 import { CreateSocialRecordRequest } from '../../interfaces/social-record.interface';
+import { PersonReportData } from '../../../report-fields/interfaces/report-fields.interface';
+import { PersonReportDataService } from '../../../report-fields/services/person-report-data.service';
 import { SocialRecordFormComponent } from '../../components/social-record-form/social-record-form.component';
 import { extractApiError } from '../../../../core/http/api-error';
 
@@ -17,10 +19,17 @@ export class NewSocialRecordComponent {
 
   private socialRecordsService = inject(SocialRecordsService);
 
+  private reportDataService = inject(PersonReportDataService);
+  private reportData: PersonReportData = {};
+
   saving = signal(false);
   isSuccess = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+
+  setReportData(data: PersonReportData): void {
+    this.reportData = data;
+  }
 
   createRecord(data: CreateSocialRecordRequest): void {
     this.errorMessage.set(null);
@@ -29,7 +38,11 @@ export class NewSocialRecordComponent {
     this.saving.set(true);
 
     this.socialRecordsService.create(data).subscribe({
-      next: () => {
+      next: (created) => {
+        // SCRUM-275: los datos del informe de Cáritas se guardan aparte (backend pendiente)
+        if (created?.personId) {
+          this.reportDataService.save(created.personId, this.reportData);
+        }
         this.saving.set(false);
         this.successMessage.set('Ficha creada correctamente.');
         this.isSuccess.set(true);

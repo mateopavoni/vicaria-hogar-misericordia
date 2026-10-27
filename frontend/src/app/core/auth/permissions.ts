@@ -4,6 +4,15 @@ export type Permission =
   | 'fichas.view'
   | 'fichas.create'
   | 'fichas.edit'
+  // SCRUM-253: exportar / imprimir la ficha completa, solo Referente
+  | 'fichas.export'
+  // SCRUM-260: evaluación psiquiátrica (ver y cargar), Referente y Directora
+  | 'evaluaciones.view'
+  | 'evaluaciones.create'
+  // SCRUM-256: documentos adjuntos de la ficha; eliminar es solo del Referente
+  | 'adjuntos.view'
+  | 'adjuntos.create'
+  | 'adjuntos.delete'
   | 'observaciones.view'
   | 'observaciones.create'
   | 'observaciones.edit'
@@ -40,7 +49,21 @@ export type Permission =
   // SCRUM-226: estadísticas de asistencia del Centro Barrial, solo Referente
   | 'asistencia.stats'
   // SCRUM-230: configurar las actividades de asistencia (activar, desactivar, crear), solo Referente
-  | 'asistencia.config';
+  | 'asistencia.config'
+  // SCRUM-267: panel de respaldos de la base de datos (administrador técnico = Referente, no hay rol aparte)
+  | 'configuracion.respaldos'
+  // SCRUM-271: informe estadístico para Cáritas, solo Referente
+  | 'informes.caritas'
+  // SCRUM-275: configurar los valores de los campos del informe de Cáritas, solo Referente
+  | 'informes.config'
+  // SCRUM-180: gestionar categorías de observaciones, solo Referente (Escucha no accede)
+  | 'categorias.manage'
+  // historia de vida: ver (Referente y Directora; Escucha no) y editar (solo Referente)
+  | 'historia.view'
+  | 'historia.edit'
+  // estadías de la Casa de Convivencia: marcar ingreso (Referente y Directora) y registrar egreso (solo Referente)
+  | 'estadias.entry'
+  | 'estadias.exit';
 
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -51,6 +74,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'fichas.view',
     'fichas.create',
     'fichas.edit',
+    'fichas.export',
+    'adjuntos.view',
+    'adjuntos.create',
+    'evaluaciones.view',
+    'evaluaciones.create',
+    'adjuntos.delete',
 
     // Observaciones
     'observaciones.view',
@@ -96,7 +125,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'asistencia.create',
     'asistencia.edit',
     'asistencia.stats',
-    'asistencia.config'
+    'asistencia.config',
+    'configuracion.respaldos',
+    'informes.caritas',
+    'informes.config',
+    'categorias.manage',
+    'historia.view',
+    'historia.edit',
+    'estadias.entry',
+    'estadias.exit'
   ],
 
 
@@ -120,8 +157,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
      // Fichas Casa de Convivencia
     'fichas.view',
+    'historia.view',
+    'estadias.entry',
     'fichas.create',
     'fichas.edit',
+    'adjuntos.view',
+    'adjuntos.create',
+    'evaluaciones.view',
+    'evaluaciones.create',
 
     // Observaciones Casa de Convivencia
     'observaciones.view',

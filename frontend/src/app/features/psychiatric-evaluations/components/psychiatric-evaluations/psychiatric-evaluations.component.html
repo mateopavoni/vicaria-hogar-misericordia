@@ -1,0 +1,105 @@
+<div class="mt-4 flex flex-col gap-4">
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-[15px] font-bold text-slate-800">Evaluación psiquiátrica</h2>
+    @if (canCreate()) {
+      <button uiButton type="button" (click)="openForm()">Registrar evaluación</button>
+    }
+  </div>
+
+  @if (successMessage()) {
+    <div class="rounded-md bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-600" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- EVALUACIÓN VIGENTE -->
+  @if (current(); as evaluation) {
+    @if (validity() === 'expired') {
+      <div class="rounded-md bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600" role="alert">
+        La evaluación psiquiátrica está vencida: no se pueden cargar medicamentos nuevos ni registrar el ingreso a la
+        Casa de Convivencia hasta cargar una evaluación nueva.
+      </div>
+    } @else if (validity() === 'expiring') {
+      <div class="rounded-md bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-700" role="alert">
+        ⚠ La evaluación vence {{ daysLeft() === 0 ? 'hoy' : daysLeft() === 1 ? 'mañana' : 'en ' + daysLeft() + ' días' }}.
+        Programá una nueva para no perder el acceso a medicación y a la Casa de Convivencia.
+      </div>
+    }
+
+    <section class="overflow-hidden rounded-lg border border-slate-200">
+      <header class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2.5">
+        <span class="text-[13px] font-bold text-slate-700">Vigente</span>
+        @switch (validity()) {
+          @case ('expired') {
+            <span class="rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">Vencida</span>
+          }
+          @case ('expiring') {
+            <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">Vence pronto</span>
+          }
+          @default {
+            <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">Vigente</span>
+          }
+        }
+      </header>
+      <dl class="grid grid-cols-1 gap-x-8 gap-y-3 px-4 py-4 text-[13px] sm:grid-cols-2">
+        <div>
+          <dt class="font-semibold text-slate-700">Fecha</dt>
+          <dd class="text-slate-500">{{ evaluation.date.split('-').reverse().join('/') }}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-slate-700">{{ validity() === 'expired' ? 'Venció el' : 'Vence el' }}</dt>
+          <dd class="text-slate-500">{{ expiryDate().split('-').reverse().join('/') }}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-slate-700">Profesional</dt>
+          <dd class="text-slate-500">{{ evaluation.professional }}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-slate-700">Cargada por</dt>
+          <dd class="text-slate-500">{{ evaluation.registeredByName }} el {{ evaluation.registeredAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="font-semibold text-slate-700">Diagnóstico</dt>
+          <dd class="whitespace-pre-line text-slate-500">{{ evaluation.diagnosis }}</dd>
+        </div>
+      </dl>
+    </section>
+  } @else {
+    <div class="rounded-md bg-slate-50 px-4 py-6 text-center text-[13px] text-slate-500">
+      Todavía no hay una evaluación psiquiátrica cargada para esta persona.
+    </div>
+  }
+
+  <!-- HISTORIAL (vigente = false) -->
+  <section class="overflow-hidden rounded-lg border border-slate-200">
+    <header class="bg-slate-50 px-4 py-2.5 text-[13px] font-bold text-slate-700">
+      Evaluaciones anteriores ({{ previous().length }})
+    </header>
+    <ul class="divide-y divide-slate-100">
+      @for (evaluation of previous(); track evaluation.id) {
+        <li class="px-4 py-3">
+          <p class="text-[13px] font-semibold text-slate-600">
+            {{ evaluation.date.split('-').reverse().join('/') }} · {{ evaluation.professional }}
+          </p>
+          <p class="mt-0.5 whitespace-pre-line text-[12px] text-slate-500">{{ evaluation.diagnosis }}</p>
+          <p class="mt-0.5 text-[12px] text-slate-400">
+            Cargada por {{ evaluation.registeredByName }} el {{ evaluation.registeredAt | date: 'dd/MM/yyyy HH:mm' }}
+          </p>
+        </li>
+      } @empty {
+        <li class="px-4 py-4 text-[13px] text-slate-400">No hay evaluaciones anteriores.</li>
+      }
+    </ul>
+  </section>
+
+  @if (showForm()) {
+    <app-evaluation-form-modal
+      [personId]="personId()"
+      [saving]="saving()"
+      [errorMessage]="formError()"
+      (saved)="save($event)"
+      (closed)="showForm.set(false)"
+    />
+  }
+</div>
