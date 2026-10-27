@@ -17,4 +17,5 @@ public interface ISocialRecordService
     Task<UpdatePersonTypeResult> UpdatePersonTypeAsync(Guid personId, UpdatePersonTypeDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId, UpdatePersonProfileStatusDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<UpdatePersonStatusResult> UpdateStatusAsync(Guid personId, UpdatePersonStatusDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    Task<UpdateReportFieldsResult> UpdateReportFieldsAsync(Guid socialRecordId, SocialRecordReportFieldsDto dto, Guid actorId, CancellationToken cancellationToken = default);
 }

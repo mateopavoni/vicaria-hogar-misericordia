@@ -155,6 +155,7 @@ public class PersonsController : ControllerBase
 
         return result.Error switch
         {
+            null when result.Scheme?.StockAlert is not null => Ok(result.Scheme),
             null => StatusCode(StatusCodes.Status201Created, result.Scheme),
             CreateMedicationSchemeError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             CreateMedicationSchemeError.MedicationNotFound => NotFound(new { message = result.ErrorMessage }),

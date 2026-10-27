@@ -123,6 +123,21 @@ public class SocialRecordsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
+    // campos del informe de Cáritas de la ficha (SCRUM-275); mismos roles que la edición
+    [HttpPut("{id:guid}/report-fields")]
+    [DirectorResidentsOnly("id", isSocialRecordId: true)]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
+    public async Task<IActionResult> UpdateReportFields(Guid id, [FromBody] SocialRecordReportFieldsDto dto, CancellationToken cancellationToken)
+    {
+        var result = await _socialRecordService.UpdateReportFieldsAsync(id, dto, ActorId, cancellationToken);
+        return result.Error switch
+        {
+            null => NoContent(),
+            UpdateReportFieldsError.NotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
     [HttpGet("filter/count")]
     public async Task<IActionResult> CountByFilter([FromQuery] FilterSocialRecordsDto filter, CancellationToken cancellationToken)
     {
