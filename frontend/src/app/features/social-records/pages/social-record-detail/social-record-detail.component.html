@@ -23,15 +23,7 @@
   @else if (record(); as person) {
 
     <!-- VOLVER -->
-    <div class="mb-5">
-      <a
-        routerLink="/dashboard/fichas"
-        class="inline-flex items-center gap-2 text-[13px] font-medium text-[#4167D9] hover:text-[#3155C7]"
-      >
-        <span class="text-lg">←</span>
-        Volver a Fichas
-      </a>
-    </div>
+    <ui-back-button to="/dashboard/fichas" label="Volver a Fichas" />
 
     @if (lifeHistoryError()) {
       <div class="mb-4 rounded-lg bg-red-50 px-5 py-3 text-[13px] font-semibold text-red-600" role="alert">
@@ -85,11 +77,34 @@
                 </span>
               }
 
+              <!-- SCRUM-260: evaluación psiquiátrica por vencer / vencida -->
+              @if (permissionService.hasPermission('evaluaciones.view')) {
+                @if (evaluationValidity() === 'expiring') {
+                  <span class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                    ⚠ Evaluación psiquiátrica vence {{ evaluationDaysLeft() === 0 ? 'hoy' : 'en ' + evaluationDaysLeft() + ' días' }}
+                  </span>
+                } @else if (evaluationValidity() === 'expired') {
+                  <span class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
+                    Evaluación psiquiátrica vencida
+                  </span>
+                }
+              }
+
+              <!-- SCRUM-275: faltan datos para el informe de Cáritas -->
+              @if (pendingReportFields().length > 0) {
+                <span
+                  class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+                  [title]="'Pendiente: ' + pendingReportFields().length + ' de ' + reportFieldKeys.length"
+                >
+                  ⚠ {{ pendingReportFields().length }} {{ pendingReportFields().length === 1 ? 'dato pendiente' : 'datos pendientes' }} para el informe Cáritas
+                </span>
+              }
+
               <!-- CAMBIO MANUAL DE ESTADO (solo ambulatorios, Residentes usan el flujo de Casa de Convivencia) -->
               @if (person.personType === PersonType.Ambulatory && permissionService.hasPermission('fichas.edit')) {
                 <button
                   type="button"
-                  (click)="toggleProfileStatus()"
+                  (click)="openStatusModal()"
                   class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   {{ person.status === PersonStatus.Active ? 'Marcar como Inactivo' : 'Marcar como Activo' }}
@@ -112,13 +127,15 @@
             </button>
             }
 
-            <button
-              type="button"
-              (click)="exportRecord()"
-              class="no-print h-[34px] rounded-md bg-[#4167D9] px-4 text-[12px] font-semibold text-white hover:bg-[#3556C0]"
-            >
-              Exportar Ficha
-            </button>
+            @if (permissionService.hasPermission('fichas.export')) {
+              <button
+                type="button"
+                (click)="exportRecord()"
+                class="no-print h-[34px] rounded-md bg-[#4167D9] px-4 text-[12px] font-semibold text-white hover:bg-[#3556C0]"
+              >
+                Exportar Ficha
+              </button>
+            }
           </div>
 
           <div class="mt-3 sm:text-right break-all">
@@ -206,6 +223,7 @@
           }
         </button>
 
+        @if (permissionService.hasPermission('historia.view')) {
         <!-- HISTORIA -->
         <button
           type="button"
@@ -219,6 +237,7 @@
             <span class="absolute bottom-0 left-0 h-[2px] w-full bg-[#4167D9]"></span>
           }
         </button>
+        }
 
         <!-- ASISTENCIA -->
         @if (permissionService.hasPermission('asistencia.view')) {
@@ -252,23 +271,37 @@
           </button>
         }
 
-        <!-- EVALUACIONES -->
+        <!-- EVALUACIONES (SCRUM-260) -->
+        @if (permissionService.hasPermission('evaluaciones.view')) {
         <button
           type="button"
           (click)="selectTab('evaluaciones')"
-          class="flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold text-slate-500 hover:text-[#4167D9]"
+          class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
+          [class.text-[#4167D9]]="activeTab() === 'evaluaciones'"
+          [class.text-slate-500]="activeTab() !== 'evaluaciones'"
         >
           Evaluaciones
+          @if (activeTab() === 'evaluaciones') {
+            <span class="absolute bottom-0 left-0 h-[2px] w-full bg-[#4167D9]"></span>
+          }
         </button>
+        }
 
-        <!-- DOCUMENTOS -->
+        <!-- DOCUMENTOS (SCRUM-256) -->
+        @if (permissionService.hasPermission('adjuntos.view')) {
         <button
           type="button"
           (click)="selectTab('documentos')"
-          class="flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold text-slate-500 hover:text-[#4167D9]"
+          class="relative flex-1 shrink-0 whitespace-nowrap px-5 py-3 text-center text-[13px] font-semibold"
+          [class.text-[#4167D9]]="activeTab() === 'documentos'"
+          [class.text-slate-500]="activeTab() !== 'documentos'"
         >
           Documentos
+          @if (activeTab() === 'documentos') {
+            <span class="absolute bottom-0 left-0 h-[2px] w-full bg-[#4167D9]"></span>
+          }
         </button>
+        }
 
       </div>
     </div>
@@ -462,6 +495,7 @@
         <!-- ACCIONES DE EGRESO / INGRESO -->
         <div class="mb-4 mt-4 flex justify-end gap-3">
           @if (hasActiveStay()) {
+            @if (permissionService.hasPermission('estadias.exit')) {
             <button
               type="button"
               (click)="openExitModal()"
@@ -469,11 +503,18 @@
             >
               Registrar Egreso de Casa de Convivencia
             </button>
-          } @else {
-            <button 
+            }
+          } @else if (permissionService.hasPermission('estadias.entry')) {
+            @if (entryBlocked()) {
+              <p class="self-center text-[12px] font-semibold text-red-600" role="alert">
+                Ingreso bloqueado: la evaluación psiquiátrica está vencida. Cargá una nueva en la pestaña Evaluaciones.
+              </p>
+            }
+            <button
               type="button"
               (click)="openEntryModal()"
-              class="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 shadow-sm"
+              [disabled]="entryBlocked()"
+              class="rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
             >
               Marcar como Residente (Ingreso)
             </button>
@@ -485,6 +526,44 @@
           <app-change-history
             [title]="'Historial de Tipo de Persona'"
             [items]="person.personTypeHistory ?? []" 
+          />
+        </section>
+
+        <!-- SCRUM-275: DATOS PARA EL INFORME DE CÁRITAS -->
+        <section class="mt-5 overflow-hidden rounded-lg border border-slate-200">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+            <h2 class="text-[13px] font-semibold text-slate-800">Datos para el informe de Cáritas</h2>
+            @if (permissionService.hasPermission('fichas.edit')) {
+              <button
+                type="button"
+                (click)="showReportFieldsModal.set(true)"
+                class="rounded-md border border-[#D5DDF3] bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {{ pendingReportFields().length > 0 ? 'Completar' : 'Editar' }}
+              </button>
+            }
+          </div>
+          <div class="grid grid-cols-1 gap-x-8 gap-y-4 px-6 py-5 sm:grid-cols-2 sm:px-12">
+            @for (key of reportFieldKeys; track key) {
+              <div>
+                <p class="text-[12px] font-semibold text-slate-700">{{ reportFieldLabels[key] }}</p>
+                @if (reportValueLabel(key); as valueLabel) {
+                  <p class="mt-1 text-[12px] text-slate-500">{{ valueLabel }}</p>
+                } @else {
+                  <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                    ⚠ Pendiente para el informe
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- SCRUM-264: HISTORIAL DE ESTADOS (automáticos y manuales, con motivo) -->
+        <section class="mt-5">
+          <app-change-history
+            [title]="'Historial de Estado (Activo / Inactivo)'"
+            [items]="statusHistory()"
           />
         </section>
 
@@ -509,12 +588,24 @@
           [personId]="person.personId"
           [personName]="person.firstName + ' ' + person.lastName"
           [isResident]="person.personType === PersonType.Resident"
+          [evaluatedAt]="currentEvaluation()?.date ?? null"
         />
       }
 
+      <!-- PESTAÑA: EVALUACIONES (SCRUM-260) -->
+      @if (activeTab() === 'evaluaciones' && permissionService.hasPermission('evaluaciones.view')) {
+        <app-psychiatric-evaluations [personId]="person.personId" />
+      }
+
+      <!-- PESTAÑA: DOCUMENTOS (SCRUM-256) -->
+      @if (activeTab() === 'documentos' && permissionService.hasPermission('adjuntos.view')) {
+        <app-person-attachments [personId]="person.personId" />
+      }
+
       <!-- PESTAÑA: HISTORIA DE VIDA -->
-      @if (activeTab() === 'historia') {
+      @if (activeTab() === 'historia' && permissionService.hasPermission('historia.view')) {
         <app-life-history
+          [canEdit]="permissionService.hasPermission('historia.edit')"
           [history]="lifeHistory()"
           (historySaved)="handleLifeHistorySaved($event)"
         />
@@ -557,3 +648,31 @@
   }
 
 </div>
+
+@if (showReportFieldsModal()) {
+  <app-report-fields-modal
+    [initial]="reportData()"
+    (saved)="saveReportFields($event)"
+    (closed)="showReportFieldsModal.set(false)"
+  />
+}
+
+@if (showStatusModal()) {
+  <app-status-change-modal
+    [targetLabel]="statusTargetLabel()"
+    [saving]="statusSaving()"
+    [errorMessage]="statusError()"
+    (confirmed)="confirmStatusChange($event)"
+    (closed)="showStatusModal.set(false)"
+  />
+}
+
+@if (showExportModal()) {
+  <app-export-record-modal
+    (download)="downloadExport($event)"
+    (print)="printExport($event)"
+    (closed)="showExportModal.set(false)"
+  />
+}
+
+<app-record-export-print [doc]="exportDoc()" />

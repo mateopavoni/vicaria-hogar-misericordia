@@ -174,17 +174,17 @@ public class BackupService : IBackupService
         return new BackupDto(backup.Id, backup.Status, backup.CreatedAt, backup.SizeBytes, backup.ExternalKey, backup.ErrorMessage);
     }
 
-    private async Task GenerateDatabaseBackupAsync(string tempPath, CancellationToken cancellationToken)
+    // BACKUP DATABASE escribe el archivo en el disco del SQL Server, que en Docker (y en
+    // cualquier deploy real) no es el de la API: se respalda en la carpeta de respaldos
+    // de la instancia y los bytes se traen por la misma conexión con OPENROWSET(BULK).
+    // Express no admite COMPRESSION, así que solo se comprime en las otras ediciones.
+    private const string ServerStagingFileName = "vicaria-backup-staging.bak";
+    private const int ExpressEngineEdition = 4;
+
+    private async Task GenerateDatabaseBackupAsync(string localPath, CancellationToken cancellationToken)
     {
         var connection = _dbContext.Database.GetDbConnection();
         var databaseName = connection.Database;
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = $"BACKUP DATABASE [{databaseName}] TO DISK = @path WITH INIT, COMPRESSION";
-        var pathParameter = command.CreateParameter();
-        pathParameter.ParameterName = "@path";
-        pathParameter.Value = tempPath;
-        command.Parameters.Add(pathParameter);
 
         var wasClosed = connection.State == System.Data.ConnectionState.Closed;
         if (wasClosed)
@@ -194,8 +194,49 @@ public class BackupService : IBackupService
 
         try
         {
-            command.CommandTimeout = 600;
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            string serverBackupDirectory;
+            int engineEdition;
+            await using (var info = connection.CreateCommand())
+            {
+                info.CommandText = "SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000)), CAST(SERVERPROPERTY('EngineEdition') AS int)";
+                await using var reader = await info.ExecuteReaderAsync(cancellationToken);
+                await reader.ReadAsync(cancellationToken);
+                serverBackupDirectory = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+                engineEdition = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+            }
+
+            if (string.IsNullOrWhiteSpace(serverBackupDirectory))
+            {
+                throw new InvalidOperationException("El SQL Server no informa una carpeta de respaldos (InstanceDefaultBackupPath).");
+            }
+
+            var separator = serverBackupDirectory.Contains('\\') ? '\\' : '/';
+            var serverPath = serverBackupDirectory.TrimEnd('/', '\\') + separator + ServerStagingFileName;
+            var serverPathLiteral = serverPath.Replace("'", "''");
+
+            await using (var backupCommand = connection.CreateCommand())
+            {
+                var options = engineEdition == ExpressEngineEdition ? "INIT" : "INIT, COMPRESSION";
+                backupCommand.CommandText = $"BACKUP DATABASE [{databaseName.Replace("]", "]]")}] TO DISK = N'{serverPathLiteral}' WITH {options}";
+                backupCommand.CommandTimeout = 600;
+                await backupCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await using (var readCommand = connection.CreateCommand())
+            {
+                // OPENROWSET(BULK) no acepta parámetros: la ruta sale de SERVERPROPERTY, no del usuario
+                readCommand.CommandText = $"SELECT BulkColumn FROM OPENROWSET(BULK N'{serverPathLiteral}', SINGLE_BLOB) AS backupFile";
+                readCommand.CommandTimeout = 600;
+                await using var reader = await readCommand.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess, cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
+                {
+                    throw new InvalidOperationException("No se pudo leer el archivo del respaldo generado.");
+                }
+
+                await using var source = reader.GetStream(0);
+                await using var target = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                await source.CopyToAsync(target, cancellationToken);
+            }
         }
         finally
         {

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SocialRecordListItem} from '../../interfaces/social-record.interface';
+import { PersonStatus, SocialRecordListItem } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
 import {debounceTime,distinctUntilChanged,Subject,takeUntil} from 'rxjs';
 import { OnDestroy } from '@angular/core';
@@ -18,6 +18,8 @@ import { PermissionService } from '../../../../core/auth/permission.service';
   styleUrl: './social-record-list.component.css'
 })
 export class SocialRecordListComponent implements OnInit, OnDestroy {
+  readonly PersonStatus = PersonStatus;
+
   private socialRecordsService = inject(SocialRecordsService);
   private destroy$ = new Subject<void>();
   private filtersService = inject(SocialRecordFiltersService);

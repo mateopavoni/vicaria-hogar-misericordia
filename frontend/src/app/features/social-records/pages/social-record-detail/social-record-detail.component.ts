@@ -1,8 +1,9 @@
 import { extractApiError } from '../../../../core/http/api-error';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { UiBackButtonComponent } from '../../../../shared/ui';
 import { DatePipe } from '@angular/common';
-import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
+import { PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
 import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
 import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
@@ -24,12 +25,29 @@ import { AttendanceHistoryEntry } from '../../../attendance/interfaces/attendanc
 import { AttendanceService } from '../../../attendance/services/attendance.service';
 import { computeAttendanceStats, isAbsenceAlert } from '../../../attendance/utils/attendance-stats.util';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { ExportRecordModalComponent } from '../../components/export-record-modal/export-record-modal.component';
+import { RecordExportPrintComponent } from '../../components/record-export-print/record-export-print.component';
+import { RecordExportLogService } from '../../services/record-export-log.service';
+import { ExportSections, RecordExportDocument, buildExportFilename, buildRecordExport } from '../../utils/record-export.util';
+import { buildPdf } from '../../utils/simple-pdf.util';
+import { PersonAttachmentsComponent } from '../../../attachments/components/person-attachments/person-attachments.component';
+import { PsychiatricEvaluationsComponent } from '../../../psychiatric-evaluations/components/psychiatric-evaluations/psychiatric-evaluations.component';
+import { PsychiatricEvaluationsService } from '../../../psychiatric-evaluations/services/psychiatric-evaluations.service';
+import { daysUntilExpiry, evaluationValidity } from '../../../psychiatric-evaluations/utils/evaluation-validity.util';
+import { ReportFieldsModalComponent } from '../../../report-fields/components/report-fields-modal/report-fields-modal.component';
+import { PersonReportData, REPORT_FIELD_KEYS, REPORT_FIELD_LABELS } from '../../../report-fields/interfaces/report-fields.interface';
+import { PersonReportDataService } from '../../../report-fields/services/person-report-data.service';
+import { ReportFieldCatalogService } from '../../../report-fields/services/report-field-catalog.service';
+import { pendingReportFields } from '../../../report-fields/utils/report-fields.util';
+import { StatusChangeModalComponent } from '../../components/status-change-modal/status-change-modal.component';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
   selector: 'app-social-record-detail',
   imports: [
     RouterLink,
+    UiBackButtonComponent,
     DatePipe,
     EmptyFieldBadgeComponent,
     ChangeHistoryComponent,
@@ -41,6 +59,12 @@ import { MedicationSchemesComponent } from '../../../medication/components/medic
     ObservationsComponent,
     AttendanceHistoryComponent,
     MedicationSchemesComponent,
+    ExportRecordModalComponent,
+    PersonAttachmentsComponent,
+    PsychiatricEvaluationsComponent,
+    RecordExportPrintComponent,
+    StatusChangeModalComponent,
+    ReportFieldsModalComponent,
   ],
   templateUrl: './social-record-detail.component.html',
   styleUrl: './social-record-detail.component.css',
@@ -56,6 +80,9 @@ export class SocialRecordDetailComponent implements OnInit {
   private lifeStoryService = inject(LifeStoryService);
   private observationsService = inject(ObservationsService);
   private attendanceService = inject(AttendanceService);
+  private authService = inject(AuthService);
+  private exportLog = inject(RecordExportLogService);
+  private evaluationsService = inject(PsychiatricEvaluationsService);
 
   record = signal<SocialRecordDetail | null>(null);
   loading = signal(true);
@@ -69,6 +96,22 @@ export class SocialRecordDetailComponent implements OnInit {
   attendanceHistory = signal<AttendanceHistoryEntry[]>([]);
   attendanceStats = computed(() => computeAttendanceStats(this.attendanceHistory(), todayLocalIso()));
   hasAbsenceAlert = computed(() => isAbsenceAlert(this.attendanceStats()));
+
+  // SCRUM-260: evaluación psiquiátrica vigente y su vigencia (vence a los 6 meses)
+  currentEvaluation = computed(() => {
+    const personId = this.record()?.personId;
+    return personId ? this.evaluationsService.currentFor(personId) : null;
+  });
+  evaluationValidity = computed(() => {
+    const evaluation = this.currentEvaluation();
+    return evaluation ? evaluationValidity(evaluation.date, todayLocalIso()) : null;
+  });
+  evaluationDaysLeft = computed(() => {
+    const evaluation = this.currentEvaluation();
+    return evaluation ? daysUntilExpiry(evaluation.date, todayLocalIso()) : 0;
+  });
+  // evaluación vencida: se bloquea el ingreso a la Casa de Convivencia
+  entryBlocked = computed(() => this.evaluationValidity() === 'expired');
 
   showExitModal = signal(false);
   showEntryModal = signal(false);
@@ -86,6 +129,9 @@ export class SocialRecordDetailComponent implements OnInit {
   }
 
   openEntryModal(): void {
+    if (this.entryBlocked()) {
+      return;
+    }
     this.showEntryModal.set(true);
   }
 
@@ -93,7 +139,7 @@ export class SocialRecordDetailComponent implements OnInit {
   // la fecha que carga el modal no se usa: el backend siempre registra el ingreso "ahora" (SCRUM-141)
   handleEntryConfirm(_data?: RegisterEntrySubmitData): void {
     const personId = this.record()?.personId;
-    if (!personId) {
+    if (!personId || this.entryBlocked()) {
       return;
     }
 
@@ -137,21 +183,71 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // marca a una persona ambulatoria como activa/inactiva a mano (SCRUM-78/156)
-  toggleProfileStatus(): void {
+  // SCRUM-275: datos de la ficha que alimentan el informe de Cáritas, con indicador de los pendientes
+  private reportDataService = inject(PersonReportDataService);
+  private reportCatalog = inject(ReportFieldCatalogService);
+  readonly reportFieldKeys = REPORT_FIELD_KEYS;
+  readonly reportFieldLabels = REPORT_FIELD_LABELS;
+  showReportFieldsModal = signal(false);
+
+  reportData = computed(() => {
     const person = this.record();
-    if (!person) {
+    return person ? this.reportDataService.get(person.personId) : {};
+  });
+  pendingReportFields = computed(() => pendingReportFields(this.reportData()));
+
+  reportValueLabel(key: (typeof REPORT_FIELD_KEYS)[number]): string | null {
+    return this.reportCatalog.label(key, this.reportData()[key]);
+  }
+
+  saveReportFields(data: PersonReportData): void {
+    const person = this.record();
+    if (!person || !this.permissionService.hasPermission('fichas.edit')) {
+      return;
+    }
+    this.reportDataService.save(person.id, person.personId, data).subscribe({
+      next: () => this.showReportFieldsModal.set(false),
+      error: (err) => {
+        this.showReportFieldsModal.set(false);
+        this.errorMessage.set(extractApiError(err, 'No se pudieron guardar los datos del informe.'));
+      },
+    });
+  }
+
+  // SCRUM-264: cambio manual de estado: pide un motivo obligatorio; el backend lo guarda en el historial
+  showStatusModal = signal(false);
+  statusSaving = signal(false);
+  statusError = signal<string | null>(null);
+
+  statusTargetLabel = computed(() =>
+    this.record()?.status === PersonStatus.Active ? 'Inactivo' : 'Activo');
+
+  // historial de estados (automáticos del job y manuales), del más nuevo al más viejo
+  statusHistory = computed(() => this.record()?.statusHistory ?? []);
+
+  openStatusModal(): void {
+    this.statusError.set(null);
+    this.showStatusModal.set(true);
+  }
+
+  confirmStatusChange(reason: string): void {
+    const person = this.record();
+    if (!person || this.statusSaving()) {
       return;
     }
 
-    const newStatus = person.status === PersonStatus.Active
-      ? PersonProfileStatus.InactiveAmbulatory
-      : PersonProfileStatus.ActiveAmbulatory;
+    const newStatus = person.status === PersonStatus.Active ? PersonStatus.Inactive : PersonStatus.Active;
 
-    this.socialRecordsService.updateProfileStatus(person.personId, newStatus).subscribe({
-      next: () => this.loadRecord(person.id),
+    this.statusSaving.set(true);
+    this.socialRecordsService.updateStatus(person.personId, newStatus, reason).subscribe({
+      next: () => {
+        this.statusSaving.set(false);
+        this.showStatusModal.set(false);
+        this.loadRecord(person.id);
+      },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message || 'No se pudo cambiar el estado.');
+        this.statusSaving.set(false);
+        this.statusError.set(err?.error?.message || 'No se pudo cambiar el estado.');
       }
     });
   }
@@ -162,10 +258,97 @@ export class SocialRecordDetailComponent implements OnInit {
   // error al guardar la historia de vida: se muestra como aviso, sin reemplazar la ficha entera
   lifeHistoryError = signal<string | null>(null);
 
-  // abre el diálogo de impresión del navegador (imprimir o guardar como PDF); los estilos
-  // de impresión ocultan el menú y la barra superior
+  // SCRUM-253: "Exportar ficha" abre el selector de secciones; de ahí se descarga el PDF o se imprime
+  showExportModal = signal(false);
+  exportDoc = signal<RecordExportDocument | null>(null);
+  exporting = signal(false);
+
   exportRecord(): void {
-    window.print();
+    if (!this.permissionService.hasPermission('fichas.export')) {
+      return;
+    }
+    this.showExportModal.set(true);
+  }
+
+  // genera el PDF y lo descarga directo al dispositivo
+  downloadExport(sections: ExportSections): void {
+    this.prepareExport(sections, (doc, record, exportedAt) => {
+      const bytes = buildPdf(doc);
+      const url = URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = buildExportFilename(record, exportedAt);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      this.logExport(record.id, sections, 'pdf');
+    });
+  }
+
+  // vista de impresión: se imprime solo la ficha armada (ver .print-only-target en styles.css)
+  printExport(sections: ExportSections): void {
+    this.prepareExport(sections, (doc, record) => {
+      this.exportDoc.set(doc);
+      this.logExport(record.id, sections, 'print');
+
+      const body = document.body;
+      const cleanup = () => {
+        body.classList.remove('print-only-target');
+        this.exportDoc.set(null);
+        window.removeEventListener('afterprint', cleanup);
+      };
+      body.classList.add('print-only-target');
+      window.addEventListener('afterprint', cleanup);
+      // esperar a que Angular pinte la vista de impresión antes de abrir el diálogo
+      setTimeout(() => window.print(), 100);
+    });
+  }
+
+  // las observaciones se piden de nuevo para incluir las que se cargaron en esta sesión
+  private prepareExport(
+    sections: ExportSections,
+    run: (doc: RecordExportDocument, record: SocialRecordDetail, exportedAt: Date) => void,
+  ): void {
+    const record = this.record();
+    const user = this.authService.user();
+    if (!record || !user || this.exporting() || !this.permissionService.hasPermission('fichas.export')) {
+      return;
+    }
+
+    const finish = (observations: Observation[]) => {
+      const exportedAt = new Date();
+      const doc = buildRecordExport({
+        record,
+        lifeHistory: this.lifeHistory(),
+        observations,
+        sections,
+        exportedAt,
+        exportedBy: `${user.name} ${user.lastname}`.trim(),
+      });
+      this.showExportModal.set(false);
+      this.exporting.set(false);
+      run(doc, record, exportedAt);
+    };
+
+    if (sections === 'datos') {
+      finish([]);
+      return;
+    }
+
+    this.exporting.set(true);
+    this.observationsService.getByPersonId(record.personId).subscribe({
+      next: (observations) => finish(observations),
+      error: () => {
+        this.exporting.set(false);
+        this.errorMessage.set('No se pudieron cargar las observaciones para exportar la ficha.');
+      },
+    });
+  }
+
+  // la auditoría no frena la descarga: si falla el registro, la ficha ya se exportó
+  private logExport(socialRecordId: string, sections: ExportSections, format: 'pdf' | 'print'): void {
+    this.exportLog.log(socialRecordId, { sections, format }).subscribe({ error: () => undefined });
   }
 
   handleLifeHistorySaved(event: { stage: LifeHistoryStage; text: string }): void {
@@ -212,12 +395,24 @@ export class SocialRecordDetailComponent implements OnInit {
         this.loadLifeHistory(response.personId);
         this.loadObservations(response.personId);
         this.loadAttendanceHistory(response.personId);
+        this.loadEvaluations(response.personId);
+        this.reportDataService.setFromRecord(response.personId, response.reportFields);
+        this.reportCatalog.load().subscribe();
       },
       error: () => {
         this.loading.set(false);
         this.errorMessage.set('No se pudo cargar la ficha.');
       }
     });
+  }
+
+  // SCRUM-260: la vigente y el historial alimentan la pestaña, la alerta y el bloqueo de ingreso
+  private loadEvaluations(personId: string): void {
+    if (!this.permissionService.hasPermission('evaluaciones.view')) {
+      return;
+    }
+    // si falla, el perfil sigue sin datos de evaluación
+    this.evaluationsService.load(personId).subscribe({ error: () => undefined });
   }
 
   private loadAttendanceHistory(personId: string): void {

@@ -124,4 +124,56 @@ public class PersonStatusManualChangeTests
         Assert.False(result.Success);
         Assert.Equal(UpdatePersonStatusError.SameStatus, result.Error);
     }
+
+    [Fact]
+    public async Task GetByIdAsync_IncluyeHistorialDeEstadosConMotivoYSistemaEnLosAutomaticos()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new SocialRecordService(context);
+
+        var actor = new User { Id = Guid.NewGuid(), FirstName = "Ana", LastName = "Referente", Email = "ana@test.com" };
+        var person = new Person { Id = Guid.NewGuid(), FirstName = "Mario", LastName = "Bros" };
+        var socialRecord = new SocialRecord
+        {
+            Id = Guid.NewGuid(),
+            PersonId = person.Id,
+            Status = SocialRecordStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        context.Users.Add(actor);
+        context.People.Add(person);
+        context.SocialRecords.Add(socialRecord);
+        context.PersonStatusChanges.Add(new PersonStatusChange
+        {
+            PersonId = person.Id,
+            PreviousStatus = SocialRecordStatus.Active,
+            NewStatus = SocialRecordStatus.Inactive,
+            Reason = "Paso automático a inactivo por 30 días sin asistencia",
+            ChangedByUserId = null,
+            ChangedAt = DateTime.UtcNow.AddDays(-2)
+        });
+        context.PersonStatusChanges.Add(new PersonStatusChange
+        {
+            PersonId = person.Id,
+            PreviousStatus = SocialRecordStatus.Inactive,
+            NewStatus = SocialRecordStatus.Active,
+            Reason = "Volvió a asistir",
+            ChangedByUserId = actor.Id,
+            ChangedAt = DateTime.UtcNow.AddDays(-1)
+        });
+        await context.SaveChangesAsync();
+
+        var detail = await service.GetByIdAsync(socialRecord.Id);
+
+        Assert.NotNull(detail);
+        Assert.Equal(2, detail.StatusHistory.Count);
+        var latest = detail.StatusHistory[0];
+        Assert.Equal("Inactivo", latest.PreviousValue);
+        Assert.Equal("Activo", latest.NewValue);
+        Assert.Equal("Ana Referente", latest.ModifiedBy);
+        Assert.Equal("Volvió a asistir", latest.Reason);
+        Assert.Equal("Sistema", detail.StatusHistory[1].ModifiedBy);
+    }
 }

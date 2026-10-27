@@ -1,26 +1,15 @@
 namespace Vicaria.Application.CaritasReports;
 
 // informe estadístico para Caritas (SCRUM-270): mismo contrato que consume la
-// pantalla de SCRUM-271, con números reales (IsSample = false)
+// pantalla de SCRUM-271, con números reales (IsSample = false). Cada categoría
+// es la lista de valores del catálogo configurable (SCRUM-274) más "No informado",
+// así que siempre suma el total de personas atendidas
 public record CaritasReportTotalsDto(
     int AttendedPersons,
     double AverageAttendancesPerPerson,
     int NewRegistrations);
 
-public record CaritasReportGenderDto(int Male, int Female, int Other);
-
-public record CaritasReportHousingDto(int Street, int Housed);
-
-public record CaritasReportDniDto(int WithDni, int WithoutDni);
-
 public record CaritasReportCountItemDto(string Label, int Count);
-
-public record CaritasReportReasonsDto(
-    int Alcohol,
-    int Drugs,
-    int Violence,
-    int Multiple,
-    int Unspecified);
 
 public record CaritasReportDto(
     string PeriodType,
@@ -28,11 +17,11 @@ public record CaritasReportDto(
     string To,
     bool IsSample,
     CaritasReportTotalsDto Totals,
-    CaritasReportGenderDto Gender,
-    CaritasReportHousingDto Housing,
-    CaritasReportDniDto Dni,
+    IReadOnlyList<CaritasReportCountItemDto> Gender,
+    IReadOnlyList<CaritasReportCountItemDto> Housing,
+    IReadOnlyList<CaritasReportCountItemDto> Dni,
     IReadOnlyList<CaritasReportCountItemDto> Geography,
-    CaritasReportReasonsDto Reasons);
+    IReadOnlyList<CaritasReportCountItemDto> Reasons);
 
 public record GetCaritasReportQueryDto(string Type, DateTime To);
 

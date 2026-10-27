@@ -181,6 +181,24 @@ public class SocialRecordService : ISocialRecordService
                 c.ChangedAt))
             .ToList();
 
+        // historial de estados (SCRUM-264): pases automáticos del job y cambios manuales con motivo
+        var statusChanges = await _dbContext.PersonStatusChanges
+            .AsNoTracking()
+            .Include(c => c.ChangedByUser)
+            .Where(c => c.PersonId == record.PersonId)
+            .OrderByDescending(c => c.ChangedAt)
+            .ToListAsync(cancellationToken);
+
+        var statusHistory = statusChanges
+            .Select(c => new StatusHistoryItemDto(
+                c.Id,
+                StatusLabel(c.PreviousStatus),
+                StatusLabel(c.NewStatus),
+                c.ChangedByUser is null ? "Sistema" : $"{c.ChangedByUser.FirstName} {c.ChangedByUser.LastName}".Trim(),
+                c.ChangedAt,
+                c.Reason))
+            .ToList();
+
         return new SocialRecordDetailDto(
             record.Id,
             record.PersonId,
@@ -201,8 +219,110 @@ public class SocialRecordService : ISocialRecordService
             record.Status,
             record.UpdatedAt,
             stays,
-            personTypeHistory);
+            personTypeHistory,
+            statusHistory,
+            new SocialRecordReportFieldsDto(
+                record.GenderId,
+                record.HousingSituationId,
+                record.OriginLocalityId,
+                record.DocumentationStatusId,
+                record.AttendanceReasonId));
     }
+
+    // campos del informe de Cáritas (SCRUM-270/275): cada valor tiene que existir en el catálogo
+    // y ser de la categoría del campo; uno desactivado solo se acepta si la ficha ya lo tenía
+    public async Task<UpdateReportFieldsResult> UpdateReportFieldsAsync(Guid socialRecordId, SocialRecordReportFieldsDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var record = await _dbContext.SocialRecords.FirstOrDefaultAsync(r => r.Id == socialRecordId, cancellationToken);
+        if (record is null)
+        {
+            return UpdateReportFieldsResult.NotFound();
+        }
+
+        var fields = new (Guid? NewId, Guid? CurrentId, CaritasCatalogCategory Category)[]
+        {
+            (dto.GenderId, record.GenderId, CaritasCatalogCategory.Gender),
+            (dto.HousingSituationId, record.HousingSituationId, CaritasCatalogCategory.HousingSituation),
+            (dto.OriginLocalityId, record.OriginLocalityId, CaritasCatalogCategory.OriginLocality),
+            (dto.DocumentationStatusId, record.DocumentationStatusId, CaritasCatalogCategory.DocumentationStatus),
+            (dto.AttendanceReasonId, record.AttendanceReasonId, CaritasCatalogCategory.AttendanceReason)
+        };
+
+        var ids = fields.Where(f => f.NewId.HasValue).Select(f => f.NewId!.Value).Distinct().ToList();
+        var values = await _dbContext.CaritasCatalogValues
+            .AsNoTracking()
+            .Where(v => ids.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+        foreach (var (newId, currentId, category) in fields)
+        {
+            if (!newId.HasValue)
+            {
+                continue;
+            }
+            if (!values.TryGetValue(newId.Value, out var value) || value.Category != category)
+            {
+                return UpdateReportFieldsResult.InvalidCatalogValue("Uno de los valores elegidos no corresponde al campo del informe.");
+            }
+            if (!value.IsActive && newId != currentId)
+            {
+                return UpdateReportFieldsResult.InvalidCatalogValue($"El valor \"{value.Name}\" está desactivado y no se puede asignar.");
+            }
+        }
+
+        record.GenderId = dto.GenderId;
+        record.HousingSituationId = dto.HousingSituationId;
+        record.OriginLocalityId = dto.OriginLocalityId;
+        record.DocumentationStatusId = dto.DocumentationStatusId;
+        record.AttendanceReasonId = dto.AttendanceReasonId;
+        record.UpdatedAt = DateTime.UtcNow;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = "Campos del informe de Cáritas actualizados",
+            AffectedEntity = $"SocialRecord:{record.Id}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return UpdateReportFieldsResult.Ok();
+    }
+
+    private static readonly Dictionary<string, string> ExportSectionLabels = new()
+    {
+        ["datos"] = "solo datos personales",
+        ["datos-observaciones"] = "datos y observaciones",
+        ["todo"] = "datos, historia de vida y observaciones"
+    };
+
+    public async Task<LogRecordExportResult> LogExportAsync(Guid socialRecordId, LogRecordExportDto dto, Guid actorId, CancellationToken cancellationToken = default)
+    {
+        var exists = await _dbContext.SocialRecords.AnyAsync(r => r.Id == socialRecordId, cancellationToken);
+        if (!exists)
+        {
+            return LogRecordExportResult.NotFound();
+        }
+
+        var format = dto.Format == "print" ? "vista de impresión" : "PDF";
+        var sections = ExportSectionLabels.TryGetValue(dto.Sections, out var label) ? label : dto.Sections;
+
+        _dbContext.AuditLogs.Add(new AuditLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = actorId,
+            Action = $"Ficha exportada ({format}): {sections}",
+            AffectedEntity = $"SocialRecord:{socialRecordId}",
+            Date = DateTime.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return LogRecordExportResult.Ok();
+    }
+
+    private static string StatusLabel(SocialRecordStatus status) =>
+        status == SocialRecordStatus.Active ? "Activo" : "Inactivo";
 
     public async Task<UpdateSocialRecordResult> UpdateAsync(Guid socialRecordId, UpdateSocialRecordDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
@@ -508,9 +628,14 @@ public class SocialRecordService : ISocialRecordService
 
         if (newType == PersonType.Resident)
         {
-            // SCRUM-134: pasar a Residente exige una evaluación psiquiátrica vigente
+            // SCRUM-134 / SCRUM-66: pasar a Residente exige una evaluación psiquiátrica vigente
+            // (IsValid y no vencida: menos de 6 meses en fecha de Córdoba, igual que medicación)
+            var minValidEvaluationDate = PsychiatricEvaluations.PsychiatricEvaluationService.GetCordobaToday().AddMonths(-6);
             var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
-                .AnyAsync(e => e.PersonId == socialRecord.PersonId && e.IsValid, cancellationToken);
+                .AnyAsync(e =>
+                    e.PersonId == socialRecord.PersonId &&
+                    e.IsValid &&
+                    e.Date.Date >= minValidEvaluationDate, cancellationToken);
 
             if (!hasValidEvaluation)
             {

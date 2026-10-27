@@ -21,11 +21,19 @@ public class AttendanceInactivityService : IAttendanceInactivityService
         // SCRUM-262: el pase se registra en el historial de estados; los Residentes
         // con estadía abierta quedan exentos (siguen presentes físicamente aunque no
         // tengan un registro de asistencia explícito).
+        // Los 30 días se cuentan desde lo último entre la última asistencia, el alta de la
+        // ficha y el último pase a Activo: una ficha nueva o recién reactivada a mano no
+        // vuelve a Inactiva hasta cumplir 30 días sin asistencia.
         var thresholdDate = DateTime.UtcNow.AddDays(-30);
 
         var inactiveCandidates = await _dbContext.SocialRecords
+            .Include(r => r.Person)
             .Where(r => r.Status == SocialRecordStatus.Active
+                && r.CreatedAt < thresholdDate
                 && !_dbContext.Attendances.Any(a => a.PersonId == r.PersonId && a.Date >= thresholdDate)
+                && !_dbContext.PersonStatusChanges.Any(c => c.PersonId == r.PersonId
+                    && c.NewStatus == SocialRecordStatus.Active
+                    && c.ChangedAt >= thresholdDate)
                 && !_dbContext.CasaConvivenciaStays.Any(s => s.PersonId == r.PersonId && s.ExitDate == null))
             .ToListAsync(cancellationToken);
 
@@ -57,6 +65,19 @@ public class AttendanceInactivityService : IAttendanceInactivityService
                 Reason = "Paso automático a inactivo por 30 días sin asistencia",
                 ChangedByUserId = null,
                 ChangedAt = DateTime.UtcNow
+            });
+
+            // SCRUM-67: los Referentes reciben la misma notificación que en el cambio manual
+            var fullName = $"{record.Person?.FirstName} {record.Person?.LastName}".Trim();
+            _dbContext.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid(),
+                Description = $"La persona {fullName} pasó a estado Inactivo. Motivo: 30 días sin asistencia",
+                EventType = "PersonStatusInactive",
+                LinkUrl = $"/personas/{record.PersonId}",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow,
+                TargetRole = RoleNames.Referent
             });
         }
 

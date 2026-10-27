@@ -15,6 +15,7 @@
   <app-social-record-form
     mode="create"
     [loading]="saving()"
+    (reportDataChange)="setReportData($event)"
     (submittedForm)="createRecord($event)"
   />
 
