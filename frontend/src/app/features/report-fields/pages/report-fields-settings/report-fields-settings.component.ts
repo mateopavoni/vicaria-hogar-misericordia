@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { UiButtonComponent, UiInputDirective } from '../../../../shared/ui';
 import {
   REPORT_FIELD_HINTS,
@@ -21,7 +21,7 @@ import { ReportFieldCatalogService } from '../../services/report-field-catalog.s
   imports: [NgTemplateOutlet, UiButtonComponent, UiInputDirective],
   templateUrl: './report-fields-settings.component.html',
 })
-export class ReportFieldsSettingsComponent {
+export class ReportFieldsSettingsComponent implements OnInit {
   private catalog = inject(ReportFieldCatalogService);
 
   readonly keys = REPORT_FIELD_KEYS;
@@ -37,19 +37,24 @@ export class ReportFieldsSettingsComponent {
   successMessage = signal<string | null>(null);
   private successTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  ngOnInit(): void {
+    this.catalog.load().subscribe();
+  }
+
   setNew(key: ReportFieldKey, text: string): void {
     this.newLabel.update((all) => ({ ...all, [key]: text }));
   }
 
   add(key: ReportFieldKey): void {
-    const result = this.catalog.add(key, this.newLabel()[key]);
-    if (!result.ok) {
-      this.fieldErrors.update((e) => ({ ...e, [key]: result.message }));
-      return;
-    }
-    this.fieldErrors.update((e) => ({ ...e, [key]: undefined }));
-    this.setNew(key, '');
-    this.showSuccess(`Se agregó "${result.value.label}".`);
+    this.catalog.add(key, this.newLabel()[key]).subscribe((result) => {
+      if (!result.ok) {
+        this.fieldErrors.update((e) => ({ ...e, [key]: result.message }));
+        return;
+      }
+      this.fieldErrors.update((e) => ({ ...e, [key]: undefined }));
+      this.setNew(key, '');
+      this.showSuccess(`Se agregó "${result.value.label}".`);
+    });
   }
 
   startEdit(key: ReportFieldKey, value: ReportFieldValue): void {
@@ -64,13 +69,14 @@ export class ReportFieldsSettingsComponent {
   saveEdit(): void {
     const edit = this.editing();
     if (!edit) return;
-    const result = this.catalog.rename(edit.key, edit.id, edit.label);
-    if (!result.ok) {
-      this.editError.set(result.message);
-      return;
-    }
-    this.editing.set(null);
-    this.showSuccess('Valor actualizado.');
+    this.catalog.rename(edit.key, edit.id, edit.label).subscribe((result) => {
+      if (!result.ok) {
+        this.editError.set(result.message);
+        return;
+      }
+      this.editing.set(null);
+      this.showSuccess('Valor actualizado.');
+    });
   }
 
   cancelEdit(): void {
@@ -79,13 +85,14 @@ export class ReportFieldsSettingsComponent {
   }
 
   toggle(key: ReportFieldKey, value: ReportFieldValue): void {
-    const result = this.catalog.setActive(key, value.id, !value.active);
-    if (!result.ok) {
-      this.errorMessage.set(result.message);
-      return;
-    }
-    this.errorMessage.set(null);
-    this.showSuccess(result.value.active ? `"${value.label}" activado.` : `"${value.label}" desactivado.`);
+    this.catalog.setActive(key, value.id, !value.active).subscribe((result) => {
+      if (!result.ok) {
+        this.errorMessage.set(result.message);
+        return;
+      }
+      this.errorMessage.set(null);
+      this.showSuccess(result.value.active ? `"${value.label}" activado.` : `"${value.label}" desactivado.`);
+    });
   }
 
   private showSuccess(message: string): void {

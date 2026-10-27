@@ -50,6 +50,10 @@ export class ReportFieldsSelectComponent {
   readonly labels = REPORT_FIELD_LABELS;
   readonly hints = REPORT_FIELD_HINTS;
 
+  constructor() {
+    this.catalog.load().subscribe();
+  }
+
   options = computed(() => {
     const current = this.value();
     const out = {} as Record<ReportFieldKey, ReportFieldValue[]>;

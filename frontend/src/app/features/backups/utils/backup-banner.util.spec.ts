@@ -1,5 +1,5 @@
 import { BackupRecord } from '../interfaces/backup.interface';
-import { backupBanner, backupFilename, sortBackups } from './backup-banner.util';
+import { backupBanner, sortBackups } from './backup-banner.util';
 
 const rec = (createdAt: string, status: 'Completed' | 'Failed' = 'Completed', errorMessage: string | null = null): BackupRecord => ({
   id: createdAt, createdAt, status, sizeBytes: status === 'Completed' ? 1000 : null, errorMessage,
@@ -26,9 +26,14 @@ describe('backupBanner', () => {
     expect(backupBanner([rec('2026-10-12T03:00:00Z')], now).tone).toBe('warning');
   });
 
-  it('ordena del más nuevo al más viejo y arma el nombre del archivo', () => {
+  it('ordena del más nuevo al más viejo', () => {
     const sorted = sortBackups([rec('2026-10-01T03:00:00Z'), rec('2026-10-03T03:00:00Z')]);
     expect(sorted[0].createdAt).toBe('2026-10-03T03:00:00Z');
-    expect(backupFilename(sorted[0])).toBe('respaldo-2026-10-03.sql.gz');
+  });
+
+  it('un respaldo en curso no tapa el resultado del último terminado', () => {
+    const inProgress: BackupRecord = { ...rec('2026-10-14T03:00:00Z'), status: 'InProgress', sizeBytes: null };
+    const failed: BackupRecord = { ...rec('2026-10-13T03:00:00Z'), status: 'Failed', sizeBytes: null };
+    expect(backupBanner([inProgress, failed], now).tone).toBe('danger');
   });
 });

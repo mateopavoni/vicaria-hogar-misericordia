@@ -3,7 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UiBackButtonComponent } from '../../../../shared/ui';
 import { DatePipe } from '@angular/common';
-import { PersonProfileStatus, PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
+import { PersonStatus, SocialRecordDetail, PersonType } from '../../interfaces/social-record.interface';
 import { SocialRecordsService } from '../../services/social-records.service';
 import { EmptyFieldBadgeComponent } from '../../../../shared/components/empty-field-badge/empty-field-badge.component';
 import { ChangeHistoryComponent } from '../../components/change-history/change-history.component';
@@ -41,7 +41,6 @@ import { PersonReportDataService } from '../../../report-fields/services/person-
 import { ReportFieldCatalogService } from '../../../report-fields/services/report-field-catalog.service';
 import { pendingReportFields } from '../../../report-fields/utils/report-fields.util';
 import { StatusChangeModalComponent } from '../../components/status-change-modal/status-change-modal.component';
-import { StatusChangeLogService, mergeStatusHistory } from '../../services/status-change-log.service';
 import { MedicationSchemesComponent } from '../../../medication/components/medication-schemes/medication-schemes.component';
 
 @Component({
@@ -206,12 +205,16 @@ export class SocialRecordDetailComponent implements OnInit {
     if (!person || !this.permissionService.hasPermission('fichas.edit')) {
       return;
     }
-    this.reportDataService.save(person.personId, data);
-    this.showReportFieldsModal.set(false);
+    this.reportDataService.save(person.id, person.personId, data).subscribe({
+      next: () => this.showReportFieldsModal.set(false),
+      error: (err) => {
+        this.showReportFieldsModal.set(false);
+        this.errorMessage.set(extractApiError(err, 'No se pudieron guardar los datos del informe.'));
+      },
+    });
   }
 
-  // SCRUM-264: cambio manual de estado (ambulatorios): pide un motivo obligatorio y lo deja en el historial
-  private statusLog = inject(StatusChangeLogService);
+  // SCRUM-264: cambio manual de estado: pide un motivo obligatorio; el backend lo guarda en el historial
   showStatusModal = signal(false);
   statusSaving = signal(false);
   statusError = signal<string | null>(null);
@@ -219,11 +222,8 @@ export class SocialRecordDetailComponent implements OnInit {
   statusTargetLabel = computed(() =>
     this.record()?.status === PersonStatus.Active ? 'Inactivo' : 'Activo');
 
-  // historial de estados: el que venga del backend + los cambios manuales hechos en esta sesión
-  statusHistory = computed(() => {
-    const person = this.record();
-    return person ? mergeStatusHistory(person.statusHistory, this.statusLog.forPerson(person.personId)) : [];
-  });
+  // historial de estados (automáticos del job y manuales), del más nuevo al más viejo
+  statusHistory = computed(() => this.record()?.statusHistory ?? []);
 
   openStatusModal(): void {
     this.statusError.set(null);
@@ -232,26 +232,15 @@ export class SocialRecordDetailComponent implements OnInit {
 
   confirmStatusChange(reason: string): void {
     const person = this.record();
-    const user = this.authService.user();
-    if (!person || !user || this.statusSaving()) {
+    if (!person || this.statusSaving()) {
       return;
     }
 
-    const previous = person.status;
-    const newStatus = previous === PersonStatus.Active
-      ? PersonProfileStatus.InactiveAmbulatory
-      : PersonProfileStatus.ActiveAmbulatory;
+    const newStatus = person.status === PersonStatus.Active ? PersonStatus.Inactive : PersonStatus.Active;
 
     this.statusSaving.set(true);
-    this.socialRecordsService.updateProfileStatus(person.personId, newStatus, reason).subscribe({
+    this.socialRecordsService.updateStatus(person.personId, newStatus, reason).subscribe({
       next: () => {
-        this.statusLog.record(
-          person.personId,
-          previous,
-          previous === PersonStatus.Active ? PersonStatus.Inactive : PersonStatus.Active,
-          `${user.name} ${user.lastname}`.trim(),
-          reason,
-        );
         this.statusSaving.set(false);
         this.showStatusModal.set(false);
         this.loadRecord(person.id);
@@ -413,12 +402,24 @@ export class SocialRecordDetailComponent implements OnInit {
         this.loadLifeHistory(response.personId);
         this.loadObservations(response.personId);
         this.loadAttendanceHistory(response.personId);
+        this.loadEvaluations(response.personId);
+        this.reportDataService.setFromRecord(response.personId, response.reportFields);
+        this.reportCatalog.load().subscribe();
       },
       error: () => {
         this.loading.set(false);
         this.errorMessage.set('No se pudo cargar la ficha.');
       }
     });
+  }
+
+  // SCRUM-260: la vigente y el historial alimentan la pestaña, la alerta y el bloqueo de ingreso
+  private loadEvaluations(personId: string): void {
+    if (!this.permissionService.hasPermission('evaluaciones.view')) {
+      return;
+    }
+    // si falla, el perfil sigue sin datos de evaluación
+    this.evaluationsService.load(personId).subscribe({ error: () => undefined });
   }
 
   private loadAttendanceHistory(personId: string): void {

@@ -1,61 +1,64 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, of, throwError } from 'rxjs';
-import { BackupDownload, BackupRecord } from '../interfaces/backup.interface';
-import { BACKUP_RETENTION, backupFilename, sortBackups } from '../utils/backup-banner.util';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { BackupDownload, BackupRecord, BackupStatus } from '../interfaces/backup.interface';
+import { BACKUP_RETENTION, sortBackups } from '../utils/backup-banner.util';
+
+/** BackupStatus del backend (serializado como número). */
+const STATUS: Record<number, BackupStatus> = { 1: 'InProgress', 2: 'Completed', 3: 'Failed' };
+
+/** BackupDto del backend (SCRUM-266). */
+interface BackupDto {
+  id: string;
+  status: number;
+  createdAt: string;
+  sizeBytes: number;
+  errorMessage: string | null;
+}
 
 /**
- * SCRUM-267: respaldos de la base de datos.
- *
- * El backend todavía no expone respaldos. Mientras tanto este servicio devuelve datos DE EJEMPLO
- * (30 respaldos diarios, uno fallido) y un archivo de demostración. Para conectarlo solo hay que
- * reemplazar el cuerpo de `list()` por `GET /api/backups` y el de `download()` por
- * `GET /api/backups/{id}/download` con `responseType: 'blob'`.
+ * SCRUM-267: respaldos de la base de datos contra la API (SCRUM-266): listado de los últimos
+ * (GET /api/admin/backups, una página con los que se conservan) y descarga del archivo.
  */
 @Injectable({ providedIn: 'root' })
 export class BackupsService {
-  private readonly records: BackupRecord[];
-
-  constructor() {
-    this.records = BackupsService.sampleData(new Date());
-  }
+  private readonly http = inject(HttpClient);
 
   list(): Observable<BackupRecord[]> {
-    return of(sortBackups(this.records)).pipe(delay(200));
+    const params = new HttpParams().set('page', 1).set('pageSize', BACKUP_RETENTION);
+    return this.http
+      .get<{ items: BackupDto[] }>('/api/admin/backups', { params })
+      .pipe(map((page) => sortBackups(page.items.map(toRecord))));
   }
 
   download(id: string): Observable<BackupDownload> {
-    const record = this.records.find((r) => r.id === id);
-    if (!record) {
-      return throwError(() => ({ error: { message: 'El respaldo ya no existe.' } }));
-    }
-    if (record.status === 'Failed') {
-      return throwError(() => ({ error: { message: 'Ese respaldo falló: no hay archivo para descargar.' } }));
-    }
-    const text = `ARCHIVO DE DEMOSTRACIÓN: el backend de respaldos todavía no está conectado.\nRespaldo del ${record.createdAt}\n`;
-    return of({
-      blob: new Blob([text], { type: 'text/plain' }),
-      filename: backupFilename(record).replace('.sql.gz', '-DEMO.txt'),
-    }).pipe(delay(200));
+    return this.http
+      .get(`/api/admin/backups/${id}/download`, { responseType: 'blob', observe: 'response' })
+      .pipe(
+        map((response) => ({
+          blob: response.body!,
+          filename: filenameFrom(response.headers.get('Content-Disposition')) ?? `respaldo-${id}.bak`,
+        })),
+      );
   }
+}
 
-  static sampleData(now: Date): BackupRecord[] {
-    const out: BackupRecord[] = [];
-    for (let i = 0; i < BACKUP_RETENTION; i++) {
-      const date = new Date(now);
-      date.setUTCDate(now.getUTCDate() - i);
-      date.setUTCHours(3, 0, 0, 0);
-      if (date.getTime() > now.getTime()) {
-        date.setUTCDate(date.getUTCDate() - 1);
-      }
-      const failed = i === 9;
-      out.push({
-        id: `backup-${i}`,
-        createdAt: date.toISOString(),
-        sizeBytes: failed ? null : 18_000_000 + (i % 7) * 350_000,
-        status: failed ? 'Failed' : 'Completed',
-        errorMessage: failed ? 'No se pudo subir el archivo al almacenamiento externo.' : null,
-      });
-    }
-    return out;
-  }
+function toRecord(dto: BackupDto): BackupRecord {
+  const status = STATUS[dto.status] ?? 'Failed';
+  return {
+    id: dto.id,
+    createdAt: dto.createdAt.endsWith('Z') ? dto.createdAt : `${dto.createdAt}Z`,
+    sizeBytes: status === 'Completed' ? dto.sizeBytes : null,
+    status,
+    errorMessage: dto.errorMessage,
+  };
+}
+
+/** Nombre del archivo del header Content-Disposition (filename= o filename*=UTF-8''). */
+function filenameFrom(header: string | null): string | null {
+  if (!header) return null;
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (encoded) return decodeURIComponent(encoded[1]);
+  const plain = /filename="?([^";]+)"?/i.exec(header);
+  return plain ? plain[1] : null;
 }

@@ -1,4 +1,4 @@
-import { CaritasReportService } from '../services/caritas-report.service';
+import { CaritasReport } from '../interfaces/caritas-report.interface';
 import { buildCaritasDocument, caritasFilename, formatPercent, periodRange, reportCategories } from './caritas-report.util';
 
 describe('periodRange', () => {
@@ -24,23 +24,30 @@ describe('formatPercent', () => {
   });
 });
 
-describe('informe de ejemplo', () => {
-  const report = CaritasReportService.sample('trimestral', '2026-09-30');
+// informe con la forma que devuelve GET /api/caritas-reports (50 personas atendidas)
+const report: CaritasReport = {
+  periodType: 'trimestral',
+  from: '2026-07-01',
+  to: '2026-09-30',
+  isSample: true,
+  totals: { attendedPersons: 50, averageAttendancesPerPerson: 7.4, newRegistrations: 11 },
+  gender: { male: 29, female: 19, other: 2 },
+  housing: { street: 22, housed: 28 },
+  dni: { withDni: 36, withoutDni: 14 },
+  geography: [
+    { label: 'Misma ciudad', count: 30 },
+    { label: 'Otra provincia', count: 20 },
+  ],
+  reasons: { alcohol: 11, drugs: 9, violence: 6, multiple: 15, unspecified: 9 },
+};
+
+describe('informe de Cáritas', () => {
   const total = report.totals.attendedPersons;
 
   it('cada categoría suma el total de personas atendidas', () => {
     for (const category of reportCategories(report)) {
       expect(category.rows.reduce((s, r) => s + r.count, 0)).toBe(total);
     }
-  });
-
-  it('es repetible para el mismo período y se marca como ejemplo', () => {
-    expect(CaritasReportService.sample('trimestral', '2026-09-30')).toEqual(report);
-    expect(report.isSample).toBe(true);
-  });
-
-  it('el semestral tiene más personas que el trimestral', () => {
-    expect(CaritasReportService.sample('semestral', '2026-09-30').totals.attendedPersons > total).toBe(true);
   });
 
   it('el documento exportable incluye el aviso de ejemplo, totales y las 5 categorías', () => {

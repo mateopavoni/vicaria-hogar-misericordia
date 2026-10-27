@@ -1,58 +1,96 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, of, throwError } from 'rxjs';
-import { AttachmentActor, PersonAttachment } from '../interfaces/attachment.interface';
-import { attachmentKind, validateAttachment } from '../utils/attachment-validation.util';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+import { AttachmentActor, AttachmentKind, PersonAttachment } from '../interfaces/attachment.interface';
+import { validateAttachment } from '../utils/attachment-validation.util';
+
+/** PersonAttachmentDto del backend (SCRUM-255). */
+interface AttachmentDto {
+  id: string;
+  personId: string;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  fileTypeIcon: string;
+  uploadedAt: string;
+  uploadedByUserId: string;
+  uploadedByName: string;
+}
 
 /**
- * SCRUM-256: adjuntos de la ficha de una persona.
- *
- * OJO — backend pendiente (SCRUM-24): hoy no existe almacenamiento ni endpoints de archivos.
- * Hasta entonces los archivos viven en memoria del navegador (se pierden al recargar) y se
- * aplican acá las mismas reglas del AC (tipo, 10 MB) con la forma de error { error: { message } }
- * que lee extractApiError. Al llegar el backend, `upload` pasa a ser un POST multipart,
- * `getByPerson` un GET y `delete` un DELETE; `url` pasa a ser la dirección de descarga.
+ * SCRUM-256: adjuntos de la ficha de una persona contra la API (SCRUM-255):
+ * POST multipart, GET del listado, GET del archivo y DELETE (solo Referente).
+ * El archivo se pide con HttpClient (lleva el token) y se expone como URL blob: en `url`,
+ * así el visor y la descarga funcionan sin exponer el token en un <img src>.
  */
 @Injectable({ providedIn: 'root' })
 export class PersonAttachmentsService {
-  private readonly attachments: PersonAttachment[] = [];
-  private nextId = 1;
+  private readonly http = inject(HttpClient);
+  /** URLs blob: creadas por persona, para liberarlas al recargar. */
+  private readonly objectUrls = new Map<string, string[]>();
 
   /** De más reciente a más antiguo. */
   getByPerson(personId: string): Observable<PersonAttachment[]> {
-    const own = this.attachments
-      .filter((a) => a.personId === personId)
-      .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt) || Number(b.id.split('-')[1]) - Number(a.id.split('-')[1]));
-    return of(own.map((a) => ({ ...a }))).pipe(delay(100));
+    return this.http.get<AttachmentDto[]>(`/api/persons/${personId}/attachments`).pipe(
+      switchMap((list) => {
+        this.revoke(personId);
+        if (list.length === 0) {
+          return of([]);
+        }
+        return forkJoin(list.map((dto) => this.withFileUrl(dto)));
+      }),
+      map((list) => {
+        this.objectUrls.set(personId, list.map((a) => a.url));
+        return list.sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+      }),
+    );
   }
 
-  upload(personId: string, file: File, actor: AttachmentActor): Observable<PersonAttachment> {
+  upload(personId: string, file: File, _actor: AttachmentActor): Observable<PersonAttachment> {
+    // mismas reglas que el backend (tipo y 10 MB) para avisar sin subir el archivo
     const error = validateAttachment(file);
     if (error) {
       return throwError(() => ({ error: { message: error } }));
     }
-    const kind = attachmentKind(file)!;
-    const attachment: PersonAttachment = {
-      id: `att-${this.nextId++}`,
-      personId,
-      name: file.name,
-      kind,
-      mimeType: file.type || (kind === 'pdf' ? 'application/pdf' : 'image/jpeg'),
-      size: file.size,
-      uploadedAt: new Date().toISOString(),
-      uploadedByName: actor.name,
-      url: URL.createObjectURL(file),
-    };
-    this.attachments.push(attachment);
-    return of({ ...attachment }).pipe(delay(150));
+    const form = new FormData();
+    form.append('files', file, file.name);
+    return this.http
+      .post<AttachmentDto[]>(`/api/persons/${personId}/attachments`, form)
+      .pipe(map((created) => toAttachment(created[0], '')));
   }
 
-  delete(attachmentId: string): Observable<void> {
-    const index = this.attachments.findIndex((a) => a.id === attachmentId);
-    if (index === -1) {
-      return throwError(() => ({ error: { message: 'El archivo no existe.' } }));
-    }
-    URL.revokeObjectURL(this.attachments[index].url);
-    this.attachments.splice(index, 1);
-    return of(undefined).pipe(delay(100));
+  delete(personId: string, attachmentId: string): Observable<void> {
+    return this.http.delete<void>(`/api/persons/${personId}/attachments/${attachmentId}`);
   }
+
+  private withFileUrl(dto: AttachmentDto): Observable<PersonAttachment> {
+    return this.http
+      .get(`/api/persons/${dto.personId}/attachments/${dto.id}`, { responseType: 'blob' })
+      .pipe(map((blob) => toAttachment(dto, URL.createObjectURL(blob))));
+  }
+
+  private revoke(personId: string): void {
+    for (const url of this.objectUrls.get(personId) ?? []) {
+      URL.revokeObjectURL(url);
+    }
+    this.objectUrls.delete(personId);
+  }
+}
+
+function kindOf(contentType: string): AttachmentKind {
+  return contentType === 'application/pdf' ? 'pdf' : 'image';
+}
+
+function toAttachment(dto: AttachmentDto, url: string): PersonAttachment {
+  return {
+    id: dto.id,
+    personId: dto.personId,
+    name: dto.fileName,
+    kind: kindOf(dto.contentType),
+    mimeType: dto.contentType,
+    size: dto.fileSizeBytes,
+    uploadedAt: dto.uploadedAt.endsWith('Z') ? dto.uploadedAt : `${dto.uploadedAt}Z`,
+    uploadedByName: dto.uploadedByName,
+    url,
+  };
 }

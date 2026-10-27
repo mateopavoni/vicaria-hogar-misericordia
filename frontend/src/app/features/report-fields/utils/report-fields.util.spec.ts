@@ -1,4 +1,3 @@
-import { PersonReportDataService } from '../services/person-report-data.service';
 import { cleanReportData, hasPendingReportFields, pendingReportFields } from './report-fields.util';
 
 describe('pendingReportFields', () => {
@@ -23,14 +22,5 @@ describe('pendingReportFields', () => {
     expect(cleanReportData({ gender: '', housing: 'x' })).toEqual({
       gender: null, housing: 'x', origin: null, document: null, mainReason: null,
     });
-  });
-});
-
-describe('PersonReportDataService', () => {
-  it('guarda por persona y devuelve vacío para las demás', () => {
-    const service = new PersonReportDataService();
-    service.save('p1', { gender: 'otro' });
-    expect(service.get('p1').gender).toBe('otro');
-    expect(service.get('p2')).toEqual({});
   });
 });

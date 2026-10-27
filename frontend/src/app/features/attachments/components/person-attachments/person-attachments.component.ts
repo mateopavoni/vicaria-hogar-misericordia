@@ -118,7 +118,7 @@ export class PersonAttachmentsComponent implements OnInit {
       return;
     }
     this.deleting.set(true);
-    this.service.delete(target.id).subscribe({
+    this.service.delete(this.personId(), target.id).subscribe({
       next: () => {
         this.deleting.set(false);
         this.pendingDelete.set(null);

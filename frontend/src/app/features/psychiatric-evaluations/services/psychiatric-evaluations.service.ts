@@ -1,34 +1,60 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, delay, of, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, forkJoin, map, switchMap, throwError } from 'rxjs';
 import { todayLocalIso } from '../../../shared/utils/date.util';
 import { EvaluationActor, PsychiatricEvaluation, RegisterEvaluationRequest } from '../interfaces/psychiatric-evaluation.interface';
 
+/** PsychiatricEvaluationStatusDto del backend (SCRUM-259). */
+interface StatusDto {
+  hasEvaluation: boolean;
+  evaluationId: string | null;
+  date: string | null;
+  professional: string | null;
+  diagnosis: string | null;
+}
+
+/** PsychiatricEvaluationHistoryItemDto del backend (SCRUM-259). */
+interface HistoryItemDto {
+  id: string;
+  personId: string;
+  date: string;
+  professional: string | null;
+  diagnosis: string | null;
+  isValid: boolean;
+  registeredByName: string;
+}
+
 /**
- * SCRUM-260: evaluaciones psiquiátricas.
- *
- * OJO — backend pendiente (SCRUM-65): la entidad PsychiatricEvaluation existe en el backend, pero
- * no hay endpoints para listar ni cargar. Hasta entonces las evaluaciones viven en memoria (se
- * pierden al recargar) y se aplican acá las reglas del AC: al cargar una nueva, las anteriores
- * pasan a vigente = false (solo una vigente por persona). El campo tiene_eval_psiq de la ficha y
- * la validación real de Residente / ingreso a la Casa de Convivencia dependen del backend.
- * Al llegar los endpoints, `register` pasa a ser un POST y `load` un GET que llena `evaluations`.
+ * SCRUM-260: evaluaciones psiquiátricas contra la API (SCRUM-258/259).
+ * `load` trae la vigente (GET .../psychiatric-evaluations/status) y las anteriores
+ * (GET .../history) y deja todo en `evaluations`; `register` hace el POST y recarga. El backend
+ * pone vigente = false en las anteriores y actualiza tiene_eval_psiq de la ficha.
  */
 @Injectable({ providedIn: 'root' })
 export class PsychiatricEvaluationsService {
+  private readonly http = inject(HttpClient);
+
   /** Estado compartido: el perfil, la pestaña y medicación leen de acá. */
   readonly evaluations = signal<PsychiatricEvaluation[]>([]);
-  private nextId = 1;
 
-  /** Hoy no hace nada (todo está en memoria); con backend traería las evaluaciones de la persona. */
-  load(_personId: string): Observable<void> {
-    return of(undefined).pipe(delay(50));
+  load(personId: string): Observable<void> {
+    const base = `/api/persons/${personId}/psychiatric-evaluations`;
+    return forkJoin([this.http.get<StatusDto>(`${base}/status`), this.http.get<HistoryItemDto[]>(`${base}/history`)]).pipe(
+      map(([status, history]) => {
+        const loaded = history.map((h) => toEvaluation(h.id, personId, h.date, h.professional, h.diagnosis, false, h.registeredByName));
+        if (status.hasEvaluation && status.evaluationId && status.date) {
+          loaded.push(toEvaluation(status.evaluationId, personId, status.date, status.professional, status.diagnosis, true, ''));
+        }
+        this.evaluations.update((list) => [...list.filter((e) => e.personId !== personId), ...loaded]);
+      }),
+    );
   }
 
   /** Evaluaciones de la persona, la más reciente primero. */
   forPerson(personId: string): PsychiatricEvaluation[] {
     return this.evaluations()
       .filter((e) => e.personId === personId)
-      .sort((a, b) => b.date.localeCompare(a.date) || Number(b.id.split('-')[1]) - Number(a.id.split('-')[1]));
+      .sort((a, b) => b.date.localeCompare(a.date) || Number(b.vigente) - Number(a.vigente));
   }
 
   /** La única evaluación con vigente = true, si existe. */
@@ -36,10 +62,10 @@ export class PsychiatricEvaluationsService {
     return this.evaluations().find((e) => e.personId === personId && e.vigente) ?? null;
   }
 
-  register(request: RegisterEvaluationRequest, actor: EvaluationActor): Observable<PsychiatricEvaluation> {
+  register(request: RegisterEvaluationRequest, _actor: EvaluationActor): Observable<PsychiatricEvaluation> {
     const professional = request.professional.trim();
     const diagnosis = request.diagnosis.trim();
-
+    // mismas reglas del formulario, para avisar sin llamar a la API
     if (!request.date) {
       return this.fail('La fecha de la evaluación es obligatoria.');
     }
@@ -60,25 +86,36 @@ export class PsychiatricEvaluationsService {
       return this.fail('El diagnóstico no puede superar los 2000 caracteres.');
     }
 
-    const evaluation: PsychiatricEvaluation = {
-      id: `eval-${this.nextId++}`,
-      personId: request.personId,
-      date: request.date,
-      professional,
-      diagnosis,
-      vigente: true,
-      registeredByName: actor.name,
-      registeredAt: new Date().toISOString(),
-    };
-    // una sola vigente por persona: las anteriores pasan a vigente = false
-    this.evaluations.update((list) => [
-      ...list.map((e) => (e.personId === request.personId ? { ...e, vigente: false } : e)),
-      evaluation,
-    ]);
-    return of({ ...evaluation }).pipe(delay(150));
+    return this.http
+      .post<{ id: string }>(`/api/persons/${request.personId}/psychiatric-evaluations`, { date: request.date, professional, diagnosis })
+      .pipe(
+        switchMap(() => this.load(request.personId)),
+        map(() => this.currentFor(request.personId)!),
+      );
   }
 
   private fail(message: string): Observable<never> {
     return throwError(() => ({ error: { message } }));
   }
+}
+
+function toEvaluation(
+  id: string,
+  personId: string,
+  date: string,
+  professional: string | null,
+  diagnosis: string | null,
+  vigente: boolean,
+  registeredByName: string,
+): PsychiatricEvaluation {
+  return {
+    id,
+    personId,
+    date: date.slice(0, 10),
+    professional: professional ?? '',
+    diagnosis: diagnosis ?? '',
+    vigente,
+    registeredByName,
+    registeredAt: '',
+  };
 }

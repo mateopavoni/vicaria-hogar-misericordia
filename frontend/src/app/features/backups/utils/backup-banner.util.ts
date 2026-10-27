@@ -12,7 +12,8 @@ export function sortBackups(records: BackupRecord[]): BackupRecord[] {
 
 /** Banner con el resultado del último respaldo. */
 export function backupBanner(records: BackupRecord[], now: Date): BackupBanner {
-  const last = sortBackups(records)[0];
+  // un respaldo en curso todavía no tiene resultado: el banner informa el último terminado
+  const last = sortBackups(records).find((r) => r.status !== 'InProgress');
   if (!last) {
     return { tone: 'neutral', title: 'Todavía no hay respaldos', message: 'El primer respaldo automático se genera en la próxima corrida diaria.' };
   }
@@ -35,8 +36,4 @@ export function backupBanner(records: BackupRecord[], now: Date): BackupBanner {
   }
 
   return { tone: 'success', title: 'Último respaldo correcto', message: 'El respaldo automático diario funciona con normalidad.' };
-}
-
-export function backupFilename(record: BackupRecord): string {
-  return `respaldo-${record.createdAt.slice(0, 10)}.sql.gz`;
 }
