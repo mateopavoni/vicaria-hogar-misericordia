@@ -69,13 +69,6 @@ public class PersonExportPdfGenerator : IPersonExportPdfGenerator
         {
             writer.WriteLine(bodyFont, $"Notas generales: {document.GeneralNotes}");
         }
-        if (document.Contact is not null)
-        {
-            var contactName = string.IsNullOrWhiteSpace(document.Contact.LastName)
-                ? document.Contact.FirstName
-                : $"{document.Contact.FirstName} {document.Contact.LastName}";
-            writer.WriteLine(bodyFont, $"Contacto de referencia: {contactName}{FormatPhone(document.Contact.Phone)}{FormatAddress(document.Contact.Address)}");
-        }
         writer.WriteLine(bodyFont, string.Empty);
 
         if (document.Sections is PersonExportSections.DataWithObservations or PersonExportSections.All)
@@ -90,7 +83,7 @@ public class PersonExportPdfGenerator : IPersonExportPdfGenerator
                 var category = string.IsNullOrWhiteSpace(observation.CategoryName)
                     ? string.Empty
                     : $" [{observation.CategoryName}]";
-                writer.WriteLine(bodyFont, $"{observation.CreatedAt:dd/MM/yyyy HH:mm}{category}");
+                writer.WriteLine(bodyFont, $"{ToArgentinaTime(observation.CreatedAt):dd/MM/yyyy HH:mm}{category}");
                 writer.WriteLine(bodyFont, observation.Content);
                 writer.WriteLine(bodyFont, string.Empty);
             }
@@ -110,12 +103,6 @@ public class PersonExportPdfGenerator : IPersonExportPdfGenerator
 
     private static string FormatDni(string? dni) =>
         string.IsNullOrWhiteSpace(dni) ? string.Empty : $" — DNI {dni}";
-
-    private static string FormatPhone(string? phone) =>
-        string.IsNullOrWhiteSpace(phone) ? string.Empty : $" — Tel. {phone}";
-
-    private static string FormatAddress(string? address) =>
-        string.IsNullOrWhiteSpace(address) ? string.Empty : $" — {address}";
 
     private static string FormatRole(string role) =>
         string.IsNullOrWhiteSpace(role) ? string.Empty : $" ({role})";
@@ -156,7 +143,32 @@ public class PersonExportPdfGenerator : IPersonExportPdfGenerator
             _y = Margin;
         }
 
+        // parte el texto en líneas que entren en el ancho de la página (observaciones e
+        // historia de vida suelen ser párrafos largos)
         public void WriteLine(XFont font, string text)
+        {
+            var maxWidth = _page.Width.Point - Margin * 2;
+            foreach (var paragraph in text.Replace("\r", string.Empty).Split('\n'))
+            {
+                var line = string.Empty;
+                foreach (var word in paragraph.Split(' '))
+                {
+                    var candidate = line.Length == 0 ? word : $"{line} {word}";
+                    if (line.Length > 0 && _graphics.MeasureString(candidate, font).Width > maxWidth)
+                    {
+                        DrawLine(font, line);
+                        line = word;
+                    }
+                    else
+                    {
+                        line = candidate;
+                    }
+                }
+                DrawLine(font, line);
+            }
+        }
+
+        private void DrawLine(XFont font, string text)
         {
             if (_y + LineHeight > _page.Height.Point - Margin)
             {
@@ -165,9 +177,7 @@ public class PersonExportPdfGenerator : IPersonExportPdfGenerator
                 _y = Margin;
             }
 
-            _graphics.DrawString(text, font, XBrushes.Black,
-                new XRect(XUnit.FromPoint(Margin), XUnit.FromPoint(_y), XUnit.FromPoint(_page.Width.Point - Margin * 2), XUnit.FromPoint(LineHeight)),
-                XStringFormats.TopLeft);
+            _graphics.DrawString(text, font, XBrushes.Black, new XPoint(Margin, _y), XStringFormats.TopLeft);
             _y += LineHeight;
         }
 

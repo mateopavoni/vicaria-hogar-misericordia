@@ -17,7 +17,7 @@ public class CreateAttendanceDtoValidator : AbstractValidator<CreateAttendanceDt
         RuleFor(x => x.Date)
             .NotEmpty()
             .WithMessage("La fecha es obligatoria para registrar la asistencia.")
-            .Must(date => date.Date <= DateTime.UtcNow.Date)
+            .Must(date => date.Date <= DateTime.UtcNow.AddHours(-3).Date) // hoy de Córdoba (UTC-3)
             .WithMessage("La fecha no puede ser futura. Solo se puede registrar la asistencia del día actual o de días pasados.");
 
         RuleFor(x => x.AnonymousCount)

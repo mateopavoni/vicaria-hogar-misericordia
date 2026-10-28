@@ -220,9 +220,9 @@ public class PersonsController : ControllerBase
     // exportación de la ficha a PDF (SCRUM-252): secciones datos /
     // datos-observaciones / todo, con nombre del sistema, fecha y referente;
     // excluye autores de observaciones y registra la exportación en auditoría
+    // solo el Referente exporta, igual que POST social-records/{id}/exports
     [HttpGet("{id:guid}/export-pdf")]
-    [DirectorResidentsOnly]
-    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
+    [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> ExportPdf(
         Guid id,
         [FromQuery(Name = "sections")] string? sections,
@@ -490,6 +490,19 @@ public class PersonsController : ControllerBase
         };
     }
     
+    // campos del informe de Cáritas que faltan cargar en la ficha (SCRUM-273)
+    [HttpGet("{id:guid}/report-fields/pending")]
+    [HttpGet("/api/personas/{id:guid}/campos-informe-pendientes")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
+    public async Task<IActionResult> GetPendingReportFields(Guid id, CancellationToken cancellationToken)
+    {
+        var pending = await _socialRecordService.GetPendingReportFieldsAsync(id, cancellationToken);
+        return pending is null
+            ? NotFound(new { message = "La ficha no existe." })
+            : Ok(pending);
+    }
+
     [HttpGet("{id}/psychiatric-evaluations/status")]
     [HttpGet("/api/personas/{id}/evaluacion-estado")]
     [DirectorResidentsOnly]

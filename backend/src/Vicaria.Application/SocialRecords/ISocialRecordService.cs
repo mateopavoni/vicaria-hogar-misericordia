@@ -18,5 +18,7 @@ public interface ISocialRecordService
     Task<UpdatePersonProfileStatusResult> UpdatePersonProfileStatusAsync(Guid personId, UpdatePersonProfileStatusDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<UpdatePersonStatusResult> UpdateStatusAsync(Guid personId, UpdatePersonStatusDto dto, Guid actorId, CancellationToken cancellationToken = default);
     Task<UpdateReportFieldsResult> UpdateReportFieldsAsync(Guid socialRecordId, SocialRecordReportFieldsDto dto, Guid actorId, CancellationToken cancellationToken = default);
+    // campos del informe de Cáritas que faltan cargar en la ficha de la persona (SCRUM-273); null si no tiene ficha
+    Task<IReadOnlyList<PendingReportFieldDto>?> GetPendingReportFieldsAsync(Guid personId, CancellationToken cancellationToken = default);
     Task<LogRecordExportResult> LogExportAsync(Guid socialRecordId, LogRecordExportDto dto, Guid actorId, CancellationToken cancellationToken = default);
 }

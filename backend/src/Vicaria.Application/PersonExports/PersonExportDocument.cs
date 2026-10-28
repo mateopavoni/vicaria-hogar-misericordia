@@ -1,5 +1,3 @@
-using Vicaria.Application.SocialRecords;
-
 namespace Vicaria.Application.PersonExports;
 
 // item de observación para el PDF (SCRUM-252): fecha, categoría y contenido;
@@ -12,7 +10,8 @@ public record PersonExportObservationItem(
 
 // documento de exportación de la ficha (SCRUM-252): mismo contenido que el
 // perfil según las secciones (datos / datos-observaciones / todo) más el
-// encabezado (sistema, fecha y referente que generó)
+// encabezado (sistema, fecha y referente que generó). No lleva el contacto de referencia:
+// es un tercero (criterio de SCRUM-23)
 public record PersonExportDocument(
     Guid PersonId,
     string FirstName,
@@ -28,7 +27,6 @@ public record PersonExportDocument(
     string? Occupation,
     bool HasDocumentation,
     string? GeneralNotes,
-    ContactDto? Contact,
     string Sections,
     IReadOnlyList<PersonExportObservationItem> Observations,
     string? BeforeCentroBarrial,
