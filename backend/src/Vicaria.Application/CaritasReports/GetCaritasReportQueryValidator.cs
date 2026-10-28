@@ -11,7 +11,7 @@ public class GetCaritasReportQueryValidator : AbstractValidator<GetCaritasReport
             .WithMessage("El período debe ser trimestral o semestral.");
 
         RuleFor(x => x.To)
-            .Must(to => to.Date <= DateTime.UtcNow.Date)
+            .Must(to => to.Date <= DateTime.UtcNow.AddHours(-3).Date) // hoy de Córdoba (UTC-3)
             .WithMessage("La fecha de corte no puede ser futura.");
     }
 }

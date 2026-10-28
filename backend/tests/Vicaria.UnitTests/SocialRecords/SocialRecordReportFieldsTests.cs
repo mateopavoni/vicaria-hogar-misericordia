@@ -106,4 +106,31 @@ public class SocialRecordReportFieldsTests
 
         Assert.Equal(UpdateReportFieldsError.NotFound, result.Error);
     }
+
+    // SCRUM-273: campos del informe que faltan cargar
+    [Fact]
+    public async Task GetPendingReportFieldsAsync_DevuelveSoloLosCamposSinValor()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new SocialRecordService(context);
+        var record = await SeedRecordAsync(context);
+        record.GenderId = Guid.NewGuid();
+        record.AttendanceReasonId = Guid.NewGuid();
+        await context.SaveChangesAsync();
+
+        var pending = await service.GetPendingReportFieldsAsync(record.PersonId);
+
+        Assert.NotNull(pending);
+        Assert.Equal(["housing", "origin", "document"], pending.Select(p => p.Field));
+        Assert.Equal("Situación habitacional", pending[0].Label);
+    }
+
+    [Fact]
+    public async Task GetPendingReportFieldsAsync_PersonaSinFicha_DevuelveNull()
+    {
+        using var context = CreateInMemoryDbContext();
+        var service = new SocialRecordService(context);
+
+        Assert.Null(await service.GetPendingReportFieldsAsync(Guid.NewGuid()));
+    }
 }

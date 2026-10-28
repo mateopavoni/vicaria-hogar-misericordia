@@ -65,6 +65,14 @@ S5_DEFECTS = [
      "SCRUM-77 / 266", "Corregido en dev", "Sin compresión en Express; el .bak se genera en la carpeta de respaldos de SQL Server y se trae por la conexión (TC-246 a TC-251)."),
     ("Brecha", "No había registro en el sistema de quién exportó la ficha y cuándo: el frontend genera el PDF y lo guardaba solo en memoria del navegador.",
      "SCRUM-23 / 252", "Corregido en dev", "Nuevo POST api/social-records/{id}/exports que deja la auditoría con usuario, fecha, formato y secciones (S5-X01, TC-218)."),
+    ("Brecha", "El endpoint del backend que genera el PDF de la ficha (SCRUM-252) llegó después de la integración y el botón \"Descargar PDF\" seguía armando el PDF en el navegador.",
+     "SCRUM-23 / 252 / 253", "Corregido en dev", "El botón descarga el PDF de GET api/persons/{id}/export-pdf, que también registra la exportación (S5-X03, TC-212 a TC-218)."),
+    ("Defecto", "El PDF de la ficha generado por el backend cortaba en el borde de la página las observaciones y la historia de vida largas, incluía el contacto de referencia (un tercero), mostraba el tipo de persona en inglés y la hora de las observaciones en UTC.",
+     "SCRUM-252", "Corregido en dev", "El texto se parte en líneas y páginas, sin contacto de referencia, tipo en español y hora de Córdoba (TC-214, TC-216)."),
+    ("Defecto", "Entre las 21 y las 24 h de Córdoba la API usaba la fecha UTC: aceptaba una evaluación psiquiátrica con fecha de mañana y el proceso diario pasaba a Inactivo a quien había asistido hace 29 días.",
+     "SCRUM-66 / 67", "Corregido en dev", "La validación y el proceso diario usan la fecha de Córdoba (TC-229, TC-238)."),
+    ("Brecha", "Faltaba el endpoint que devuelve los campos del informe de Cáritas pendientes de cargar en la ficha.",
+     "SCRUM-70 / 273", "Corregido en dev", "Nuevo GET api/personas/{id}/campos-informe-pendientes (S5-C10)."),
 ]
 
 STORY_OF = {"190": "16", "195": "17", "200": "18", "205": "19", "211": "74", "212": "74", "17": "17"}
