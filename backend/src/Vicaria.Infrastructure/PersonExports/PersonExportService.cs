@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.PersonExports;
-using Vicaria.Application.SocialRecords;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
@@ -54,11 +53,6 @@ public class PersonExportService : IPersonExportService
             : $"{actor.FirstName} {actor.LastName}".Trim();
         var generatedByRole = actor?.Role?.Name ?? string.Empty;
 
-        var contact = await _dbContext.Contacts
-            .Where(c => c.SocialRecordId == socialRecord.Id)
-            .OrderBy(c => c.FirstName)
-            .FirstOrDefaultAsync(cancellationToken);
-
         IReadOnlyList<PersonExportObservationItem> observations = [];
         if (normalizedSections is PersonExportSections.DataWithObservations or PersonExportSections.All)
         {
@@ -95,7 +89,12 @@ public class PersonExportService : IPersonExportService
             Dni: person.Dni,
             DateOfBirth: person.DateOfBirth,
             Phone: person.Phone,
-            PersonType: socialRecord.PersonType?.ToString(),
+            PersonType: socialRecord.PersonType switch
+            {
+                Domain.Entities.PersonType.Ambulatory => "Ambulatorio",
+                Domain.Entities.PersonType.Resident => "Residente",
+                _ => null
+            },
             ReasonForEntry: socialRecord.ReasonForEntry,
             EntryDate: socialRecord.EntryDate,
             HousingSituation: socialRecord.HousingSituation,
@@ -103,9 +102,6 @@ public class PersonExportService : IPersonExportService
             Occupation: socialRecord.Occupation,
             HasDocumentation: socialRecord.HasDocumentation,
             GeneralNotes: socialRecord.GeneralNotes,
-            Contact: contact is null
-                ? null
-                : new ContactDto(contact.FirstName, contact.LastName, contact.Phone, contact.Address),
             Sections: normalizedSections,
             Observations: observations,
             BeforeCentroBarrial: beforeCentroBarrial,

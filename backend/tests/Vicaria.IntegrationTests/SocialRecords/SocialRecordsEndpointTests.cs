@@ -390,4 +390,80 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    // SCRUM-252: exportación de la ficha a PDF desde el backend
+    [Fact]
+    public async Task ExportPdf_ComoReferente_DevuelvePdfYRegistraAuditoria()
+    {
+        var (recordId, _) = await SembrarFichaYGeneroAsync();
+        Guid personId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            personId = scope.ServiceProvider.GetRequiredService<VicariaDbContext>().SocialRecords.Single(r => r.Id == recordId).PersonId;
+        }
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var response = await _client.GetAsync($"/api/persons/{personId}/export-pdf?sections=datos-observaciones");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/pdf", response.Content.Headers.ContentType?.MediaType);
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
+        using var verify = _factory.Services.CreateScope();
+        var db = verify.ServiceProvider.GetRequiredService<VicariaDbContext>();
+        Assert.True(await db.AuditLogs.AnyAsync(a => a.AffectedEntity == $"Person:{personId}" && a.Action.Contains("datos y observaciones")));
+    }
+
+    [Fact]
+    public async Task ExportPdf_ComoEscucha_Devuelve403()
+    {
+        await UsarTokenAsync(RoleNames.Listener);
+
+        var response = await _client.GetAsync($"/api/persons/{Guid.NewGuid()}/export-pdf?sections=datos");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ExportPdf_SeccionesInvalidas_Devuelve400_YPersonaInexistente_Devuelve404()
+    {
+        await UsarTokenAsync(RoleNames.Referent);
+
+        var invalid = await _client.GetAsync($"/api/persons/{Guid.NewGuid()}/export-pdf?sections=otra");
+        var missing = await _client.GetAsync($"/api/persons/{Guid.NewGuid()}/export-pdf?sections=todo");
+
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    // SCRUM-273: campos del informe pendientes
+    [Fact]
+    public async Task GetPendingReportFields_DevuelveLosQueFaltan()
+    {
+        var (recordId, genderId) = await SembrarFichaYGeneroAsync();
+        Guid personId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            personId = scope.ServiceProvider.GetRequiredService<VicariaDbContext>().SocialRecords.Single(r => r.Id == recordId).PersonId;
+        }
+        await UsarTokenAsync(RoleNames.Referent);
+        await _client.PutAsJsonAsync($"/api/social-records/{recordId}/report-fields",
+            new { genderId, housingSituationId = (Guid?)null, originLocalityId = (Guid?)null, documentationStatusId = (Guid?)null, attendanceReasonId = (Guid?)null });
+
+        var response = await _client.GetAsync($"/api/personas/{personId}/campos-informe-pendientes");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var pending = await response.Content.ReadFromJsonAsync<List<PendingReportFieldDto>>();
+        Assert.Equal(["housing", "origin", "document", "mainReason"], pending!.Select(p => p.Field));
+    }
+
+    [Fact]
+    public async Task GetPendingReportFields_ComoEscucha_Devuelve403()
+    {
+        await UsarTokenAsync(RoleNames.Listener);
+
+        var response = await _client.GetAsync($"/api/persons/{Guid.NewGuid()}/report-fields/pending");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }

@@ -3,6 +3,7 @@ using Vicaria.Application.Attendances;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Persistence;
+using Vicaria.Infrastructure.PsychiatricEvaluations;
 
 namespace Vicaria.UnitTests.Attendances;
 
@@ -181,6 +182,22 @@ public class AttendanceServiceTests
 
         var log = await db.AuditLogs.FirstOrDefaultAsync(a => a.AffectedEntity == $"SocialRecord:{record.Id}");
         Assert.NotNull(log);
+    }
+
+    // la asistencia se guarda con la fecha de Córdoba: a la noche (UTC ya es el día siguiente)
+    // la de hace 29 días de Córdoba todavía cuenta
+    [Fact]
+    public async Task CheckInactivity_AsistenciaDeHace29DiasDeCordoba_MantieneActivo()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-60));
+        await SeedAttendance(db, personId, PsychiatricEvaluationService.GetCordobaToday().AddDays(-29));
+        var service = new AttendanceInactivityService(db);
+
+        await service.CheckAndProcessInactivityAsync();
+
+        var record = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
+        Assert.Equal(SocialRecordStatus.Active, record.Status);
     }
 
     [Fact]
