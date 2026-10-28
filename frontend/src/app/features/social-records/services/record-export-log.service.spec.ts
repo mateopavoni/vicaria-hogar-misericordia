@@ -22,4 +22,15 @@ describe('RecordExportLogService', () => {
     expect(req.request.body).toEqual({ sections: 'todo', format: 'pdf' });
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
+
+  it('descarga el PDF que genera el backend con las secciones elegidas', () => {
+    let size = 0;
+    service.downloadPdf('persona-1', 'datos-observaciones').subscribe((blob) => (size = blob.size));
+    const req = httpMock.expectOne((r) => r.url === '/api/persons/persona-1/export-pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('sections')).toBe('datos-observaciones');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['%PDF-1.4']));
+    expect(size).toBe(8);
+  });
 });

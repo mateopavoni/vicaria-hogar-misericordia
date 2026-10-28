@@ -175,6 +175,9 @@ r = await call('PUT', `/api/social-records/${R.recordId}/report-fields`, { token
 rec('S5-C08', 'Un valor desactivado no se puede asignar a una ficha (400)', r.status === 400, `status=${r.status} ${r.json?.message ?? ''}`);
 r = await call('PUT', `/api/social-records/${R.recordId}/report-fields`, { token: T.esc, body: { genderId: gender?.id } });
 rec('S5-C09', 'Escucha no puede cargar los campos del informe (403)', r.status === 403, `status=${r.status}`);
+// SCRUM-273: campos del informe que faltan cargar (la ficha tiene género y motivo)
+r = await call('GET', `/api/personas/${R.personId}/campos-informe-pendientes`, { token: T.ref });
+rec('S5-C10', 'El backend devuelve los campos del informe que faltan cargar', r.status === 200 && JSON.stringify((r.json ?? []).map(f => f.field)) === JSON.stringify(['housing', 'origin', 'document']), `status=${r.status} ${JSON.stringify((r.json ?? []).map(f => f.field))}`);
 
 // ---------------- SCRUM-69 informe de Cáritas
 await call('POST', '/api/attendances', { token: T.ref, body: { personId: R.personId, activity: 0, date: today, anonymousCount: 0 } });
@@ -209,6 +212,14 @@ r = await call('POST', `/api/social-records/${A.recordId}/exports`, { token: T.r
 rec('S5-X01', 'El backend registra quién exportó la ficha y cuándo (204 y auditoría)', r.status === 204 && Number(sql(`SELECT COUNT(*) FROM audit_logs WHERE Action LIKE 'Ficha exportada%'`)) > Number(auditBefore), `status=${r.status}`);
 r = await call('POST', `/api/social-records/${A.recordId}/exports`, { token: T.esc, body: { sections: 'todo', format: 'pdf' } });
 rec('S5-X02', 'Escucha no puede exportar la ficha (403)', r.status === 403, `status=${r.status}`);
+// SCRUM-252: el backend genera el PDF y registra la exportación
+const pdfBefore = sql(`SELECT COUNT(*) FROM audit_logs WHERE AffectedEntity = 'Person:${A.personId}' AND Action LIKE 'Ficha exportada (PDF)%'`);
+r = await call('GET', `/api/persons/${A.personId}/export-pdf?sections=todo`, { token: T.ref });
+rec('S5-X03', 'El backend genera el PDF de la ficha y registra la exportación', r.status === 200 && r.buf.subarray(0, 4).toString() === '%PDF' && Number(sql(`SELECT COUNT(*) FROM audit_logs WHERE AffectedEntity = 'Person:${A.personId}' AND Action LIKE 'Ficha exportada (PDF)%'`)) > Number(pdfBefore), `status=${r.status} bytes=${r.buf?.length}`);
+r = await call('GET', `/api/persons/${A.personId}/export-pdf?sections=otra`, { token: T.ref });
+const badSections = r.status;
+r = await call('GET', `/api/persons/${A.personId}/export-pdf?sections=datos`, { token: T.esc });
+rec('S5-X04', 'Secciones inválidas dan 400 y Escucha recibe 403 al pedir el PDF', badSections === 400 && r.status === 403, `secciones=${badSections} escucha=${r.status}`);
 
 // ---------------- SCRUM-67 job diario de inactivación (corre al arrancar la API)
 const J = await newPerson('Job');
