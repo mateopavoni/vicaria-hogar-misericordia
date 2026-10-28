@@ -30,7 +30,6 @@ import { ExportRecordModalComponent } from '../../components/export-record-modal
 import { RecordExportPrintComponent } from '../../components/record-export-print/record-export-print.component';
 import { RecordExportLogService } from '../../services/record-export-log.service';
 import { ExportSections, RecordExportDocument, buildExportFilename, buildRecordExport } from '../../utils/record-export.util';
-import { buildPdf } from '../../utils/simple-pdf.util';
 import { PersonAttachmentsComponent } from '../../../attachments/components/person-attachments/person-attachments.component';
 import { PsychiatricEvaluationsComponent } from '../../../psychiatric-evaluations/components/psychiatric-evaluations/psychiatric-evaluations.component';
 import { PsychiatricEvaluationsService } from '../../../psychiatric-evaluations/services/psychiatric-evaluations.service';
@@ -270,19 +269,31 @@ export class SocialRecordDetailComponent implements OnInit {
     this.showExportModal.set(true);
   }
 
-  // genera el PDF y lo descarga directo al dispositivo
+  // el backend genera el PDF y registra la exportación (SCRUM-252); se descarga directo al dispositivo
   downloadExport(sections: ExportSections): void {
-    this.prepareExport(sections, (doc, record, exportedAt) => {
-      const bytes = buildPdf(doc);
-      const url = URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = buildExportFilename(record, exportedAt);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      this.logExport(record.id, sections, 'pdf');
+    const record = this.record();
+    if (!record || this.exporting() || !this.permissionService.hasPermission('fichas.export')) {
+      return;
+    }
+
+    this.exporting.set(true);
+    this.exportLog.downloadPdf(record.personId, sections).subscribe({
+      next: (blob) => {
+        this.showExportModal.set(false);
+        this.exporting.set(false);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = buildExportFilename(record, new Date());
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: () => {
+        this.exporting.set(false);
+        this.errorMessage.set('No se pudo generar el PDF de la ficha.');
+      },
     });
   }
 
@@ -347,7 +358,7 @@ export class SocialRecordDetailComponent implements OnInit {
   }
 
   // la auditoría no frena la descarga: si falla el registro, la ficha ya se exportó
-  private logExport(socialRecordId: string, sections: ExportSections, format: 'pdf' | 'print'): void {
+  private logExport(socialRecordId: string, sections: ExportSections, format: 'print'): void {
     this.exportLog.log(socialRecordId, { sections, format }).subscribe({ error: () => undefined });
   }
 

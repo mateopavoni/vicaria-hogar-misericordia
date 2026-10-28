@@ -30,3 +30,8 @@ public class UpdateReportFieldsResult
     public static UpdateReportFieldsResult InvalidCatalogValue(string message) =>
         new() { Success = false, Error = UpdateReportFieldsError.InvalidCatalogValue, ErrorMessage = message };
 }
+
+// campo del informe de Cáritas que la ficha todavía no tiene cargado (SCRUM-273):
+// Field es la clave estable (gender, housing, origin, document, mainReason) y Label el
+// nombre que ve el usuario
+public record PendingReportFieldDto(string Field, string Label);

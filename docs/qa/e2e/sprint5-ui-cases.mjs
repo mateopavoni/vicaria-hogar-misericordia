@@ -76,6 +76,8 @@ const openTab = async (p, tab, recordId) => {
   await go(p, `/dashboard/fichas/${recordId}`);
   await p.getByRole('button', { name: tab, exact: true }).first().click(); await sleep(1500);
 };
+// texto de un PDF (el de la ficha lo genera el backend con PDFsharp: se lee con PyMuPDF)
+const pdfText = (file) => execFileSync('python', ['-c', 'import fitz,sys;print("\\n".join(p.get_text() for p in fitz.open(sys.argv[1])))', file], { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
 // descarga el PDF de la ficha con las secciones elegidas y devuelve su texto
 const exportRecord = async (recordId, label) => {
   await go(P.ref, `/dashboard/fichas/${recordId}`);
@@ -83,7 +85,7 @@ const exportRecord = async (recordId, label) => {
   await P.ref.getByText(label, { exact: true }).click();
   const [dl] = await Promise.all([P.ref.waitForEvent('download', { timeout: 15000 }), P.ref.getByRole('button', { name: 'Descargar PDF' }).click()]);
   const file = await dl.path();
-  return { name: dl.suggestedFilename(), text: fs.readFileSync(file).toString('latin1') };
+  return { name: dl.suggestedFilename(), text: pdfText(file) };
 };
 
 // ======================= datos de la corrida =======================
@@ -116,9 +118,9 @@ await tc(215, 'El PDF lleva nombre del sistema, fecha de exportación y referent
   const { text } = await exportRecord(X.recordId, 'Solo datos personales');
   const [y, m, d] = today.split('-');
   must(/Vicaria/.test(text), 'falta el nombre del sistema');
-  must(text.includes(`Exportado el ${d}/${m}/${y}`), 'falta la fecha de exportación');
-  must(/por Test referente/i.test(text), 'falta el nombre de quien exportó');
-  return `Exportado el ${d}/${m}/${y} por Test referente`;
+  must(text.includes(`Fecha de exportación: ${d}/${m}/${y}`), 'falta la fecha de exportación');
+  must(/Generado por: Test referente/i.test(text), 'falta el nombre de quien exportó');
+  return `Fecha de exportación: ${d}/${m}/${y}, generado por Test referente`;
 });
 await tc(216, 'El PDF no incluye datos de otros usuarios ni de terceros', P.ref, async () => {
   const { text } = await exportRecord(X.recordId, 'Todo');
@@ -137,7 +139,7 @@ await tc(217, 'La ficha se descarga directo y se puede imprimir', P.ref, async (
   return `${name} y vista de impresión`;
 });
 await tc(218, 'Queda registrado quién exportó la ficha y cuándo', P.ref, async () => {
-  const exportLogs = () => sql(`SELECT u.Email + '|' + a.Action FROM audit_logs a JOIN users u ON u.Id = a.UserId WHERE a.Action LIKE 'Ficha exportada%' AND a.AffectedEntity = 'SocialRecord:${X.recordId}' ORDER BY a.Date DESC`).split('\n').filter(Boolean);
+  const exportLogs = () => sql(`SELECT u.Email + '|' + a.Action FROM audit_logs a JOIN users u ON u.Id = a.UserId WHERE a.Action LIKE 'Ficha exportada%' AND a.AffectedEntity = 'Person:${X.personId}' ORDER BY a.Date DESC`).split('\n').filter(Boolean);
   const before = exportLogs().length;
   await exportRecord(X.recordId, 'Solo datos personales');
   await sleep(1000);

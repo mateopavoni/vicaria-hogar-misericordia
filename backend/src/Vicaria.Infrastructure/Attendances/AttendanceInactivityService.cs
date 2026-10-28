@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.Attendances;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
+using Vicaria.Infrastructure.PsychiatricEvaluations;
 
 namespace Vicaria.Infrastructure.Attendances;
 
@@ -25,12 +26,15 @@ public class AttendanceInactivityService : IAttendanceInactivityService
         // ficha y el último pase a Activo: una ficha nueva o recién reactivada a mano no
         // vuelve a Inactiva hasta cumplir 30 días sin asistencia.
         var thresholdDate = DateTime.UtcNow.AddDays(-30);
+        // las asistencias se guardan con la fecha de Córdoba: cuentan las de los últimos 30
+        // días de Córdoba, hoy incluido
+        var attendanceThreshold = PsychiatricEvaluationService.GetCordobaToday().AddDays(-29);
 
         var inactiveCandidates = await _dbContext.SocialRecords
             .Include(r => r.Person)
             .Where(r => r.Status == SocialRecordStatus.Active
                 && r.CreatedAt < thresholdDate
-                && !_dbContext.Attendances.Any(a => a.PersonId == r.PersonId && a.Date >= thresholdDate)
+                && !_dbContext.Attendances.Any(a => a.PersonId == r.PersonId && a.Date >= attendanceThreshold)
                 && !_dbContext.PersonStatusChanges.Any(c => c.PersonId == r.PersonId
                     && c.NewStatus == SocialRecordStatus.Active
                     && c.ChangedAt >= thresholdDate)
