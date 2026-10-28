@@ -183,7 +183,7 @@
   "id": "S5-S04",
   "name": "El historial de estados guarda estado anterior y nuevo, fecha, motivo y usuario",
   "ok": true,
-  "note": "{\"id\":\"191260be-f82e-4181-9de3-c198859c6e64\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T12:15:18.4578914\",\"reason\":\"Internación\"}"
+  "note": "{\"id\":\"257d80e5-92c6-4a55-9b83-a118c57e8c39\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-28T00:50:29.74802\",\"reason\":\"Internación\"}"
  },
  {
   "id": "S5-S05",
@@ -195,13 +195,13 @@
   "id": "S5-S06",
   "name": "Los Referentes reciben una notificación al pasar a Inactivo",
   "ok": true,
-  "note": "n=40"
+  "note": "n=55"
  },
  {
   "id": "S5-S07",
   "name": "Al registrar una asistencia la persona vuelve a Activo y queda en el historial",
   "ok": true,
-  "note": "asistencia=204 estado=0 ultimo={\"id\":\"62d065e7-9367-426d-bcce-2ab8428e8c0b\",\"previousValue\":\"Inactivo\",\"newValue\":\"Activo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-27T12:15:18.5764053\",\"reason\":\"Persona reactivada por nueva asistencia\"}"
+  "note": "asistencia=204 estado=0 ultimo={\"id\":\"a3196390-24d9-477a-8550-ef365261aece\",\"previousValue\":\"Inactivo\",\"newValue\":\"Activo\",\"modifiedBy\":\"Test referente\",\"modifiedAt\":\"2026-10-28T00:50:30.0333591\",\"reason\":\"Persona reactivada por nueva asistencia\"}"
  },
  {
   "id": "S5-S08",
@@ -213,7 +213,7 @@
   "id": "S5-C01",
   "name": "El catálogo trae valores para los 5 campos del informe",
   "ok": true,
-  "note": "3/3/4/3/13"
+  "note": "3/3/4/3/16"
  },
  {
   "id": "S5-C02",
@@ -255,7 +255,7 @@
   "id": "S5-C08",
   "name": "Un valor desactivado no se puede asignar a una ficha (400)",
   "ok": true,
-  "note": "status=400 El valor \"Situación QA mvqnf219 editado\" está desactivado y no se puede asignar."
+  "note": "status=400 El valor \"Situación QA mvree8bp editado\" está desactivado y no se puede asignar."
  },
  {
   "id": "S5-C09",
@@ -264,16 +264,22 @@
   "note": "status=403"
  },
  {
+  "id": "S5-C10",
+  "name": "El backend devuelve los campos del informe que faltan cargar",
+  "ok": true,
+  "note": "status=200 [\"housing\",\"origin\",\"document\"]"
+ },
+ {
   "id": "S5-R01",
   "name": "Referente genera el informe trimestral con totales y desglose por motivo (200, datos reales)",
   "ok": true,
-  "note": "status=200 personas=29 motivos=29"
+  "note": "status=200 personas=38 motivos=38"
  },
  {
   "id": "S5-R02",
   "name": "Cada categoría del informe suma el total de personas atendidas",
   "ok": true,
-  "note": "género=29 vivienda=29 dni=29"
+  "note": "género=38 vivienda=38 dni=38"
  },
  {
   "id": "S5-R03",
@@ -291,7 +297,7 @@
   "id": "S5-R05",
   "name": "El informe se exporta a PDF (200, application/pdf)",
   "ok": true,
-  "note": "status=200 type=application/pdf bytes=31724"
+  "note": "status=200 type=application/pdf bytes=31761"
  },
  {
   "id": "S5-R06",
@@ -303,7 +309,7 @@
   "id": "S5-B01",
   "name": "Referente consulta el listado de respaldos (200)",
   "ok": true,
-  "note": "status=200 n=3"
+  "note": "status=200 n=4"
  },
  {
   "id": "S5-B02-Esc",
@@ -342,6 +348,18 @@
   "note": "status=403"
  },
  {
+  "id": "S5-X03",
+  "name": "El backend genera el PDF de la ficha y registra la exportación",
+  "ok": true,
+  "note": "status=200 bytes=31751"
+ },
+ {
+  "id": "S5-X04",
+  "name": "Secciones inválidas dan 400 y Escucha recibe 403 al pedir el PDF",
+  "ok": true,
+  "note": "secciones=400 escucha=403"
+ },
+ {
   "id": "S5-J01",
   "name": "El proceso diario pasa a Inactivo a quien no asiste hace más de 30 días",
   "ok": true,
@@ -351,7 +369,7 @@
   "id": "S5-J02",
   "name": "El pase automático queda en el historial como Sistema, con fecha y motivo",
   "ok": true,
-  "note": "{\"id\":\"a0930036-6094-4916-b7ea-a09ccdc93c94\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Sistema\",\"modifiedAt\":\"2026-10-27T12:15:22.8785871\",\"reason\":\"Paso automático a inactivo por 30 días sin asistencia\"}"
+  "note": "{\"id\":\"15353d4b-6df5-4d3a-9225-cb48722ba594\",\"previousValue\":\"Activo\",\"newValue\":\"Inactivo\",\"modifiedBy\":\"Sistema\",\"modifiedAt\":\"2026-10-28T00:50:34.3368632\",\"reason\":\"Paso automático a inactivo por 30 días sin asistencia\"}"
  },
  {
   "id": "S5-J03",
@@ -369,6 +387,6 @@
   "id": "S5-J04",
   "name": "Los Referentes reciben una notificación cuando el proceso diario pasa a alguien a Inactivo",
   "ok": true,
-  "note": "n=42"
+  "note": "n=57"
  }
 ]

@@ -229,6 +229,32 @@ public class SocialRecordService : ISocialRecordService
                 record.AttendanceReasonId));
     }
 
+    // campos del informe de Cáritas sin valor en la ficha (SCRUM-273), en el orden del formulario
+    public async Task<IReadOnlyList<PendingReportFieldDto>?> GetPendingReportFieldsAsync(Guid personId, CancellationToken cancellationToken = default)
+    {
+        var record = await _dbContext.SocialRecords
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.PersonId == personId, cancellationToken);
+        if (record is null)
+        {
+            return null;
+        }
+
+        var fields = new (Guid? Value, string Field, string Label)[]
+        {
+            (record.GenderId, "gender", "Género"),
+            (record.HousingSituationId, "housing", "Situación habitacional"),
+            (record.OriginLocalityId, "origin", "Localidad de origen"),
+            (record.DocumentationStatusId, "document", "Documento"),
+            (record.AttendanceReasonId, "mainReason", "Motivo principal de asistencia")
+        };
+
+        return fields
+            .Where(f => !f.Value.HasValue)
+            .Select(f => new PendingReportFieldDto(f.Field, f.Label))
+            .ToList();
+    }
+
     // campos del informe de Cáritas (SCRUM-270/275): cada valor tiene que existir en el catálogo
     // y ser de la categoría del campo; uno desactivado solo se acepta si la ficha ya lo tenía
     public async Task<UpdateReportFieldsResult> UpdateReportFieldsAsync(Guid socialRecordId, SocialRecordReportFieldsDto dto, Guid actorId, CancellationToken cancellationToken = default)

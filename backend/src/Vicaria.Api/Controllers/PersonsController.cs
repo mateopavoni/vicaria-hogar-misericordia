@@ -6,6 +6,7 @@ using Vicaria.Api.Filters;
 using Vicaria.Application.CasaConvivenciaStays;
 using Vicaria.Application.MedicationHistories;
 using Vicaria.Application.MedicationSchemes;
+using Vicaria.Application.PersonExports;
 using Vicaria.Application.PersonAttachments;
 using Vicaria.Application.Persons;
 using Vicaria.Application.PsychiatricEvaluations;
@@ -34,6 +35,8 @@ public class PersonsController : ControllerBase
     private readonly IPsychiatricEvaluationService _psychiatricEvaluationService;
     private readonly IValidator<CreatePsychiatricEvaluationDto> _createPsychiatricEvaluationValidator;
     private readonly IPersonAttachmentService _personAttachmentService;
+    private readonly IPersonExportService _personExportService;
+    private readonly IPersonExportPdfGenerator _personExportPdfGenerator;
     
 
     public PersonsController(
@@ -50,7 +53,9 @@ public class PersonsController : ControllerBase
         IValidator<GetMedicationHistoryDto> getMedicationHistoryValidator,
         IPsychiatricEvaluationService psychiatricEvaluationService,
         IValidator<CreatePsychiatricEvaluationDto> createPsychiatricEvaluationValidator,
-        IPersonAttachmentService personAttachmentService)
+        IPersonAttachmentService personAttachmentService,
+        IPersonExportService personExportService,
+        IPersonExportPdfGenerator personExportPdfGenerator)
        
     {
         _socialRecordService = socialRecordService;
@@ -67,6 +72,8 @@ public class PersonsController : ControllerBase
         _psychiatricEvaluationService = psychiatricEvaluationService;
         _createPsychiatricEvaluationValidator = createPsychiatricEvaluationValidator;
         _personAttachmentService = personAttachmentService;
+        _personExportService = personExportService;
+        _personExportPdfGenerator = personExportPdfGenerator;
         
     }
 
@@ -208,6 +215,45 @@ public class PersonsController : ControllerBase
             ProfileTimelineError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
             _ => BadRequest(new { message = result.ErrorMessage })
         };
+    }
+
+    // exportación de la ficha a PDF (SCRUM-252): secciones datos /
+    // datos-observaciones / todo, con nombre del sistema, fecha y referente;
+    // excluye autores de observaciones y registra la exportación en auditoría
+    // solo el Referente exporta, igual que POST social-records/{id}/exports
+    [HttpGet("{id:guid}/export-pdf")]
+    [Authorize(Roles = RoleNames.Referent)]
+    public async Task<IActionResult> ExportPdf(
+        Guid id,
+        [FromQuery(Name = "sections")] string? sections,
+        CancellationToken cancellationToken)
+    {
+        var result = await _personExportService.GetExportAsync(id, sections ?? string.Empty, ActorId, cancellationToken);
+
+        return result.Error switch
+        {
+            null => File(
+                _personExportPdfGenerator.GenerateExportPdf(result.Document!),
+                "application/pdf",
+                BuildPersonExportFileName(result.Document!)),
+            PersonExportError.PersonNotFound => NotFound(new { message = result.ErrorMessage }),
+            PersonExportError.SocialRecordNotFound => NotFound(new { message = result.ErrorMessage }),
+            _ => BadRequest(new { message = result.ErrorMessage })
+        };
+    }
+
+    private static string BuildPersonExportFileName(PersonExportDocument document)
+    {
+        var baseName = string.Concat(
+            document.FirstName.Trim().ToLowerInvariant()
+                .Where(c => char.IsLetterOrDigit(c) || c == ' ' || c == '-')
+                .Select(c => c == ' ' ? '-' : c));
+        if (string.IsNullOrWhiteSpace(baseName))
+        {
+            baseName = "persona";
+        }
+
+        return $"ficha-{baseName.ToLowerInvariant()}-{document.GeneratedAtUtc:yyyyMMdd}.pdf";
     }
 
     // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75).
@@ -444,6 +490,19 @@ public class PersonsController : ControllerBase
         };
     }
     
+    // campos del informe de Cáritas que faltan cargar en la ficha (SCRUM-273)
+    [HttpGet("{id:guid}/report-fields/pending")]
+    [HttpGet("/api/personas/{id:guid}/campos-informe-pendientes")]
+    [DirectorResidentsOnly]
+    [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
+    public async Task<IActionResult> GetPendingReportFields(Guid id, CancellationToken cancellationToken)
+    {
+        var pending = await _socialRecordService.GetPendingReportFieldsAsync(id, cancellationToken);
+        return pending is null
+            ? NotFound(new { message = "La ficha no existe." })
+            : Ok(pending);
+    }
+
     [HttpGet("{id}/psychiatric-evaluations/status")]
     [HttpGet("/api/personas/{id}/evaluacion-estado")]
     [DirectorResidentsOnly]
