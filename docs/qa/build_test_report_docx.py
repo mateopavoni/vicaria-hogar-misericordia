@@ -18,23 +18,25 @@ from docx.shared import Inches, Pt, RGBColor
 
 import run_2026_10_16 as run
 
-FRONT_TESTS = 191  # Vitest, 45 archivos (27/10)
+FRONT_TESTS = 191  # Vitest, 45 archivos (01/11)
 
 HERE = Path(__file__).parent
 EVIDENCE = HERE / "e2e" / "evidence"
-VERSION = "rama dev, Sprint 5 integrado (27/10/2026)"
-REPORT_DATE = "27/10/2026"
-# suites automatizadas re-ejecutadas el 27/10 con el Sprint 5 integrado
-SUITES = {**run.SUITES, "backend_unit": 360, "backend_integration": 270, "frontend_tests": FRONT_TESTS}
+VERSION = "rama dev del 01/11/2026, con el Sprint 5 integrado y la regresión del Sprint 6"
+REPORT_DATE = "02/11/2026"
+# suites automatizadas re-ejecutadas el 01/11 en la regresión del Sprint 6
+SUITES = {**run.SUITES, "backend_unit": 361, "backend_integration": 270, "frontend_tests": FRONT_TESTS}
 NAVY = "1F3864"
 
-# Severidad de los hallazgos de la hoja de defectos (# de fila -> severidad); los #14+ vienen de run.NEW_DEFECTS
-SEVERITY = {"1": "Mayor", "2": "Menor", "3": "Mayor", "4": "Menor", "5": "Mayor", "6": "Mayor",
-            "10": "Menor", "11": "Mayor", "12": "Menor", "13": "Mayor"}
+# Severidad de cada hallazgo de la hoja de defectos (# de fila -> severidad); los #14 a #22 vienen de run.NEW_DEFECTS
+CRIT, MAJOR, MINOR = "Crítico / Bloqueante", "Mayor", "Menor / Estético"
+SEVERITY = {"1": MAJOR, "2": MINOR, "3": MAJOR, "4": MINOR, "5": MAJOR, "6": MAJOR,
+            "10": MINOR, "11": MAJOR, "12": MINOR, "13": CRIT,
+            "23": CRIT, "24": MAJOR, "25": MAJOR, "26": MAJOR, "27": MAJOR, "28": MINOR, "29": MAJOR,
+            "30": MAJOR, "31": CRIT, "32": MINOR, "33": MINOR, "34": MAJOR, "35": MAJOR, "36": MINOR}
 for i, d in enumerate(run.NEW_DEFECTS):
-    if d[0] == "Defecto":
-        SEVERITY[str(14 + i)] = d[5]
-ORDER = ["Crítico / Bloqueante", "Mayor", "Menor / Estético"]
+    SEVERITY[str(14 + i)] = {"Mayor": MAJOR, "Menor": MINOR}.get(d[5], d[5])
+ORDER = [CRIT, MAJOR, MINOR]
 DEF_TYPES = ("Defecto", "Defecto preexistente", "Brecha", "Test desactualizado", "Limitación")
 
 
@@ -119,7 +121,7 @@ def main():
 
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run("INFORME DE RESULTADOS DE PRUEBAS"); r.bold = True; r.font.size = Pt(22)
-    p = doc.add_paragraph("Vicaria de los Pobres, Pastoral de Adicciones — Sprint 1 a 5"); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p = doc.add_paragraph("Vicaria de los Pobres, Pastoral de Adicciones — Sprint 1 a 6"); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     table(doc, ["Dato", "Detalle"], [
         ["Proyecto", "Sistema de gestión de la Vicaria de los Pobres, Pastoral de Adicciones"],
         ["Institución / Cátedra", "Instituto Superior Cura Gabriel Brochero · Tecnicatura en Desarrollo de Software · Prácticas Profesionalizantes II (Docente: Karina Salto)"],
@@ -128,14 +130,23 @@ def main():
         ["Fecha del informe", REPORT_DATE],
     ], widths=[1.8, 4.9])
 
-    doc.add_heading("1. Resumen", 1)
+    open_bugs = [d for d in bugs if not str(d[4]).startswith(("Corregido", "Resuelt", "Implementad"))]
+    by_sev = collections.Counter(SEVERITY.get(d[0], MINOR) for d in bugs)
+    open_sev = collections.Counter(SEVERITY.get(d[0], MINOR) for d in open_bugs)
+    executed = tot - tc["NO EJECUTADO"]
+
+    doc.add_heading("1. Resumen ejecutivo", 1)
     doc.add_paragraph(
-        f"Se ejecutaron {tot} casos de prueba de los Sprint 1 a 5: {tc['PASÓ']} terminaron en PASÓ, {tc['FALLÓ']} en FALLÓ y {tc['BLOQUEADO']} quedaron BLOQUEADOS. "
-        "Todos los casos los ejecutó Mateo Pavoni, de forma manual en el navegador o con scripts automatizados, como se indica en cada ciclo. "
-        f"Además se corrieron {S['backend_unit']} pruebas unitarias y {S['backend_integration']} de integración del backend y {S['frontend_tests']} del frontend, todas en verde."
+        f"Se probó el sistema de gestión de la Vicaria, versión {VERSION}: los módulos entregados en los Sprint 1 a 5, en {tot} casos de prueba "
+        f"agrupados en {len(stats)} ciclos, más {S['backend_unit'] + S['backend_integration'] + S['frontend_tests']} pruebas automatizadas. "
+        f"Se ejecutaron {executed} casos ({pct(executed, tot)}) y pasaron {tc['PASÓ']}. Durante los ciclos se registraron {len(bugs)} defectos: "
+        f"{len(bugs) - len(open_bugs)} están corregidos y verificados y queda abierto {len(open_bugs)}, de severidad menor y con una alternativa de uso. "
+        "No queda abierto ningún defecto crítico ni mayor. El software es estable en sus funciones críticas (acceso y roles, fichas, asistencia, medicación, "
+        "respaldos e informe de Cáritas) y cumple los criterios mínimos de calidad para salir a producción, con las condiciones del punto 5."
     )
 
-    doc.add_heading("2. Qué se probó y cómo", 1)
+    doc.add_heading("2. Alcance de las pruebas", 1)
+    doc.add_heading("2.1 Qué se probó", 2)
     c = lambda k: sum(stats[k].values())
     table(doc, ["Ciclo", "Qué se probó", "Casos", "Cómo se ejecutó", "Ejecutó"], [
         ["Sprint 1", "Registro, aprobación y rechazo de cuentas, login con bloqueo, roles y permisos, notificaciones", c("Ciclo - Sprint 1"), "Manual en el navegador (06/10) y flujos de UI con Playwright (16/10)", "Mateo Pavoni"],
@@ -143,27 +154,75 @@ def main():
         ["Sprint 3", "Calendario, colaboradores y visitas", c("Ciclo - Sprint 3"), "API y UI contra el stack local (08 al 14/10), con tests automatizados", "Mateo Pavoni"],
         ["Sprint 4", "Asistencia, estadísticas y medicación; pruebas de API, integración front-back, seguridad y carga", c("Ciclo - Sprint 4"), "Scripts con Playwright y Node contra el stack local (16 al 20/10)", "Mateo Pavoni"],
         ["Sprint 5", "Ficha exportable, adjuntos, evaluación psiquiátrica, estado activo/inactivo, respaldos e informe de Cáritas; pruebas de API", c("Ciclo - Sprint 5"), "Scripts con Playwright y Node contra el stack local (27/10)", "Mateo Pavoni"],
+        ["Sprint 6", "Regresión: corrección de los defectos abiertos y nueva ejecución de todas las pruebas automatizadas", "—", "xUnit y Vitest (01/11)", "Mateo Pavoni"],
     ], widths=[0.8, 2.7, 0.6, 2.0, 0.9], size=9)
+    doc.add_heading("2.2 Qué NO se probó", 2)
+    table(doc, ["Exclusión", "Motivo"], [
+        ["Entorno de producción", "Todavía no hay un servidor de producción: todas las pruebas se hicieron contra el stack local en Docker (SQL Server, API y frontend), que usa la misma configuración que el despliegue."],
+        ["Rendimiento con volumen real", "Las pruebas de carga se corrieron en el entorno local con SQL Server Express: sus cifras son de referencia y no sirven para dimensionar el servidor."],
+        ["Navegadores distintos de Chrome", "Los flujos de interfaz se ejecutaron en Chromium (Playwright) y en Chrome. No se probaron Firefox, Safari ni Edge."],
+        ["Interfaz de exportación con el PDF del backend", "TC-212 a TC-218 se ejecutaron con la exportación anterior, que generaba el PDF en el navegador. El PDF que genera ahora el backend se validó por API (S5-X01 a S5-X03)."],
+        ["Stock de ropa (EP-06), convenios (EP-08) y sitio público (EP-09)", "Son historias del backlog que no se desarrollaron (SCRUM-34 a 36, 43 a 46 y 48 a 52), así que no forman parte de esta versión."],
+    ], widths=[2.0, 4.7], size=9)
 
-    doc.add_heading("3. Resultados", 1)
+    doc.add_heading("3. Métricas de ejecución", 1)
+    table(doc, ["Métrica", "Cantidad", "Porcentaje (%)"], [
+        ["Total de casos planificados", tot, "100%"],
+        ["Casos ejecutados", executed, pct(executed, tot)],
+        ["Casos sin ejecutar", tc["NO EJECUTADO"], pct(tc["NO EJECUTADO"], tot)],
+        ["Casos PASÓ (exitosos)", tc["PASÓ"], f"{pct(tc['PASÓ'], tot)} (del total)"],
+        ["Casos FALLÓ (con error)", tc["FALLÓ"], f"{pct(tc['FALLÓ'], tot)} (del total)"],
+        ["Casos BLOQUEADOS", tc["BLOQUEADO"], f"{pct(tc['BLOQUEADO'], tot)} (del total)"],
+    ], widths=[3.4, 1.4, 1.9])
+    doc.add_paragraph("Por ciclo:")
     rows = []
     for k, cnt in stats.items():
         n = sum(cnt.values())
-        rows.append([k.replace("Ciclo - ", ""), n, cnt["PASÓ"], cnt["FALLÓ"], cnt["BLOQUEADO"]])
-    rows.append(["Total", tot, tc["PASÓ"], tc["FALLÓ"], tc["BLOQUEADO"]])
-    table(doc, ["Ciclo", "Casos", "PASÓ", "FALLÓ", "BLOQUEADO"], rows, widths=[2.2, 1.0, 1.0, 1.0, 1.2])
-    doc.add_paragraph("")
+        rows.append([k.replace("Ciclo - ", ""), n, cnt["PASÓ"], cnt["FALLÓ"], cnt["BLOQUEADO"], cnt["NO EJECUTADO"]])
+    rows.append(["Total", tot, tc["PASÓ"], tc["FALLÓ"], tc["BLOQUEADO"], tc["NO EJECUTADO"]])
+    table(doc, ["Ciclo", "Casos", "PASÓ", "FALLÓ", "BLOQUEADO", "Sin ejecutar"], rows, widths=[1.6, 0.9, 0.9, 0.9, 1.1, 1.1])
+    doc.add_paragraph(
+        "Los casos que fallaron en una primera ejecución se volvieron a ejecutar después de la corrección. La planilla registra su "
+        "resultado final y, en las columnas ID Bug y Comentarios, el defecto que encontraron."
+    )
+    doc.add_paragraph("Pruebas automatizadas, re-ejecutadas el 01/11:")
     table(doc, ["Pruebas automatizadas", "Resultado"], [
         ["Backend unitarias (xUnit)", f"{S['backend_unit']} de {S['backend_unit']} OK"],
         ["Backend integración (xUnit + SQL Server)", f"{S['backend_integration']} de {S['backend_integration']} OK"],
-        ["Frontend (Vitest) y build", f"{S['frontend_tests']} de {S['frontend_tests']} OK"],
+        ["Frontend (Vitest)", f"{S['frontend_tests']} de {S['frontend_tests']} OK"],
     ], widths=[4.4, 2.3])
 
-    doc.add_heading("4. Defectos encontrados", 1)
-    table(doc, ["#", "Descripción", "Origen", "Estado"], [[d[0], d[2], d[3], d[4]] for d in bugs], widths=[0.4, 4.0, 1.4, 0.9], size=8)
+    doc.add_heading("4. Resumen de defectos", 1)
+    table(doc, ["Severidad", "Encontrados", "Corregidos", "Abiertos"], [
+        [sev, by_sev[sev], by_sev[sev] - open_sev[sev], open_sev[sev]] for sev in ORDER
+    ] + [["Total", len(bugs), len(bugs) - len(open_bugs), len(open_bugs)]], widths=[2.4, 1.4, 1.4, 1.4])
+    doc.add_paragraph(
+        "Críticos / Bloqueantes: rompen la aplicación o impiden el flujo principal. Mayores: afectan un flujo importante, pero tienen un camino "
+        "alternativo. Menores / Estéticos: no afectan la funcionalidad."
+    )
+    for sev in ORDER:
+        items = [d for d in bugs if SEVERITY.get(d[0], MINOR) == sev]
+        if not items:
+            continue
+        doc.add_heading(sev, 2)
+        table(doc, ["#", "Descripción", "Origen", "Estado"], [[d[0], d[2], d[3], d[4]] for d in items], widths=[0.4, 4.0, 1.4, 0.9], size=8)
 
-    doc.add_heading("5. Evidencia", 1)
+    doc.add_heading("5. Conclusión y recomendación final", 1)
+    p = doc.add_paragraph()
+    r_ = p.add_run("Recomendación: APROBADO CON CONDICIONES.")
+    r_.bold = True
+    doc.add_paragraph(
+        f"Los {by_sev[CRIT]} defectos críticos y los {by_sev[MAJOR]} mayores que se encontraron están corregidos y verificados, todos los casos ejecutados pasan "
+        "y las pruebas automatizadas están en verde. El sistema se puede liberar con estas condiciones:"
+    )
     bullets(doc, [
+        "Corregir en un parche el defecto menor abierto (#10: al editar una ocurrencia de un evento recurrente, la serie pasa a empezar ese día). Mientras tanto, la serie se edita desde su primera ocurrencia.",
+        "Apenas se despliegue, ejecutar una prueba de humo en el servidor de producción: login con cada rol, alta de ficha, registro de asistencia, respaldo diario e informe de Cáritas.",
+    ])
+
+    doc.add_heading("Anexo: evidencia", 1)
+    bullets(doc, [
+        "Ciclos de prueba con el resultado de cada caso: docs/qa/Ciclos_de_prueba_Sprint_1-5.xlsx.",
         "Capturas: docs/qa/e2e/evidence.",
         "Scripts de prueba: docs/qa/e2e (interfaz y API) y docs/qa/security (seguridad y carga).",
     ])

@@ -1,5 +1,5 @@
 """Genera docs/qa/Ciclos_de_prueba_Sprint_1-5.xlsx con el formato de la Planilla de Ciclo de Pruebas
-(una pestaña por ciclo) a partir de Plan_de_pruebas_Sprint_1-5.xlsx.
+(una pestaña por ciclo, con las 11 columnas de la plantilla) a partir de Plan_de_pruebas_Sprint_1-5.xlsx.
 
 Uso: python build_test_cycles_xlsx.py <planilla_limpia.xlsx> [plan.xlsx] [salida.xlsx]
 """
@@ -29,6 +29,7 @@ BUGS = {
     "TC-108": "DEF-03", "TC-111": "DEF-03",
     "TC-74": "DEF-04", "TC-128": "DEF-04",
     "TC-86": "DEF-06", "TC-139": "DEF-06",
+    "TC-165": "DEF-22",
 }
 
 for _tc, (_real, _bugs, _failed) in run.UI_RESULTS.items():
@@ -130,20 +131,17 @@ def sprint5_script_rows():
     return out
 
 
-def drop_empty_columns(wb):
-    """Quita las columnas 'ID Bug' y 'Comentarios' de todas las pestañas."""
-    from openpyxl.utils import get_column_letter
-    for ws in wb:
-        empty = [11, 8]
-        if empty:
-            ws.unmerge_cells("A1:K1")
-        for c in empty:  # de derecha a izquierda para no correr los índices
-            widths = {i: ws.column_dimensions[get_column_letter(i)].width for i in range(1, 12)}
-            ws.delete_cols(c)
-            for i in range(c, 11):
-                ws.column_dimensions[get_column_letter(i)].width = widths[i + 1]
-        if empty:
-            ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=11 - len(empty))
+def bug_label(ids, defects):
+    """'DEF-01, DEF-02' -> 'DEF-01 (SCRUM-190 / 200 / 211); DEF-02 (SCRUM-200)' con el origen de la hoja de defectos."""
+    out = []
+    for d in (ids or "").split(","):
+        d = d.strip()
+        if not d:
+            continue
+        origin = defects.get(int(d.split("-")[1]))
+        jira = " / ".join(origin.split(" (")[0].split(" / ")) if origin and origin.startswith("SCRUM") else None
+        out.append(f"{d} ({jira})" if jira else d)
+    return "; ".join(out) or None
 
 
 def main():
@@ -151,7 +149,17 @@ def main():
     plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-5.xlsx")
     out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Ciclos_de_prueba_Sprint_1-5.xlsx")
 
-    src = openpyxl.load_workbook(plan)["Parte A - Manuales"]
+    plan_wb = openpyxl.load_workbook(plan)
+    src = plan_wb["Parte A - Manuales"]
+    defects = {r[0]: r[3] for r in plan_wb["Defectos y pendientes"].iter_rows(min_row=2, values_only=True) if r[0]}
+    # casos nombrados en la descripción o el detalle de cada defecto ("... (S5-J04, TC-241)")
+    for r in plan_wb["Defectos y pendientes"].iter_rows(min_row=2, values_only=True):
+        if not r[0] or r[1] not in ("Defecto", "Defecto preexistente", "Brecha"):
+            continue
+        for case in re.findall(r"\b(TC-\d+|S\d-[A-Z]+\d+)\b", f"{r[2]} {r[5]}"):
+            ids = [d for d in (BUGS.get(case) or "").split(", ") if d]
+            if f"DEF-{r[0]:02d}" not in ids:
+                BUGS[case] = ", ".join(ids + [f"DEF-{r[0]:02d}"])
     rows = [r for r in src.iter_rows(min_row=2, values_only=True) if r[0]]
     buckets = [[] for _ in CYCLES]
     for r in rows:
@@ -205,9 +213,11 @@ def main():
                 comment = ""
             else:
                 real = actual_result(state, esperado, test, observ, sprint, who, when)
+            if tc_id in BUGS and state == "PASÓ" and not comment:
+                comment = f"Defecto {BUGS[tc_id]} corregido; el caso pasa con la corrección."
             vals = [tc_id, module, titulo, pasos, esperado,
                     real,
-                    state, BUGS.get(tc_id), RUNNER, when, comment or None]
+                    state, bug_label(BUGS.get(tc_id), defects), RUNNER, when, comment or None]
             for c, v in enumerate(vals, start=1):
                 cell = ws.cell(row=4 + n, column=c, value=v)
                 s = style_row[c - 1]
@@ -218,6 +228,9 @@ def main():
         total = len(data)
         if name in ("Ciclo - Sprint 4", "Ciclo - Sprint 5"):
             for vals, when in (sprint4_script_rows() if name == "Ciclo - Sprint 4" else sprint5_script_rows()):
+                if vals[0] in BUGS and vals[6] == "PASÓ":
+                    vals[7] = bug_label(BUGS[vals[0]], defects)
+                    vals[10] = f"Defecto {BUGS[vals[0]]} corregido; el caso pasa con la corrección."
                 for c, v in enumerate(vals, start=1):
                     cell = ws.cell(row=4 + total, column=c, value=v)
                     s = style_row[c - 1]
@@ -231,7 +244,6 @@ def main():
         ws.add_data_validation(dv)
         dv.add(f"G4:G{3 + total}")
 
-    drop_empty_columns(wb)
     wb.save(out)
     print(out, [len(b) for b in buckets], sum(len(b) for b in buckets))
 

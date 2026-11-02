@@ -175,6 +175,7 @@ Los mensajes de commit y la documentación se escriben en español. Las migracio
 |---|---|
 | [`PROJECT.md`](./PROJECT.md) | Contexto de negocio, objetivos, alcance y roles |
 | [`AGENTS.md`](./AGENTS.md) | Convenciones de código, patrones por capa y reglas de trabajo |
+| [`docs/MANUAL_TECNICO.md`](./docs/MANUAL_TECNICO.md) | Manual técnico: instalación desde cero y configuración por entorno, integraciones y seguridad |
 | [`deploy-local.md`](./deploy-local.md) | Guía para levantar el sistema en local |
 | [`.ai/context/`](./.ai/context/00_INDEX.md) | Estado verificado contra el código, decisiones y deuda conocida |
 | [`docs/qa/`](./docs/qa/) | Casos de prueba, plan de pruebas y flujos de interfaz |
