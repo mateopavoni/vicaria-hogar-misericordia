@@ -27,9 +27,9 @@ public class CalendarActivitySyncService : ICalendarActivitySyncService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        // Incluye las desactivadas: si un Referente desactivó una actividad del calendario, no se vuelve a crear
         var existingActivities = await _dbContext.Activities
             .AsNoTracking()
-            .Where(a => a.IsActive)
             .Select(a => a.Name.ToLower())
             .ToListAsync(cancellationToken);
 
