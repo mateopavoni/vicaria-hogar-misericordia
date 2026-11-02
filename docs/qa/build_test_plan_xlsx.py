@@ -447,7 +447,7 @@ def main():
         ("Test desactualizado", "Get_WithEachAuthorizedRole_Returns200 incluía al rol Escucha, excluido por SCRUM-212.",
          "SCRUM-212", "Corregido", "Se quitó Escucha de los roles autorizados del test."),
         ("Defecto preexistente", "Los ítems del menú Inicio, Asistencia, Medicación e Informes apuntan a /inicio, una ruta sin pantalla (página vacía). Está en main.",
-         "Frontend (Sprint 1-2)", "Abierta", "Detectado en la prueba de humo por rol: 4 de 15 pantallas; las demás cargan sin errores de API ni de consola."),
+         "Frontend (Sprint 1-2)", "Corregido en dev", "Detectado en la prueba de humo por rol. El ítem Informes abre ahora el informe de Cáritas (/dashboard/informes/caritas, SCRUM-271), solo para Referente."),
         ("Defecto", "Las series recurrentes con fecha de inicio anterior al rango consultado no se expandían: un evento semanal solo aparecía en su semana de inicio.",
          "SCRUM-189 / 194", "Corregido en dev", "La consulta incluye las series iniciadas antes del rango; hay tests unitarios y de integración."),
         ("Decisión resuelta", "Solapamiento de visitas: es una advertencia. El backend responde 409 con el aviso y acepta allowOverlap para guardar igual.",
@@ -463,7 +463,7 @@ def main():
         ("Defecto", "Los specs de asistencia y medicación de dev-frontend-belen usaban sintaxis de Jasmine (done, toBeTrue, toBeFalse) y no compilaban con Vitest: 55 errores y ningún test corría.",
          "SCRUM-218 a 250 (frontend)", "Corregido en dev", "Se convirtieron a promesas y toBe(true/false): 120 de 120 pruebas OK."),
         ("Brecha", "Las pantallas de asistencia y medicación del frontend usan servicios simulados (of(...).pipe(delay)) y no llaman a la API.",
-         "SCRUM-218 a 250 (frontend)", "Abierta", "Integrarlas con el backend a medida que se complete; hasta entonces los criterios de negocio no están verificados."),
+         "SCRUM-218 a 250 (frontend)", "Corregido en dev", "Los servicios de asistencia, medicación y stock llaman a la API desde la integración del 19/10 (TC-147 a TC-194 y S4-W en navegador)."),
     ]
     for tipo, desc, origen, estado, detalle, _sev in run.NEW_DEFECTS:
         items.append((tipo, desc, origen, estado, detalle))
