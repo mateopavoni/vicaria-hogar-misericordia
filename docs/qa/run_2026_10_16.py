@@ -41,13 +41,13 @@ NEW_DEFECTS = [
      "SCRUM-226 (frontend)", "Corregido en dev",
      "La lista muestra 'nunca registró asistencia' cuando no hay fecha; verificado en navegador.", "Menor"),
     ("Defecto", "Una actividad del calendario desactivada vuelve a aparecer: al abrir la pantalla de actividades se sincroniza con el calendario y se crea una actividad nueva con el mismo nombre, activa, en lugar de respetar la desactivada.",
-     "SCRUM-57 (backend: sincronizar-calendario)", "Abierto",
-     "Visto en la ejecución en navegador del 20/10 (TC-165): se desactivó 'Almuerzo' y el auditor registró una sincronización dos segundos después con una 'Almuerzo' nueva. La sincronización debería ignorar o reactivar la existente.", "Menor"),
+     "SCRUM-57 (backend: sincronizar-calendario)", "Corregido en dev",
+     "Visto en la ejecución en navegador del 20/10 (TC-165). La sincronización ahora compara también con las actividades desactivadas y no las vuelve a crear; test unitario nuevo (01/11).", "Menor"),
 ]
 
 # Defectos de la hoja del plan que cambiaron de estado: el menú ya no tiene 4 ítems rotos sino uno (Informes).
-DEFECT_5_NOTE = ("Los ítems Inicio, Asistencia y Medicación ya funcionan; solo 'Informes' apunta a /inicio, una ruta sin pantalla (página vacía). "
-                 "Verificado en navegador con los 4 roles el 2026-10-16.")
+DEFECT_5_NOTE = ("Los ítems del menú Inicio, Asistencia, Medicación e Informes apuntaban a /inicio, una ruta sin pantalla (página vacía). "
+                 "Visto en navegador con los 4 roles el 2026-10-16.")
 
 # TC existentes ejecutados en navegador real el 16/10. id -> (resultado real, defectos vinculados, falló antes de la corrección)
 UI_RESULTS = {

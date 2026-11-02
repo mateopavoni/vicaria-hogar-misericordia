@@ -112,6 +112,39 @@ public class CalendarActivitySyncServiceTests
     }
 
     [Fact]
+    public async Task SyncRecurringActivitiesAsync_ActividadDesactivada_NoLaVuelveACrear()
+    {
+        using var db = CrearDbContext();
+
+        db.Activities.Add(new Activity
+        {
+            Id = Guid.NewGuid(),
+            Name = "Almuerzo",
+            IsActive = false,
+            IsFromCalendar = true,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        db.GeneralCalendarEvents.Add(new GeneralCalendarEvent
+        {
+            Id = Guid.NewGuid(),
+            Title = "Almuerzo",
+            RecurrenceDays = WeekDays.Monday,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await db.SaveChangesAsync();
+
+        var service = new CalendarActivitySyncService(db);
+
+        var result = await service.SyncRecurringActivitiesAsync(Guid.NewGuid());
+
+        Assert.Equal(0, result.SyncedCount);
+        var actividad = Assert.Single(await db.Activities.ToListAsync());
+        Assert.False(actividad.IsActive);
+    }
+
+    [Fact]
     public async Task RegisterAsync_MismaPersonaMismoDiaDistintasActividades_PermiteAmbosRegistros()
     {
         using var db = CrearDbContext();

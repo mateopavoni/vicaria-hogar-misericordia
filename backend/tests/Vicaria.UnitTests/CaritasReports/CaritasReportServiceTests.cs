@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.CaritasReports;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.CaritasReports;
+using Vicaria.Infrastructure.Pdf;
 using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.UnitTests.CaritasReports;
@@ -126,6 +127,7 @@ public class CaritasReportServiceTests
     [Fact]
     public void GenerateReportPdf_ConMuchasLocalidades_GeneraVariasPaginas()
     {
+        PdfFontResolver.Register();
         var geography = Enumerable.Range(1, 60)
             .Select(i => new CaritasReportCountItemDto($"Localidad {i}", 1))
             .ToList();
