@@ -230,7 +230,7 @@ public class AttendanceStatisticsService : IAttendanceStatisticsService
     private static string GetActivityName(AttendanceActivity activity) =>
         activity switch
         {
-            AttendanceActivity.DayCenter => "Centro de Día",
+            AttendanceActivity.DayCenter => "Hogar de día",
             AttendanceActivity.CasaConvivencia => "Casa de Convivencia",
             _ => activity.ToString()
         };

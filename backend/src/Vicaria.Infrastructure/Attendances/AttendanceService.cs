@@ -307,7 +307,7 @@ public class AttendanceService : IAttendanceService
                 Activity: g.Key,
                 ActivityName: g.Key switch
                 {
-                    AttendanceActivity.DayCenter => "Centro de Día",
+                    AttendanceActivity.DayCenter => "Hogar de día",
                     AttendanceActivity.CasaConvivencia => "Casa de Convivencia",
                     _ => g.Key.ToString()
                 },

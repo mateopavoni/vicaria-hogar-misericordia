@@ -153,7 +153,7 @@ Estado de la última ejecución completa (3 de noviembre de 2026, rama `main`):
 
 | Suite | Resultado |
 |---|---|
-| Backend, pruebas unitarias (`backend/tests/Vicaria.UnitTests`) | 361 de 361 |
+| Backend, pruebas unitarias (`backend/tests/Vicaria.UnitTests`) | 364 de 364 |
 | Backend, pruebas de integración (`backend/tests/Vicaria.IntegrationTests`) | 270 de 270 |
 | Frontend, pruebas unitarias y compilación de producción | 181 de 181 y compilación sin advertencias |
 
