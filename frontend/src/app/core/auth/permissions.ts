@@ -4,12 +4,12 @@ export type Permission =
   | 'fichas.view'
   | 'fichas.create'
   | 'fichas.edit'
-  // SCRUM-253: exportar / imprimir la ficha completa, solo Referente
+  // Exportar / imprimir la ficha completa, solo Referente
   | 'fichas.export'
-  // SCRUM-260: evaluación psiquiátrica (ver y cargar), Referente y Directora
+  // Evaluación psiquiátrica (ver y cargar), Referente y Directora
   | 'evaluaciones.view'
   | 'evaluaciones.create'
-  // SCRUM-256: documentos adjuntos de la ficha; eliminar es solo del Referente
+  // Documentos adjuntos de la ficha; eliminar es solo del Referente
   | 'adjuntos.view'
   | 'adjuntos.create'
   | 'adjuntos.delete'
@@ -33,30 +33,32 @@ export type Permission =
   | 'medicamentos.view'
   | 'medicamentos.create'
   | 'medicamentos.edit'
-  // SCRUM-242: historial de tomas de una persona, solo Referente y Directora (no Coordinador ni Escucha)
+  // Historial de tomas de una persona, solo Referente y Directora (no Coordinador ni Escucha)
   | 'medicamentos.history'
-  // SCRUM-246: inventario de medicamentos (ingresos, umbral, movimientos), solo Referente y Directora; separado del stock de ropa
+  // Inventario de medicamentos (ingresos, umbral, movimientos), solo Referente y Directora; separado del stock de ropa
   | 'medicamentos.stock'
-  // SCRUM-74: el backend (CasonaVisitsController) deja leer a los 4 roles y escribir solo a
+  // El backend (CasonaVisitsController) deja leer a los 4 roles y escribir solo a
   // Referente, Directora y Coordinador; Escucha nunca tiene visitas.*
   | 'visitas.view'
   | 'visitas.create'
   | 'visitas.edit'
-  // SCRUM-218: asistencia diaria. 'asistencia.edit' = modificar un día ya cerrado (solo Referente, con justificación)
+  // Asistencia diaria. 'asistencia.edit' = modificar un día ya cerrado (solo Referente, con justificación)
   | 'asistencia.view'
   | 'asistencia.create'
   | 'asistencia.edit'
-  // SCRUM-226: estadísticas de asistencia del Centro Barrial, solo Referente
+  // historial de asistencia de una persona en su perfil (Escucha no)
+  | 'asistencia.history'
+  // Estadísticas de asistencia del Centro Barrial, solo Referente
   | 'asistencia.stats'
-  // SCRUM-230: configurar las actividades de asistencia (activar, desactivar, crear), solo Referente
+  // Configurar las actividades de asistencia (activar, desactivar, crear), solo Referente
   | 'asistencia.config'
-  // SCRUM-267: panel de respaldos de la base de datos (administrador técnico = Referente, no hay rol aparte)
+  // Panel de respaldos de la base de datos (administrador técnico = Referente, no hay rol aparte)
   | 'configuracion.respaldos'
-  // SCRUM-271: informe estadístico para Cáritas, solo Referente
+  // Informe estadístico para Cáritas, solo Referente
   | 'informes.caritas'
-  // SCRUM-275: configurar los valores de los campos del informe de Cáritas, solo Referente
+  // Configurar los valores de los campos del informe de Cáritas, solo Referente
   | 'informes.config'
-  // SCRUM-180: gestionar categorías de observaciones, solo Referente (Escucha no accede)
+  // Gestionar categorías de observaciones, solo Referente (Escucha no accede)
   | 'categorias.manage'
   // historia de vida: ver (Referente y Directora; Escucha no) y editar (solo Referente)
   | 'historia.view'
@@ -115,15 +117,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.history',
     'medicamentos.stock',
 
-    // Visitas de la Casa de Convivencia (SCRUM-74)
+    // Visitas de la Casa de Convivencia
     'visitas.view',
     'visitas.create',
     'visitas.edit',
 
-    // Asistencia diaria (SCRUM-218)
+    // Asistencia diaria
     'asistencia.view',
     'asistencia.create',
     'asistencia.edit',
+    'asistencia.history',
     'asistencia.stats',
     'asistencia.config',
     'configuracion.respaldos',
@@ -193,38 +196,33 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'medicamentos.history',
     'medicamentos.stock',
 
-    // Visitas de la Casa de Convivencia (SCRUM-74)
+    // Visitas de la Casa de Convivencia
     'visitas.view',
     'visitas.create',
     'visitas.edit',
 
-    // Asistencia diaria (SCRUM-218); modificar días cerrados es solo del Referente
+    // Asistencia diaria; modificar días cerrados es solo del Referente
     'asistencia.view',
-    'asistencia.create'
+    'asistencia.create',
+    'asistencia.history'
   ],
 
-  // bug reportado 2026-09-23: faltaba este rol por completo. Los permisos granulares
-  // reales que le da la migración AddCoordinadorRolePermissions son solo 3: ver fichas de
-  // residentes de la Casa de Convivencia, cargar observaciones sobre residentes y ver la
-  // agenda de medicamentos — mucho más acotado que DirectoraDeCasaConvivencia. (Nota: varios
-  // controllers además lo autorizan a nivel de [Authorize(Roles=...)] para crear fichas y
-  // cambiar tipo/estado de persona, que no tiene equivalente en este mapa de permisos
-  // granulares — discrepancia ya documentada en .ai/context/OPEN_QUESTIONS.md, no se
-  // resuelve acá.)
+  // ve fichas de residentes, carga observaciones y ve la agenda de medicamentos
   CoordinadorDeCasaConvivencia: [
     'fichas.view',
     'observaciones.view',
     'observaciones.create',
     'medicamentos.view',
 
-    // calendario general de solo lectura y visitas de la casona (SCRUM-74)
+    // calendario general de solo lectura y visitas de la casona
     'calendario.view',
     'visitas.view',
     'visitas.create',
     'visitas.edit',
 
     'asistencia.view',
-    'asistencia.create'
+    'asistencia.create',
+    'asistencia.history'
   ]
 
 };

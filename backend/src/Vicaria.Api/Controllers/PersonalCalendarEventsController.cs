@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Application.CalendarEvents;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 
 namespace Vicaria.Api.Controllers;
@@ -50,7 +51,7 @@ public class PersonalCalendarEventsController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, new { id });
     }
 
-    // los eventos personales solo los ve su creador (SCRUM-194): la protección es por
+    // los eventos personales solo los ve su creador: la protección es por
     // ownership, no por rol, por eso el filtrado va siempre contra el usuario del JWT
     [HttpGet]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -60,7 +61,7 @@ public class PersonalCalendarEventsController : ControllerBase
         [FromQuery] int page = 1,
         CancellationToken cancellationToken = default)
     {
-        var fromDate = from?.Date ?? DateTime.UtcNow.Date;
+        var fromDate = from?.Date ?? CordobaClock.Today;
         var toDate = to?.Date ?? fromDate.AddDays(6);
         if (fromDate > toDate)
         {
@@ -83,7 +84,7 @@ public class PersonalCalendarEventsController : ControllerBase
             : Ok(calendarEvent);
     }
 
-    // edición y baja de un evento propio (SCRUM-17): solo Referente, igual que el alta;
+    // edición y baja de un evento propio: solo Referente, igual que el alta;
     // un evento ajeno responde 404 para no revelar su existencia
     [HttpPut("{id:guid}")]
     [Authorize(Roles = RoleNames.Referent)]

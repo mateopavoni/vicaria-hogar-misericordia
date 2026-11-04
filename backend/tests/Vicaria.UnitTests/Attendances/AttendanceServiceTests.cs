@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Persistence;
-using Vicaria.Infrastructure.PsychiatricEvaluations;
 
 namespace Vicaria.UnitTests.Attendances;
 
@@ -191,7 +191,7 @@ public class AttendanceServiceTests
     {
         using var db = CrearDbContext();
         var personId = await CrearPersonaConFichaActiva(db, DateTime.UtcNow.AddDays(-60));
-        await SeedAttendance(db, personId, PsychiatricEvaluationService.GetCordobaToday().AddDays(-29));
+        await SeedAttendance(db, personId, CordobaClock.Today.AddDays(-29));
         var service = new AttendanceInactivityService(db);
 
         await service.CheckAndProcessInactivityAsync();
@@ -303,5 +303,38 @@ public class AttendanceServiceTests
         Assert.Equal(2, result.Persons.Count);
         Assert.Equal(3, result.AnonymousCount);
         Assert.Equal(day, result.Date);
+    }
+
+    // "hoy" es el día de Córdoba: entre las 21 y las 24 h la fecha UTC ya es mañana,
+    // y aun así la asistencia del día se corrige sin justificación
+    [Fact]
+    public async Task UpdateAsync_AsistenciaDeHoy_NoPideJustificacion()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db);
+        await SeedAttendance(db, personId, CordobaClock.Today);
+        var attendanceId = db.Attendances.Single().Id;
+        var service = new AttendanceService(db);
+
+        var result = await service.UpdateAsync(attendanceId, new UpdateAttendanceDto(AnonymousCount: 4), Guid.NewGuid());
+
+        Assert.True(result.Success);
+        Assert.Equal(4, db.Attendances.Single().AnonymousCount);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DiaCerradoSinJustificacion_Rechaza()
+    {
+        using var db = CrearDbContext();
+        var personId = await CrearPersonaConFichaActiva(db);
+        await SeedAttendance(db, personId, CordobaClock.Today.AddDays(-1));
+        var attendanceId = db.Attendances.Single().Id;
+        var service = new AttendanceService(db);
+
+        var result = await service.UpdateAsync(attendanceId, new UpdateAttendanceDto(AnonymousCount: 4), Guid.NewGuid());
+
+        Assert.False(result.Success);
+        Assert.Equal(UpdateAttendanceError.JustificationRequired, result.Error);
+        Assert.Equal(0, db.Attendances.Single().AnonymousCount);
     }
 }

@@ -6,7 +6,7 @@ namespace Vicaria.Infrastructure.Persistence.Configurations;
 
 public class GeneralCalendarEventConfiguration : IEntityTypeConfiguration<GeneralCalendarEvent>
 {
-    // ids fijos para que el seed sea determinístico entre entornos (SCRUM-183)
+    // ids fijos para que el seed sea determinístico entre entornos
     private static readonly Guid BreakfastId = new("88888888-8888-8888-8888-888888888801");
     private static readonly Guid LunchId = new("88888888-8888-8888-8888-888888888802");
     private static readonly Guid SnackId = new("88888888-8888-8888-8888-888888888803");

@@ -2,13 +2,14 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.IntegrationTests.Auth;
 
 namespace Vicaria.IntegrationTests.Authorization;
 
-// SCRUM-137: la Directora de Casa de Convivencia solo accede a Residentes en cualquier
+// La Directora de Casa de Convivencia solo accede a Residentes en cualquier
 // endpoint de la persona, no solo en el listado de fichas
 public class DirectorResidentsOnlyTests : IClassFixture<VicariaWebApplicationFactory>
 {
@@ -98,7 +99,7 @@ public class DirectorResidentsOnlyTests : IClassFixture<VicariaWebApplicationFac
         var (_, personId) = await CrearFichaAsync(PersonType.Ambulatory);
         await UsarTokenAsync(RoleNames.CasaConvivenciaDirector);
 
-        var response = await _client.PostAsJsonAsync("/api/attendances", new { personId, activity = 0, date = DateTime.UtcNow, anonymousCount = 0 });
+        var response = await _client.PostAsJsonAsync("/api/attendances", new { personId, activity = 0, date = CordobaClock.Today, anonymousCount = 0 });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }

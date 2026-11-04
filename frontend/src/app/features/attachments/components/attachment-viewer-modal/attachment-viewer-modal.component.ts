@@ -2,7 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { PersonAttachment } from '../../interfaces/attachment.interface';
 
-/** SCRUM-256: visor de imágenes dentro del sistema (DUMB). */
+/** Visor de imágenes dentro del sistema. */
 @Component({
   selector: 'app-attachment-viewer-modal',
   imports: [UiModalComponent, UiButtonComponent],

@@ -1,6 +1,6 @@
 namespace Vicaria.Application.CasonaVisits;
 
-// alta de visita de un residente a la Casa de Convivencia (SCRUM-210 / SCRUM-74).
+// alta de visita de un residente a la Casa de Convivencia.
 // PersonId es el residente que recibe la visita; VisitorName es texto libre del visitante
 // (no existe tabla de visitantes, ver CasonaVisit). El alta siempre queda en Pending
 // (default de la entidad); el estado se cambia después por PUT.

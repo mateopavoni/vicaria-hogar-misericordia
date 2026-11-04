@@ -4,7 +4,7 @@ using Vicaria.Application.CaritasReports;
 
 namespace Vicaria.Infrastructure.CaritasReports;
 
-// versión imprimible del informe Caritas (SCRUM-270) con PdfSharp;
+// versión imprimible del informe Caritas con PdfSharp;
 // mismo contenido que el JSON de CaritasReportService, en el estilo de
 // AttendanceSummaryPdfGenerator
 public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
@@ -75,7 +75,7 @@ public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
         }
 
         graphics.DrawString(text, font, XBrushes.Black,
-            new XRect(XUnit.FromPoint(Margin), XUnit.FromPoint(y), XUnit.FromPoint(page.Width.Point - Margin * 2), XUnit.FromPoint(LineHeight)),
+            new XRect(Margin, y, page.Width.Point - Margin * 2, LineHeight),
             XStringFormats.TopLeft);
         return y + LineHeight;
     }

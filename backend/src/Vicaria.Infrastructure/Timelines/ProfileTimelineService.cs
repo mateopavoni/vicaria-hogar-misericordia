@@ -4,7 +4,7 @@ using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.Timelines;
 
-// proyección del timeline unificado del perfil (SCRUM-159): combina los hitos
+// proyección del timeline unificado del perfil: combina los hitos
 // ya registrados en el expediente (ingresos/egresos de Casa de Convivencia) con las
 // observaciones, ordenados por fecha descendente para la vista del perfil
 public class ProfileTimelineService : IProfileTimelineService

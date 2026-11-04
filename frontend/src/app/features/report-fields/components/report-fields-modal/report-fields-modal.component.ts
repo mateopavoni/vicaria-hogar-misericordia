@@ -3,7 +3,7 @@ import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { PersonReportData } from '../../interfaces/report-fields.interface';
 import { ReportFieldsSelectComponent } from '../report-fields-select/report-fields-select.component';
 
-/** SCRUM-275: completar o editar los datos del informe de Cáritas de una ficha (DUMB). */
+/** Completar o editar los datos del informe de Cáritas de una ficha. */
 @Component({
   selector: 'app-report-fields-modal',
   imports: [UiModalComponent, UiButtonComponent, ReportFieldsSelectComponent],

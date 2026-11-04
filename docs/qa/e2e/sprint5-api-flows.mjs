@@ -23,7 +23,10 @@ const login = async e => (await call('POST', '/api/auth/login', { body: { email:
 const tokens = async () => ({ ref: await login('referente@test.com'), dir: await login('directora@test.com'), esc: await login('escucha@test.com'), coo: await login('coordinador@test.com') });
 let T = await tokens();
 
-const sql = q => execFileSync('docker', ['exec', 'vicaria-sqlserver', 'bash', '-c',
+// nombres de los contenedores de docker compose (se pueden cambiar si el stack usa otros)
+const SQL_CONTAINER = process.env.SQL_CONTAINER || 'vicaria-sqlserver';
+const API_CONTAINER = process.env.API_CONTAINER || 'vicaria-api';
+const sql = q => execFileSync('docker', ['exec', SQL_CONTAINER, 'bash', '-c',
   `/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -d VicariaDb -h -1 -W -Q "SET NOCOUNT ON; ${q.replace(/"/g, '\\"')}"`],
   { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).trim();
 
@@ -227,7 +230,7 @@ sql(`UPDATE social_records SET CreatedAt = DATEADD(day, -40, GETUTCDATE()) WHERE
 const N = await newPerson('JobNueva');
 const K = await newPerson('JobReciente');
 await call('POST', '/api/attendances', { token: T.ref, body: { personId: K.personId, activity: 0, date: iso(ar(-29)), anonymousCount: 0 } });
-execFileSync('docker', ['restart', 'vicaria-api'], { encoding: 'utf8' });
+execFileSync('docker', ['restart', API_CONTAINER], { encoding: 'utf8' });
 for (let i = 0; i < 60; i++) {
   try { if ((await fetch(API + '/api/caritas-catalogs')).status === 401) break; } catch { /* arrancando */ }
   await new Promise(ok => setTimeout(ok, 1000));

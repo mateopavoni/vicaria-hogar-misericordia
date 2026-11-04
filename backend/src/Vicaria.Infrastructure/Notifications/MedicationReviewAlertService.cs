@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.Notifications;
 using Vicaria.Domain.Entities;
-using Vicaria.Infrastructure.MedicationSchemes;
 using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.Notifications;
 
-// alertas de revisión del esquema de medicación (SCRUM-249):
+// alertas de revisión del esquema de medicación:
 // - "más de 30 días sin revisión" para cada residente con algún esquema vigente vencido
 // - recordatorio el día 1 de cada mes para cada residente con esquemas vigentes
 // Genera una notificación por cada rol destinatario (Referente/Directora/Coordinador) y
@@ -34,7 +34,7 @@ public class MedicationReviewAlertService : IMedicationReviewAlertService
     public async Task<int> CheckAndNotifyAsync(CancellationToken cancellationToken = default)
     {
         var nowUtc = DateTime.UtcNow;
-        var cordobaNow = MedicationSchemeService.GetCordobaNow();
+        var cordobaNow = CordobaClock.Now;
         var staleThreshold = cordobaNow.AddDays(-ThresholdDays);
 
         var activeSchemes = await _dbContext.MedicationSchemes

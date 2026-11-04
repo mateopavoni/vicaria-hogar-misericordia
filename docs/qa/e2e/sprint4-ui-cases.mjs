@@ -8,6 +8,9 @@ import { execFileSync } from 'child_process';
 import fs from 'fs';
 
 const BASE = process.env.BASE || 'http://localhost:4200';
+// nombres de los contenedores de docker compose (se pueden cambiar si el stack usa otros)
+const SQL_CONTAINER = process.env.SQL_CONTAINER || 'vicaria-sqlserver';
+const API_CONTAINER = process.env.API_CONTAINER || 'vicaria-api';
 const SHOTS = process.env.SHOTS || './shots-s4ui';
 fs.mkdirSync(SHOTS, { recursive: true });
 const PASS = 'Test1234!';
@@ -24,14 +27,16 @@ const call = async (method, path, { token, body } = {}) => {
 const login = async e => (await call('POST', '/api/auth/login', { body: { email: e, password: PASS } })).json?.token;
 const T = { ref: await login('referente@test.com'), dir: await login('directora@test.com'), esc: await login('escucha@test.com'), coo: await login('coordinador@test.com') };
 
-const sql = q => execFileSync('docker', ['exec', 'vicaria-sqlserver', 'bash', '-c',
+const sql = q => execFileSync('docker', ['exec', SQL_CONTAINER, 'bash', '-c',
   `/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -d VicariaDb -h -1 -W -Q "SET NOCOUNT ON; ${q.replace(/"/g, '\\"')}"`],
   { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).trim();
 
 const dayStr = d => d.toISOString().slice(0, 10);
 const today = dayStr(new Date(Date.now() - 3 * 36e5));
 const yesterday = dayStr(new Date(Date.now() - 3 * 36e5 - 864e5));
-const LUCIA = '33438a32-f4e6-4fba-b868-07f6362b5bfd';
+// persona semilla: se busca por nombre porque el seed genera ids nuevos en cada base
+const LUCIA = (await call('GET', '/api/social-records?q=Luc%C3%ADa', { token: T.ref })).json
+  ?.find(r => r.fullName === 'Lucía Fernández')?.personId?.toLowerCase();
 
 // ---------- personas ----------
 const people = [];

@@ -22,7 +22,7 @@ const DTO_FIELD: Record<ReportFieldKey, keyof ReportFieldsDto> = {
 };
 
 /**
- * SCRUM-275: valores de los campos del informe de cada persona (clave: personId). Se leen del
+ * Valores de los campos del informe de cada persona (clave: personId). Se leen del
  * detalle de la ficha (`reportFields`) y se guardan con PUT /api/social-records/{id}/report-fields.
  */
 @Injectable({ providedIn: 'root' })

@@ -8,7 +8,7 @@ using Vicaria.Infrastructure.PersonExports;
 
 namespace Vicaria.UnitTests.PersonExports;
 
-// SCRUM-252: documento de exportación de la ficha, auditoría y PDF
+// Documento de exportación de la ficha, auditoría y PDF
 public class PersonExportServiceTests
 {
     private static VicariaDbContext CreateInMemoryDbContext()

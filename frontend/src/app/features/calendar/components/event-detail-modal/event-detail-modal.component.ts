@@ -3,15 +3,8 @@ import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { CalendarEvent } from '../../interfaces/calendar-event.interface';
 
 /**
- * SCRUM-187: detalle completo de un evento (título, horario, descripción y autor),
- * al hacer clic en un evento del calendario. Las actividades recurrentes precargadas
- * (isRecurring) no tienen botón "Editar"/"Eliminar": son fijas, no las creó ningún
- * usuario. SCRUM-16 (AC): el autor del evento puede editarlo/eliminarlo, y cualquier
- * Referente también — esa cuenta ya la hace el padre (CalendarComponent) evento por
- * evento; `canEdit` acá es el resultado de esa cuenta, no solo el permiso de rol.
- * SCRUM-17/SCRUM-197 (AC): "el usuario puede convertir un evento personal en general
- * si lo decide posteriormente" — botón "Hacer general", solo para eventos con
- * scope 'personal' y cuando `canConvert` lo habilita (también lo decide el padre).
+ * Detalle de un evento del calendario (título, horario, descripción y autor).
+ * Qué botones se muestran lo decide CalendarComponent con `canEdit` y `canConvert`.
  */
 @Component({
   selector: 'app-event-detail-modal',

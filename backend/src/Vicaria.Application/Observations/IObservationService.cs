@@ -13,7 +13,7 @@ public interface IObservationService
         GetObservationsFilterDto filters,
         CancellationToken cancellationToken = default);
 
-    // exportacion de las observaciones filtradas a CSV (SCRUM-166)
+    // exportacion de las observaciones filtradas a CSV
     Task<string> ExportToCsvAsync(
         Guid personId,
         GetObservationsFilterDto filters,

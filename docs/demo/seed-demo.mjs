@@ -6,6 +6,9 @@
 import { execFileSync } from 'child_process';
 
 const API = process.env.API || 'http://localhost:5000';
+// nombres de los contenedores de docker compose (se pueden cambiar si el stack usa otros)
+const SQL_CONTAINER = process.env.SQL_CONTAINER || 'vicaria-sqlserver';
+const API_CONTAINER = process.env.API_CONTAINER || 'vicaria-api';
 const PASS = 'Test1234!';
 
 // ----------------------------------------------------------------- utilidades
@@ -26,7 +29,7 @@ const ok = (r, what) => {
   if (r.status >= 300) throw new Error(`${what}: ${r.status} ${r.text.slice(0, 300)}`);
   return r.json;
 };
-const sql = (q) => execFileSync('docker', ['exec', 'vicaria-sqlserver', 'bash', '-c',
+const sql = (q) => execFileSync('docker', ['exec', SQL_CONTAINER, 'bash', '-c',
   `/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -d VicariaDb -h -1 -W -Q "SET NOCOUNT ON; ${q.replace(/"/g, '\\"')}"`],
   { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).trim();
 
@@ -346,7 +349,7 @@ for (let d = 29; d >= 1; d--) {
   sql(`INSERT INTO backups (Id, Status, CreatedAt, SizeBytes, ExternalKey, ErrorMessage) VALUES (NEWID(), ${failed ? 3 : 2}, DATEADD(minute, 3 * 60 + ${Math.floor(rnd() * 4)}, DATEADD(day, -${d}, CAST(CAST(SYSUTCDATETIME() AS date) AS datetime2))), ${failed ? 0 : 11800000 + Math.floor(rnd() * 900000)}, '${key}', ${failed ? "N'No se pudo conectar con el almacenamiento externo (tiempo de espera agotado).'" : 'NULL'})`);
   if (key) keys.push(key);
 }
-execFileSync('docker', ['exec', 'vicaria-api', 'sh', '-c', `mkdir -p /app/uploads/backups && cd /app/uploads/backups && for k in ${keys.join(' ')}; do printf 'Respaldo de demostración de la base VicariaDb' > $k; done`], { env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+execFileSync('docker', ['exec', API_CONTAINER, 'sh', '-c', `mkdir -p /app/uploads/backups && cd /app/uploads/backups && for k in ${keys.join(' ')}; do printf 'Respaldo de demostración de la base VicariaDb' > $k; done`], { env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
 console.log(`${keys.length} respaldos exitosos y 1 fallido en el historial`);
 
 console.log('\nListo. Reiniciá la API (docker restart vicaria-api) para que el proceso diario pase a Inactivo a quienes dejaron de venir.');

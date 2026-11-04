@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// calendario personal por usuario (EP-04/SCRUM-183); a diferencia del general,
+// calendario personal de cada usuario; a diferencia del general,
 // el autor es obligatorio: cada evento personal pertenece a quien lo crea.
 public class PersonalCalendarEvent
 {

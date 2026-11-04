@@ -4,7 +4,7 @@ using Vicaria.Application.PersonExports;
 
 namespace Vicaria.Infrastructure.PersonExports;
 
-// genera el PDF de exportación de la ficha (SCRUM-252) con PdfSharp;
+// genera el PDF de exportación de la ficha con PdfSharp;
 // sigue el estilo de MedicationHistoryPdfGenerator (PdfWriter interno)
 public class PersonExportPdfGenerator : IPersonExportPdfGenerator
 {

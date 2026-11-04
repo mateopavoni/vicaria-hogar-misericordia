@@ -1,4 +1,4 @@
-// SCRUM-186: helpers de fechas para el calendario (semana de lunes a domingo, grilla
+// Helpers de fechas para el calendario (semana de lunes a domingo, grilla
 // mensual con relleno de semanas completas). Nada de esto toca horarios/zona horaria
 // más allá de trabajar siempre en hora LOCAL, igual que todayLocalIso().
 

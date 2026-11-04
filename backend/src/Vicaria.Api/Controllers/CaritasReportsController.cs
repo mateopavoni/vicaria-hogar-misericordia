@@ -26,7 +26,7 @@ public class CaritasReportsController : ControllerBase
         _queryValidator = queryValidator;
     }
 
-    // informe estadístico para Caritas (SCRUM-270): desglose por motivo de
+    // informe estadístico para Caritas: desglose por motivo de
     // asistencia, totales y resto de categorías; solo Referente
     [HttpGet]
     [Authorize(Roles = RoleNames.Referent)]
@@ -54,7 +54,7 @@ public class CaritasReportsController : ControllerBase
         };
     }
 
-    // versión imprimible del informe en PDF (SCRUM-270); mismo contenido que el JSON
+    // versión imprimible del informe en PDF; mismo contenido que el JSON
     [HttpGet("pdf")]
     [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> GetReportPdf(

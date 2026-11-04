@@ -1,6 +1,6 @@
 namespace Vicaria.Application.PersonExports;
 
-// item de observación para el PDF (SCRUM-252): fecha, categoría y contenido;
+// item de observación para el PDF: fecha, categoría y contenido;
 // no lleva autor (decisión: excluir datos de terceros/otros usuarios)
 public record PersonExportObservationItem(
     DateTime CreatedAt,
@@ -8,10 +8,10 @@ public record PersonExportObservationItem(
     string Content
 );
 
-// documento de exportación de la ficha (SCRUM-252): mismo contenido que el
+// documento de exportación de la ficha: mismo contenido que el
 // perfil según las secciones (datos / datos-observaciones / todo) más el
-// encabezado (sistema, fecha y referente que generó). No lleva el contacto de referencia:
-// es un tercero (criterio de SCRUM-23)
+// encabezado (sistema, fecha y referente que lo generó). No incluye el contacto de
+// referencia porque es un dato de un tercero.
 public record PersonExportDocument(
     Guid PersonId,
     string FirstName,

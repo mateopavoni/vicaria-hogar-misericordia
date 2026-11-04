@@ -60,7 +60,6 @@ export class RegisterComponent {
     if (this.registerForm.invalid) {
 
       this.registerForm.markAllAsTouched();
-    ///  this.errorMessage.set('Por favor completa todos los campos obligatorios correctamente.');
 
       return;
     }

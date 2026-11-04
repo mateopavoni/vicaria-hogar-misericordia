@@ -1,6 +1,6 @@
-"""Genera docs/qa/Informe_de_pruebas_Sprint_1-5.docx (informe de resultados de pruebas).
-Las métricas se calculan leyendo Ciclos_de_prueba_Sprint_1-5.xlsx; los defectos, la hoja
-"Defectos y pendientes" de Plan_de_pruebas_Sprint_1-5.xlsx; el resto, run_2026_10_16.py.
+"""Genera docs/qa/Informe_de_pruebas_Sprint_1-6.docx (informe de resultados de pruebas).
+Las métricas se calculan leyendo Ciclos_de_prueba_Sprint_1-6.xlsx; los defectos, la hoja
+"Defectos y pendientes" de Plan_de_pruebas_Sprint_1-5.xlsx más los de sprint6_regression.py.
 
 Uso: python build_test_report_docx.py [ciclos.xlsx] [plan.xlsx] [salida.docx]
 """
@@ -17,15 +17,14 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
 import run_2026_10_16 as run
-
-FRONT_TESTS = 191  # Vitest, 45 archivos (01/11)
+import sprint6_regression as s6
 
 HERE = Path(__file__).parent
 EVIDENCE = HERE / "e2e" / "evidence"
-VERSION = "rama dev del 01/11/2026, con el Sprint 5 integrado y la regresión del Sprint 6"
-REPORT_DATE = "02/11/2026"
-# suites automatizadas re-ejecutadas el 01/11 en la regresión del Sprint 6
-SUITES = {**run.SUITES, "backend_unit": 361, "backend_integration": 270, "frontend_tests": FRONT_TESTS}
+VERSION = "rama main del 04/11/2026, versión final después de la regresión del Sprint 6"
+REPORT_DATE = "04/11/2026"
+# suites automatizadas re-ejecutadas en la regresión final del Sprint 6
+SUITES = {**run.SUITES, **s6.SUITES}
 NAVY = "1F3864"
 
 # Severidad de cada hallazgo de la hoja de defectos (# de fila -> severidad); los #14 a #22 vienen de run.NEW_DEFECTS
@@ -36,6 +35,8 @@ SEVERITY = {"1": MAJOR, "2": MINOR, "3": MAJOR, "4": MINOR, "5": MAJOR, "6": MAJ
             "30": MAJOR, "31": CRIT, "32": MINOR, "33": MINOR, "34": MAJOR, "35": MAJOR, "36": MINOR}
 for i, d in enumerate(run.NEW_DEFECTS):
     SEVERITY[str(14 + i)] = {"Mayor": MAJOR, "Menor": MINOR}.get(d[5], d[5])
+for d in s6.DEFECTS:
+    SEVERITY[d[0]] = {"Mayor": MAJOR, "Menor": MINOR}[d[5]]
 ORDER = [CRIT, MAJOR, MINOR]
 DEF_TYPES = ("Defecto", "Defecto preexistente", "Brecha", "Test desactualizado", "Limitación")
 
@@ -97,9 +98,9 @@ def picture(doc, name, caption, width=5.6):
 
 
 def main():
-    ciclos = sys.argv[1] if len(sys.argv) > 1 else str(HERE / "Ciclos_de_prueba_Sprint_1-5.xlsx")
+    ciclos = sys.argv[1] if len(sys.argv) > 1 else str(HERE / "Ciclos_de_prueba_Sprint_1-6.xlsx")
     plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-5.xlsx")
-    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Informe_de_pruebas_Sprint_1-5.docx")
+    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Informe_de_pruebas_Sprint_1-6.docx")
 
     wbc = openpyxl.load_workbook(ciclos)
     stats = {ws.title: collections.Counter(ws.cell(row=r, column=7).value for r in range(4, ws.max_row + 1)) for ws in wbc}
@@ -110,6 +111,7 @@ def main():
 
     defects = [r for r in openpyxl.load_workbook(plan)["Defectos y pendientes"].iter_rows(min_row=2, values_only=True) if r[0]]
     defects = [(str(d[0]),) + tuple(d[1:]) for d in defects]
+    defects += [d[:5] for d in s6.DEFECTS]
     bugs = [d for d in defects if d[1] in DEF_TYPES]
     S = SUITES
 
@@ -154,7 +156,7 @@ def main():
         ["Sprint 3", "Calendario, colaboradores y visitas", c("Ciclo - Sprint 3"), "API y UI contra el stack local (08 al 14/10), con tests automatizados", "Mateo Pavoni"],
         ["Sprint 4", "Asistencia, estadísticas y medicación; pruebas de API, integración front-back, seguridad y carga", c("Ciclo - Sprint 4"), "Scripts con Playwright y Node contra el stack local (16 al 20/10)", "Mateo Pavoni"],
         ["Sprint 5", "Ficha exportable, adjuntos, evaluación psiquiátrica, estado activo/inactivo, respaldos e informe de Cáritas; pruebas de API", c("Ciclo - Sprint 5"), "Scripts con Playwright y Node contra el stack local (27/10)", "Mateo Pavoni"],
-        ["Sprint 6", "Regresión: corrección de los defectos abiertos y nueva ejecución de todas las pruebas automatizadas", "—", "xUnit y Vitest (01/11)", "Mateo Pavoni"],
+        ["Sprint 6", "Regresión final sobre la versión que se entrega: pruebas automatizadas, re-ejecución de todos los scripts de API, interfaz, seguridad y carga, y revisión visual de 76 pantallas por rol en escritorio y celular", c("Ciclo - Sprint 6"), "xUnit, Vitest y scripts con Playwright y Node sobre un stack limpio (01 al 04/11)", "Mateo Pavoni"],
     ], widths=[0.8, 2.7, 0.6, 2.0, 0.9], size=9)
     doc.add_heading("2.2 Qué NO se probó", 2)
     table(doc, ["Exclusión", "Motivo"], [
@@ -162,6 +164,7 @@ def main():
         ["Rendimiento con volumen real", "Las pruebas de carga se corrieron en el entorno local con SQL Server Express: sus cifras son de referencia y no sirven para dimensionar el servidor."],
         ["Navegadores distintos de Chrome", "Los flujos de interfaz se ejecutaron en Chromium (Playwright) y en Chrome. No se probaron Firefox, Safari ni Edge."],
         ["Interfaz de exportación con el PDF del backend", "TC-212 a TC-218 se ejecutaron con la exportación anterior, que generaba el PDF en el navegador. El PDF que genera ahora el backend se validó por API (S5-X01 a S5-X03)."],
+        ["TC-153, TC-154, TC-193 y los casos del respaldo diario en la regresión", "Sobre una base recién creada no se pueden ejecutar: usan fechas fijas, un residente sin evaluación vigente o necesitan que el respaldo diario ya haya corrido. Pasaron en sus ciclos originales y quedan BLOQUEADOS en el ciclo del Sprint 6 (S6-10 y S6-12)."],
         ["Stock de ropa (EP-06), convenios (EP-08) y sitio público (EP-09)", "Son historias del backlog que no se desarrollaron (SCRUM-34 a 36, 43 a 46 y 48 a 52), así que no forman parte de esta versión."],
     ], widths=[2.0, 4.7], size=9)
 
@@ -185,7 +188,7 @@ def main():
         "Los casos que fallaron en una primera ejecución se volvieron a ejecutar después de la corrección. La planilla registra su "
         "resultado final y, en las columnas ID Bug y Comentarios, el defecto que encontraron."
     )
-    doc.add_paragraph("Pruebas automatizadas, re-ejecutadas el 01/11:")
+    doc.add_paragraph("Pruebas automatizadas, re-ejecutadas el 04/11 sobre la versión final:")
     table(doc, ["Pruebas automatizadas", "Resultado"], [
         ["Backend unitarias (xUnit)", f"{S['backend_unit']} de {S['backend_unit']} OK"],
         ["Backend integración (xUnit + SQL Server)", f"{S['backend_integration']} de {S['backend_integration']} OK"],
@@ -213,7 +216,9 @@ def main():
     r_.bold = True
     doc.add_paragraph(
         f"Los {by_sev[CRIT]} defectos críticos y los {by_sev[MAJOR]} mayores que se encontraron están corregidos y verificados, todos los casos ejecutados pasan "
-        "y las pruebas automatizadas están en verde. El sistema se puede liberar con estas condiciones:"
+        f"y las pruebas automatizadas están en verde. La regresión final del Sprint 6 encontró {len(s6.DEFECTS)} defectos nuevos (#37 a #44: la fecha de "
+        "\"hoy\" calculada en UTC, horas mostradas en UTC, pedidos sin permiso y detalles de diseño en el celular), todos corregidos y verificados. "
+        "El sistema se puede liberar con estas condiciones:"
     )
     bullets(doc, [
         "Corregir en un parche el defecto menor abierto (#10: al editar una ocurrencia de un evento recurrente, la serie pasa a empezar ese día). Mientras tanto, la serie se edita desde su primera ocurrencia.",
@@ -222,7 +227,7 @@ def main():
 
     doc.add_heading("Anexo: evidencia", 1)
     bullets(doc, [
-        "Ciclos de prueba con el resultado de cada caso: docs/qa/Ciclos_de_prueba_Sprint_1-5.xlsx.",
+        "Ciclos de prueba con el resultado de cada caso: Ciclos_de_prueba_Sprint_1-6.xlsx.",
         "Capturas: docs/qa/e2e/evidence.",
         "Scripts de prueba: docs/qa/e2e (interfaz y API) y docs/qa/security (seguridad y carga).",
     ])

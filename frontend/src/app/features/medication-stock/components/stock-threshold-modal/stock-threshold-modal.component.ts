@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
 import { MedicationStockItem } from '../../interfaces/medication-stock.interface';
 
-/** SCRUM-246: configurar el umbral de stock bajo de un medicamento (DUMB). */
+/** Configurar el umbral de stock bajo de un medicamento. */
 @Component({
   selector: 'app-stock-threshold-modal',
   imports: [ReactiveFormsModule, UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],

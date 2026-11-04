@@ -25,7 +25,7 @@ public class CasaConvivenciaStayController : ControllerBase
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    // registra el egreso de una estadía (SCRUM-146): fecha/hora automática server-side +
+    // registra el egreso de una estadía: fecha/hora automática server-side +
     // motivo opcional (enum) + texto libre solo si motivo = otro
     [HttpPut("{id}/egreso")]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]

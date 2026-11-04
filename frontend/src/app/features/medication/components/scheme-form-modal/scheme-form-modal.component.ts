@@ -5,7 +5,7 @@ import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalCompo
 import { CreateMedicationSchemeRequest, MedicationCatalogItem } from '../../interfaces/medication.interface';
 
 /**
- * SCRUM-234: alta de un esquema de medicación (DUMB). Selector del catálogo (solo se puede
+ * Alta de un esquema de medicación. Selector del catálogo (solo se puede
  * elegir un medicamento que exista), dosis y hora. Si el medicamento elegido no tiene stock
  * en farmacia se alerta, pero se puede guardar: queda "pendiente de stock".
  */

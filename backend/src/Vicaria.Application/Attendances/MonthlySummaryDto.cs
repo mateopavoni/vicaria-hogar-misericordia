@@ -2,8 +2,7 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Application.Attendances;
 
-// resumen mensual de asistencia (SCRUM-225): lo calcula el servicio compartido
-// para que el PDF de esta subtarea y el endpoint de SCRUM-224 usen la misma fuente
+// resumen mensual de asistencia; el PDF y las estadísticas usan el mismo cálculo
 public record ActivityTotalDto(
     AttendanceActivity Activity,
     string ActivityName,

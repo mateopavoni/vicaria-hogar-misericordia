@@ -79,7 +79,7 @@ export class CalendarEventsService {
       .pipe(map(({ id }) => ({ ...dto, id, authorName: '', authorId: '' }) as CalendarEvent));
   }
 
-  // PUT api/{general|personal}-calendar-events/{id} (SCRUM-190): edición completa, responde 204
+  // PUT api/{general|personal}-calendar-events/{id}: edición completa, responde 204
   update(id: string, dto: UpdateCalendarEventDto): Observable<CalendarEvent> {
     const [date, startTime] = dto.start.split('T');
     const endTime = dto.end.split('T')[1];
@@ -101,7 +101,7 @@ export class CalendarEventsService {
     return this.http.delete<void>(`${this.baseUrl(scope)}/${id}`);
   }
 
-  // PUT api/personal-calendar-events/{id}/publish (SCRUM-195): crea el evento general y
+  // PUT api/personal-calendar-events/{id}/publish: crea el evento general y
   // elimina el personal; responde { id } del evento general nuevo
   convertToGeneral(id: string): Observable<{ id: string }> {
     return this.http.put<{ id: string }>(`${this.baseUrl('personal')}/${id}/publish`, {});

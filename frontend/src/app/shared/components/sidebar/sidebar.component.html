@@ -1,5 +1,5 @@
 
-<!-- backdrop del drawer en mobile: bug reportado 2026-09-23, sidebar sin breakpoints -->
+<!-- fondo oscuro detrás del menú en mobile -->
 @if (sidebarState.isOpenOnMobile()) {
   <div
     class="fixed inset-0 z-30 bg-slate-900/50 md:hidden"
@@ -216,7 +216,7 @@
     </a>
   }
 
-    <!-- Categorías de observaciones (SCRUM-180) -->
+    <!-- Categorías de observaciones -->
     @if (permissionService.hasPermission('categorias.manage')) {
     <a
       routerLink="/dashboard/configuracion/categorias"
@@ -271,7 +271,7 @@
     </a>
     }
 
-    <!-- Informe Cáritas (SCRUM-271) -->
+    <!-- Informe Cáritas -->
     @if (permissionService.hasPermission('informes.caritas')) {
     <a
       routerLink="/dashboard/informes/caritas"
@@ -298,7 +298,7 @@
     </a>
     }
 
-    <!-- Respaldos (SCRUM-267) -->
+    <!-- Respaldos -->
     @if (permissionService.hasPermission('configuracion.respaldos')) {
     <a
       routerLink="/dashboard/configuracion/respaldos"

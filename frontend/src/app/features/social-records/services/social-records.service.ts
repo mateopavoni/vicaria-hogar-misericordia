@@ -19,7 +19,7 @@ export class SocialRecordsService {
     return this.http.post<CreateSocialRecordResponse>(this.apiUrl, dto);
   }
 
-  // listado paginado con búsqueda y filtros avanzados (SCRUM-6, SCRUM-21)
+  // listado paginado con búsqueda y filtros avanzados
   getAll(page: number = 1, search: string = '', filters?: SocialRecordFilters): Observable<SocialRecordsResponse> {
     let params = new HttpParams().set('page', page);
     if (search.trim()) {
@@ -49,16 +49,13 @@ export class SocialRecordsService {
     return this.http.get<SocialRecordDetail>(`${this.apiUrl}/${id}`);
   }
 
-  // bug reportado 2026-09-23: tipado como Observable<SocialRecordDetail>, pero el backend
-  // devuelve 204 No Content (SocialRecordsController.Update) — el body siempre llegaba
-  // vacío. Quien llame a este método debe volver a pedir el registro con getById si lo
-  // necesita actualizado, igual que ya hacen los flujos de ingreso/egreso.
+  // el backend responde 204 sin cuerpo; para ver la ficha actualizada hay que pedirla con getById
   update(id: string, data: CreateSocialRecordRequest): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, data);
   }
 
   // cambia el tipo de persona (ambulatorio/residente); el backend crea la estadía en la Casa de Convivencia
-  // automáticamente al pasar a Residente (SCRUM-134), no hace falta un endpoint de "entry" aparte
+  // automáticamente al pasar a Residente, no hace falta un endpoint de "entry" aparte
   updatePersonType(personId: string, personType: PersonType): Observable<void> {
     return this.http.put<void>(`/api/persons/${personId}/type`, { personType });
   }
@@ -69,7 +66,7 @@ export class SocialRecordsService {
     return this.http.put<void>(`/api/casa-convivencia-stays/${stayId}/egreso`, payload);
   }
 
-  // SCRUM-264: cambio manual de estado Activo/Inactivo con motivo obligatorio (SCRUM-263). El backend
+  // Cambio manual de estado Activo/Inactivo con motivo obligatorio. El backend
   // lo guarda en el historial de estados y, al pasar a Inactivo, notifica a los Referentes
   updateStatus(personId: string, status: PersonStatus, reason: string): Observable<void> {
     return this.http.patch<void>(`/api/persons/${personId}/status`, { status, reason });

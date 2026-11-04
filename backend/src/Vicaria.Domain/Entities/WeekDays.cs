@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// días de la semana para eventos recurrentes (SCRUM-183), guardado como int:
+// días de la semana para eventos recurrentes, guardado como int:
 // las plantillas del hogar usan Monday..Friday (L-V) o solo Tuesday (merendero)
 [Flags]
 public enum WeekDays

@@ -11,7 +11,7 @@ import { daysUntilExpiry, evaluationExpiryDate, evaluationValidity } from '../..
 import { EvaluationFormModalComponent } from '../evaluation-form-modal/evaluation-form-modal.component';
 
 /**
- * SCRUM-260: pestaña "Evaluaciones" del perfil (SMART). Muestra la evaluación vigente con su
+ * Pestaña "Evaluaciones" del perfil. Muestra la evaluación vigente con su
  * vencimiento (badge de alerta a menos de 30 días, indicador de vencida), el formulario de carga
  * y el historial de evaluaciones anteriores (vigente = false).
  * Ver: evaluaciones.view; cargar: evaluaciones.create (Referente y Directora).

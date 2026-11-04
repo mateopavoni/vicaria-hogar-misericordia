@@ -1,6 +1,6 @@
 export type BackupStatus = 'InProgress' | 'Completed' | 'Failed';
 
-/** SCRUM-267: un respaldo de la base de datos (uno por día). */
+/** Un respaldo de la base de datos (uno por día). */
 export interface BackupRecord {
   id: string;
   createdAt: string;           // ISO

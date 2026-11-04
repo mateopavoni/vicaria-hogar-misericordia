@@ -10,7 +10,7 @@ import { AdministrationStatus, AgendaItem, MedicationAgenda } from '../../interf
 import { MedicationService } from '../../services/medication.service';
 
 /**
- * SCRUM-238: agenda diaria de medicamentos (/dashboard/medicacion).
+ * Agenda diaria de medicamentos (/dashboard/medicacion).
  * Tomas agrupadas por hora según quiénes asistieron ese día. Se ve con medicamentos.view;
  * marcar tomas requiere medicamentos.edit (Referente y Directora) y solo en el día actual.
  * Los días anteriores son de solo lectura, para verificar el historial de administración.
@@ -45,12 +45,13 @@ export class MedicationAgendaComponent {
 
   longDate = computed(() => {
     const [y, m, d] = this.date().split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('es-AR', {
+    const text = new Date(y, m - 1, d).toLocaleDateString('es-AR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
+    return text.charAt(0).toUpperCase() + text.slice(1);
   });
 
   total = computed(() => this.agenda()?.slots.reduce((n, s) => n + s.items.length, 0) ?? 0);

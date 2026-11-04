@@ -4,7 +4,7 @@ import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalCompo
 import { Visit } from '../../interfaces/visit.interface';
 
 /**
- * SCRUM-74 (AC): "las visitas canceladas quedan registradas con motivo opcional" —
+ * "las visitas canceladas quedan registradas con motivo opcional" —
  * un ui-confirm-dialog genérico no alcanza acá porque necesita un campo de texto, así
  * que es un modal propio y chico.
  */

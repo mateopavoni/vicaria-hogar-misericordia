@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// contacto de referencia familiar, opcional (SCRUM-5)
+// contacto de referencia familiar, opcional
 public class Contact
 {
     public Guid Id { get; set; }
