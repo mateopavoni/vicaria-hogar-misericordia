@@ -1,6 +1,6 @@
 import { MedicationScheme } from '../interfaces/medication.interface';
 
-/** Un esquema vigente sin revisar hace más de estos días dispara la alerta (SCRUM-250). */
+/** Un esquema vigente sin revisar hace más de estos días dispara la alerta. */
 export const REVIEW_ALERT_DAYS = 30;
 
 /** La evaluación psiquiátrica vence a los 6 meses: pasado eso no se pueden agregar medicamentos. */

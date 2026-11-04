@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// colaborador (SCRUM-199 / EP-05): voluntario o empleado del dispositivo, no es una
+// colaborador: voluntario o empleado del dispositivo, no es una
 // persona atendida ni un usuario del sistema. Dni/Email/Phone/WorkArea son opcionales;
 // el índice único sobre Dni solo aplica cuando está cargado (ver CollaboratorConfiguration).
 public class Collaborator

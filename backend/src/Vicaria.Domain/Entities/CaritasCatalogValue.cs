@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// valor configurable del catálogo del informe Caritas (SCRUM-274):
+// valor configurable del catálogo del informe Caritas:
 // una sola tabla con discriminador Category; la baja es lógica
 // (IsActive = false) para conservar los datos históricos al cambiar
 // los criterios de Caritas

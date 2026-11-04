@@ -12,7 +12,7 @@ function notBeforeToday(control: AbstractControl): ValidationErrors | null {
 }
 
 /**
- * SCRUM-246: registrar el ingreso de un medicamento (DUMB). Se elige uno existente o se da de
+ * Registrar el ingreso de un medicamento. Se elige uno existente o se da de
  * alta uno nuevo; cantidad, vencimiento (no puede ser anterior a hoy) y proveedor.
  */
 @Component({

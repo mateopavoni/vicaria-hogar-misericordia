@@ -20,7 +20,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
         Guid actorId,
         CancellationToken cancellationToken)
     {
-        // el autor sale del JWT, nunca del cliente: es lo que hace privado el evento (SCRUM-194)
+        // el autor sale del JWT, nunca del cliente: es lo que hace privado el evento
         var calendarEvent = new PersonalCalendarEvent
         {
             Id = Guid.NewGuid(),
@@ -51,7 +51,7 @@ public class PersonalCalendarEventService : IPersonalCalendarEventService
         var fromDate = from.Date;
         var toDate = to.Date;
 
-        // el filtro por autor es la garantía de privacidad (SCRUM-194): los eventos de
+        // el filtro por autor es la garantía de privacidad: los eventos de
         // otro usuario jamás se materializan, aunque el rol tenga acceso al endpoint
         var calendarEvents = await _dbContext.PersonalCalendarEvents
             .AsNoTracking()

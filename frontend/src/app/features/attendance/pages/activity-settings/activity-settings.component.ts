@@ -12,7 +12,7 @@ const SOURCE_LABELS: Record<AttendanceActivitySource, string> = {
 };
 
 /**
- * SCRUM-230: configuración de actividades de asistencia (solo Referente, ver la ruta).
+ * Configuración de actividades de asistencia (solo Referente, ver la ruta).
  * Activar y desactivar, crear actividades nuevas del Hogar de día y sincronizar las
  * recurrentes del calendario. Las desactivadas dejan de ofrecerse para registrar pero
  * conservan el historial.

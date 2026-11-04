@@ -1,0 +1,53 @@
+name: CD
+
+# cuando el CI de main termina bien, publica las imágenes Docker de la API y del frontend
+# en GitHub Container Registry (ghcr.io), listas para desplegar con docker compose
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publicar imágenes Docker
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nombre de las imágenes
+        id: names
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: API
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.names.outputs.owner }}/vicaria-api:latest
+            ghcr.io/${{ steps.names.outputs.owner }}/vicaria-api:${{ github.event.workflow_run.head_sha }}
+
+      - name: Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile.local
+          push: true
+          tags: |
+            ghcr.io/${{ steps.names.outputs.owner }}/vicaria-web:latest
+            ghcr.io/${{ steps.names.outputs.owner }}/vicaria-web:${{ github.event.workflow_run.head_sha }}

@@ -21,7 +21,7 @@ import { CollaboratorsService } from '../../services/collaborators.service';
 type CollaboratorTab = 'active' | 'inactive';
 
 /**
- * SCRUM-29 (SCRUM-201/SCRUM-202/SCRUM-206/SCRUM-207): listado y gestión de
+ * Listado y gestión de
  * colaboradores (voluntarios y empleados). Alta/edición con solo el nombre
  * obligatorio, baja y reactivación con confirmación (no se elimina del historial),
  * búsqueda por nombre/apellido/área (insensible a mayúsculas y acentos, con
@@ -55,7 +55,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
 
   activeTab = signal<CollaboratorTab>('active');
 
-  // SCRUM-206: término de búsqueda aplicado (ya debounceado) y filtro por tipo
+  // Término de búsqueda aplicado (ya debounceado) y filtro por tipo
   // (mismo patrón que fichas: searchTerm/filters separados de lo que el usuario
   // está tipeando, para no recalcular en cada letra sin el debounce)
   searchTerm = signal('');
@@ -71,7 +71,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
     { id: 'inactive', label: 'Inactivos', count: this.inactiveCount(), tone: 'neutral' },
   ]);
 
-  // SCRUM-19: busca por nombre, apellido o área desde un único campo, insensible a
+  // Busca por nombre, apellido o área desde un único campo, insensible a
   // mayúsculas y acentos; además filtra por tipo y por la tab activa/inactiva.
   visibleCollaborators = computed(() => {
     const term = this.normalize(this.searchTerm().trim());
@@ -92,7 +92,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
     });
   });
 
-  // SCRUM-207: si hay una búsqueda activa y no encontró nada, se muestra el estado
+  // Si hay una búsqueda activa y no encontró nada, se muestra el estado
   // vacío con la opción de registrar en vez de la tabla (que tiene su propio mensaje
   // genérico para cuando simplemente no hay colaboradores activos/inactivos).
   showEmptySearchState = computed(
@@ -116,7 +116,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
   saving = signal(false);
   formError = signal<string | null>(null);
 
-  // ficha de solo lectura (SCRUM-207)
+  // ficha de solo lectura
   viewingCollaborator = signal<Collaborator | null>(null);
 
   // confirmación antes de dar de baja o reactivar
@@ -196,7 +196,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
     this.showFormModal.set(true);
   }
 
-  // SCRUM-207: desde el estado vacío de la búsqueda, precarga el nombre tipeado
+  // Desde el estado vacío de la búsqueda, precarga el nombre tipeado
   openCreateModalFromSearch(): void {
     this.editingCollaborator.set(null);
     this.createPrefillName.set(this.searchTerm().trim());
@@ -239,7 +239,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  // SCRUM-207: ficha completa de solo lectura al hacer clic en un resultado
+  // Ficha completa de solo lectura al hacer clic en un resultado
   openDetail(collaborator: Collaborator): void {
     this.viewingCollaborator.set(collaborator);
   }
@@ -253,7 +253,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
     this.openEditModal(collaborator);
   }
 
-  // tanto dar de baja como reactivar se confirman antes (SCRUM-202): es un cambio de
+  // tanto dar de baja como reactivar se confirman antes: es un cambio de
   // estado visible para todo el equipo, mejor evitar un click accidental
   requestToggle(collaborator: Collaborator): void {
     this.pendingToggle.set(collaborator);
@@ -284,7 +284,7 @@ export class CollaboratorManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  // SCRUM-19: "la búsqueda es insensible a mayúsculas y acentos"
+  // "la búsqueda es insensible a mayúsculas y acentos"
   private normalize(value: string): string {
     return value
       .normalize('NFD')

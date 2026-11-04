@@ -14,6 +14,8 @@ Trabajo Final Integrador de Prácticas Profesionalizantes II, Tecnicatura en Des
 - [Puesta en marcha](#puesta-en-marcha)
 - [Pruebas y calidad](#pruebas-y-calidad)
 - [Flujo de trabajo](#flujo-de-trabajo)
+- [Cómo contribuir](#cómo-contribuir)
+- [Ejemplos de uso](#ejemplos-de-uso)
 - [Documentación](#documentación)
 - [Equipo](#equipo)
 
@@ -31,12 +33,15 @@ El equipo registraba a las personas, sus observaciones y la agenda en papel, sin
 | EP-01 | Fichas de personas: alta, búsqueda con filtros combinables, edición, perfil completo y tipo de persona (Ambulatorio o Residente) | Completa |
 | EP-02 | Observaciones con autoría y fecha automáticas, línea de tiempo con filtros, exportación a CSV, categorías de observación e historia de vida por etapas | Completa |
 | EP-12 | Casa de Convivencia: evaluación psiquiátrica, estadías con ingreso automático y egreso con motivo y auditoría | Completa |
-| EP-10 | Asistencia diaria e inactividad automática a los 30 días | Parcial |
 | EP-04 | Calendario general del Centro Barrial con actividades recurrentes precargadas, eventos con repetición diaria, semanal o mensual, calendario personal privado y conversión de un evento personal en general | Completa |
 | EP-05 | Colaboradores (voluntarios y empleados): alta, edición, baja y reactivación lógicas, detalle y búsqueda por nombre o área | Completa |
 | EP-05 | Calendario semanal de visitas a residentes de la Casa de Convivencia, con estados, motivo de cancelación opcional y aviso de solapamiento de horarios | Completa |
+| EP-10 | Asistencia diaria con actividades configurables, modificación justificada de días cerrados, estadísticas, detección de inactivos, resumen mensual en PDF e inactivación automática a los 30 días | Completa |
+| EP-11 | Medicación: esquemas por persona con revisión mensual, agenda diaria de tomas, historial exportable a PDF e inventario de medicamentos con alerta de stock bajo | Completa |
+| EP-07 | Documentos adjuntos de la ficha (imágenes y PDF) y exportación de la ficha a PDF | Completa |
+| EP-13 | Informe estadístico para Cáritas con catálogo de valores configurable y exportación a PDF; respaldos diarios de la base con retención y descarga | Completa |
 
-Pendiente de planificación: agenda de medicamentos, documentación y adjuntos con exportación a PDF, informes institucionales e inventario.
+Quedan en el backlog, sin planificar: stock de ropa (EP-06), convenios (EP-08) y la página pública (EP-09).
 
 Toda operación que modifica el estado de una entidad relevante queda registrada en un registro de auditoría con el actor, la acción, la entidad afectada y la fecha en UTC.
 
@@ -68,7 +73,8 @@ Monolito con Clean Architecture en el backend y una aplicación de una sola pág
 │   │   └── Vicaria.IntegrationTests API completa con WebApplicationFactory y SQL Server real
 │   └── docker-compose.yml           SQL Server, API y frontend para ejecución local
 ├── frontend/                        Aplicación Angular
-├── docs/qa/                         Casos de prueba, plan de pruebas en Excel y flujos E2E
+├── docs/                            Manual técnico, datos de demostración y material de QA
+├── .github/workflows/               Integración continua (ci.yml) y publicación de imágenes (cd.yml)
 └── .ai/context/                     Estado verificado, decisiones y preguntas abiertas
 ```
 
@@ -137,25 +143,23 @@ dotnet test tests/Vicaria.IntegrationTests -- xUnit.ParallelizeTestCollections=f
 # Frontend
 cd frontend
 npm ci
-npm test
-npm run build
+npx ng test --watch=false
+npx ng build --configuration production
 ```
 
 Las pruebas de integración levantan un SQL Server real con Testcontainers y se ejecutan de forma secuencial para no saturar Docker.
 
-Estado de la última ejecución completa:
+Estado de la última ejecución completa (3 de noviembre de 2026, rama `main`):
 
 | Suite | Resultado |
 |---|---|
-| Backend, pruebas unitarias | 246 de 246 |
-| Backend, pruebas de integración | 240 de 240 |
-| Frontend, pruebas y compilación de producción | 51 de 51 pruebas y compilación correcta |
-| Flujos de interfaz en navegador real (Playwright) | 33 de 33 verificaciones |
-| Casos manuales del Sprint 1 y 2 (TC-01 a TC-40) | 40 de 40 |
+| Backend, pruebas unitarias (`backend/tests/Vicaria.UnitTests`) | 364 de 364 |
+| Backend, pruebas de integración (`backend/tests/Vicaria.IntegrationTests`) | 270 de 270 |
+| Frontend, pruebas unitarias y compilación de producción | 181 de 181 y compilación sin advertencias |
 
-La integración continua (`.github/workflows/ci.yml`) compila y ejecuta las pruebas de backend y frontend en cada push y pull request hacia `main` y `dev`.
+La integración continua (`.github/workflows/ci.yml`) compila y ejecuta las pruebas de backend y frontend en cada push y pull request hacia `main` y `dev`. Cuando el CI de `main` termina bien, el despliegue continuo (`.github/workflows/cd.yml`) publica las imágenes Docker de la API y del frontend en GitHub Container Registry (`ghcr.io`).
 
-El plan de pruebas completo, con los casos manuales (TC) y automatizados (TA) de los cuatro sprints (el Sprint 4 todavía sin desarrollo), está en [`docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx`](./docs/qa/Plan_de_pruebas_Sprint_1-4.xlsx). El detalle del Sprint 3 y los flujos de interfaz reproducibles están en [`docs/qa/`](./docs/qa/).
+En [`docs/qa/`](./docs/qa/) están los scripts que generan el plan de pruebas, la planilla de ciclos y el informe de pruebas, los flujos de interfaz reproducibles con Playwright (`docs/qa/e2e/`) y las pruebas de seguridad y carga de la API (`docs/qa/security/`). Las planillas y documentos generados (`.xlsx` y `.docx`) no se versionan y se entregan aparte.
 
 ## Flujo de trabajo
 
@@ -169,6 +173,40 @@ El plan de pruebas completo, con los casos manuales (TC) y automatizados (TA) de
 
 Los mensajes de commit y la documentación se escriben en español. Las migraciones de Entity Framework tienen nombres descriptivos en inglés.
 
+## Cómo contribuir
+
+1. Crear una rama desde `dev` con el número de la historia de Jira: `feature/SCRUM-123-descripcion-corta` (o `fix/...` para una corrección).
+2. Respetar las convenciones de [`AGENTS.md`](./AGENTS.md): identificadores en inglés, mensajes al usuario en español, Result Pattern en los servicios, constantes de `RoleNames` en la autorización y un registro de auditoría en toda operación que cambie el estado de una entidad.
+3. Agregar pruebas unitarias para la lógica nueva y pruebas de integración si se toca un endpoint.
+4. Correr las pruebas de backend y frontend en local (ver [Pruebas y calidad](#pruebas-y-calidad)).
+5. Escribir commits cortos y descriptivos, en español, con el formato `tipo(alcance): descripción` (`feat`, `fix`, `docs`, `test`, `chore`).
+6. Abrir un pull request hacia `dev`. El CI tiene que pasar antes del merge.
+
+## Ejemplos de uso
+
+Con el entorno levantado (ver [Puesta en marcha](#puesta-en-marcha)), la forma más simple de usar el sistema es entrar a http://localhost:4200 con alguno de los usuarios de prueba. Algunos recorridos habituales:
+
+- **Registrar a una persona que llega al hogar:** Fichas → Nueva ficha. Solo el nombre es obligatorio; el resto se completa después.
+- **Cargar el seguimiento:** desde el perfil de la persona, Observaciones → Nueva observación, con categoría. La línea de tiempo se filtra por fecha, autor o categoría y se exporta a CSV.
+- **Tomar asistencia del día:** Asistencia → elegir la actividad y marcar a las personas presentes.
+- **Ver la agenda de medicamentos:** Medicación muestra las tomas del día; cada una se marca como administrada o no administrada.
+- **Generar el informe para Cáritas:** Informe Cáritas, elegir el período y exportar a PDF.
+
+La API también se puede usar directamente. Por ejemplo, iniciar sesión y crear una ficha:
+
+```bash
+# inicia sesión y guarda el token
+TOKEN=$(curl -s http://localhost:5000/api/auth/login   -H "Content-Type: application/json"   -d '{"email":"referente@test.com","password":"Test1234!"}' | jq -r .token)
+
+# crea una ficha con el único dato obligatorio
+curl -s http://localhost:5000/api/social-records   -H "Authorization: Bearer $TOKEN"   -H "Content-Type: application/json"   -d '{"firstName":"Juan","hasDocumentation":false}'
+
+# busca fichas por nombre o DNI
+curl -s "http://localhost:5000/api/social-records?q=juan" -H "Authorization: Bearer $TOKEN"
+```
+
+Todos los endpoints, con sus parámetros y respuestas, se pueden probar desde Swagger en http://localhost:5000/swagger.
+
 ## Documentación
 
 | Documento | Contenido |
@@ -176,9 +214,11 @@ Los mensajes de commit y la documentación se escriben en español. Las migracio
 | [`PROJECT.md`](./PROJECT.md) | Contexto de negocio, objetivos, alcance y roles |
 | [`AGENTS.md`](./AGENTS.md) | Convenciones de código, patrones por capa y reglas de trabajo |
 | [`docs/MANUAL_TECNICO.md`](./docs/MANUAL_TECNICO.md) | Manual técnico: instalación desde cero y configuración por entorno, integraciones y seguridad |
+| [`docs/GUIA_USUARIO.md`](./docs/GUIA_USUARIO.md) | Guía de usuario final: acceso, navegación, funciones principales con capturas y ejemplos de uso por rol |
 | [`deploy-local.md`](./deploy-local.md) | Guía para levantar el sistema en local |
 | [`.ai/context/`](./.ai/context/00_INDEX.md) | Estado verificado contra el código, decisiones y deuda conocida |
-| [`docs/qa/`](./docs/qa/) | Casos de prueba, plan de pruebas y flujos de interfaz |
+| [`docs/demo/`](./docs/demo/) | Carga de datos de demostración |
+| [`docs/qa/`](./docs/qa/) | Scripts del plan de pruebas, los ciclos y el informe; flujos de interfaz y pruebas de seguridad |
 
 ## Equipo
 

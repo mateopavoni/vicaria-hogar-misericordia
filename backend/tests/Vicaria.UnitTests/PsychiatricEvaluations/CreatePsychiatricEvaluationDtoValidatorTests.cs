@@ -1,3 +1,4 @@
+using Vicaria.Application.Common;
 using Vicaria.Application.PsychiatricEvaluations;
 
 namespace Vicaria.UnitTests.PsychiatricEvaluations;
@@ -8,7 +9,7 @@ public class CreatePsychiatricEvaluationDtoValidatorTests
     [Fact]
     public void Validate_FechaDeMananaEnCordoba_EsInvalida()
     {
-        var cordobaToday = DateTime.UtcNow.AddHours(-3).Date;
+        var cordobaToday = CordobaClock.Today;
         var validator = new CreatePsychiatricEvaluationDtoValidator();
 
         var tomorrow = validator.Validate(new CreatePsychiatricEvaluationDto(cordobaToday.AddDays(1), "Dr. Test", "Diagnóstico"));

@@ -350,8 +350,7 @@ await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, nul
         Assert.Null(perfil);
     }
 
-    // bug reportado 2026-09-23: se guardaba el DNI con puntos/espacios y la búsqueda
-    // comparaba solo dígitos, así que nunca matcheaba.
+    // el DNI se guarda solo con dígitos para que la búsqueda lo encuentre
     [Fact]
     public async Task CreateAsync_ConDniConPuntosYEspacios_LoGuardaSoloConDigitos()
     {
@@ -392,8 +391,7 @@ await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, nul
         Assert.Equal("30999111", persona!.Dni);
     }
 
-    // bug reportado 2026-09-23: UpdateSocialRecordDto no tenía Contact, así que editar el
-    // contacto de referencia se perdía en silencio
+    // la edición de la ficha también guarda el contacto de referencia
     [Fact]
     public async Task UpdateAsync_ConContactoNuevo_LoCrea()
     {
@@ -440,8 +438,7 @@ await service.CreateAsync(new CreateSocialRecordDto("Ana", null, null, null, nul
         Assert.Empty(await db.Contacts.Where(c => c.SocialRecordId == creada.SocialRecordId).ToListAsync());
     }
 
-    // bug reportado 2026-09-23: UpdateAsync (edición genérica de ficha) cambiaba
-    // PersonType sin la misma validación/side-effects que UpdatePersonTypeAsync
+    // la edición de la ficha aplica las mismas reglas de cambio de tipo que UpdatePersonTypeAsync
     [Fact]
     public async Task UpdateAsync_AResidenteSinEvaluacion_DevuelveMissingPsychiatricEvaluation()
     {

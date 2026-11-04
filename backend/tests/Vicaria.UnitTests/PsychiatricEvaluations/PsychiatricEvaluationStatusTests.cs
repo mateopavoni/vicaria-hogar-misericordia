@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -42,7 +43,7 @@ public class PsychiatricEvaluationStatusTests
         using var context = CreateInMemoryDbContext();
         var service = new PsychiatricEvaluationService(context);
 
-        var today = PsychiatricEvaluationService.GetCordobaToday();
+        var today = CordobaClock.Today;
         var targetExpiration = today.AddDays(15);
         var evaluationDate = targetExpiration.AddMonths(-6);
 
@@ -78,7 +79,7 @@ public class PsychiatricEvaluationStatusTests
         using var context = CreateInMemoryDbContext();
         var service = new PsychiatricEvaluationService(context);
 
-        var today = PsychiatricEvaluationService.GetCordobaToday();
+        var today = CordobaClock.Today;
         var person = new Person { Id = Guid.NewGuid(), FirstName = "Pedro" };
         var evaluation = new PsychiatricEvaluation
         {
@@ -115,7 +116,7 @@ public class PsychiatricEvaluationStatusTests
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = DateTime.UtcNow.Date,
+            Date = CordobaClock.Today,
             IsValid = true,
             RegisteredByUserId = actor.Id
         };
@@ -124,7 +125,7 @@ public class PsychiatricEvaluationStatusTests
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = DateTime.UtcNow.Date.AddMonths(-8),
+            Date = CordobaClock.Today.AddMonths(-8),
             IsValid = false,
             RegisteredByUserId = actor.Id
         };
@@ -133,7 +134,7 @@ public class PsychiatricEvaluationStatusTests
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = DateTime.UtcNow.Date.AddMonths(-14),
+            Date = CordobaClock.Today.AddMonths(-14),
             IsValid = false,
             RegisteredByUserId = actor.Id
         };

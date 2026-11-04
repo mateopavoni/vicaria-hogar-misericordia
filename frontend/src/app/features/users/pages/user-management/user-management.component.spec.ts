@@ -5,11 +5,7 @@ import { provideRouter } from '@angular/router';
 
 import { UserManagementComponent } from './user-management.component';
 
-// bug reportado 2026-09-23 (limpieza de test-infra): ngOnInit dispara HTTP reales
-// (usuarios activos/inactivos) que, sin HttpClientTesting, intentaban resolver una URL
-// relativa contra el entorno de fetch de Vitest/jsdom y fallaban con una excepción no
-// controlada después de terminado el test ("should create" igual pasaba, pero quedaba
-// ruido de "Unhandled Errors"). Se intercepta con HttpTestingController.
+// ngOnInit pide los usuarios por HTTP, así que se intercepta con HttpTestingController
 describe('UserManagementComponent', () => {
   let component: UserManagementComponent;
   let fixture: ComponentFixture<UserManagementComponent>;

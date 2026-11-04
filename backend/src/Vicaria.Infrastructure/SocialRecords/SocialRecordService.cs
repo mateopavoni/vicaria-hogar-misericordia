@@ -132,7 +132,7 @@ public class SocialRecordService : ISocialRecordService
         return filtered.Select(r => new SocialRecordSearchResultDto(r.Id, r.PersonId, $"{r.Person!.FirstName} {r.Person.LastName}".Trim(), r.Person.Dni, r.UpdatedAt)).ToList();
     }
 
-    // perfil completo de una ficha, para la pantalla de detalle (SCRUM-8/121)
+    // perfil completo de una ficha, para la pantalla de detalle
     public async Task<SocialRecordDetailDto?> GetByIdAsync(Guid socialRecordId, CancellationToken cancellationToken = default)
     {
         var record = await _dbContext.SocialRecords
@@ -162,9 +162,8 @@ public class SocialRecordService : ISocialRecordService
                 Math.Max(0, (int)((s.ExitDate ?? now) - s.EntryDate).TotalDays)))
             .ToListAsync(cancellationToken);
 
-        // historial de cambios de tipo de persona (bug reportado 2026-09-23: nunca existió
-        // este campo). Se materializa primero y se mapea en memoria (en vez de armar el
-        // string dentro del Select) para no asumir que ChangedByUser siempre resuelve.
+        // historial de cambios de tipo de persona; se mapea en memoria porque
+        // ChangedByUser puede venir null
         var personTypeChanges = await _dbContext.PersonTypeChanges
             .AsNoTracking()
             .Include(c => c.ChangedByUser)
@@ -181,7 +180,7 @@ public class SocialRecordService : ISocialRecordService
                 c.ChangedAt))
             .ToList();
 
-        // historial de estados (SCRUM-264): pases automáticos del job y cambios manuales con motivo
+        // historial de estados: pases automáticos del job y cambios manuales con motivo
         var statusChanges = await _dbContext.PersonStatusChanges
             .AsNoTracking()
             .Include(c => c.ChangedByUser)
@@ -229,7 +228,7 @@ public class SocialRecordService : ISocialRecordService
                 record.AttendanceReasonId));
     }
 
-    // campos del informe de Cáritas sin valor en la ficha (SCRUM-273), en el orden del formulario
+    // campos del informe de Cáritas sin valor en la ficha, en el orden del formulario
     public async Task<IReadOnlyList<PendingReportFieldDto>?> GetPendingReportFieldsAsync(Guid personId, CancellationToken cancellationToken = default)
     {
         var record = await _dbContext.SocialRecords
@@ -255,7 +254,7 @@ public class SocialRecordService : ISocialRecordService
             .ToList();
     }
 
-    // campos del informe de Cáritas (SCRUM-270/275): cada valor tiene que existir en el catálogo
+    // campos del informe de Cáritas: cada valor tiene que existir en el catálogo
     // y ser de la categoría del campo; uno desactivado solo se acepta si la ficha ya lo tenía
     public async Task<UpdateReportFieldsResult> UpdateReportFieldsAsync(Guid socialRecordId, SocialRecordReportFieldsDto dto, Guid actorId, CancellationToken cancellationToken = default)
     {
@@ -363,8 +362,6 @@ public class SocialRecordService : ISocialRecordService
 
         // el tipo de persona puede afectar la estadía en la Casa de Convivencia y queda
         // auditado en el historial; se valida/aplica antes de tocar el resto de los campos
-        // (bug reportado 2026-09-23: este endpoint cambiaba PersonType sin la misma lógica
-        // que UpdatePersonTypeAsync, permitiendo desincronizar el estado de la estadía)
         if (dto.PersonType.HasValue)
         {
             var outcome = await ChangePersonTypeAsync(socialRecord, dto.PersonType.Value, actorId, cancellationToken);
@@ -392,8 +389,7 @@ public class SocialRecordService : ISocialRecordService
         socialRecord.GeneralNotes = dto.GeneralNotes?.Trim();
         socialRecord.UpdatedAt = DateTime.UtcNow;
 
-        // bug reportado 2026-09-23: UpdateSocialRecordDto no tenía Contact, así que
-        // editar el contacto de referencia se perdía en silencio
+        // crea, actualiza o borra el contacto de referencia
         await UpsertContactAsync(socialRecordId, dto.Contact, cancellationToken);
 
         _dbContext.AuditLogs.Add(new AuditLog
@@ -416,7 +412,7 @@ public class SocialRecordService : ISocialRecordService
         return await query.CountAsync(cancellationToken);
     }
 
-    // listado paginado con busqueda de texto y filtros combinables (SCRUM-21/127)
+    // listado paginado con busqueda de texto y filtros combinables
     public async Task<PagedResult<SocialRecordListItemDto>> GetPagedAsync(int page, string? search, FilterSocialRecordsDto? filter, PersonType? personTypeFilter = null, CancellationToken cancellationToken = default)
     {
         const int pageSize = 10;
@@ -637,12 +633,9 @@ public class SocialRecordService : ISocialRecordService
         ActiveStayMustBeExitedFirst
     }
 
-    // lógica única de cambio de PersonType, compartida por los 3 endpoints que pueden
-    // tocarlo (UpdatePersonTypeAsync, UpdateAsync de ficha, UpdatePersonProfileStatusAsync).
-    // Bug reportado 2026-09-23: antes solo UpdatePersonTypeAsync validaba la evaluación
-    // psiquiátrica y manejaba la estadía; los otros dos caminos podían desincronizar el
-    // tipo de persona con la estadía real de la Casa de Convivencia. No hace SaveChanges:
-    // el caller decide cuándo persistir junto con el resto de sus cambios.
+    // cambio de PersonType compartido por los 3 endpoints que pueden tocarlo: valida la
+    // evaluación psiquiátrica y mantiene la estadía en la Casa de Convivencia al día.
+    // No hace SaveChanges: lo hace quien lo llama junto con el resto de sus cambios.
     private async Task<PersonTypeChangeOutcome> ChangePersonTypeAsync(SocialRecord socialRecord, PersonType newType, Guid actorId, CancellationToken cancellationToken)
     {
         if (socialRecord.PersonType == newType)
@@ -654,9 +647,9 @@ public class SocialRecordService : ISocialRecordService
 
         if (newType == PersonType.Resident)
         {
-            // SCRUM-134 / SCRUM-66: pasar a Residente exige una evaluación psiquiátrica vigente
+            // Pasar a Residente exige una evaluación psiquiátrica vigente
             // (IsValid y no vencida: menos de 6 meses en fecha de Córdoba, igual que medicación)
-            var minValidEvaluationDate = PsychiatricEvaluations.PsychiatricEvaluationService.GetCordobaToday().AddMonths(-6);
+            var minValidEvaluationDate = CordobaClock.Today.AddMonths(-6);
             var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
                 .AnyAsync(e =>
                     e.PersonId == socialRecord.PersonId &&
@@ -704,7 +697,7 @@ public class SocialRecordService : ISocialRecordService
             Date = DateTime.UtcNow
         });
 
-        // SCRUM-141: al pasar a Residente se registra automáticamente una estadía en
+        // Al pasar a Residente se registra automáticamente una estadía en
         // la casa de convivencia con EntryDate = hoy (solo en la transición, no al re-setear el tipo)
         if (newType == PersonType.Resident && !wasResident)
         {
@@ -785,8 +778,7 @@ public class SocialRecordService : ISocialRecordService
         return new string(withoutAccents.ToArray()).ToLowerInvariant();
     }
 
-    // deja solo los dígitos del DNI (bug reportado 2026-09-23: "38.123.456" guardado y
-    // "38123456" buscado no matcheaban porque la comparación era literal)
+    // deja solo los dígitos del DNI, así "38.123.456" y "38123456" son el mismo valor
     private static string DigitsOnly(string value) => new(value.Where(char.IsDigit).ToArray());
 
     private static string? NormalizeDni(string? dni)

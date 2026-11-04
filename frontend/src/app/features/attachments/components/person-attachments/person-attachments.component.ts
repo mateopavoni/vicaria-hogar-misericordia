@@ -3,21 +3,21 @@ import { DatePipe } from '@angular/common';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { extractApiError } from '../../../../core/http/api-error';
-import { UiButtonComponent, UiConfirmDialogComponent } from '../../../../shared/ui';
+import { UiConfirmDialogComponent } from '../../../../shared/ui';
 import { PersonAttachment } from '../../interfaces/attachment.interface';
 import { PersonAttachmentsService } from '../../services/person-attachments.service';
 import { formatFileSize, validateAttachment } from '../../utils/attachment-validation.util';
 import { AttachmentViewerModalComponent } from '../attachment-viewer-modal/attachment-viewer-modal.component';
 
 /**
- * SCRUM-256: sección "Documentos" del perfil de la persona (SMART). Carga múltiple de imágenes
+ * Sección "Documentos" del perfil de la persona. Carga múltiple de imágenes
  * (JPG, PNG) y PDF de hasta 10 MB cada uno; listado con ícono por tipo, nombre, fecha y usuario;
  * visor para imágenes, descarga de PDF y eliminación con confirmación.
  * Ver: adjuntos.view; subir: adjuntos.create; eliminar: adjuntos.delete (solo Referente).
  */
 @Component({
   selector: 'app-person-attachments',
-  imports: [DatePipe, UiButtonComponent, UiConfirmDialogComponent, AttachmentViewerModalComponent],
+  imports: [DatePipe, UiConfirmDialogComponent, AttachmentViewerModalComponent],
   templateUrl: './person-attachments.component.html',
 })
 export class PersonAttachmentsComponent implements OnInit {

@@ -4,7 +4,7 @@ import { Observable, forkJoin, map, switchMap, throwError } from 'rxjs';
 import { todayLocalIso } from '../../../shared/utils/date.util';
 import { EvaluationActor, PsychiatricEvaluation, RegisterEvaluationRequest } from '../interfaces/psychiatric-evaluation.interface';
 
-/** PsychiatricEvaluationStatusDto del backend (SCRUM-259). */
+/** PsychiatricEvaluationStatusDto del backend. */
 interface StatusDto {
   hasEvaluation: boolean;
   evaluationId: string | null;
@@ -13,7 +13,7 @@ interface StatusDto {
   diagnosis: string | null;
 }
 
-/** PsychiatricEvaluationHistoryItemDto del backend (SCRUM-259). */
+/** PsychiatricEvaluationHistoryItemDto del backend. */
 interface HistoryItemDto {
   id: string;
   personId: string;
@@ -25,7 +25,7 @@ interface HistoryItemDto {
 }
 
 /**
- * SCRUM-260: evaluaciones psiquiátricas contra la API (SCRUM-258/259).
+ * Evaluaciones psiquiátricas contra la API.
  * `load` trae la vigente (GET .../psychiatric-evaluations/status) y las anteriores
  * (GET .../history) y deja todo en `evaluations`; `register` hace el POST y recarga. El backend
  * pone vigente = false en las anteriores y actualiza tiene_eval_psiq de la ficha.

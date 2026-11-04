@@ -2,7 +2,7 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Application.SocialRecords;
 
-// perfil completo de una ficha, para la pantalla de detalle (SCRUM-8/121)
+// perfil completo de una ficha, para la pantalla de detalle
 public record SocialRecordDetailDto(
     Guid Id,
     Guid PersonId,
@@ -27,8 +27,7 @@ public record SocialRecordDetailDto(
     IReadOnlyList<StatusHistoryItemDto> StatusHistory,
     SocialRecordReportFieldsDto ReportFields);
 
-// item de historial de cambio de tipo de persona, con la misma forma que espera
-// el ChangeHistoryItem del frontend (bug reportado 2026-09-23: nunca existió este campo)
+// item del historial de cambios de tipo de persona
 public record PersonTypeHistoryItemDto(
     Guid Id,
     string? PreviousValue,
@@ -36,7 +35,7 @@ public record PersonTypeHistoryItemDto(
     string ModifiedBy,
     DateTime ModifiedAt);
 
-// item del historial de estados (SCRUM-262/263), con la forma del ChangeHistoryItem del
+// item del historial de estados, con la forma del ChangeHistoryItem del
 // frontend; ModifiedBy es "Sistema" en los pases automáticos del job
 public record StatusHistoryItemDto(
     Guid Id,

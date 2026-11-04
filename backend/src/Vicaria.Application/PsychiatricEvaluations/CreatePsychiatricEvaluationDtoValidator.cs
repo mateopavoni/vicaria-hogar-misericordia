@@ -12,7 +12,7 @@ public class CreatePsychiatricEvaluationDtoValidator : AbstractValidator<CreateP
             .WithMessage("La fecha de la evaluación es obligatoria.")
             // "hoy" es el de Córdoba (UTC-3, sin horario de verano): entre las 21 y las 24 h la
             // fecha UTC ya es la del día siguiente
-            .Must(date => date.Date <= DateTime.UtcNow.AddHours(-3).Date)
+            .Must(date => date.Date <= CordobaClock.Today)
             .WithMessage("La fecha de la evaluación no puede ser futura.");
 
         RuleFor(x => x.Professional)

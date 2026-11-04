@@ -9,6 +9,9 @@ import { execFileSync } from 'child_process';
 import fs from 'fs';
 
 const BASE = process.env.BASE || 'http://localhost:4200';
+// nombres de los contenedores de docker compose (se pueden cambiar si el stack usa otros)
+const SQL_CONTAINER = process.env.SQL_CONTAINER || 'vicaria-sqlserver';
+const API_CONTAINER = process.env.API_CONTAINER || 'vicaria-api';
 const SHOTS = process.env.SHOTS || './shots-s5ui';
 const OUT = process.env.OUT || './sprint5-ui-results.json';
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -29,7 +32,7 @@ const login = async e => (await call('POST', '/api/auth/login', { body: { email:
 const tokens = async () => ({ ref: await login('referente@test.com'), dir: await login('directora@test.com'), esc: await login('escucha@test.com'), coo: await login('coordinador@test.com') });
 let T = await tokens();
 
-const sql = q => execFileSync('docker', ['exec', 'vicaria-sqlserver', 'bash', '-c',
+const sql = q => execFileSync('docker', ['exec', SQL_CONTAINER, 'bash', '-c',
   `/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -d VicariaDb -h -1 -W -Q "SET NOCOUNT ON; ${q.replace(/"/g, '\\"')}"`],
   { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).trim();
 
@@ -366,7 +369,7 @@ await att(J31.personId, iso(ar(-31))); await att(J29.personId, iso(ar(-29)));
 // fichas dadas de alta hace 40 días: una ficha nueva tiene 30 días de gracia antes del pase automático
 sql(`UPDATE social_records SET CreatedAt = DATEADD(day, -40, GETUTCDATE()) WHERE Id IN ('${J31.recordId}', '${J29.recordId}')`);
 // los jobs diarios corren al arrancar la API
-execFileSync('docker', ['restart', 'vicaria-api'], { encoding: 'utf8' });
+execFileSync('docker', ['restart', API_CONTAINER], { encoding: 'utf8' });
 for (let i = 0; i < 60; i++) { try { if ((await fetch(BASE + '/api/caritas-catalogs')).status === 401) break; } catch { /* arrancando */ } await sleep(1000); }
 await sleep(3000); T = await tokens();
 await tc(238, 'Pasa a Inactivo a los 30 días sin asistencia', P.ref, async () => {
@@ -455,7 +458,7 @@ await tc(246, 'El sistema genera el respaldo diario', P.ref, async () => {
 const realBackup = succeeded.find(b => !b.externalKey.startsWith('qa-'));
 await tc(247, 'El respaldo se guarda fuera de la base', null, async () => {
   if (!realBackup) throw new Blocked('no hay respaldos exitosos para revisar el almacenamiento (ver TC-246)');
-  const head = execFileSync('docker', ['exec', 'vicaria-api', 'sh', '-c', `head -c 4 /app/uploads/backups/${realBackup.externalKey}; echo; stat -c %s /app/uploads/backups/${realBackup.externalKey}`], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).split('\n');
+  const head = execFileSync('docker', ['exec', API_CONTAINER, 'sh', '-c', `head -c 4 /app/uploads/backups/${realBackup.externalKey}; echo; stat -c %s /app/uploads/backups/${realBackup.externalKey}`], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } }).split('\n');
   must(/^(TAPE|MSSQ)/.test(head[0]), `el archivo guardado no es un .bak de SQL Server (${head[0]})`);
   must(Number(head[1]) === realBackup.sizeBytes, 'el tamaño del archivo no coincide con el registrado');
   return `archivo ${realBackup.externalKey} de ${realBackup.sizeBytes} bytes en el almacenamiento de respaldos`;
@@ -463,7 +466,7 @@ await tc(247, 'El respaldo se guarda fuera de la base', null, async () => {
 await tc(248, 'Se conservan los últimos 30 respaldos', null, async () => {
   const seeded = Number(sql(`SELECT COUNT(*) FROM backups WHERE ExternalKey LIKE 'qa-ret-%'`));
   if (!realBackup || !seeded) throw new Blocked('hace falta un respaldo exitoso del proceso diario con 30 respaldos anteriores sembrados');
-  const files = execFileSync('docker', ['exec', 'vicaria-api', 'sh', '-c', 'ls /app/uploads/backups'], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+  const files = execFileSync('docker', ['exec', API_CONTAINER, 'sh', '-c', 'ls /app/uploads/backups'], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
   // el listado pagina de a 30 y mezcla los fallidos: se cuenta en la base
   const kept = Number(sql('SELECT COUNT(*) FROM backups WHERE Status = 2'));
   must(kept === 30, `quedan ${kept} respaldos exitosos`);
@@ -475,7 +478,7 @@ await tc(249, 'Descargar un respaldo desde el panel', P.ref, async () => {
   // respaldo exitoso de prueba: fila y archivo en el almacenamiento local de la API
   const id = '00000000-0000-4000-9000-' + Date.now().toString().slice(-12);
   const key = `qa-${TAG}.bak`;
-  execFileSync('docker', ['exec', 'vicaria-api', 'sh', '-c', `mkdir -p /app/uploads/backups && printf 'respaldo QA' > /app/uploads/backups/${key}`], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+  execFileSync('docker', ['exec', API_CONTAINER, 'sh', '-c', `mkdir -p /app/uploads/backups && printf 'respaldo QA' > /app/uploads/backups/${key}`], { encoding: 'utf8', env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
   sql(`INSERT INTO backups (Id, Status, CreatedAt, SizeBytes, ExternalKey, ErrorMessage) VALUES ('${id}', 2, SYSUTCDATETIME(), 11, '${key}', NULL)`);
   try {
     await go(P.ref, '/dashboard/configuracion/respaldos');
@@ -490,7 +493,7 @@ await tc(249, 'Descargar un respaldo desde el panel', P.ref, async () => {
     return `${dl.suggestedFilename()}; los fallidos no se descargan (409)`;
   } finally {
     sql(`DELETE FROM backups WHERE Id='${id}'`);
-    execFileSync('docker', ['exec', 'vicaria-api', 'rm', '-f', `/app/uploads/backups/${key}`], { env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
+    execFileSync('docker', ['exec', API_CONTAINER, 'rm', '-f', `/app/uploads/backups/${key}`], { env: { ...process.env, MSYS_NO_PATHCONV: '1' } });
   }
 });
 await tc(250, 'Si el respaldo falla se avisa al administrador', P.ref, async () => {
@@ -506,7 +509,7 @@ await tc(250, 'Si el respaldo falla se avisa al administrador', P.ref, async () 
   }
   const n = (await call('GET', '/api/notifications', { token: T.ref })).json ?? [];
   must(n.some(x => /respaldo/i.test(x.description)), 'no llegó la notificación interna de la falla');
-  const env = execFileSync('docker', ['exec', 'vicaria-api', 'printenv'], { encoding: 'utf8' });
+  const env = execFileSync('docker', ['exec', API_CONTAINER, 'printenv'], { encoding: 'utf8' });
   const mail = /Smtp__|Backup__Smtp/i.test(env) ? 'email enviado al administrador' : 'el email depende de la configuración SMTP y de destinatarios, que el stack local no tiene';
   return `banner, notificación y ${mail}`;
 });

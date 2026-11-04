@@ -264,7 +264,7 @@ public class AuthService : IAuthService
                     Date = DateTime.UtcNow
                 });
 
-                // avisamos a los referentes que esta cuenta quedó bloqueada (SCRUM-95)
+                // avisamos a los referentes que esta cuenta quedó bloqueada
                 var hasReferents = await _dbContext.Users.AnyAsync(u => u.Role != null && u.Role.Name == RoleNames.Referent, cancellationToken);
                 if (hasReferents)
                 {

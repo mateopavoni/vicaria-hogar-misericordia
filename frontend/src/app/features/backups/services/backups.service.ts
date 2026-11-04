@@ -7,7 +7,7 @@ import { BACKUP_RETENTION, sortBackups } from '../utils/backup-banner.util';
 /** BackupStatus del backend (serializado como número). */
 const STATUS: Record<number, BackupStatus> = { 1: 'InProgress', 2: 'Completed', 3: 'Failed' };
 
-/** BackupDto del backend (SCRUM-266). */
+/** BackupDto del backend. */
 interface BackupDto {
   id: string;
   status: number;
@@ -17,7 +17,7 @@ interface BackupDto {
 }
 
 /**
- * SCRUM-267: respaldos de la base de datos contra la API (SCRUM-266): listado de los últimos
+ * Respaldos de la base de datos contra la API: listado de los últimos
  * (GET /api/admin/backups, una página con los que se conservan) y descarga del archivo.
  */
 @Injectable({ providedIn: 'root' })

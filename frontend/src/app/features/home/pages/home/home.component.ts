@@ -11,7 +11,7 @@ import { LowStockCardComponent } from '../../components/low-stock-card/low-stock
 /**
  * Pantalla de inicio (/dashboard). Hasta ahora no existía: el login redirigía acá y el
  * outlet quedaba vacío. Cada rol ve solo los widgets de lo que tiene permiso: observación rápida, asistencia, calendario,
- * visitas de la Casa de Convivencia y stock bajo; el panel de estadísticas (SCRUM-226) es del Referente.
+ * visitas de la Casa de Convivencia y stock bajo; el panel de estadísticas es del Referente.
  */
 @Component({
   selector: 'app-home',

@@ -4,8 +4,8 @@ import { DatePipe } from '@angular/common';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalComponent } from '../../../../shared/ui';
 
 /**
- * SCRUM-218 (AC de SCRUM-54): la asistencia de un día ya cerrado solo la modifica un
- * Referente, y con justificación obligatoria. Modal chico (DUMB): pide el texto y lo emite.
+ * La asistencia de un día ya cerrado solo la modifica un
+ * Referente, y con justificación obligatoria. Este modal pide el texto y lo emite.
  */
 @Component({
   selector: 'app-attendance-justification-modal',

@@ -4,7 +4,7 @@ import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { AttachmentActor, AttachmentKind, PersonAttachment } from '../interfaces/attachment.interface';
 import { validateAttachment } from '../utils/attachment-validation.util';
 
-/** PersonAttachmentDto del backend (SCRUM-255). */
+/** PersonAttachmentDto del backend. */
 interface AttachmentDto {
   id: string;
   personId: string;
@@ -18,7 +18,7 @@ interface AttachmentDto {
 }
 
 /**
- * SCRUM-256: adjuntos de la ficha de una persona contra la API (SCRUM-255):
+ * Adjuntos de la ficha de una persona contra la API:
  * POST multipart, GET del listado, GET del archivo y DELETE (solo Referente).
  * El archivo se pide con HttpClient (lleva el token) y se expone como URL blob: en `url`,
  * así el visor y la descarga funcionan sin exponer el token en un <img src>.

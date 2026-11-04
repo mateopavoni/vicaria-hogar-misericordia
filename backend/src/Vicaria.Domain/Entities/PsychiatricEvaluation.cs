@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// evaluación psiquiátrica de una persona (SCRUM-134/EP-12): una persona puede
+// evaluación psiquiátrica de una persona: una persona puede
 // tener varias evaluaciones, registradas por distintos usuarios. Para que una
 // persona pueda ser Residente debe existir una evaluación vigente (IsValid).
 public class PsychiatricEvaluation

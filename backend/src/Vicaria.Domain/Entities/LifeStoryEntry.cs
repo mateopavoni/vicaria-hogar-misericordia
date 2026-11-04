@@ -1,8 +1,7 @@
 namespace Vicaria.Domain.Entities;
 
-// bitácora append-only de la historia de vida (bug reportado 2026-09-23: guardar una etapa
-// pisaba el contenido anterior en vez de sumar una entrada nueva). Cada guardado de una etapa
-// crea una fila nueva acá; LifeStory sigue existiendo como caché de "última entrada por etapa".
+// historial de la historia de vida: cada guardado de una etapa crea una fila nueva.
+// LifeStory guarda solo la última entrada de cada etapa.
 public class LifeStoryEntry
 {
     public Guid Id { get; set; } = Guid.NewGuid();

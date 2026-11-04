@@ -4,9 +4,9 @@ using Vicaria.Application.Attendances;
 
 namespace Vicaria.Infrastructure.Attendances;
 
-// genera el PDF del resumen mensual de asistencia (SCRUM-225) con PdfSharp;
+// genera el PDF del resumen mensual de asistencia con PdfSharp;
 // el contenido es el mismo MonthlyAttendanceSummaryDto que calcula
-// AttendanceStatisticsService (y que SCRUM-224 reutiliza)
+// AttendanceStatisticsService
 public class AttendanceSummaryPdfGenerator : IAttendanceSummaryPdfGenerator
 {
     private const double Margin = 50;
@@ -90,7 +90,7 @@ public class AttendanceSummaryPdfGenerator : IAttendanceSummaryPdfGenerator
         }
 
         graphics.DrawString(text, font, XBrushes.Black,
-            new XRect(XUnit.FromPoint(Margin), XUnit.FromPoint(y), XUnit.FromPoint(page.Width.Point - Margin * 2), XUnit.FromPoint(LineHeight)),
+            new XRect(Margin, y, page.Width.Point - Margin * 2, LineHeight),
             XStringFormats.TopLeft);
         return y + LineHeight;
     }

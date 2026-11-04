@@ -58,7 +58,7 @@ public class LifeStoryService : ILifeStoryService
             _dbContext.LifeStories.Add(entity);
         }
 
-        // Auditoría automática por etapa (SCRUM-172) — este endpoint (PUT masivo de las 3
+        // Auditoría automática por etapa — este endpoint (PUT masivo de las 3
         // etapas) también suma una entrada nueva al historial de cada etapa que cambió,
         // igual que UpdateStageAsync, para no dejar un camino que siga pisando contenido.
         if (dto.BeforeCentroBarrial is not null && dto.BeforeCentroBarrial != entity.BeforeCentroBarrial)
@@ -90,10 +90,8 @@ public class LifeStoryService : ILifeStoryService
         return MapToDto(entity, entriesByStage);
     }
 
-    // guarda una nueva entrada de una etapa (bug reportado 2026-09-23: antes pisaba el
-    // contenido anterior en vez de crear una entrada nueva). LifeStory sigue actualizándose
-    // como caché de "última entrada" para no romper a nadie que solo lea el valor actual;
-    // la fuente de verdad del historial completo es LifeStoryEntry (append-only).
+    // guarda una entrada nueva en la etapa; LifeStory queda con la última entrada
+    // y el historial completo está en LifeStoryEntry
     public async Task<LifeStoryResponseDto?> UpdateStageAsync(Guid personId, LifeStoryStage stage, string content, Guid actorUserId, CancellationToken cancellationToken = default)
     {
         var personExists = await _dbContext.People.AnyAsync(p => p.Id == personId, cancellationToken);
@@ -186,7 +184,7 @@ public class LifeStoryService : ILifeStoryService
         return result;
     }
 
-    // actualiza una etapa y su auditoría solo si el contenido cambió (consistente con SCRUM-172)
+    // actualiza una etapa y su auditoría solo si el contenido cambió
     private static void ApplyStageContent(LifeStory entity, LifeStoryStage stage, string content, Guid actorUserId, DateTime now)
     {
         var trimmed = content.Trim();

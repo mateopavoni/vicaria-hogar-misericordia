@@ -11,7 +11,7 @@ import {
 import { ReportFieldCatalogService } from '../../services/report-field-catalog.service';
 
 /**
- * SCRUM-275: configuración de los valores de los campos del informe de Cáritas
+ * Configuración de los valores de los campos del informe de Cáritas
  * (/dashboard/configuracion/campos-informe). Solo Referente (permiso informes.config).
  * Agregar, editar y desactivar valores; los desactivados dejan de ofrecerse pero las fichas
  * que ya los tienen los conservan.

@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { MedicationStockItem, StockMovement, StockMovementType } from '../../interfaces/medication-stock.interface';
 
-/** SCRUM-246: historial de movimientos de un medicamento — ingresos, consumos y fechas (DUMB). */
+/** Historial de movimientos de un medicamento — ingresos, consumos y fechas. */
 @Component({
   selector: 'app-stock-movements-modal',
   imports: [DatePipe, UiModalComponent, UiButtonComponent],

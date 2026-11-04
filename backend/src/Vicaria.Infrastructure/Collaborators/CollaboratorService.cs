@@ -134,7 +134,7 @@ public class CollaboratorService : ICollaboratorService
         return UpdateCollaboratorResult.Ok();
     }
 
-    // búsqueda por nombre, apellido o área, con filtro opcional por tipo (SCRUM-204).
+    // búsqueda por nombre, apellido o área, con filtro opcional por tipo.
     // mismo patrón que SocialRecordService.SearchAsync: en SQL Server la insensibilidad a
     // tildes/mayúsculas la dan la collation Modern_Spanish_CI_AI de las columnas + ToUpper(),
     // y en InMemory (tests unitarios) se normaliza a mano porque no existe ni collation ni

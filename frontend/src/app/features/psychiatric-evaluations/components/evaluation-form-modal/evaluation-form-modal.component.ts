@@ -4,7 +4,7 @@ import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalCompo
 import { todayLocalIso } from '../../../../shared/utils/date.util';
 import { RegisterEvaluationRequest } from '../../interfaces/psychiatric-evaluation.interface';
 
-/** SCRUM-260: formulario de carga de una evaluación psiquiátrica (DUMB). */
+/** Formulario de carga de una evaluación psiquiátrica. */
 @Component({
   selector: 'app-evaluation-form-modal',
   imports: [ReactiveFormsModule, UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],

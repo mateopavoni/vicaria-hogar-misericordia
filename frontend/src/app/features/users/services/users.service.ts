@@ -11,10 +11,7 @@ export interface UsersResponse {
   totalPages: number;
 }
 
-// id fijo de cada rol en la base (seed determinístico, ver RolConfiguration en el backend)
-// bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia (id real sembrado en
-// la migración AddCoordinadorRolePermissions) — sin esta entrada, aprobar o reasignar
-// a ese rol desde la UI mandaba roleId undefined.
+// id fijo de cada rol en la base (los siembra RoleConfiguration en el backend)
 const ROLE_IDS: Record<UserRole, string> = {
   Referente: '11111111-1111-1111-1111-111111111111',
   DirectoraDeCasaConvivencia: '22222222-2222-2222-2222-222222222222',

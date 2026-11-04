@@ -11,10 +11,10 @@ public record MedicationStockAlertDto(
         new(PendingStockCode, PendingStockMessage);
 }
 
-// forma de respuesta del esquema creado (SCRUM-232 / SCRUM-233): el front (SCRUM-234) usa
+// forma de respuesta del esquema creado: el front usa
 // el objeto devuelto directamente, por eso viaja completo y no solo el id.
 // Time en HH:mm y LoadedAt en ISO, igual que MedicationScheme del front.
-// ReviewedAt/ReviewedBy* son la última revisión mensual (SCRUM-249), null si nunca se revisó.
+// ReviewedAt/ReviewedBy* son la última revisión mensual, null si nunca se revisó.
 public record MedicationSchemeDto(
     Guid Id,
     Guid PersonId,

@@ -31,7 +31,7 @@ public class CasaConvivenciaStayService : ICasaConvivenciaStayService
 
         var now = DateTime.UtcNow;
 
-        // SCRUM-146: fecha/hora de egreso automática, server-side (UTC)
+        // Fecha/hora de egreso automática, server-side (UTC)
         stay.ExitDate = now;
         stay.ExitReason = dto.ExitReason;
         stay.Reason = dto.Reason?.Trim();

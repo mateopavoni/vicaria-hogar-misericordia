@@ -2,7 +2,7 @@ import { HELVETICA_BOLD_WIDTHS, HELVETICA_WIDTHS } from './helvetica-widths';
 import { RecordExportDocument } from './record-export.util';
 
 /**
- * SCRUM-253: generador de PDF de texto, sin dependencias (el proyecto no trae ninguna librería
+ * Generador de PDF de texto, sin dependencias (el proyecto no trae ninguna librería
  * de PDF). Usa las fuentes estándar Helvetica / Helvetica-Bold con codificación WinAnsi, que
  * cubre el español (tildes, ñ, ¿, ¡). Soporta corte de líneas y varias páginas.
  */
