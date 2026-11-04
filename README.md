@@ -214,6 +214,7 @@ Todos los endpoints, con sus parámetros y respuestas, se pueden probar desde Sw
 | [`PROJECT.md`](./PROJECT.md) | Contexto de negocio, objetivos, alcance y roles |
 | [`AGENTS.md`](./AGENTS.md) | Convenciones de código, patrones por capa y reglas de trabajo |
 | [`docs/MANUAL_TECNICO.md`](./docs/MANUAL_TECNICO.md) | Manual técnico: instalación desde cero y configuración por entorno, integraciones y seguridad |
+| [`docs/GUIA_USUARIO.md`](./docs/GUIA_USUARIO.md) | Guía de usuario final: acceso, navegación, funciones principales con capturas y ejemplos de uso por rol |
 | [`deploy-local.md`](./deploy-local.md) | Guía para levantar el sistema en local |
 | [`.ai/context/`](./.ai/context/00_INDEX.md) | Estado verificado contra el código, decisiones y deuda conocida |
 | [`docs/demo/`](./docs/demo/) | Carga de datos de demostración |
