@@ -1,9 +1,8 @@
 namespace Vicaria.Domain.Entities;
 
-// historial de cambios de estado de la ficha (SCRUM-262): cada transición
+// historial de cambios de estado de la ficha: cada transición
 // Active<->Inactive queda registrada con fecha, motivo y actor; ChangedByUserId
-// en null significa cambio automático del job (sin usuario). La crea esta
-// subtarea y la reutiliza el cambio manual (SCRUM-263).
+// en null significa cambio automático del job (sin usuario).
 public class PersonStatusChange
 {
     public Guid Id { get; set; } = Guid.NewGuid();

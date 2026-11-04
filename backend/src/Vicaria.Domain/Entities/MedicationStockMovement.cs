@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// registro de movimientos de inventario de medicamentos (SCRUM-244 / historia SCRUM-71):
+// movimiento del inventario de medicamentos:
 // ingresos con proveedor y vencimiento, y consumos automáticos o manuales.
 public class MedicationStockMovement
 {

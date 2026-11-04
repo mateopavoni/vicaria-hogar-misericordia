@@ -4,7 +4,7 @@ import { todayLocalIso } from '../../../../shared/utils/date.util';
 import { MedicationService } from '../../services/medication.service';
 
 /**
- * SCRUM-238: acceso directo a la agenda de medicamentos de hoy, visible en el inicio.
+ * Acceso directo a la agenda de medicamentos de hoy, visible en el inicio.
  * Muestra cuántas tomas quedan sin registrar. El que lo monta decide el permiso.
  */
 @Component({

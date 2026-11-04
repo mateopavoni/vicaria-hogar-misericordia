@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.MedicationAgendas;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.MedicationAgendas;
@@ -95,7 +96,7 @@ public class MedicationAgendaServiceTests
             Id = Guid.NewGuid(),
             PersonId = Guid.NewGuid(),
             MedicationId = Guid.NewGuid(),
-            Date = DateTime.UtcNow.Date,
+            Date = CordobaClock.Today,
             Time = new TimeSpan(8, 0, 0),
             Dose = "2mg",
             Status = MedicationIntakeStatus.Pending
@@ -171,7 +172,7 @@ public class MedicationAgendaServiceTests
             Id = Guid.NewGuid(),
             PersonId = Guid.NewGuid(),
             MedicationId = medication.Id,
-            Date = DateTime.UtcNow.Date,
+            Date = CordobaClock.Today,
             Time = new TimeSpan(8, 0, 0),
             Dose = "2mg",
             Status = MedicationIntakeStatus.Pending

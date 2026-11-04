@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Vicaria.IntegrationTests.Auth;
 
-// firma un JWT igual al que emitirá el login real (SCRUM-83), usando la misma
+// firma un JWT igual al que emitirá el login real, usando la misma
 // clave de test que VicariaWebApplicationFactory le da a la app
 public static class TestJwtFactory
 {

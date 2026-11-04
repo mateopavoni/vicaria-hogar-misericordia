@@ -1,7 +1,6 @@
 export type LifeHistoryStage = 'beforeHome' | 'duringHome' | 'afterHome';
 
-// una entrada histórica de la etapa (bug reportado 2026-09-23: guardar pisaba el
-// contenido anterior en vez de sumar una entrada nueva)
+// una entrada del historial de la etapa
 export interface LifeHistoryEntry {
   id: string;
   text: string;

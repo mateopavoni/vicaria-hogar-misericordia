@@ -94,7 +94,7 @@ public class ObservationCategoryService : IObservationCategoryService
         return CategoryOperationResult.Ok();
     }
 
-    // restringe el borrado fisico si la categoria ya tiene observaciones cargadas (SCRUM-177)
+    // restringe el borrado fisico si la categoria ya tiene observaciones cargadas
     public async Task<CategoryOperationResult> DeleteAsync(Guid id, Guid actorId, CancellationToken cancellationToken = default)
     {
         var category = await _dbContext.ObservationCategories.FindAsync([id], cancellationToken);

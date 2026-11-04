@@ -14,9 +14,6 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  // bug reportado 2026-09-23: este test seguía comprobando el <h1> de bienvenida del
-  // scaffold inicial de Angular CLI ("Hello, vicaria-prueba"); el template real de
-  // App ya es solo un <router-outlet/>, sin ningún <h1> — el test fallaba siempre.
   it('should render the router outlet', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();

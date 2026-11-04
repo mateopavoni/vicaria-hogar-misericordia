@@ -35,7 +35,7 @@ interface StockHistoryDto {
 }
 
 /**
- * SCRUM-246: inventario de medicamentos del Centro Barrial (separado del stock de ropa).
+ * Inventario de medicamentos del Centro Barrial (separado del stock de ropa).
  * Usa /api/stock-medicamentos (Referente y Directora).
  *
  * - El stock se descuenta en el backend al marcar una toma como administrada; el front ya no

@@ -19,7 +19,7 @@ const keyOf = (text: string): string => normalize(text).toLowerCase();
 const CATEGORY: Record<ReportFieldKey, number> = { gender: 0, housing: 1, origin: 2, document: 3, mainReason: 4 };
 const KEY_OF_CATEGORY: Record<number, ReportFieldKey> = { 0: 'gender', 1: 'housing', 2: 'origin', 3: 'document', 4: 'mainReason' };
 
-/** CaritasCatalogValueDto del backend (SCRUM-274). */
+/** CaritasCatalogValueDto del backend. */
 interface CatalogValueDto {
   id: string;
   category: number;
@@ -33,7 +33,7 @@ const emptyCatalogs = (): Record<ReportFieldKey, ReportFieldValue[]> =>
 const toValue = (dto: CatalogValueDto): ReportFieldValue => ({ id: dto.id, label: dto.name, active: dto.isActive });
 
 /**
- * SCRUM-275: catálogo de valores de los campos del informe de Cáritas contra la API (SCRUM-274):
+ * Catálogo de valores de los campos del informe de Cáritas contra la API:
  * GET/POST /api/caritas-catalogs, PUT /{id} y PATCH /{id}/status (alta, edición y baja lógica solo
  * Referente). Desactivar un valor lo saca de las opciones nuevas pero las fichas que ya lo tienen
  * lo conservan. `load` se pide una vez y queda en memoria; las acciones actualizan ese estado.

@@ -1,7 +1,7 @@
 namespace Vicaria.Domain.Entities;
 
-// registro mínimo de identidad; solo FirstName es obligatorio (ver SCRUM-5,
-// no se puede exigir documentación para registrar a alguien)
+// registro mínimo de identidad; solo FirstName es obligatorio porque no se puede
+// exigir documentación para registrar a alguien
 public class Person
 {
     public Guid Id { get; set; }

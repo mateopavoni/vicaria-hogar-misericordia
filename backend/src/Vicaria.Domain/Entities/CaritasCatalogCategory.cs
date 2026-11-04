@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// tipos de valores configurables del informe Caritas (SCRUM-70/SCRUM-274)
+// tipos de valores configurables del informe Caritas
 public enum CaritasCatalogCategory
 {
     Gender,

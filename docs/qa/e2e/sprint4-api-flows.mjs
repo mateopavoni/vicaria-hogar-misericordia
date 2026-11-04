@@ -14,9 +14,13 @@ const call = async (method, path, { token, body } = {}) => {
 const login = async e => (await call('POST', '/api/auth/login', { body: { email: e, password: PASS } })).json?.token;
 const T = { ref: await login('referente@test.com'), dir: await login('directora@test.com'), esc: await login('escucha@test.com'), coo: await login('coordinador@test.com') };
 
-// personas semilla (ids fijos del seed)
-const LUCIA = '33438A32-F4E6-4FBA-B868-07F6362B5BFD', CARLOS = '11A6D997-EE86-424F-87F3-B1A1EB564A31', ROBERTO = '8F563145-9CA6-4E3B-ADEB-DDA835611C64';
-const MED_A = 'F013939A-D224-4CBF-B4A8-4896612379DE', MED_C = '7C99620A-26BE-476B-9D17-95D7F75F2DC4';
+// personas y medicamentos semilla: se buscan por nombre porque el seed genera ids nuevos en cada base
+const personId = async fullName => (await call('GET', `/api/social-records?q=${encodeURIComponent(fullName.split(' ')[0])}`, { token: T.ref })).json
+  ?.find(r => r.fullName === fullName)?.personId;
+const LUCIA = await personId('Lucía Fernández'), CARLOS = await personId('Carlos Rodríguez'), ROBERTO = await personId('Roberto Sánchez');
+const catalog = (await call('GET', '/api/medication-schemes/catalog', { token: T.ref })).json ?? [];
+const medicationId = name => catalog.find(m => m.name === name)?.id;
+const MED_A = medicationId('Medicamento de prueba A'), MED_C = medicationId('Medicamento de prueba C (sin stock)');
 const day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const rnd = n => Math.floor(Math.random() * n);
 // fecha distinta por corrida para no chocar con el índice único persona+actividad+fecha de corridas anteriores

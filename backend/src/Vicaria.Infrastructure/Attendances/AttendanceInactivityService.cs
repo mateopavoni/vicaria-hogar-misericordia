@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
-using Vicaria.Infrastructure.PsychiatricEvaluations;
 
 namespace Vicaria.Infrastructure.Attendances;
 
@@ -17,9 +17,9 @@ public class AttendanceInactivityService : IAttendanceInactivityService
 
     public async Task CheckAndProcessInactivityAsync(CancellationToken cancellationToken = default)
     {
-        // SCRUM-135: una persona queda Activa solo si registró asistencia en los últimos
+        // Una persona queda Activa solo si registró asistencia en los últimos
         // 30 días; sin asistencia reciente (o sin ninguna asistencia) pasa a Inactive.
-        // SCRUM-262: el pase se registra en el historial de estados; los Residentes
+        // El pase se registra en el historial de estados; los Residentes
         // con estadía abierta quedan exentos (siguen presentes físicamente aunque no
         // tengan un registro de asistencia explícito).
         // Los 30 días se cuentan desde lo último entre la última asistencia, el alta de la
@@ -28,7 +28,7 @@ public class AttendanceInactivityService : IAttendanceInactivityService
         var thresholdDate = DateTime.UtcNow.AddDays(-30);
         // las asistencias se guardan con la fecha de Córdoba: cuentan las de los últimos 30
         // días de Córdoba, hoy incluido
-        var attendanceThreshold = PsychiatricEvaluationService.GetCordobaToday().AddDays(-29);
+        var attendanceThreshold = CordobaClock.Today.AddDays(-29);
 
         var inactiveCandidates = await _dbContext.SocialRecords
             .Include(r => r.Person)
@@ -71,7 +71,7 @@ public class AttendanceInactivityService : IAttendanceInactivityService
                 ChangedAt = DateTime.UtcNow
             });
 
-            // SCRUM-67: los Referentes reciben la misma notificación que en el cambio manual
+            // Los Referentes reciben la misma notificación que en el cambio manual
             var fullName = $"{record.Person?.FirstName} {record.Person?.LastName}".Trim();
             _dbContext.Notifications.Add(new Notification
             {

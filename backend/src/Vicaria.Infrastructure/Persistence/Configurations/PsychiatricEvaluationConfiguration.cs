@@ -36,7 +36,7 @@ public class PsychiatricEvaluationConfiguration : IEntityTypeConfiguration<Psych
             .HasForeignKey(e => e.RegisteredByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // una sola evaluación vigente por persona (SCRUM-258): el filtro deja
+        // una sola evaluación vigente por persona: el filtro deja
         // múltiples no vigentes históricas; la unicidad de la vigente la impone SQL Server
         builder.HasIndex(e => e.PersonId)
             .IsUnique()

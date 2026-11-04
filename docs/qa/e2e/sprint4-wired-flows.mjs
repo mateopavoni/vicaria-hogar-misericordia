@@ -22,11 +22,11 @@ const today = new Date(Date.now() - 3 * 36e5).toISOString().slice(0, 10);
 const RND = String(Date.now()).slice(-6);
 const hhmm = `${String(Math.floor(Math.random() * 10) + 12).padStart(2, '0')}:${String(Math.floor(Math.random() * 6) * 10).padStart(2, '0')}`;
 
-// personas con evaluación vigente del seed
+// persona semilla con evaluación vigente: se busca por nombre porque el seed genera ids nuevos en cada base
+const LUCIA = (await call('GET', '/api/social-records?q=Luc%C3%ADa', { token: T.ref })).json
+  ?.find(r => r.fullName === 'Lucía Fernández')?.personId;
 const people = (await call('GET', '/api/social-records/list?page=1', { token: T.ref })).json;
 const list = people?.items ?? people?.data ?? people ?? [];
-const lucia = list.find(p => /Luc/i.test(p.firstName ?? p.name ?? p.fullName ?? ''));
-const LUCIA = lucia?.personId ?? lucia?.id ?? '33438A32-F4E6-4FBA-B868-07F6362B5BFD';
 
 // ---- Parte 1: cadena por API
 const medName = `QA Medicamento ${RND}`;

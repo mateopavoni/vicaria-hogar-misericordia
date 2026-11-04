@@ -126,8 +126,7 @@ public class LifeStoryServiceTests
         Assert.Empty(result.BeforeCentroBarrial.Entries);
     }
 
-    // bug reportado 2026-09-23: guardar una etapa pisaba el contenido anterior en vez de
-    // sumar una entrada nueva al historial.
+    // guardar una etapa suma una entrada nueva sin pisar la anterior
     [Fact]
     public async Task UpdateStageAsync_GuardaDosVeces_SumaDosEntradasAlHistorialSinPerderLaPrimera()
     {

@@ -4,7 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { CaritasReport, ReportPeriodType } from '../interfaces/caritas-report.interface';
 
 /**
- * SCRUM-271: informe estadístico para Cáritas contra la API (SCRUM-270):
+ * Informe estadístico para Cáritas contra la API:
  * GET /api/caritas-reports?type=trimestral|semestral&to=YYYY-MM-DD, solo Referente.
  * El backend devuelve el mismo CaritasReport con números reales (isSample = false).
  */

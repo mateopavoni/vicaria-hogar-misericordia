@@ -6,7 +6,7 @@ using Vicaria.IntegrationTests.Auth;
 
 namespace Vicaria.IntegrationTests.Backups;
 
-// SCRUM-77: el SQL Server corre en un contenedor aparte, igual que en Docker y en un deploy
+// El SQL Server corre en un contenedor aparte, igual que en Docker y en un deploy
 // real, así que el .bak se genera en otro disco y tiene que llegar a la API por la conexión
 public class BackupServiceTests : IClassFixture<VicariaWebApplicationFactory>
 {

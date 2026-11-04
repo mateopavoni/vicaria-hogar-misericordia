@@ -11,7 +11,7 @@ import {
 import { ReportFieldCatalogService } from '../../services/report-field-catalog.service';
 
 /**
- * SCRUM-275: un select por campo del informe de Cáritas (DUMB). Opcionales: se puede dejar en
+ * Un select por campo del informe de Cáritas. Son opcionales: se puede dejar en
  * blanco. Ofrece solo los valores activos, más el valor actual si fue desactivado después.
  */
 @Component({

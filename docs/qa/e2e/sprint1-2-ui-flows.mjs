@@ -181,6 +181,8 @@ if (ONLY === 'fichas' || ONLY === 'all') {
     await r.locator('input[placeholder^="Buscar por nombre"]').fill(DNI); await r.waitForTimeout(1800);
     await r.locator('tr', { hasText: NAME }).first().getByLabel('Ver ficha').click(); await r.waitForURL(/fichas\/[0-9a-f-]{36}/, { timeout: 8000 }).catch(() => {});
     fichaUrl = r.url();
+    // el perfil se carga por API: se espera a que aparezca el nombre antes de leerlo
+    await r.getByText(NAME).first().waitFor({ timeout: 10000 }).catch(() => {});
     await shot(r, 'TC-11-detalle');
     const t = await body(r);
     log('TC-11', 'Un Referente crea una ficha con los datos mínimos y la ve en el listado y el detalle', /fichas\/[0-9a-f-]{36}/.test(fichaUrl) && t.includes(NAME) && !bad.length , `${fichaUrl.replace(BASE, '')} ${bad.join(' | ')}`);

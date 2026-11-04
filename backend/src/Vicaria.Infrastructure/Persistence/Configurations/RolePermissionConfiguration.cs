@@ -12,9 +12,8 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
 
         builder.HasKey(rp => new { rp.RoleId, rp.PermissionId });
 
-        // permisos de Directora de Casa de Convivencia (SCRUM-88)
-        // permisos de Coordinador de Casa de Convivencia (SCRUM-102): mismos 3 permisos que Directora,
-        // según los criterios de aceptación de SCRUM-73 (ver fichas, cargar observaciones, ver agenda)
+        // Directora y Coordinador de Casa de Convivencia tienen los mismos 3 permisos:
+        // ver fichas, cargar observaciones y ver la agenda de medicación
         builder.HasData(
             new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaDirectorId, PermissionId = PermissionConfiguration.ViewCasaConvivenciaResidentRecordsId },
             new RolePermission { RoleId = RoleConfiguration.CasaConvivenciaDirectorId, PermissionId = PermissionConfiguration.LoadResidentObservationsId },

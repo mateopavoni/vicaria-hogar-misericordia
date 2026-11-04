@@ -13,7 +13,7 @@ interface ActivityGroup {
 }
 
 /**
- * SCRUM-222 (front de SCRUM-55): sección de asistencia en el perfil de la persona (DUMB).
+ * Sección de asistencia en el perfil de la persona.
  * Lista las fechas agrupadas por actividad, con filtro por actividad y rango de fechas,
  * tarjetas de indicadores y aviso cuando lleva más de 7 días sin asistir.
  * Los indicadores se calculan sobre TODO el historial; los filtros solo afectan a la lista.
