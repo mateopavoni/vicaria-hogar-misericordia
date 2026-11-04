@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { extractApiError } from '../../../../core/http/api-error';
 import { UiButtonComponent, UiFormFieldComponent, UiInputDirective } from '../../../../shared/ui';
 import { todayLocalIso } from '../../../../shared/utils/date.util';
@@ -29,15 +30,19 @@ const EMPTY_OVERVIEW: AttendanceStatistics = {
  * Panel de estadísticas de asistencia del Centro Barrial.
  * Los números los calcula el backend (/api/attendances/statistics, /inactive y el PDF mensual).
  * Solo para Referente (permiso asistencia.stats): lo protege la ruta y el que lo monta.
+ * Se ve dentro de Inicio y también como página propia; solo en ese caso lleva el margen de página.
  */
 @Component({
   selector: 'app-attendance-stats-panel',
   imports: [DatePipe, UiButtonComponent, UiFormFieldComponent, UiInputDirective],
   templateUrl: './attendance-stats-panel.component.html',
+  host: { '[class]': "isPage ? 'block px-4 pb-8 pt-4 md:px-8' : 'block'" },
 })
 export class AttendanceStatsPanelComponent implements OnInit {
   private attendanceService = inject(AttendanceService);
   private activitiesService = inject(AttendanceActivitiesService);
+
+  readonly isPage = inject(ActivatedRoute).component === AttendanceStatsPanelComponent;
 
   // el backend solo lleva estadísticas de las dos actividades fijas
   readonly activities = signal(SYSTEM_ACTIVITIES);

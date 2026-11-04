@@ -45,12 +45,13 @@ export class MedicationAgendaComponent {
 
   longDate = computed(() => {
     const [y, m, d] = this.date().split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString('es-AR', {
+    const text = new Date(y, m - 1, d).toLocaleDateString('es-AR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
+    return text.charAt(0).toUpperCase() + text.slice(1);
   });
 
   total = computed(() => this.agenda()?.slots.reduce((n, s) => n + s.items.length, 0) ?? 0);
