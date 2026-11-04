@@ -35,7 +35,7 @@ public class CaritasCatalogValueConfiguration : IEntityTypeConfiguration<Caritas
 
         var baseDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // valores de ejemplo de SCRUM-70; el resto se carga por el CRUD (SCRUM-274)
+        // valores iniciales; el resto se carga por el CRUD
         builder.HasData(
             new CaritasCatalogValue
             {
@@ -85,8 +85,7 @@ public class CaritasCatalogValueConfiguration : IEntityTypeConfiguration<Caritas
                 IsActive = true,
                 CreatedAt = baseDate
             },
-            // valores del informe Caritas (SCRUM-270): género, localidad de origen y
-            // motivo de asistencia, con las etiquetas del criterio de aceptación
+            // valores del informe de Cáritas: género, localidad de origen y motivo de asistencia
             new CaritasCatalogValue
             {
                 Id = Guid.Parse("22222222-2222-2222-2222-222222222207"),

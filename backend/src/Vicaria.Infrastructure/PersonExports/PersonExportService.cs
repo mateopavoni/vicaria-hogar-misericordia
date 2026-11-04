@@ -5,7 +5,7 @@ using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.PersonExports;
 
-// arma el documento de exportación de la ficha (SCRUM-252) y registra la
+// arma el documento de exportación de la ficha y registra la
 // auditoría; el PDF lo genera IPersonExportPdfGenerator
 public class PersonExportService : IPersonExportService
 {

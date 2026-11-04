@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Vicaria.Domain.Entities;
 
 namespace Vicaria.Infrastructure.Persistence;
@@ -43,5 +44,46 @@ public class VicariaDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VicariaDbContext).Assembly);
+        MarkTimestampsAsUtc(modelBuilder);
     }
+
+    // las marcas de tiempo se guardan en UTC; al leerlas se marcan como UTC para que la API
+    // las mande con "Z" y el navegador las muestre en hora de Córdoba. Las fechas sin hora
+    // (nacimiento, asistencia, evaluación, visitas) no se tocan.
+    private static void MarkTimestampsAsUtc(ModelBuilder modelBuilder)
+    {
+        var utc = new ValueConverter<DateTime, DateTime>(
+            value => value,
+            value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+        var nullableUtc = new ValueConverter<DateTime?, DateTime?>(
+            value => value,
+            value => value.HasValue ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : value);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (!IsTimestamp(entityType.ClrType, property.Name))
+                {
+                    continue;
+                }
+
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(utc);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(nullableUtc);
+                }
+            }
+        }
+    }
+
+    private static bool IsTimestamp(Type entity, string propertyName) =>
+        propertyName.EndsWith("At")
+        || propertyName is nameof(User.LockoutEnd) or nameof(User.RefreshTokenExpiry)
+        || (entity == typeof(AuditLog) && propertyName == nameof(AuditLog.Date))
+        || (entity == typeof(MedicationStockMovement) && propertyName == nameof(MedicationStockMovement.Date))
+        || (entity == typeof(CasaConvivenciaStay) && propertyName is nameof(CasaConvivenciaStay.EntryDate) or nameof(CasaConvivenciaStay.ExitDate));
 }

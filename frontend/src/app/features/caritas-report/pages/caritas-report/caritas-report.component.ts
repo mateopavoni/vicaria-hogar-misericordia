@@ -21,8 +21,8 @@ import {
 } from '../../utils/caritas-report.util';
 
 /**
- * SCRUM-271: pantalla de generación del informe estadístico para Cáritas
- * (/dashboard/informes/caritas). SMART: selector de período, vista con tablas y barras por
+ * Pantalla de generación del informe estadístico para Cáritas
+ * (/dashboard/informes/caritas): selector de período, vista con tablas y barras por
  * categoría, exportar a PDF e imprimir. Solo Referente (permiso informes.caritas).
  */
 @Component({

@@ -1,4 +1,4 @@
-"""Genera docs/qa/Ciclos_de_prueba_Sprint_1-5.xlsx con el formato de la Planilla de Ciclo de Pruebas
+"""Genera docs/qa/Ciclos_de_prueba_Sprint_1-6.xlsx con el formato de la Planilla de Ciclo de Pruebas
 (una pestaña por ciclo, con las 11 columnas de la plantilla) a partir de Plan_de_pruebas_Sprint_1-5.xlsx.
 
 Uso: python build_test_cycles_xlsx.py <planilla_limpia.xlsx> [plan.xlsx] [salida.xlsx]
@@ -11,6 +11,7 @@ from pathlib import Path
 
 import openpyxl
 import run_2026_10_16 as run
+import sprint6_regression as s6
 from openpyxl.worksheet.datavalidation import DataValidation
 
 HERE = Path(__file__).parent
@@ -42,6 +43,7 @@ CYCLES = [
     ("Ciclo - Sprint 3", "Sprint 3 — Calendario, colaboradores y visitas (EP-04, EP-05, EP-06)"),
     ("Ciclo - Sprint 4", "Sprint 4 — Asistencia y medicación (EP-10): casos de interfaz, pruebas de API, integración front-back, seguridad y carga"),
     ("Ciclo - Sprint 5", "Sprint 5 — Ficha exportable, adjuntos, evaluación psiquiátrica, estado, respaldos e informe de Cáritas (EP-07, EP-12, EP-13): casos de interfaz y pruebas de API"),
+    ("Ciclo - Sprint 6", "Sprint 6 — Regresión final sobre la versión que se entrega: pruebas automatizadas, re-ejecución de los scripts y revisión visual"),
 ]
 
 
@@ -131,6 +133,11 @@ def sprint5_script_rows():
     return out
 
 
+def sprint6_rows():
+    """Filas de la regresión final (03 y 04/11). Devuelve [(valores A..K, fecha)]."""
+    return [([c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], RUNNER, s6.RUN_DATE, c[8]], s6.RUN_DATE) for c in s6.CASES]
+
+
 def bug_label(ids, defects):
     """'DEF-01, DEF-02' -> 'DEF-01 (SCRUM-190 / 200 / 211); DEF-02 (SCRUM-200)' con el origen de la hoja de defectos."""
     out = []
@@ -147,7 +154,7 @@ def bug_label(ids, defects):
 def main():
     template = sys.argv[1]
     plan = sys.argv[2] if len(sys.argv) > 2 else str(HERE / "Plan_de_pruebas_Sprint_1-5.xlsx")
-    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Ciclos_de_prueba_Sprint_1-5.xlsx")
+    out = sys.argv[3] if len(sys.argv) > 3 else str(HERE / "Ciclos_de_prueba_Sprint_1-6.xlsx")
 
     plan_wb = openpyxl.load_workbook(plan)
     src = plan_wb["Parte A - Manuales"]
@@ -226,8 +233,9 @@ def main():
                 if c == 10 and when:
                     cell.number_format = "dd/mm/yyyy"
         total = len(data)
-        if name in ("Ciclo - Sprint 4", "Ciclo - Sprint 5"):
-            for vals, when in (sprint4_script_rows() if name == "Ciclo - Sprint 4" else sprint5_script_rows()):
+        extra = {"Ciclo - Sprint 4": sprint4_script_rows, "Ciclo - Sprint 5": sprint5_script_rows, "Ciclo - Sprint 6": sprint6_rows}
+        if name in extra:
+            for vals, when in extra[name]():
                 if vals[0] in BUGS and vals[6] == "PASÓ":
                     vals[7] = bug_label(BUGS[vals[0]], defects)
                     vals[10] = f"Defecto {BUGS[vals[0]]} corregido; el caso pasa con la corrección."

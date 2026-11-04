@@ -107,7 +107,7 @@ public class SocialRecordReportFieldsTests
         Assert.Equal(UpdateReportFieldsError.NotFound, result.Error);
     }
 
-    // SCRUM-273: campos del informe que faltan cargar
+    // Campos del informe que faltan cargar
     [Fact]
     public async Task GetPendingReportFieldsAsync_DevuelveSoloLosCamposSinValor()
     {

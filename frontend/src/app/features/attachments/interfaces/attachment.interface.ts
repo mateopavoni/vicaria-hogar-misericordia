@@ -1,5 +1,5 @@
 /**
- * SCRUM-256 (front de SCRUM-24): archivos adjuntos a la ficha de una persona.
+ * Archivos adjuntos a la ficha de una persona.
  * Se cargan desde la API (ver PersonAttachmentsService).
  */
 export type AttachmentKind = 'image' | 'pdf';

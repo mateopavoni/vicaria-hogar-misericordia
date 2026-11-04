@@ -3,11 +3,9 @@ import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { Visit, VisitStatus } from '../../interfaces/visit.interface';
 
 /**
- * SCRUM-214: detalle de una visita — residente, visitante, horario, duración y
- * estado. Acciones para cambiar el estado (pendiente/realizada/cancelada, AC de
- * SCRUM-74) y para editar. Una visita cancelada ya no se puede editar ni volver a
- * marcar como pendiente/realizada — es un registro histórico cerrado (supuesto propio,
- * el AC no lo aclara explícitamente).
+ * Detalle de una visita — residente, visitante, horario, duración y
+ * estado. Permite cambiar el estado (pendiente/realizada/cancelada) y editar.
+ * Una visita cancelada queda cerrada: no se edita ni cambia de estado.
  */
 @Component({
   selector: 'app-visit-detail-modal',

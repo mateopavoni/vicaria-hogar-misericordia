@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// tipo de colaborador (SCRUM-199): Voluntario / Empleado del Jira
+// tipo de colaborador: Voluntario / Empleado del Jira
 public enum CollaboratorType
 {
     Volunteer,

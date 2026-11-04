@@ -528,7 +528,7 @@ public class CasonaVisitsEndpointTests : IClassFixture<VicariaWebApplicationFact
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    // cambio de estado dedicado (SCRUM-211): PATCH api/casona-visits/{id}/status
+    // cambio de estado dedicado: PATCH api/casona-visits/{id}/status
     [Fact]
     public async Task Patch_ToCompleted_Returns204AndPersistsStatus()
     {
@@ -597,7 +597,7 @@ public class CasonaVisitsEndpointTests : IClassFixture<VicariaWebApplicationFact
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    // SCRUM-212: la escucha tampoco puede consultar visitas
+    // La escucha tampoco puede consultar visitas
     [Fact]
     public async Task Get_WithListenerRole_Returns403()
     {

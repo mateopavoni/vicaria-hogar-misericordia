@@ -22,7 +22,7 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
         builder.Property(e => e.AnonymousCount)
             .IsRequired();
 
-        // justificación de la modificación de un día cerrado (SCRUM-217):
+        // justificación de la modificación de un día cerrado:
         // opcional a nivel de BD (solo obligatoria por regla de negocio si el día está cerrado)
         builder.Property(e => e.Justification)
             .HasMaxLength(500)

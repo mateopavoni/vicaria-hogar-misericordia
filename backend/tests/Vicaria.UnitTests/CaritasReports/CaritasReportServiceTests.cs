@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.CaritasReports;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.CaritasReports;
 using Vicaria.Infrastructure.Pdf;
@@ -40,7 +41,7 @@ public class CaritasReportServiceTests
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = DateTime.UtcNow.Date.AddDays(-1),
+            Date = CordobaClock.Today.AddDays(-1),
             CreatedByUserId = Guid.NewGuid()
         });
         await context.SaveChangesAsync();
@@ -58,7 +59,7 @@ public class CaritasReportServiceTests
         await SeedAttendedRecordAsync(context);
         var service = new CaritasReportService(context);
 
-        var result = await service.GetReportAsync("trimestral", DateTime.UtcNow.Date);
+        var result = await service.GetReportAsync("trimestral", CordobaClock.Today);
 
         Assert.True(result.Success);
         var report = result.Data!;
@@ -81,7 +82,7 @@ public class CaritasReportServiceTests
         await SeedAttendedRecordAsync(context, genderId: added.Id);
         var service = new CaritasReportService(context);
 
-        var report = (await service.GetReportAsync("trimestral", DateTime.UtcNow.Date)).Data!;
+        var report = (await service.GetReportAsync("trimestral", CordobaClock.Today)).Data!;
 
         Assert.Contains(report.Gender, i => i.Label == "Mujer" && i.Count == 1);
         Assert.Contains(report.Gender, i => i.Label == "No binario" && i.Count == 1);
@@ -99,7 +100,7 @@ public class CaritasReportServiceTests
         await SeedAttendedRecordAsync(context, genderId: inactiveUsed.Id);
         var service = new CaritasReportService(context);
 
-        var report = (await service.GetReportAsync("trimestral", DateTime.UtcNow.Date)).Data!;
+        var report = (await service.GetReportAsync("trimestral", CordobaClock.Today)).Data!;
 
         Assert.Contains(report.Reasons, i => i.Label == "Violencia" && i.Count == 0);
         Assert.DoesNotContain(report.Reasons, i => i.Label == "Viejo motivo");
@@ -117,7 +118,7 @@ public class CaritasReportServiceTests
         await SeedAttendedRecordAsync(context, originId: cordoba.Id);
         var service = new CaritasReportService(context);
 
-        var report = (await service.GetReportAsync("trimestral", DateTime.UtcNow.Date)).Data!;
+        var report = (await service.GetReportAsync("trimestral", CordobaClock.Today)).Data!;
 
         var item = Assert.Single(report.Geography);
         Assert.Equal("Córdoba", item.Label);

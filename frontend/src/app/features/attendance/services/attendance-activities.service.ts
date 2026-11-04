@@ -21,7 +21,7 @@ const normalize = (name: string): string => name.trim().replace(/\s+/g, ' ');
 const keyOf = (name: string): string => normalize(name).toLowerCase();
 
 /**
- * SCRUM-230: catálogo de actividades de asistencia, configurable por el Referente
+ * Catálogo de actividades de asistencia, configurable por el Referente
  * (/api/actividades).
  *
  * - "Hogar de día" y "Casa de Convivencia (diaria)" son fijas (source 'system', no se desactivan)
@@ -29,7 +29,7 @@ const keyOf = (name: string): string => normalize(name).toLowerCase();
  * - Las actividades recurrentes del calendario general se sincronizan con `syncFromCalendar()`
  *   (el backend las agrega y marca `isFromCalendar`). Nunca se borran si desaparecen del calendario.
  * - Las demás se crean a mano (source 'custom') y pertenecen al Hogar de día.
- * - OJO: el registro de asistencia del backend (POST /api/attendances) solo conoce las dos
+ * - El registro de asistencia del backend (POST /api/attendances) solo conoce las dos
  *   actividades fijas; ver AttendanceService.
  */
 @Injectable({ providedIn: 'root' })

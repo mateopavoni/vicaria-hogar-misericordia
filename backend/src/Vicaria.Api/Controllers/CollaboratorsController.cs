@@ -39,7 +39,7 @@ public class CollaboratorsController : ControllerBase
         return Ok(results);
     }
 
-    // búsqueda por nombre, apellido o área, con filtro opcional por tipo (SCRUM-204).
+    // búsqueda por nombre, apellido o área, con filtro opcional por tipo.
     // cualquier rol autenticado puede buscar, mismo criterio que la búsqueda de fichas
     [HttpGet("search")]
     public async Task<IActionResult> Search(
@@ -60,7 +60,7 @@ public class CollaboratorsController : ControllerBase
         return Ok(results);
     }
 
-    // alta solo para Referente (SCRUM-199)
+    // alta solo para Referente
     [HttpPost]
     [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> Create(

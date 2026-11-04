@@ -3,7 +3,7 @@ import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { EXPORT_SECTION_OPTIONS, ExportSections } from '../../utils/record-export.util';
 
 /**
- * SCRUM-253: elegir qué secciones incluir al exportar la ficha (DUMB). Se puede descargar el
+ * Elegir qué secciones incluir al exportar la ficha. Se puede descargar el
  * PDF directo al dispositivo o abrir la vista de impresión.
  */
 @Component({

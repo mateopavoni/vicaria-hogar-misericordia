@@ -72,8 +72,6 @@ export class SocialRecordEditComponent
     return this.formComponent()?.canDeactivate() ?? true;
   }
 
-  // bug reportado 2026-09-23: esta pantalla cargaba datos mockeados ("María Belén
-  // González" hardcodeada) en vez de la ficha real del backend.
   private loadRecord(id: string): void {
 
     this.loading.set(true);
@@ -116,8 +114,7 @@ export class SocialRecordEditComponent
     this.successMessage.set(null);
     this.saving.set(true);
 
-    // bug reportado 2026-09-23: el backend devuelve 204 No Content, no la ficha
-    // actualizada — antes se esperaba un body que nunca llegaba.
+    // el backend responde 204 sin cuerpo
     this.socialRecordsService
       .update(this.recordId, data)
       .subscribe({

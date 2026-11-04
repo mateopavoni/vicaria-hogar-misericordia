@@ -2,7 +2,7 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Application.CasonaVisits;
 
-// edición completa de una visita (SCRUM-210): solo aplica mientras esté Pending;
+// edición completa de una visita: solo aplica mientras esté Pending;
 // CancellationReason es opcional también al cancelar.
 public record UpdateCasonaVisitDto(
     Guid PersonId,

@@ -134,6 +134,10 @@ return result.Error switch
 
   
 
+### Fechas
+
+"Hoy" es siempre el día de Córdoba: usar `CordobaClock.Today` / `CordobaClock.Now` (`Vicaria.Application.Common`), nunca `DateTime.Today` ni `DateTime.UtcNow.Date`. Entre las 21 y las 24 h la fecha UTC ya es la del día siguiente. Las marcas de auditoría (`CreatedAt`, `AuditLog.Date`) siguen en UTC.
+
 ### Auditoría
 
 Toda operación sensible (aprobar/rechazar usuario, etc.) registra un `AuditLog` con: `UserId` (del actor, no del afectado), `Action` ( El contenido del texto puede ir en español si es para lectura humana, el nombre del campo va en inglés), `AffectedEntity` (formato `"Entity:Id"`), `Date` (UTC).

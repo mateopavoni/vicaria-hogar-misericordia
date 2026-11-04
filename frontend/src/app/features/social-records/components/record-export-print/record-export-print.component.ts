@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 import { RecordExportDocument } from '../../utils/record-export.util';
 
 /**
- * SCRUM-253: vista de impresión de la ficha exportada (DUMB). Solo se ve al imprimir (@media
+ * Vista de impresión de la ficha exportada. Solo se ve al imprimir (@media
  * print, clase `print:block`); `print-target` hace que, con la clase `print-only-target` en el
  * body (ver styles.css), se imprima únicamente este bloque.
  */

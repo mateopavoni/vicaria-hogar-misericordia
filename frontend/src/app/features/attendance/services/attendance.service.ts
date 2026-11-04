@@ -54,14 +54,14 @@ interface InactiveDto {
   daysSinceLastAttendance: number | null;
 }
 
-/** Resumen del panel de estadísticas: lo que calcula el backend (SCRUM-224). */
+/** Resumen del panel de estadísticas: lo que calcula el backend. */
 export interface AttendanceStatistics extends AttendanceOverview {
   previousPeriodTotal: number;
   comparisonPercentage: number | null;
 }
 
 /**
- * SCRUM-218: asistencia diaria por actividad y fecha (/api/attendances).
+ * Asistencia diaria por actividad y fecha (/api/attendances).
  *
  * El backend guarda una fila por persona, actividad y fecha, con el conteo de personas sin
  * ficha repartido en esas filas. Por eso:
@@ -90,7 +90,7 @@ export class AttendanceService {
     );
   }
 
-  // SCRUM-222: fechas en las que una persona asistió, de todas las actividades, de más
+  // Fechas en las que una persona asistió, de todas las actividades, de más
   // reciente a más antigua. Los filtros por actividad y rango se aplican en pantalla.
   getPersonHistory(personId: string): Observable<AttendanceHistoryEntry[]> {
     return this.http.get<HistoryDto>(`/api/personas/${personId}/asistencias`).pipe(
@@ -167,7 +167,7 @@ export class AttendanceService {
     );
   }
 
-  // SCRUM-226: estadísticas calculadas por el backend para el rango y la actividad elegidos.
+  // Estadísticas calculadas por el backend para el rango y la actividad elegidos.
   getStatistics(from: string, to: string, activity: AttendanceActivity | null): Observable<AttendanceStatistics> {
     let params = new HttpParams().set('from', from).set('to', to);
     if (activity !== null) {
@@ -200,7 +200,7 @@ export class AttendanceService {
     );
   }
 
-  /** Personas sin asistir hace más de `days` días (SCRUM-225). */
+  /** Personas sin asistir hace más de `days` días. */
   getInactive(days: number): Observable<InactivePerson[]> {
     const params = new HttpParams().set('days', days);
     return this.http.get<InactiveDto[]>('/api/attendances/inactive', { params }).pipe(
@@ -215,7 +215,7 @@ export class AttendanceService {
     );
   }
 
-  /** Resumen mensual en PDF generado por el backend (SCRUM-225). */
+  /** Resumen mensual en PDF generado por el backend. */
   getMonthlySummaryPdf(year: number, month: number): Observable<Blob> {
     const params = new HttpParams().set('year', year).set('month', month);
     return this.http.get('/api/attendances/monthly-summary/pdf', { params, responseType: 'blob' });

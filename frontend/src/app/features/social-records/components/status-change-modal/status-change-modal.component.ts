@@ -4,7 +4,7 @@ import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalCompo
 
 export const STATUS_REASON_MAX = 300;
 
-/** SCRUM-264: cambio manual de estado Activo/Inactivo con motivo obligatorio (DUMB). */
+/** Cambio manual de estado Activo/Inactivo con motivo obligatorio. */
 @Component({
   selector: 'app-status-change-modal',
   imports: [ReactiveFormsModule, UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],

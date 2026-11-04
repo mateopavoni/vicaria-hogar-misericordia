@@ -1,8 +1,7 @@
 namespace Vicaria.Domain.Entities;
 
-// historial de cambios de tipo de persona (bug reportado 2026-09-23: el historial nunca existió
-// en el backend). Se registra cada vez que PersonType cambia de verdad, sin importar por cuál de
-// los 3 endpoints que pueden tocarlo (UpdatePersonType, UpdateAsync de ficha, UpdatePersonProfileStatus).
+// historial de cambios de tipo de persona: se registra cada vez que PersonType cambia,
+// sin importar desde qué endpoint
 public class PersonTypeChange
 {
     public Guid Id { get; set; } = Guid.NewGuid();

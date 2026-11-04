@@ -1,7 +1,5 @@
 /**
- * SCRUM-260 (front de SCRUM-65): evaluación psiquiátrica de una persona.
- * OJO — backend pendiente: la entidad PsychiatricEvaluation existe pero no hay endpoints
- * (ver PsychiatricEvaluationsService).
+ * Evaluación psiquiátrica de una persona.
  */
 export interface PsychiatricEvaluation {
   id: string;

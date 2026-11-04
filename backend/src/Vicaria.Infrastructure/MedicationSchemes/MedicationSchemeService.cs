@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -8,40 +9,13 @@ namespace Vicaria.Infrastructure.MedicationSchemes;
 
 public class MedicationSchemeService : IMedicationSchemeService
 {
-    // SCRUM-249: un esquema vigente sin revisar más de estos días dispara la alerta
+    // Un esquema vigente sin revisar más de estos días dispara la alerta
     private const int ReviewAlertDays = 30;
-    private static readonly TimeZoneInfo CordobaTimeZone = ResolveCordobaTimeZone();
     private readonly VicariaDbContext _dbContext;
 
     public MedicationSchemeService(VicariaDbContext dbContext)
     {
         _dbContext = dbContext;
-    }
-
-    public static DateTime GetCordobaToday() =>
-        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CordobaTimeZone).Date;
-
-    // instante actual en hora de Córdoba (el conteo de los 30 días usa esta zona)
-    public static DateTime GetCordobaNow() =>
-        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CordobaTimeZone);
-
-    private static TimeZoneInfo ResolveCordobaTimeZone()
-    {
-        if (TimeZoneInfo.TryFindSystemTimeZoneById("America/Argentina/Cordoba", out var ianaTimeZone))
-        {
-            return ianaTimeZone;
-        }
-
-        if (TimeZoneInfo.TryFindSystemTimeZoneById("Argentina Standard Time", out var windowsTimeZone))
-        {
-            return windowsTimeZone;
-        }
-
-        return TimeZoneInfo.CreateCustomTimeZone(
-            "America/Argentina/Cordoba",
-            TimeSpan.FromHours(-3),
-            "Hora de Córdoba",
-            "Hora de Córdoba");
     }
 
     public async Task<CreateMedicationSchemeResult> CreateAsync(
@@ -58,7 +32,7 @@ public class MedicationSchemeService : IMedicationSchemeService
             return CreateMedicationSchemeResult.PersonNotFound();
         }
 
-        // SCRUM-232 (decisión 11): solo Residentes
+        // (decisión 11): solo Residentes
         var isResident = await _dbContext.SocialRecords
             .AsNoTracking()
             .AnyAsync(r => r.PersonId == personId && r.PersonType == PersonType.Resident, cancellationToken);
@@ -67,8 +41,8 @@ public class MedicationSchemeService : IMedicationSchemeService
             return CreateMedicationSchemeResult.PersonNotResident();
         }
 
-        // SCRUM-232 / SCRUM-233: sin evaluación psiquiátrica vigente (IsValid y no vencida a más de 6 meses en fecha de Córdoba) se bloquea la carga
-        var minValidEvaluationDate = GetCordobaToday().AddMonths(-6);
+        // Sin evaluación psiquiátrica vigente (IsValid y no vencida a más de 6 meses en fecha de Córdoba) se bloquea la carga
+        var minValidEvaluationDate = CordobaClock.Today.AddMonths(-6);
         var hasValidEvaluation = await _dbContext.PsychiatricEvaluations
             .AsNoTracking()
             .AnyAsync(e =>
@@ -176,10 +150,10 @@ public class MedicationSchemeService : IMedicationSchemeService
             query = query.Where(s => s.IsActive == activeFilter);
         }
 
-        // SCRUM-249: solo los vigentes que llevan más de 30 días sin revisión
+        // Solo los vigentes que llevan más de 30 días sin revisión
         if (needsReview == true)
         {
-            var threshold = GetCordobaNow().AddDays(-ReviewAlertDays);
+            var threshold = CordobaClock.Now.AddDays(-ReviewAlertDays);
             query = query.Where(s => s.IsActive && (s.ReviewedAt ?? s.LoadedAt) < threshold);
         }
 
@@ -219,7 +193,7 @@ public class MedicationSchemeService : IMedicationSchemeService
 
     public async Task<IReadOnlyList<MedicationReviewAlertDto>> GetNeedsReviewAsync(CancellationToken cancellationToken = default)
     {
-        var threshold = GetCordobaNow().AddDays(-ReviewAlertDays);
+        var threshold = CordobaClock.Now.AddDays(-ReviewAlertDays);
 
         var schemes = await _dbContext.MedicationSchemes
             .AsNoTracking()
@@ -229,7 +203,7 @@ public class MedicationSchemeService : IMedicationSchemeService
             .OrderBy(s => s.ReviewedAt ?? s.LoadedAt)
             .ToListAsync(cancellationToken);
 
-        var now = GetCordobaNow();
+        var now = CordobaClock.Now;
         return schemes.Select(s => new MedicationReviewAlertDto(
             s.Id,
             s.PersonId,

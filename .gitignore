@@ -39,3 +39,6 @@ docs/qa/*.docx
 
 # archivos que generan los tests de integración (adjuntos y respaldos en el ContentRoot de la API)
 backend/src/Vicaria.Api/uploads/
+
+# caché de Python de los scripts de docs/qa
+__pycache__/

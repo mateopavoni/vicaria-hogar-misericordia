@@ -32,7 +32,7 @@ public class CollaboratorConfiguration : IEntityTypeConfiguration<Collaborator>
         builder.Property(c => c.RegisteredAt).HasColumnName("registered_at").IsRequired();
 
         // DNI único solo cuando está cargado: SQL Server trata los NULL como iguales en un
-        // índice único, sin el filtro solo cabería un colaborador sin DNI (SCRUM-199)
+        // índice único, sin el filtro solo cabería un colaborador sin DNI
         builder.HasIndex(c => c.Dni)
             .IsUnique()
             .HasFilter("[dni] IS NOT NULL");

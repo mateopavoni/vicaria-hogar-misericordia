@@ -1,4 +1,4 @@
-/** SCRUM-271 (front de SCRUM-69): informe estadístico para Cáritas. */
+/** Informe estadístico para Cáritas. */
 export type ReportPeriodType = 'trimestral' | 'semestral';
 
 export const PERIOD_MONTHS: Record<ReportPeriodType, number> = { trimestral: 3, semestral: 6 };
@@ -35,7 +35,7 @@ export interface CaritasReport {
     newRegistrations: number;
   };
   /**
-   * Cada categoría trae los valores del catálogo configurable (SCRUM-70) más
+   * Cada categoría trae los valores del catálogo configurable más
    * "No informado", así que suma el total de personas atendidas.
    */
   gender: CountItem[];
