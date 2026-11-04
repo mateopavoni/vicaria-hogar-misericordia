@@ -7,9 +7,9 @@ import { CreateVisitDto, Resident, Visit } from '../../interfaces/visit.interfac
 import { findConflictingVisits } from '../../utils/visit-conflict.util';
 
 /**
- * SCRUM-214: alta y edición de una visita. Reactive form con residente (solo
+ * Alta y edición de una visita. Reactive form con residente (solo
  * residentes, ver `residents` input), visitante, fecha, hora y duración estimada.
- * SCRUM-74 (AC): "el sistema alerta si hay dos visitas al mismo residente en el mismo
+ * "el sistema alerta si hay dos visitas al mismo residente en el mismo
  * horario" — alerta no bloqueante, se recalcula en vivo contra `existingVisits`.
  */
 @Component({
@@ -139,7 +139,7 @@ export class VisitFormModalComponent {
   // (si no, un computed() acá nunca se volvería a disparar al tipear).
   private formValue = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
 
-  // alerta en vivo (AC de SCRUM-74), no bloquea el guardado
+  // alerta en vivo, no bloquea el guardado
   conflicts = computed(() => {
     const { residentId, date, time, durationMinutes } = this.formValue();
     if (!residentId || !date || !time || !durationMinutes) {

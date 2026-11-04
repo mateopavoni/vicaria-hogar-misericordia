@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.MedicationHistories;
 using Vicaria.Domain.Entities;
-using Vicaria.Infrastructure.MedicationSchemes;
 using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.MedicationHistories;
@@ -44,7 +44,7 @@ public class MedicationHistoryService : IMedicationHistoryService
         }
 
         // "hoy" en hora de Córdoba: las tomas de hoy todavía no tienen resultado histórico
-        var today = MedicationSchemeService.GetCordobaToday();
+        var today = CordobaClock.Today;
 
         var query = _dbContext.DailyMedicationSchedules
             .AsNoTracking()

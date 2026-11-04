@@ -1,6 +1,6 @@
 namespace Vicaria.Application.Timelines;
 
-// proxies las entradas del timeline unificado del perfil (SCRUM-159): los
+// proxies las entradas del timeline unificado del perfil: los
 // hitos ya registrados en el expediente (estadías de Casa de Convivencia) y las observaciones
 public enum ProfileTimelineEntryType
 {

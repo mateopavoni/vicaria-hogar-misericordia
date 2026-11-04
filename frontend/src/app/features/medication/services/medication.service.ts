@@ -46,7 +46,7 @@ interface AgendaDto {
 }
 
 /**
- * SCRUM-234 / 238 / 242 / 250: esquemas, agenda diaria e historial de medicación.
+ * Esquemas, agenda diaria e historial de medicación.
  * Usa /api/persons/{id}/medication-schemes, /api/medicamentos/agenda y
  * /api/persons/{id}/medication-history.
  *
@@ -92,7 +92,7 @@ export class MedicationService {
       .pipe(map(toScheme));
   }
 
-  /** SCRUM-250: "Marcar como revisado" — el backend registra revisado_en y revisado_por. Solo esquemas vigentes. */
+  /** "Marcar como revisado" — el backend registra revisado_en y revisado_por. Solo esquemas vigentes. */
   markReviewed(personId: string, schemeId: string): Observable<MedicationScheme> {
     return this.http
       .patch<void>(`/api/persons/${personId}/medication-schemes/${schemeId}/review`, {})
@@ -106,7 +106,7 @@ export class MedicationService {
       .pipe(switchMap(() => this.schemeById(personId, schemeId)));
   }
 
-  // ───────── SCRUM-238: agenda diaria ─────────
+  // ───────── agenda diaria ─────────
 
   /**
    * Agenda del día agrupada por hora. El backend la arma con las personas que asistieron ese día
@@ -155,7 +155,7 @@ export class MedicationService {
     );
   }
 
-  // ───────── SCRUM-242: historial de tomas de una persona ─────────
+  // ───────── historial de tomas de una persona ─────────
 
   /** Historial de una persona, de más reciente a más antiguo (el backend ya lo ordena). */
   getPersonHistory(personId: string): Observable<MedicationHistoryEntry[]> {

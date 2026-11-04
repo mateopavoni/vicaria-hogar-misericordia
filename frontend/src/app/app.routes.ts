@@ -29,7 +29,7 @@ export const routes: Routes = [
         .then(m => m.LayoutComponent),
 
     children: [
-      // INICIO (/dashboard): estadísticas de asistencia para Referente (SCRUM-226)
+      // INICIO (/dashboard): estadísticas de asistencia para Referente
       {
         path: '',
         pathMatch: 'full',
@@ -46,7 +46,7 @@ export const routes: Routes = [
 
         canActivate: [permissionGuard('users.view')]
       },
-      // SCRUM-6 (listado)
+      // (listado)
       {
         path: 'fichas',
 
@@ -57,13 +57,6 @@ export const routes: Routes = [
             .then(
               m => m.SocialRecordListComponent
             ),
-      },
-
-      // Redirect por compatibilidad (URL vieja del botón "Nueva ficha")
-      {
-        path: 'ficha-nueva',
-        redirectTo: 'fichas/crear',
-        pathMatch: 'full',
       },
 
       {
@@ -83,7 +76,7 @@ export const routes: Routes = [
             .then(m => m.SocialRecordDetailComponent)
       },
 
-      // EP-05: gestión y búsqueda de colaboradores (backend: api/collaborators)
+      // gestión y búsqueda de colaboradores
       {
         path: 'colaboradores',
         loadComponent: () =>
@@ -92,7 +85,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('colaboradores.view')]
       },
 
-      // EP-04: calendario general/personal; las visitas de la Casa de Convivencia son una pestaña
+      // calendario general y personal; las visitas de la Casa de Convivencia son una pestaña
       {
         path: 'calendario',
         loadComponent: () =>
@@ -101,7 +94,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('calendario.view')]
       },
 
-      // SCRUM-218: registro de asistencia diaria
+      // Registro de asistencia diaria
       {
         path: 'asistencia',
         loadComponent: () =>
@@ -110,7 +103,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('asistencia.view')]
       },
 
-      // SCRUM-230: configuración de actividades de asistencia, solo Referente
+      // Configuración de actividades de asistencia, solo Referente
       {
         path: 'asistencia/actividades',
         loadComponent: () =>
@@ -119,7 +112,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('asistencia.config')]
       },
 
-      // SCRUM-226: panel de estadísticas de asistencia, solo Referente
+      // Panel de estadísticas de asistencia, solo Referente
       {
         path: 'asistencia/estadisticas',
         loadComponent: () =>
@@ -128,7 +121,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('asistencia.stats')]
       },
 
-      // SCRUM-238: agenda diaria de medicamentos (ver: medicamentos.view; marcar tomas: medicamentos.edit)
+      // Agenda diaria de medicamentos (ver: medicamentos.view; marcar tomas: medicamentos.edit)
       {
         path: 'medicacion',
         loadComponent: () =>
@@ -137,7 +130,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('medicamentos.view')]
       },
 
-      // SCRUM-246: inventario de medicamentos, solo Referente y Directora
+      // Inventario de medicamentos, solo Referente y Directora
       {
         path: 'medicacion/stock',
         loadComponent: () =>
@@ -146,7 +139,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('medicamentos.stock')]
       },
 
-      // SCRUM-267: respaldos de la base de datos, solo administrador técnico (Referente)
+      // Respaldos de la base de datos, solo administrador técnico (Referente)
       {
         path: 'configuracion/respaldos',
         loadComponent: () =>
@@ -155,7 +148,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('configuracion.respaldos')]
       },
 
-      // SCRUM-271: informe estadístico para Cáritas, solo Referente
+      // Informe estadístico para Cáritas, solo Referente
       {
         path: 'informes/caritas',
         loadComponent: () =>
@@ -164,7 +157,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('informes.caritas')]
       },
 
-      // SCRUM-275: valores de los campos del informe de Cáritas, solo Referente
+      // Valores de los campos del informe de Cáritas, solo Referente
       {
         path: 'configuracion/campos-informe',
         loadComponent: () =>
@@ -173,7 +166,7 @@ export const routes: Routes = [
         canActivate: [permissionGuard('informes.config')]
       },
 
-      // SCRUM-180: categorías de observaciones, solo Referente
+      // Categorías de observaciones, solo Referente
       {
         path: 'configuracion/categorias',
         loadComponent: () =>

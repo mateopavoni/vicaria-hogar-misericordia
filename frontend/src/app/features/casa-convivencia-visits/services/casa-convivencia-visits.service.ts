@@ -61,7 +61,7 @@ export class CasaConvivenciaVisitsService {
     );
   }
 
-  // SCRUM-214: selector de residente. Reusa el listado de fichas filtrado a residentes activos
+  // Selector de residente. Reusa el listado de fichas filtrado a residentes activos
   // (personType 1 = Resident, status 0 = Active) hasta que exista un endpoint liviano propio.
   getResidents(): Observable<Resident[]> {
     const page = (n: number) =>
@@ -109,7 +109,7 @@ export class CasaConvivenciaVisitsService {
     }, dto.allowOverlap ?? false);
   }
 
-  // SCRUM-74 (AC): se puede marcar una visita como realizada, cancelada o pendiente.
+  // Se puede marcar una visita como realizada, cancelada o pendiente.
   updateStatus(id: string, status: VisitStatus, cancellationReasonInput?: string | null): Observable<Visit> {
     const current = this.known.get(id);
     if (!current) {
@@ -117,7 +117,7 @@ export class CasaConvivenciaVisitsService {
     }
     const cancellationReason =
       status === 'cancelled' ? cancellationReasonInput?.trim() || null : null;
-    // PATCH api/casona-visits/{id}/status responde 204 sin cuerpo (SCRUM-211)
+    // PATCH api/casona-visits/{id}/status responde 204 sin cuerpo
     return this.http
       .patch<void>(`${this.apiUrl}/${id}/status`, { status: STATUS_TO_API[status], cancellationReason })
       .pipe(

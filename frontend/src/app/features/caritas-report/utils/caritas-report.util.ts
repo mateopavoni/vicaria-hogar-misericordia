@@ -64,7 +64,7 @@ export interface ReportCategory {
   rows: ReportRow[];
 }
 
-/** Las categorías del informe, en el orden del criterio de aceptación. */
+/** Las categorías del informe, en el orden en que se muestran. */
 export function reportCategories(report: CaritasReport): ReportCategory[] {
   return [
     { title: 'Género', rows: toRows(report.gender) },

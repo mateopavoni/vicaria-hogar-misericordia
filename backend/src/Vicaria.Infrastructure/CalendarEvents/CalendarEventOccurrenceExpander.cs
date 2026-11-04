@@ -2,7 +2,7 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Infrastructure.CalendarEvents;
 
-// expansion de eventos recurrentes a ocurrencias concretas dentro de un rango (SCRUM-194):
+// expansion de eventos recurrentes a ocurrencias concretas dentro de un rango:
 // - Date null (plantillas institucionales del seed) → cada día del rango que matchee RecurrenceDays
 // - Date con valor → la serie arranca en Date (primera ocurrencia siempre en Date) y desde ahí
 //   se repite semanalmente los días marcados en RecurrenceDays; RecurrenceDays.None = fecha única

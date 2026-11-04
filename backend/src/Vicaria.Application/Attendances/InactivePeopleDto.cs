@@ -1,6 +1,6 @@
 namespace Vicaria.Application.Attendances;
 
-// lista de personas sin asistencia reciente (SCRUM-225): criterio puro por
+// lista de personas sin asistencia reciente: criterio puro por
 // asistencia (última fecha registrada), independiente del job de 30 días que
 // cambia SocialRecord.Status a Inactive
 public record InactivePersonDto(

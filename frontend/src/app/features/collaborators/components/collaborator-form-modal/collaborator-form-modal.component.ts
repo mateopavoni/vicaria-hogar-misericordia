@@ -4,10 +4,10 @@ import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalCompo
 import { Collaborator, CollaboratorType, CreateCollaboratorDto } from '../../interfaces/collaborator.interface';
 
 /**
- * Modal para dar de alta o editar un colaborador (SCRUM-201).
+ * Modal para dar de alta o editar un colaborador.
  * collaborator = null -> modo "Nuevo colaborador". collaborator = {...} -> modo "Editar".
  * El padre (collaborator-management) decide si llama a create() o update() al recibir "saved".
- * Único campo obligatorio: nombre (ver AC de SCRUM-18).
+ * Único campo obligatorio: nombre.
  */
 @Component({
   selector: 'app-collaborator-form-modal',
@@ -20,7 +20,7 @@ export class CollaboratorFormModalComponent {
   // null = alta de un colaborador nuevo; con valor = edición de ese colaborador
   collaborator = input<Collaborator | null>(null);
 
-  // SCRUM-207: cuando se abre "Registrar colaborador" desde el estado vacío de la
+  // Cuando se abre "Registrar colaborador" desde el estado vacío de la
   // búsqueda, precarga el nombre tipeado. Solo aplica en modo alta (collaborator = null).
   prefillFirstName = input<string | null>(null);
 

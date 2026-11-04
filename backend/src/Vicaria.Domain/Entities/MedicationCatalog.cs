@@ -1,9 +1,9 @@
 namespace Vicaria.Domain.Entities;
 
-// catálogo de medicamentos disponibles (SCRUM-232/EP-11): solo medicamentos
+// catálogo de medicamentos disponibles: solo medicamentos
 // del catálogo pueden cargarse en un esquema. Stock = unidades en farmacia;
-// 0 = sin stock (el esquema se marca como pendiente, ver SCRUM-233).
-// MinimumStockThreshold = umbral configurable para alertas de stock bajo (SCRUM-245).
+// 0 = sin stock (el esquema se marca como pendiente).
+// MinimumStockThreshold = umbral configurable para alertas de stock bajo.
 public class MedicationCatalog
 {
     public Guid Id { get; set; }

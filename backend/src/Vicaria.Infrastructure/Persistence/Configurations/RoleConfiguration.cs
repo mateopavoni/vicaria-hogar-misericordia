@@ -11,7 +11,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
     // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos de Directora
     internal static readonly Guid CasaConvivenciaDirectorId = new("22222222-2222-2222-2222-222222222222");
     private static readonly Guid ListenerId = new("33333333-3333-3333-3333-333333333333");
-    // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos del Coordinador (SCRUM-102)
+    // internal (no private): RolePermissionConfiguration necesita este id para sembrar los permisos del Coordinador
     internal static readonly Guid CasaConvivenciaCoordinatorId = new("77777777-7777-7777-7777-777777777777");
 
     public void Configure(EntityTypeBuilder<Role> builder)

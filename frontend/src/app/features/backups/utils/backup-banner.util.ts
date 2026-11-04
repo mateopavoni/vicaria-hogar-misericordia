@@ -1,6 +1,6 @@
 import { BackupBanner, BackupRecord } from '../interfaces/backup.interface';
 
-/** Cantidad mínima de respaldos diarios que se conservan (criterio de aceptación). */
+/** Cantidad mínima de respaldos diarios que se conservan. */
 export const BACKUP_RETENTION = 30;
 
 /** Pasadas estas horas sin un respaldo nuevo se avisa que el diario no corrió. */

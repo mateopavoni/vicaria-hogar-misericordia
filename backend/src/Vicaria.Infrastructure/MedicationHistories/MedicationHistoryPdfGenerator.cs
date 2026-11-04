@@ -4,8 +4,8 @@ using Vicaria.Application.MedicationHistories;
 
 namespace Vicaria.Infrastructure.MedicationHistories;
 
-// genera el PDF del historial de medicación de una persona (SCRUM-241) con PdfSharp,
-// con el mismo conjunto que el endpoint JSON (SCRUM-240) más el encabezado para
+// genera el PDF del historial de medicación de una persona con PdfSharp,
+// con el mismo conjunto que el endpoint JSON más el encabezado para
 // presentar a un profesional de salud; sigue el estilo de AttendanceSummaryPdfGenerator
 public class MedicationHistoryPdfGenerator : IMedicationHistoryPdfGenerator
 {
@@ -100,7 +100,7 @@ public class MedicationHistoryPdfGenerator : IMedicationHistoryPdfGenerator
             }
 
             _graphics.DrawString(text, font, XBrushes.Black,
-                new XRect(XUnit.FromPoint(Margin), XUnit.FromPoint(_y), XUnit.FromPoint(_page.Width.Point - Margin * 2), XUnit.FromPoint(LineHeight)),
+                new XRect(Margin, _y, _page.Width.Point - Margin * 2, LineHeight),
                 XStringFormats.TopLeft);
             _y += LineHeight;
         }

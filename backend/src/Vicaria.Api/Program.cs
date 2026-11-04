@@ -408,7 +408,7 @@ static void SeedDemoData(VicariaDbContext dbContext)
     var (personLucia, recordLucia) = MakePerson(
         "Lucía", "Fernández", null, PersonType.Resident, SocialRecordStatus.Active,
         "Ingreso voluntario a la Casa de Convivencia", "Sin vivienda", null, 10);
-    // ficha activa con seguimiento vencido: dispara la alerta de 30 días sin observaciones (SCRUM-22)
+    // ficha activa con seguimiento vencido: dispara la alerta de 30 días sin observaciones
     var (personPedro, recordPedro) = MakePerson(
         "Pedro", "Almada", "27111222", PersonType.Ambulatory, SocialRecordStatus.Active,
         "Asiste al comedor, sin seguimiento reciente", "Calle", "Changas", 60);
@@ -442,7 +442,7 @@ static void SeedDemoData(VicariaDbContext dbContext)
         }
     );
 
-    // evaluación psiquiátrica vigente para los residentes (Carlos, Lucía) — condición para PersonType.Resident (SCRUM-134)
+    // evaluación psiquiátrica vigente para los residentes (Carlos, Lucía) — condición para PersonType.Resident
     dbContext.PsychiatricEvaluations.AddRange(
         new PsychiatricEvaluation
         {
@@ -563,7 +563,7 @@ static void SeedDemoData(VicariaDbContext dbContext)
         }
     );
 
-    // asistencia reciente para los 4 activos: el job de inactividad (SCRUM-135) pasa a
+    // asistencia reciente para los 4 activos: el job de inactividad pasa a
     // Inactive cualquier ficha Activa sin asistencia en los últimos 30 días, sin importar
     // qué tan reciente sea el ingreso — sin esto, la demo arranca con todo marcado inactivo
     dbContext.Attendances.AddRange(
@@ -577,9 +577,9 @@ static void SeedDemoData(VicariaDbContext dbContext)
     dbContext.SaveChanges();
 }
 
-// catálogo de ejemplo para QA manual local y demos (docker-compose, SCRUM-232):
-// nombres genéricos de prueba (no son medicamentos reales), uno sin stock para
-// ver la alerta de "pendiente de stock". Idempotente e independiente de SeedDemoData.
+// catálogo de medicamentos de ejemplo para el entorno local y las demos.
+// Son nombres de prueba (no medicamentos reales) y uno queda sin stock para
+// mostrar la alerta de "pendiente de stock". Se puede ejecutar más de una vez.
 static void SeedDemoMedicationCatalog(VicariaDbContext dbContext)
 {
     if (dbContext.MedicationCatalogs.Any())
@@ -596,7 +596,7 @@ static void SeedDemoMedicationCatalog(VicariaDbContext dbContext)
     dbContext.SaveChanges();
 }
 
-// esquema de ejemplo para ver la alerta de revisión mensual (SCRUM-249): cargado hace 45
+// esquema de ejemplo para ver la alerta de revisión mensual: cargado hace 45
 // días y nunca revisado, así supera el umbral de 30 días. Idempotente e independiente
 // de los otros seed.
 static void SeedDemoMedicationSchemes(VicariaDbContext dbContext)

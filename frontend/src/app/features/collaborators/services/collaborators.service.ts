@@ -57,7 +57,7 @@ export class CollaboratorsService {
     );
   }
 
-  // PUT api/collaborators/{id} (SCRUM-200): edición completa; incluye isActive, que registra
+  // PUT api/collaborators/{id}: edición completa; incluye isActive, que registra
   // la baja o reactivación en la auditoría. Responde 204 sin cuerpo.
   update(id: string, dto: UpdateCollaboratorDto): Observable<Collaborator> {
     const current = this.known.get(id);

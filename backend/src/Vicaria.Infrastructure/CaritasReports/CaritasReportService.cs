@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.CaritasReports;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.CaritasReports;
 
-// desglose por motivo, totales y base del PDF del informe Caritas (SCRUM-270):
+// desglose por motivo, totales y base del PDF del informe Caritas:
 // personas atendidas = asistencias nominales distintas en el rango;
 // el rango replica la regla del front (periodRange): últimos 3/6 meses
 // que terminan en la fecha de corte, inclusive
@@ -19,7 +20,7 @@ public class CaritasReportService : ICaritasReportService
     {
         if (type != "trimestral" && type != "semestral") return CaritasReportResult.InvalidPeriod();
         var toDate = to.Date;
-        if (toDate > DateTime.UtcNow.Date) return CaritasReportResult.InvalidDate();
+        if (toDate > CordobaClock.Today) return CaritasReportResult.InvalidDate();
 
         var fromDate = ResolveFrom(type, toDate);
         var toExclusive = toDate.AddDays(1);
@@ -55,7 +56,7 @@ public class CaritasReportService : ICaritasReportService
             .ToListAsync(cancellationToken);
 
         // todos los valores del catálogo: los activos aparecen aunque cuenten 0 y los dados
-        // de baja solo si alguna ficha todavía los usa (baja lógica, SCRUM-274)
+        // de baja solo si alguna ficha todavía los usa (baja lógica)
         var catalogValues = await _dbContext.CaritasCatalogValues
             .AsNoTracking()
             .OrderBy(v => v.CreatedAt)

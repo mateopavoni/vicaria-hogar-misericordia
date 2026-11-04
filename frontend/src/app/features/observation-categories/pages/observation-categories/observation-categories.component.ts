@@ -7,8 +7,8 @@ import { CategoryFormModalComponent } from '../../components/category-form-modal
 import { CategoryFilter, countByStatus, filterCategories } from '../../utils/category-filter.util';
 
 /**
- * SCRUM-180 (front de SCRUM-72): configuración de categorías de observaciones
- * (/dashboard/configuracion/categorias). SMART, solo Referente (permiso categorias.manage).
+ * Configuración de categorías de observaciones
+ * (/dashboard/configuracion/categorias), solo Referente (permiso categorias.manage).
  * Crear, editar, activar/desactivar y eliminar (solo si no tiene observaciones: el backend
  * lo valida y responde con el motivo). Las desactivadas no se ofrecen al cargar observaciones
  * nuevas pero siguen viéndose en las históricas.

@@ -37,9 +37,7 @@ export interface BackendUser {
 export type LoginErrorType = 'credentials' | 'blocked' | 'pending' | 'inactive' | 'rejected' | 'unknown';
 
 
-// bug reportado 2026-09-23: el backend manda el campo "status" (AuthController.Login,
-// StatusCode(403, new { status = result.Status, ... })), no "estado" — la comparación
-// nunca activaba las ramas de "cuenta bloqueada"/"cuenta pendiente"
+// cuerpo del 403 del login: status indica si la cuenta está bloqueada o pendiente
 export interface LoginErrorBody {
   status?: 'Bloqueada' | 'Pending' | 'Inactive' | 'Rejected';
   message?: string;

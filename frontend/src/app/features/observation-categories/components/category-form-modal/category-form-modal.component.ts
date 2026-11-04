@@ -3,7 +3,7 @@ import { UiButtonComponent, UiFormFieldComponent, UiInputDirective, UiModalCompo
 import { CreateCategoryDto, ObservationCategory } from '../../../social-records/interfaces/observation-category.interface';
 import { DESCRIPTION_MAX, NAME_MAX, validateCategory } from '../../utils/category-filter.util';
 
-/** SCRUM-180: crear o editar una categoría de observación (DUMB). Sin `category` = alta. */
+/** Crear o editar una categoría de observación. Sin `category` = alta. */
 @Component({
   selector: 'app-category-form-modal',
   imports: [UiModalComponent, UiButtonComponent, UiFormFieldComponent, UiInputDirective],

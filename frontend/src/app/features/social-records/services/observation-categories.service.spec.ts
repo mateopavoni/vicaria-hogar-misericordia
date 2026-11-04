@@ -4,10 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { ObservationCategoriesService } from './observation-categories.service';
 
-// bug reportado 2026-09-23: getActive() apuntaba a GET /api/observation-categories/active
-// (ruta inexistente, el modal de "crear observación" fallaba en 404 y el combo de
-// categorías quedaba siempre vacío) y toggleActive() apuntaba a .../toggle-status en vez
-// de .../status. Este spec fija el contrato real contra el backend.
+// verifica las rutas que usa el servicio contra el backend
 describe('ObservationCategoriesService', () => {
   let service: ObservationCategoriesService;
   let httpMock: HttpTestingController;

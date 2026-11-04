@@ -1,5 +1,5 @@
 /**
- * SCRUM-218 (front de SCRUM-54) + SCRUM-230 (front de SCRUM-57): registro de asistencia diaria.
+ * Registro de asistencia diaria.
  * Las actividades ya no son una lista fija: son un catálogo configurable por el Referente
  * (ver AttendanceActivitiesService). El id es un texto estable.
  */
@@ -7,7 +7,7 @@ export type AttendanceActivity = string;
 
 /**
  * Área del hogar. El registro de la Casa de Convivencia es diario y va aparte del Hogar de
- * día (SCRUM-57): tiene su propia actividad fija y solo admite residentes.
+ * día: tiene su propia actividad fija y solo admite residentes.
  */
 export type AttendanceArea = 'hogar-de-dia' | 'casa-convivencia';
 
@@ -64,7 +64,7 @@ export interface SaveDailyAttendanceRequest {
   justification: string | null;
 }
 
-/** SCRUM-222: una fecha en la que una persona asistió a una actividad. */
+/** Una fecha en la que una persona asistió a una actividad. */
 export interface AttendanceHistoryEntry {
   activity: AttendanceActivity;
   /** YYYY-MM-DD */
@@ -80,16 +80,6 @@ export interface AttendanceStats {
   lastAttendance: string | null;
   /** Días corridos desde la última asistencia hasta hoy; null si nunca asistió. */
   daysSinceLast: number | null;
-}
-
-/** SCRUM-226: filtros del panel de estadísticas. */
-export interface AttendanceStatsFilters {
-  /** YYYY-MM-DD, inclusive */
-  from: string;
-  /** YYYY-MM-DD, inclusive */
-  to: string;
-  /** null = todas las actividades */
-  activity: AttendanceActivity | null;
 }
 
 export interface ActivityStats {
@@ -117,7 +107,7 @@ export interface AttendanceOverview {
   perDay: DayTotal[];
 }
 
-/** Persona que dejó de asistir hace más de N días (SCRUM-56: 14). */
+/** Persona que dejó de asistir hace más de N días. */
 export interface InactivePerson {
   personId: string;
   fullName: string;

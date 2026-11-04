@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Api.Controllers;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Attendances;
 using Vicaria.Infrastructure.Persistence;
@@ -215,7 +216,7 @@ public class PersonAttendanceHistoryTests
     {
         using var db = CrearDbContext();
         var person = await CrearPersona(db);
-        var today = DateTime.UtcNow.Date;
+        var today = CordobaClock.Today;
         await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-2));
         await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-1));
         await CrearAsistencia(db, person.Id, AttendanceActivity.CasaConvivencia, today);
@@ -238,7 +239,7 @@ public class PersonAttendanceHistoryTests
     {
         using var db = CrearDbContext();
         var person = await CrearPersona(db);
-        var today = DateTime.UtcNow.Date;
+        var today = CordobaClock.Today;
         await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-2));
         await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today.AddDays(-1));
 
@@ -260,7 +261,7 @@ public class PersonAttendanceHistoryTests
     {
         using var db = CrearDbContext();
         var person = await CrearPersona(db);
-        var pastDate = DateTime.UtcNow.Date.AddDays(-8);
+        var pastDate = CordobaClock.Today.AddDays(-8);
         await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, pastDate);
 
         var service = new AttendanceService(db);
@@ -281,7 +282,7 @@ public class PersonAttendanceHistoryTests
     {
         using var db = CrearDbContext();
         var person = await CrearPersona(db);
-        var today = DateTime.UtcNow.Date;
+        var today = CordobaClock.Today;
         await CrearAsistencia(db, person.Id, AttendanceActivity.DayCenter, today);
         await CrearAsistencia(db, person.Id, AttendanceActivity.CasaConvivencia, today);
 

@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Application.CalendarEvents;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 
 namespace Vicaria.Api.Controllers;
@@ -29,7 +30,7 @@ public class GeneralCalendarEventsController : ControllerBase
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     private bool IsReferent => User.IsInRole(RoleNames.Referent);
 
-    // alta solo para Referente (SCRUM-189); la visibilidad para todos los usuarios
+    // alta solo para Referente; la visibilidad para todos los usuarios
     // la resuelve el listado/consulta del calendario, que es otra tarea
     [HttpPost]
     [Authorize(Roles = RoleNames.Referent)]
@@ -51,7 +52,7 @@ public class GeneralCalendarEventsController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, new { id = result.GeneralCalendarEventId });
     }
 
-    // listado de eventos generales con ocurrencias recurrentes expandidas y paginado (SCRUM-194)
+    // listado de eventos generales con ocurrencias recurrentes expandidas y paginado
     [HttpGet]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> GetOccurrences(
@@ -60,7 +61,7 @@ public class GeneralCalendarEventsController : ControllerBase
         [FromQuery] int page = 1,
         CancellationToken cancellationToken = default)
     {
-        var fromDate = from?.Date ?? DateTime.UtcNow.Date;
+        var fromDate = from?.Date ?? CordobaClock.Today;
         var toDate = to?.Date ?? fromDate.AddDays(6);
         if (fromDate > toDate)
         {
@@ -112,7 +113,7 @@ public class GeneralCalendarEventsController : ControllerBase
         };
     }
 
-    // detalle de un evento general sin expandir; 404 si no existe (SCRUM-194)
+    // detalle de un evento general sin expandir; 404 si no existe
     [HttpGet("{id:guid}")]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.MedicationSchemes;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.MedicationSchemes;
@@ -65,7 +66,7 @@ public class MedicationSchemeServiceTests
         {
             Id = Guid.NewGuid(),
             PersonId = person.Id,
-            Date = evaluationDate ?? MedicationSchemeService.GetCordobaToday(),
+            Date = evaluationDate ?? CordobaClock.Today,
             Professional = "Dra. Test",
             IsValid = validEvaluation,
             RegisteredByUserId = createdByUserId
@@ -191,7 +192,7 @@ public class MedicationSchemeServiceTests
     {
         using var db = CreateDbContext();
         var actorId = await SeedUserAsync(db);
-        var cutoffDate = MedicationSchemeService.GetCordobaToday().AddMonths(-6);
+        var cutoffDate = CordobaClock.Today.AddMonths(-6);
         var personId = await SeedPersonAsync(db, actorId, validEvaluation: true, evaluationDate: cutoffDate);
         var medicationId = await SeedMedicationAsync(db);
         var service = new MedicationSchemeService(db);
@@ -206,7 +207,7 @@ public class MedicationSchemeServiceTests
     {
         using var db = CreateDbContext();
         var actorId = await SeedUserAsync(db);
-        var expiredDate = MedicationSchemeService.GetCordobaToday().AddMonths(-6).AddDays(-1);
+        var expiredDate = CordobaClock.Today.AddMonths(-6).AddDays(-1);
         var personId = await SeedPersonAsync(db, actorId, validEvaluation: true, evaluationDate: expiredDate);
         var medicationId = await SeedMedicationAsync(db);
         var service = new MedicationSchemeService(db);
@@ -222,13 +223,13 @@ public class MedicationSchemeServiceTests
     {
         using var db = CreateDbContext();
         var actorId = await SeedUserAsync(db);
-        var expiredDate = MedicationSchemeService.GetCordobaToday().AddMonths(-6).AddDays(-10);
+        var expiredDate = CordobaClock.Today.AddMonths(-6).AddDays(-10);
         var personId = await SeedPersonAsync(db, actorId, validEvaluation: true, evaluationDate: expiredDate);
         db.PsychiatricEvaluations.Add(new PsychiatricEvaluation
         {
             Id = Guid.NewGuid(),
             PersonId = personId,
-            Date = MedicationSchemeService.GetCordobaToday().AddMonths(-2),
+            Date = CordobaClock.Today.AddMonths(-2),
             Professional = "Dra. Reciente",
             IsValid = true,
             RegisteredByUserId = actorId

@@ -227,9 +227,7 @@ public class PersonTypeUpdateTests
         Assert.NotNull(log);
     }
 
-    // bug reportado 2026-09-23: se podía dejar de ser Residente (por este endpoint o por
-    // UpdateAsync/UpdatePersonProfileStatusAsync) con una estadía todavía abierta,
-    // desincronizando el botón de ingreso/egreso del frontend.
+    // dejar de ser Residente con una estadía abierta no está permitido por ningún endpoint
     [Fact]
     public async Task SetAmbulatory_ConEstadiaActiva_DevuelveActiveStayMustBeExitedFirst()
     {
@@ -264,7 +262,7 @@ public class PersonTypeUpdateTests
         Assert.True(resultado.Success);
     }
 
-    // bug reportado 2026-09-23: el historial de tipo de persona nunca existió
+    // cada cambio de tipo de persona queda en el historial
     [Fact]
     public async Task CambioTipo_RegistraEntradaEnHistorial()
     {
