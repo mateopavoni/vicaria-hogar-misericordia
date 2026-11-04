@@ -26,7 +26,7 @@ const EMPTY_OVERVIEW: AttendanceStatistics = {
 };
 
 /**
- * SCRUM-226 (front de SCRUM-56): panel de estadísticas de asistencia del Centro Barrial.
+ * Panel de estadísticas de asistencia del Centro Barrial.
  * Los números los calcula el backend (/api/attendances/statistics, /inactive y el PDF mensual).
  * Solo para Referente (permiso asistencia.stats): lo protege la ruta y el que lo monta.
  */

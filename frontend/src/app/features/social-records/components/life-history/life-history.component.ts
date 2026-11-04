@@ -32,9 +32,7 @@ export class LifeHistoryComponent {
   // por etapa: si se está mostrando el historial completo de entradas anteriores
   expandedStage = signal<LifeHistoryStage | null>(null);
 
-  // bug reportado 2026-09-23: "Editar" guardaba siempre sobre la misma entrada en vez de
-  // crear una nueva. Ahora el modal siempre arranca en blanco: cada guardado es una entrada
-  // nueva en el historial, no una edición de la anterior.
+  // el modal arranca en blanco: cada guardado es una entrada nueva en el historial
   startNewEntry(stage: LifeHistoryStage): void {
     this.editingStage.set(stage);
   }

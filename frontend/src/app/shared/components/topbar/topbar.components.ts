@@ -4,8 +4,7 @@ import { NotificationMenuComponent } from '../notification-menu/notification-men
 import { UserRole } from '../../../core/auth/userRole';
 import { SidebarStateService } from '../../layout/sidebar-state.service';
 
-// nombres lindos para mostrar en pantalla, el código interno sigue siendo el de UserRole
-// bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia
+// nombre de cada rol para mostrar en pantalla
 const ROLE_LABELS: Record<UserRole, string> = {
   Referente: 'Referente',
   DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',

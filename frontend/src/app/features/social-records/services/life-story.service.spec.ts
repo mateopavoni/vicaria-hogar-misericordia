@@ -4,9 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { LifeStoryService } from './life-story.service';
 
-// bug reportado 2026-09-23: guardar una etapa pisaba el contenido anterior en vez de
-// sumar una entrada nueva al historial. Este spec fija que el mapeo del frontend
-// conserva la lista de entradas que ahora manda el backend (LifeStorySectionDto.Entries).
+// el mapeo conserva la lista de entradas de cada etapa que manda el backend
 describe('LifeStoryService', () => {
   let service: LifeStoryService;
   let httpMock: HttpTestingController;

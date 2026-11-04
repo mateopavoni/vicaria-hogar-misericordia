@@ -4,8 +4,8 @@ import { UiButtonComponent, UiModalComponent } from '../../../../shared/ui';
 import { Collaborator, CollaboratorType } from '../../interfaces/collaborator.interface';
 
 /**
- * Ficha completa de un colaborador, de solo lectura (SCRUM-207): se abre al hacer
- * clic en un resultado de la búsqueda (SCRUM-19/SCRUM-206) y muestra todos los datos,
+ * Ficha completa de un colaborador, de solo lectura: se abre al hacer
+ * clic en un resultado de la búsqueda y muestra todos los datos,
  * no solo los que aparecen en la tabla de resultados (nombre, teléfono, email, tipo).
  * Desde acá se puede pasar a edición con el botón "Editar".
  */

@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// eventos del calendario general (agenda compartida del hogar, EP-04/SCRUM-183).
+// eventos del calendario general (agenda compartida del hogar).
 // Date null + RecurrenceDays con valores = plantilla recurrente precargada por seed;
 // Date con valor = evento concreto cargado en una fecha. AuthorUserId anulado porque
 // las plantillas institucionales no tienen autor (seed entra con null).

@@ -102,9 +102,9 @@ export interface SocialRecordsResponse {
 
     status: PersonStatus;
     lastModifiedAt?: string | null;
-    // SCRUM-264: historial de cambios de estado (automáticos del job y manuales con motivo)
+    // Historial de cambios de estado (automáticos del job y manuales con motivo)
     statusHistory?: ChangeHistoryItem[];
-    // SCRUM-275: campos del informe de Cáritas (un id del catálogo por campo)
+    // Campos del informe de Cáritas (un id del catálogo por campo)
     reportFields?: ReportFieldsDto;
   }
 

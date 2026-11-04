@@ -6,7 +6,7 @@ import { MedicationService } from '../../services/medication.service';
 import { filterHistory, summarizeHistory } from '../../utils/medication-history.util';
 
 /**
- * SCRUM-242: historial de tomas de medicación de una persona (pestaña "Medicación" del
+ * Historial de tomas de medicación de una persona (pestaña "Medicación" del
  * perfil). Tabla por fecha con filtro de rango y de medicamento; las no administradas se
  * resaltan. "Exportar PDF" usa la impresión del navegador ("Guardar como PDF"), mostrando
  * solo este bloque (ver estilos .print-target en styles.css). El que lo monta decide el

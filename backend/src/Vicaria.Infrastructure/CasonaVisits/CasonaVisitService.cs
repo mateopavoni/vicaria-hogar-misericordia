@@ -78,7 +78,7 @@ public class CasonaVisitService : ICasonaVisitService
             return UpdateCasonaVisitResult.NotFound();
         }
 
-        // solo una visita Pendiente es editable; Realizada/Cancelada quedan congeladas (SCRUM-210)
+        // solo una visita Pendiente es editable; Realizada/Cancelada quedan congeladas
         if (visit.Status != VisitStatus.Pending)
         {
             return UpdateCasonaVisitResult.InvalidState();
@@ -216,7 +216,6 @@ public class CasonaVisitService : ICasonaVisitService
     }
 
     // la persona debe existir, tener ficha con tipo Residente y una estadía sin egreso
-    // (reglas de SCRUM-210: visitas de residentes a la Casa de Convivencia)
     private async Task<PersonIssue> CheckPersonAsync(Guid personId, CancellationToken cancellationToken)
     {
         var person = await _dbContext.People

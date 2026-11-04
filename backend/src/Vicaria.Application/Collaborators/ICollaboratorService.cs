@@ -18,7 +18,7 @@ public interface ICollaboratorService
         Guid actorId,
         CancellationToken cancellationToken);
 
-    // búsqueda por nombre, apellido o área con filtro opcional por tipo (SCRUM-204)
+    // búsqueda por nombre, apellido o área con filtro opcional por tipo
     Task<List<CollaboratorSearchResultDto>> SearchAsync(
         string? query,
         CollaboratorType? typeFilter = null,

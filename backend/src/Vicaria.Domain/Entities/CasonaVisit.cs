@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// visita de un residente a la Casa de Convivencia (SCRUM-209 / SCRUM-74): entidad
+// visita de un residente a la Casa de Convivencia: entidad
 // independiente de los eventos del calendario (GeneralCalendarEvent/PersonalCalendarEvent).
 // VisitorName es texto libre porque no existe tabla de visitantes; CancellationReason
 // solo aplica cuando Status = Cancelled.

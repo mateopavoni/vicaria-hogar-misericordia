@@ -95,7 +95,7 @@ public class ObservationService : IObservationService
         return new ObservationsTimelineResponseDto(items, totalCount);
     }
 
-    // exportacion de las observaciones filtradas a CSV, mismo filtro que el timeline (SCRUM-166)
+    // exportacion de las observaciones filtradas a CSV, mismo filtro que el timeline
     public async Task<string> ExportToCsvAsync(
         Guid personId,
         GetObservationsFilterDto filters,

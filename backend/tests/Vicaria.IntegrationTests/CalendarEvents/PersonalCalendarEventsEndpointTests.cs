@@ -248,7 +248,7 @@ public class PersonalCalendarEventsEndpointTests : IClassFixture<VicariaWebAppli
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // conversión personal -> general (SCRUM-195): PUT api/personal-calendar-events/{id}/publish
+    // conversión personal -> general: PUT api/personal-calendar-events/{id}/publish
     [Fact]
     public async Task Publish_ByOwner_Returns200MovesEventToGeneral()
     {

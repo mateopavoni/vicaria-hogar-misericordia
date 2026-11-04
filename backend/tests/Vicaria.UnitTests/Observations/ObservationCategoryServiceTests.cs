@@ -96,7 +96,7 @@ public class ObservationCategoryServiceTests
         var service = new ObservationCategoryService(db);
         var actorId = Guid.NewGuid();
 
-        // nombre distinto a las categorias predefinidas por seed (SCRUM-179), sino choca con DuplicateName
+        // nombre distinto a las categorias predefinidas por seed, sino choca con DuplicateName
         var resultado = await service.CreateAsync(new CreateObservationCategoryDto("Autonomía"), actorId);
 
         Assert.True(resultado.Success);
@@ -126,7 +126,7 @@ public class ObservationCategoryServiceTests
     public async Task UpdateAsync_ConDescripcionVacia_GuardaNull()
     {
         using var db = CrearDbContext();
-        // nombre distinto a las categorias predefinidas por seed (SCRUM-179), sino choca con DuplicateName
+        // nombre distinto a las categorias predefinidas por seed, sino choca con DuplicateName
         var categoria = await CrearCategoriaAsync(db, "Autonomía", "Vieja descripción");
         var service = new ObservationCategoryService(db);
 
@@ -254,7 +254,7 @@ public class ObservationCategoryServiceTests
     public async Task GetCategoriesAsync_OnlyActiveFalse_IncluyeInactivas()
     {
         using var db = CrearDbContext();
-        // hay 6 categorias predefinidas por seed (SCRUM-179), ademas de las 2 que crea este test
+        // hay 6 categorias predefinidas por seed, ademas de las 2 que crea este test
         var categoriasPreexistentes = await db.ObservationCategories.CountAsync();
         var activa = await CrearCategoriaAsync(db, "Autonomía");
         var inactiva = await CrearCategoriaAsync(db, "Legal");

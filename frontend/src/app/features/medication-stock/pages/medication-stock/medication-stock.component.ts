@@ -15,8 +15,8 @@ import { MedicationStockService } from '../../services/medication-stock.service'
 import { itemsNeedingAttention, stockLevel } from '../../utils/stock-level.util';
 
 /**
- * SCRUM-246: inventario de medicamentos del Centro Barrial (/dashboard/medicacion/stock).
- * SMART: listado con stock actual, ingreso, umbral, alerta de stock bajo e historial de
+ * Inventario de medicamentos del Centro Barrial (/dashboard/medicacion/stock).
+ * Listado con stock actual, ingreso, umbral, alerta de stock bajo e historial de
  * movimientos por medicamento. Solo con permiso medicamentos.stock (Referente y Directora).
  * Independiente del stock de ropa.
  */

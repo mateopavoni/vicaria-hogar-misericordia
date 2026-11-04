@@ -30,7 +30,7 @@
     }
   </div>
 
-  <!-- SCRUM-196/SCRUM-74: General / Mi calendario / Combinado / Visitas Casa de Convivencia — la
+  <!-- General / Mi calendario / Combinado / Visitas Casa de Convivencia — la
        fila solo se muestra si hay al menos una pestaña extra aparte de "General"
        (calendario personal y/o permiso visitas.view, ver hasExtraTabs()). -->
   @if (hasExtraTabs()) {
@@ -53,7 +53,7 @@
 
   @if (calendarTab() === 'visitas') {
 
-    <!-- SCRUM-74/SCRUM-213/SCRUM-214: calendario de visitas de la Casa de Convivencia,
+    <!-- Calendario de visitas de la Casa de Convivencia,
          con sus propios datos/permisos/vistas (día/semana/mes) y modales — se monta
          entero acá adentro, en vez de tener su propia ruta y link de sidebar. -->
     <app-casa-convivencia-visits-calendar />
@@ -97,7 +97,7 @@
       </div>
     </div>
 
-    <!-- ÉXITO (SCRUM-192): confirmación visible de crear/editar/eliminar, se oculta sola -->
+    <!-- ÉXITO: confirmación visible de crear/editar/eliminar, se oculta sola -->
     @if (successMessage()) {
       <div class="mb-4 rounded-md bg-emerald-50 px-4 py-3 text-[14px] font-semibold text-emerald-600" role="status">
         {{ successMessage() }}
@@ -240,7 +240,7 @@
       />
     }
 
-    <!-- ELIMINAR (SCRUM-16/SCRUM-192): confirmación previa obligatoria -->
+    <!-- ELIMINAR: confirmación previa obligatoria -->
     @if (deletingEvent(); as event) {
       <ui-confirm-dialog
         title="Eliminar evento"

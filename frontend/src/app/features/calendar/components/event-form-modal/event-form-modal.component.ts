@@ -5,14 +5,8 @@ import { isBeforeToday, todayLocalIso } from '../../../../shared/utils/date.util
 import { CalendarEvent, EventFormValue, RecurrenceFrequency } from '../../interfaces/calendar-event.interface';
 
 /**
- * SCRUM-186/SCRUM-187/SCRUM-191: alta y edición de un evento del calendario,
- * incluyendo si es recurrente (diario/semanal/mensual, AC de SCRUM-16). No se usa para
- * las actividades recurrentes precargadas (no se pueden editar, ver AC de SCRUM-15).
- * Oculto para el rol Escucha (el padre decide si renderiza el botón que abre esto).
- * SCRUM-197 (AC): "los eventos personales siguen el mismo formulario de carga que los
- * generales" — por eso este componente no sabe nada de `scope`: lo decide
- * CalendarComponent (según la pestaña activa, o conservando el del evento original al
- * editar), no un campo del formulario.
+ * Alta y edición de un evento del calendario, con repetición diaria, semanal o mensual.
+ * Sirve para eventos generales y personales: a qué calendario va lo decide CalendarComponent.
  */
 @Component({
   selector: 'app-event-form-modal',
@@ -94,7 +88,7 @@ export class EventFormModalComponent {
     return null;
   }
 
-  // SCRUM-16 (AC): "si se intenta guardar un evento sin título o sin fecha, el sistema
+  // "si se intenta guardar un evento sin título o sin fecha, el sistema
   // muestra un error de validación claro" — faltaba este getter, el control ya era
   // required pero no se mostraba ningún mensaje.
   get dateError(): string | null {

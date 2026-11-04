@@ -70,14 +70,14 @@
                 }
               </div>
 
-              <!-- SCRUM-55: más de 7 días sin asistir -->
+              <!-- Más de 7 días sin asistir -->
               @if (hasAbsenceAlert()) {
                 <span class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                   ⚠ {{ attendanceStats().daysSinceLast }} días sin asistir
                 </span>
               }
 
-              <!-- SCRUM-260: evaluación psiquiátrica por vencer / vencida -->
+              <!-- Evaluación psiquiátrica por vencer / vencida -->
               @if (permissionService.hasPermission('evaluaciones.view')) {
                 @if (evaluationValidity() === 'expiring') {
                   <span class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
@@ -90,7 +90,7 @@
                 }
               }
 
-              <!-- SCRUM-275: faltan datos para el informe de Cáritas -->
+              <!-- Faltan datos para el informe de Cáritas -->
               @if (pendingReportFields().length > 0) {
                 <span
                   class="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
@@ -255,7 +255,7 @@
           </button>
         }
 
-        <!-- MEDICACIÓN (SCRUM-234): oculta para Escucha, que no tiene medicamentos.view -->
+        <!-- MEDICACIÓN: oculta para Escucha, que no tiene medicamentos.view -->
         @if (permissionService.hasPermission('medicamentos.view')) {
           <button
             type="button"
@@ -271,7 +271,7 @@
           </button>
         }
 
-        <!-- EVALUACIONES (SCRUM-260) -->
+        <!-- EVALUACIONES -->
         @if (permissionService.hasPermission('evaluaciones.view')) {
         <button
           type="button"
@@ -287,7 +287,7 @@
         </button>
         }
 
-        <!-- DOCUMENTOS (SCRUM-256) -->
+        <!-- DOCUMENTOS -->
         @if (permissionService.hasPermission('adjuntos.view')) {
         <button
           type="button"
@@ -529,7 +529,7 @@
           />
         </section>
 
-        <!-- SCRUM-275: DATOS PARA EL INFORME DE CÁRITAS -->
+        <!-- DATOS PARA EL INFORME DE CÁRITAS -->
         <section class="mt-5 overflow-hidden rounded-lg border border-slate-200">
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
             <h2 class="text-[13px] font-semibold text-slate-800">Datos para el informe de Cáritas</h2>
@@ -559,7 +559,7 @@
           </div>
         </section>
 
-        <!-- SCRUM-264: HISTORIAL DE ESTADOS (automáticos y manuales, con motivo) -->
+        <!-- HISTORIAL DE ESTADOS (automáticos y manuales, con motivo) -->
         <section class="mt-5">
           <app-change-history
             [title]="'Historial de Estado (Activo / Inactivo)'"
@@ -582,7 +582,7 @@
         <app-attendance-history [entries]="attendanceHistory()" />
       }
 
-      <!-- PESTAÑA: MEDICACIÓN (SCRUM-234) -->
+      <!-- PESTAÑA: MEDICACIÓN -->
       @if (activeTab() === 'medicacion' && permissionService.hasPermission('medicamentos.view')) {
         <app-medication-schemes
           [personId]="person.personId"
@@ -592,12 +592,12 @@
         />
       }
 
-      <!-- PESTAÑA: EVALUACIONES (SCRUM-260) -->
+      <!-- PESTAÑA: EVALUACIONES -->
       @if (activeTab() === 'evaluaciones' && permissionService.hasPermission('evaluaciones.view')) {
         <app-psychiatric-evaluations [personId]="person.personId" />
       }
 
-      <!-- PESTAÑA: DOCUMENTOS (SCRUM-256) -->
+      <!-- PESTAÑA: DOCUMENTOS -->
       @if (activeTab() === 'documentos' && permissionService.hasPermission('adjuntos.view')) {
         <app-person-attachments [personId]="person.personId" />
       }

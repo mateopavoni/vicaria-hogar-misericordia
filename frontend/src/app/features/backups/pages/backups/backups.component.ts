@@ -8,7 +8,7 @@ import { BackupsService } from '../../services/backups.service';
 import { BACKUP_RETENTION, backupBanner } from '../../utils/backup-banner.util';
 
 /**
- * SCRUM-267: panel de respaldos (/dashboard/configuracion/respaldos). SMART: tabla con fecha,
+ * Panel de respaldos (/dashboard/configuracion/respaldos): tabla con fecha,
  * tamaño y estado, banner con el resultado del último respaldo y descarga manual.
  * Solo con permiso configuracion.respaldos (Referente).
  */

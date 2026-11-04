@@ -10,7 +10,7 @@ import { AdministrationStatus, AgendaItem, MedicationAgenda } from '../../interf
 import { MedicationService } from '../../services/medication.service';
 
 /**
- * SCRUM-238: agenda diaria de medicamentos (/dashboard/medicacion).
+ * Agenda diaria de medicamentos (/dashboard/medicacion).
  * Tomas agrupadas por hora según quiénes asistieron ese día. Se ve con medicamentos.view;
  * marcar tomas requiere medicamentos.edit (Referente y Directora) y solo en el día actual.
  * Los días anteriores son de solo lectura, para verificar el historial de administración.

@@ -69,7 +69,7 @@ public class PersonObservationsController : ControllerBase
         return Ok(response);
     }
 
-    // exportacion de las observaciones filtradas a CSV (SCRUM-166)
+    // exportacion de las observaciones filtradas a CSV
     [HttpGet("export")]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.Listener},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> ExportObservations(

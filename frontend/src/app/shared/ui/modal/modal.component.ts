@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 let nextId = 0;
 
 /**
- * Cascarón único para todos los modales de la app (DUMB component).
+ * Base común para todos los modales de la app.
  * Uso:
  *   <ui-modal title="..." (closed)="...">
  *     contenido

@@ -1,6 +1,5 @@
 /**
- * SCRUM-246 (front de SCRUM-71): inventario de medicamentos del Centro Barrial.
- * Módulo independiente del stock de ropa. OJO — backend pendiente: ver MedicationStockService.
+ * Inventario de medicamentos del Centro Barrial (independiente del stock de ropa).
  */
 
 export interface MedicationStockItem {

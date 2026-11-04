@@ -15,7 +15,7 @@ import { MedicationService } from '../../services/medication.service';
 import { MedicationSchemeFormModalComponent } from '../scheme-form-modal/scheme-form-modal.component';
 
 /**
- * SCRUM-234: sección "Medicación" del perfil de la persona. Lista el esquema (vigente e
+ * Sección "Medicación" del perfil de la persona. Lista el esquema (vigente e
  * histórico) y permite cargar medicamentos. Se monta solo con permiso medicamentos.view
  * (Referente, Directora y Coordinador; nunca Escucha); cargar requiere medicamentos.create
  * (Referente y Directora). Sin evaluación psiquiátrica vigente la carga queda bloqueada.
@@ -42,7 +42,7 @@ export class MedicationSchemesComponent implements OnInit {
   evaluationValid = signal<boolean | null>(null);
   evaluationExpired = signal(false);
 
-  // SCRUM-250: vigentes / esquemas anteriores / historial de tomas
+  // Vigentes / esquemas anteriores / historial de tomas
   activeTab = signal<'vigentes' | 'anteriores' | 'tomas'>('vigentes');
   tabs = computed<UiTab<'vigentes' | 'anteriores' | 'tomas'>[]>(() => [
     { id: 'vigentes', label: `Vigentes (${this.activeSchemes().length})` },
@@ -61,7 +61,7 @@ export class MedicationSchemesComponent implements OnInit {
   saving = signal(false);
   formError = signal<string | null>(null);
 
-  // SCRUM-242: historial de tomas, solo Referente y Directora
+  // Historial de tomas, solo Referente y Directora
   canViewHistory = computed(() => this.permissionService.hasPermission('medicamentos.history'));
   canCreate = computed(() => this.permissionService.hasPermission('medicamentos.create'));
   // la carga queda bloqueada hasta confirmar que hay una evaluación vigente

@@ -2,7 +2,7 @@ using Vicaria.Domain.Entities;
 
 namespace Vicaria.Application.CalendarEvents;
 
-// detalle sin expandir de un evento del calendario general (SCRUM-194);
+// detalle sin expandir de un evento del calendario general;
 // AuthorUserId es nullable porque las plantillas del seed no tienen autor
 public record GeneralCalendarEventDetailDto(
     Guid Id,

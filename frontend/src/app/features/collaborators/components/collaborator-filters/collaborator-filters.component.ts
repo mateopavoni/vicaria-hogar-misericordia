@@ -6,7 +6,7 @@ import { CollaboratorType } from '../../interfaces/collaborator.interface';
 type TypeOption = 'all' | 'volunteer' | 'employee';
 
 /**
- * SCRUM-19/SCRUM-206: filtro por tipo del listado de colaboradores. Mismo patrón que
+ * Filtro por tipo del listado de colaboradores. Mismo patrón que
  * SocialRecordFiltersComponent (form con "Aplicar"/"Limpiar", en vez de aplicar en
  * cada tecla), pero con las 3 opciones como checkboxes en línea en vez de un select
  * — se comportan como mutuamente excluyentes (como un radio), tal como se pidió.

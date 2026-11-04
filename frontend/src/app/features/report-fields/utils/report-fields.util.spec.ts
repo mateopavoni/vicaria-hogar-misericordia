@@ -1,4 +1,4 @@
-import { cleanReportData, hasPendingReportFields, pendingReportFields } from './report-fields.util';
+import { cleanReportData, pendingReportFields } from './report-fields.util';
 
 describe('pendingReportFields', () => {
   it('sin datos están pendientes los 5 campos', () => {
@@ -15,7 +15,7 @@ describe('pendingReportFields', () => {
 
   it('completo no tiene pendientes', () => {
     const full = { gender: 'a', housing: 'b', origin: 'c', document: 'd', mainReason: 'e' };
-    expect(hasPendingReportFields(full)).toBe(false);
+    expect(pendingReportFields(full)).toEqual([]);
   });
 
   it('cleanReportData deja null en los vacíos', () => {

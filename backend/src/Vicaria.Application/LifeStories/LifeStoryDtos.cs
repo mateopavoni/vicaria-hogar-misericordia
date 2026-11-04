@@ -1,7 +1,6 @@
 namespace Vicaria.Application.LifeStories;
 
-// una entrada histórica de una etapa (bug reportado 2026-09-23: guardar pisaba el contenido
-// anterior en vez de sumar una entrada nueva) — Content es lo que se escribió en ese momento.
+// una entrada del historial de una etapa; Content es lo que se escribió en ese momento
 public record LifeStoryEntryDto(
     Guid Id,
     string Content,

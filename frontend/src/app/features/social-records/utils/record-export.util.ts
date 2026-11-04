@@ -3,7 +3,7 @@ import { Observation } from '../interfaces/observation.interface';
 import { PersonStatus, PersonType, SocialRecordDetail } from '../interfaces/social-record.interface';
 
 /**
- * SCRUM-253: qué secciones incluye la ficha exportada.
+ * Qué secciones incluye la ficha exportada.
  * - 'datos': solo datos personales
  * - 'datos-observaciones': datos + observaciones
  * - 'todo': datos + historia de vida + observaciones
@@ -74,7 +74,7 @@ const orEmpty = (value: string | null | undefined): string => (value && value.tr
 
 /**
  * Arma el documento a exportar.
- * Privacidad (AC): no se incluyen datos de otros usuarios del sistema (autores de observaciones o
+ * Privacidad: no se incluyen datos de otros usuarios del sistema (autores de observaciones o
  * de la historia de vida, historial de cambios) ni de terceros (el contacto de la ficha).
  */
 export function buildRecordExport(input: BuildExportInput): RecordExportDocument {

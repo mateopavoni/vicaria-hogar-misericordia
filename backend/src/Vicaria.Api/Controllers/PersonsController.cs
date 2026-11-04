@@ -87,7 +87,7 @@ public class PersonsController : ControllerBase
         return Ok(stays);
     }
 
-    // cambia el tipo de persona (SCRUM-134): para Residente exige evaluación
+    // cambia el tipo de persona: para Residente exige evaluación
     // psiquiátrica vigente; sin ella responde 400 con el detalle
     [HttpPut("{id}/type")]
     [DirectorResidentsOnly]
@@ -115,7 +115,7 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
-    // cambia el estado del perfil (ambulatorio activo/inactivo, residente) y audita el cambio (SCRUM-152/153)
+    // cambia el estado del perfil (ambulatorio activo/inactivo, residente) y audita el cambio
     [HttpPut("{id}/status")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -139,10 +139,10 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
-    // carga de esquema de medicación (SCRUM-232 / SCRUM-59): medicamento del
+    // carga de esquema de medicación: medicamento del
     // catálogo + dosis + hora (HH:mm). Solo Residentes con evaluación
     // psiquiátrica vigente; el duplicado vigente responde 409. Devuelve el
-    // esquema completo como lo usa el front (SCRUM-234).
+    // esquema completo como lo usa el front.
     [HttpPost("{id}/medication-schemes")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -171,7 +171,7 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
-    // alta de evaluación psiquiátrica con unicidad de vigente (SCRUM-258): invalida las
+    // alta de evaluación psiquiátrica con unicidad de vigente: invalida las
     // anteriores de la persona, actualiza HasPsychiatricEvaluation en la ficha y calcula
     // el vencimiento (fecha + 6 meses). Solo Referente, Directora y Coordinador; Escucha → 403.
     [HttpPost("{id}/psychiatric-evaluations")]
@@ -200,7 +200,7 @@ public class PersonsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
-    // timeline unificado del perfil (SCRUM-159): hitos del expediente (estadías de
+    // timeline unificado del perfil: hitos del expediente (estadías de
     // Casa de Convivencia) + observaciones, ordenados por fecha. Lectura para los roles con acceso al perfil.
     [HttpGet("{id}/timeline")]
     [DirectorResidentsOnly]
@@ -217,7 +217,7 @@ public class PersonsController : ControllerBase
         };
     }
 
-    // exportación de la ficha a PDF (SCRUM-252): secciones datos /
+    // exportación de la ficha a PDF: secciones datos /
     // datos-observaciones / todo, con nombre del sistema, fecha y referente;
     // excluye autores de observaciones y registra la exportación en auditoría
     // solo el Referente exporta, igual que POST social-records/{id}/exports
@@ -256,8 +256,8 @@ public class PersonsController : ControllerBase
         return $"ficha-{baseName.ToLowerInvariant()}-{document.GeneratedAtUtc:yyyyMMdd}.pdf";
     }
 
-    // consulta el historial y esquemas vigentes de medicación de la persona (SCRUM-248 / SCRUM-75).
-    // Con needsReview=true devuelve solo los vigentes con más de 30 días sin revisión (SCRUM-249).
+    // consulta el historial y esquemas vigentes de medicación de la persona.
+    // Con needsReview=true devuelve solo los vigentes con más de 30 días sin revisión.
     [HttpGet("{id}/medication-schemes")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -273,7 +273,7 @@ public class PersonsController : ControllerBase
         };
     }
 
-    // historial de tomas de la persona por fecha, con filtros opcionales from/to/medicationId (SCRUM-240)
+    // historial de tomas de la persona por fecha, con filtros opcionales from/to/medicationId
     [HttpGet("{id}/medication-history")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -307,8 +307,8 @@ public class PersonsController : ControllerBase
         };
     }
 
-    // exportación del historial a PDF para presentar a un profesional de salud (SCRUM-241):
-    // mismos filtros, misma autorización y mismo conjunto que el JSON (SCRUM-240)
+    // exportación del historial a PDF para presentar a un profesional de salud:
+    // mismos filtros, misma autorización y mismo conjunto que el JSON
     [HttpGet("{id}/medication-history/pdf")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -360,7 +360,7 @@ public class PersonsController : ControllerBase
             _ => "all"
         };
 
-    // desactiva un esquema de medicación manteniendo el registro histórico (SCRUM-248 / SCRUM-75)
+    // desactiva un esquema de medicación manteniendo el registro histórico
     [HttpPatch("{id}/medication-schemes/{schemeId:guid}/deactivate")]
     [DirectorResidentsOnly]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
@@ -378,7 +378,7 @@ public class PersonsController : ControllerBase
         };
     }
 
-    // marca el esquema como revisado (SCRUM-249): registra ReviewedAt y ReviewedBy a partir
+    // marca el esquema como revisado: registra ReviewedAt y ReviewedBy a partir
     // del actor autenticado. Solo esquemas vigentes; el histórico responde 409.
     [HttpPatch("{id}/medication-schemes/{schemeId:guid}/review")]
     [DirectorResidentsOnly]
@@ -490,7 +490,7 @@ public class PersonsController : ControllerBase
         };
     }
     
-    // campos del informe de Cáritas que faltan cargar en la ficha (SCRUM-273)
+    // campos del informe de Cáritas que faltan cargar en la ficha
     [HttpGet("{id:guid}/report-fields/pending")]
     [HttpGet("/api/personas/{id:guid}/campos-informe-pendientes")]
     [DirectorResidentsOnly]

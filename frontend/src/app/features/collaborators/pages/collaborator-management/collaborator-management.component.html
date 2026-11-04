@@ -22,7 +22,7 @@
     }
   </div>
 
-  <!-- BUSCADOR (SCRUM-19/SCRUM-206): mismo look&feel que el buscador de fichas -->
+  <!-- BUSCADOR: mismo look&feel que el buscador de fichas -->
   <div class="mb-5 flex items-center gap-3">
     <div class="relative flex-1">
       <svg
@@ -55,7 +55,7 @@
     </button>
   </div>
 
-  <!-- FILTROS (SCRUM-206): mismo patrón que el panel de filtros de fichas -->
+  <!-- FILTROS: mismo patrón que el panel de filtros de fichas -->
   <div class="mb-4">
     <app-collaborator-filters
       (filtersApplied)="applyFilters($event)"
@@ -89,7 +89,7 @@
       </div>
     }
 
-    <!-- ESTADO VACÍO DE BÚSQUEDA (SCRUM-207): sin resultados para lo tipeado -->
+    <!-- ESTADO VACÍO DE BÚSQUEDA: sin resultados para lo tipeado -->
     @if (showEmptySearchState()) {
       <div class="flex min-h-[260px] flex-col items-center justify-center px-6 py-10 text-center">
         <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#EEF2FF]">
@@ -208,7 +208,7 @@
     />
   }
 
-  <!-- FICHA COMPLETA DE SOLO LECTURA (SCRUM-207) -->
+  <!-- FICHA COMPLETA DE SOLO LECTURA -->
   @if (viewingCollaborator(); as collaborator) {
     <app-collaborator-detail-modal
       [collaborator]="collaborator"

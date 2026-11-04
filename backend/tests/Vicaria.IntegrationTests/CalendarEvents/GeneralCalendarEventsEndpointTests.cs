@@ -165,7 +165,7 @@ public class GeneralCalendarEventsEndpointTests : IClassFixture<VicariaWebApplic
         Assert.True(detail.GetProperty("repeatsMonthly").GetBoolean());
     }
 
-    // edición y eliminación con permisos y auditoría (SCRUM-190)
+    // edición y eliminación con permisos y auditoría
     [Fact]
     public async Task Put_ByReferent_Returns204AndChangesDetail()
     {
@@ -371,7 +371,7 @@ public class GeneralCalendarEventsEndpointTests : IClassFixture<VicariaWebApplic
     {
         await UseTokenAsync(RoleNames.Referent);
 
-        // id fijo del seed de SCRUM-183 (Desayuno)
+        // id fijo de la actividad Desayuno en el seed
         var response = await _client.GetAsync("/api/general-calendar-events/88888888-8888-8888-8888-888888888801");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

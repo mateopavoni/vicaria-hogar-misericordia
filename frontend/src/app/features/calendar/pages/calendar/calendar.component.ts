@@ -22,32 +22,14 @@ import { isBeforeToday } from '../../../../shared/utils/date.util';
 import { CasaConvivenciaVisitsCalendarComponent } from '../../../casa-convivencia-visits/pages/casa-convivencia-visits-calendar/casa-convivencia-visits-calendar.component';
 
 type ViewMode = 'week' | 'month';
-// 'combined' = SCRUM-17 (AC): "vista combinada que muestre ambos calendarios al mismo
-// tiempo con colores diferenciados". 'visitas' = SCRUM-74: el calendario de la Casa de
-// Convivencia, integrado como una pestaña más acá (ver comentario de la clase) en vez
-// de una pantalla aparte con link propio en el sidebar.
+// 'combined' muestra el general y el personal juntos; 'visitas' es el calendario
+// de visitas de la Casa de Convivencia, que se muestra como una pestaña más.
 type CalendarTab = CalendarScope | 'combined' | 'visitas';
 
 /**
- * SCRUM-28 (SCRUM-186/SCRUM-187) + SCRUM-16 (SCRUM-191/SCRUM-192) + SCRUM-17
- * (SCRUM-196/SCRUM-197): calendario general del Centro Barrial + calendario personal.
- * Vistas semanal y mensual, actividades recurrentes precargadas (desayuno/almuerzo/
- * merendero, solo en general/combinado), alta/edición/baja de eventos propios (con
- * opción de repetirlos diario/semanal/mensual), conversión de un evento personal en
- * general, detalle con autor, resaltado del día actual, confirmación visible al
- * guardar/eliminar. El calendario PERSONAL (AC de SCRUM-17: "como referente del
- * hogar, quiero tener mi propio calendario personal") es exclusivo del rol
- * Referente — el selector General/Mi calendario/Combinado ni se muestra para los
- * demás roles, que solo ven el calendario general (Escucha, de solo lectura, ver AC
- * de SCRUM-15).
- *
- * SCRUM-74/SCRUM-213/SCRUM-214: el calendario de visitas de la Casa de Convivencia
- * (CasaConvivenciaVisitsCalendarComponent) se integra acá como pestaña "Visitas Casa de Convivencia" —
- * exclusiva de quien tenga el permiso visitas.view (Referente/DirectoraDeCasona/
- * CoordinadorDeCasaConvivencia) — en vez de tener ruta y link de sidebar propios. Es
- * un calendario con datos, permisos y vistas (día/semana/mes) totalmente distintos al
- * general/personal, así que no comparte lógica interna con este componente: solo se
- * monta su página completa dentro de esta pestaña (ver template).
+ * Calendario general del Centro Barrial y calendario personal, en vista semanal o mensual.
+ * El calendario personal es solo para el rol Referente; los demás roles ven el general.
+ * La pestaña de visitas monta CasaConvivenciaVisitsCalendarComponent, que tiene su propia lógica.
  */
 @Component({
   selector: 'app-calendar',
@@ -78,19 +60,14 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   canCreateGeneral = computed(() => this.permissionService.hasPermission('calendario.create'));
 
-  // permiso de rol crudo (Referente/DirectoraDeCasona hoy). SCRUM-16 (AC) agrega una
-  // regla MÁS estricta por evento encima de esto — ver canManageEvent().
+  // permiso general de edición; canManageEvent() agrega la regla por evento
   private hasEditPermission = computed(() => this.permissionService.hasPermission('calendario.edit'));
   private isReferente = computed(() => this.authService.user()?.role === 'Referente');
 
-  // SCRUM-17 (AC): el calendario personal es exclusivo de Referente (ver comentario de
-  // la clase). Expuesto público porque el template lo usa para mostrar/ocultar el
-  // selector de pestañas General/Mi calendario/Combinado.
+  // el calendario personal es exclusivo de Referente
   hasPersonalCalendar = computed(() => this.isReferente());
 
-  // SCRUM-74 (AC): la pestaña "Visitas Casa de Convivencia" se muestra con el mismo permiso que
-  // guardaba la ruta propia que tenía antes (visitas.view) — Referente,
-  // DirectoraDeCasona y CoordinadorDeCasaConvivencia; Escucha no la ve.
+  // la pestaña de visitas la ven quienes tienen el permiso visitas.view (todos menos Escucha)
   hasVisitsCalendar = computed(() => this.permissionService.hasPermission('visitas.view'));
 
   viewTabs: UiTab<ViewMode>[] = [
@@ -98,11 +75,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     { id: 'month', label: 'Mes' },
   ];
 
-  // SCRUM-196 (AC): alternar entre "Calendario general", "Mi calendario" y una vista
-  // combinada, más "Visitas Casa de Convivencia" (SCRUM-74) para quien tenga ese permiso. La fila
-  // de pestañas entera solo se muestra si hay al menos una pestaña extra por mostrar
-  // (ver hasExtraTabs() y calendar.component.html) — quien no tiene ninguno de los dos
-  // permisos solo ve el calendario general, sin selector.
+  // pestañas disponibles según el rol; si solo queda "General" no se muestra el selector
   calendarTab = signal<CalendarTab>('general');
   scopeTabs = computed<UiTab<CalendarTab>[]>(() => {
     const tabs: UiTab<CalendarTab>[] = [{ id: 'general', label: 'General' }];
@@ -143,21 +116,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
   });
 
-  // eventos reales (del backend, cuando exista) + las actividades recurrentes
-  // precargadas, generadas en el frontend para el rango visible (ver AC de SCRUM-15).
-  // Las recurrentes son siempre institucionales/generales — no aparecen en "Mi
-  // calendario" (scope 'personal').
-  allEvents = computed<CalendarEvent[]>(() => {
-    // las actividades precargadas (desayuno, almuerzo...) ya vienen del backend (plantillas del seed)
-    const recurring: CalendarEvent[] = [];
-    return [...this.events(), ...recurring];
-  });
-
-  // SCRUM-17 (AC): mismo formulario que el general, pero solo se puede dar de alta
-  // desde "General" (si hay permiso) o "Mi calendario" (si hay calendario personal).
-  // Desde "Combinado" no se da de alta: no hay forma no ambigua de saber a qué
-  // calendario pertenecería el evento nuevo. Desde "Visitas Casa de Convivencia" tampoco: esa
-  // pestaña tiene su propio botón "Nueva visita", lo gestiona CasaConvivenciaVisitsCalendarComponent.
+  // solo se crean eventos desde "General" o "Mi calendario"; en "Combinado" no se sabe
+  // a qué calendario iría y la pestaña de visitas tiene su propio botón
   canCreateHere = computed(() => {
     switch (this.calendarTab()) {
       case 'general':
@@ -172,24 +132,21 @@ export class CalendarComponent implements OnInit, OnDestroy {
   weekDays = computed(() => weekDays(this.referenceDate()));
   monthWeeks = computed(() => monthGridWeeks(this.referenceDate()));
 
-  // alta (ver canCreateHere, según la pestaña activa); edición/baja/conversión se
-  // evalúan por evento, ver canManageEvent()/canConvertToGeneral()
+  // formulario de alta y edición
   showFormModal = signal(false);
   editingEvent = signal<CalendarEvent | null>(null);
   formInitialDate = signal(isoDate(new Date()));
   saving = signal(false);
   formError = signal<string | null>(null);
 
-  // detalle del evento (SCRUM-187)
+  // detalle del evento
   viewingEvent = signal<CalendarEvent | null>(null);
 
-  // eliminación (SCRUM-16/SCRUM-192): confirmación previa obligatoria. Un error acá
-  // se muestra en el mismo banner de errorMessage que usa la carga del calendario.
+  // eliminación, siempre con confirmación previa
   deletingEvent = signal<CalendarEvent | null>(null);
   deleting = signal(false);
 
-  // SCRUM-192 (AC): mensaje de confirmación visible al crear/editar/eliminar, sin
-  // recargar la página — se limpia solo a los pocos segundos.
+  // mensaje de éxito que se oculta solo a los pocos segundos
   successMessage = signal<string | null>(null);
   private successTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -219,16 +176,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return date.getMonth() === this.referenceDate().getMonth();
   }
 
-  // Regla pedida: ningún evento de calendario puede quedar con fecha anterior a hoy —
-  // acá se usa para no ofrecer "crear evento" al clickear un día ya pasado en la
-  // grilla (el bloqueo real está en el formulario, ver event-form-modal; esto es solo
-  // para no abrir el modal con una fecha que de entrada ya va a rechazar).
+  // no se ofrece crear eventos en días pasados (el formulario también lo valida)
   isPastDay(date: Date): boolean {
     return isBeforeToday(isoDate(date));
   }
 
   eventsForDay(date: Date): CalendarEvent[] {
-    return this.allEvents()
+    return this.events()
       .filter((e) => isSameDay(new Date(e.start), date))
       .sort((a, b) => a.start.localeCompare(b.start));
   }
@@ -242,12 +196,8 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return !!currentUserId && currentUserId === event.authorId;
   }
 
-  // SCRUM-16 (AC): "el autor del evento puede editarlo o eliminarlo; cualquier
-  // Referente también puede hacerlo". Las actividades recurrentes precargadas
-  // (isRecurring) nunca son editables, las creó el sistema, no un usuario.
-  // SCRUM-17 (AC): el calendario personal es privado — ahí la regla es más estricta,
-  // solo el autor lo administra (ni siquiera otro Referente puede tocar el evento
-  // personal de otra persona, porque ni siquiera debería poder verlo).
+  // un evento general lo edita su autor o un Referente; uno personal, solo su autor.
+  // Las actividades precargadas del sistema no se editan.
   canManageEvent(event: CalendarEvent): boolean {
     if (event.isRecurring) {
       return false;
@@ -258,18 +208,12 @@ export class CalendarComponent implements OnInit, OnDestroy {
     return this.hasEditPermission() && (this.isReferente() || this.isAuthor(event));
   }
 
-  // SCRUM-17/SCRUM-197 (AC): "el usuario puede convertir un evento personal en
-  // general si lo decide posteriormente" — solo el autor, y solo si además podría
-  // haber creado un evento general directamente (mismo permiso que "Nuevo evento" en
-  // la pestaña General).
+  // el autor puede pasar un evento personal al calendario general si tiene permiso de crear eventos generales
   canConvertToGeneral(event: CalendarEvent): boolean {
     return !event.isRecurring && event.scope === 'personal' && this.isAuthor(event) && this.canCreateGeneral();
   }
 
-  // DatePipe (date: 'EEE') depende del LOCALE_ID de Angular, que en este proyecto no
-  // está registrado en es-AR, así que mostraba los días en inglés (Mon, Tue...). Se
-  // usa toLocaleDateString directamente, igual que el resto de los textos de fecha
-  // de este componente.
+  // nombre corto del día en español (DatePipe lo mostraría en inglés)
   weekdayLabel(date: Date): string {
     const label = date.toLocaleDateString('es-AR', { weekday: 'short' });
     return label.replace('.', '').charAt(0).toUpperCase() + label.replace('.', '').slice(1);
@@ -282,8 +226,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   changeScope(tab: CalendarTab): void {
     this.calendarTab.set(tab);
-    // "Visitas Casa de Convivencia" no usa events/loadEvents de este componente — tiene su propia
-    // carga de datos adentro de CasaConvivenciaVisitsCalendarComponent (ver template).
+    // la pestaña de visitas carga sus propios datos
     if (tab !== 'visitas') {
       this.loadEvents();
     }
@@ -310,10 +253,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
   loadEvents(): void {
     const tab = this.calendarTab();
-    // "Visitas Casa de Convivencia" no tiene CalendarEvent/scope propios — los carga
-    // CasaConvivenciaVisitsCalendarComponent. No debería llegar acá (changeScope/ngOnInit lo
-    // evitan), pero se corta explícito para que el tipo de tab quede acotado a
-    // CalendarScope|'combined' debajo, igual que antes de agregar esa pestaña.
+    // la pestaña de visitas carga sus propios datos
     if (tab === 'visitas') {
       return;
     }
@@ -324,9 +264,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     const desde = isoDate(this.rangeStart());
     const hasta = isoDate(this.rangeEnd());
 
-    // SCRUM-196 (AC): vista combinada = ambos calendarios a la vez. Se piden los dos
-    // rangos en paralelo y se combinan acá — el backend sigue filtrando 'personal' por
-    // el usuario autenticado (ver comentario en el service), el frontend no filtra nada.
+    // en la vista combinada se piden los dos calendarios en paralelo y se juntan
     const request$: Observable<CalendarEvent[]> =
       tab === 'combined'
         ? forkJoin([
@@ -337,7 +275,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
 
     request$.subscribe({
       next: (events) => {
-        this.events.set(events.map((event) => this.withAuthorFallback(event)));
+        this.events.set(events.map((event) => this.withAuthorName(event)));
         this.loading.set(false);
       },
       error: () => {
@@ -347,25 +285,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
     });
   }
 
-  // el autor lo debería completar el backend a partir del usuario autenticado (ver
-  // comentario en calendar-event.interface.ts). Mientras ese backend no exista, o si
-  // alguna respuesta llega sin authorName/authorId, se completa con el usuario
-  // logueado para que nunca se vea vacío ni con un valor genérico. LIMITACIÓN: esto
-  // hace que todo evento sin authorId "parezca" propio de quien esté mirando el
-  // calendario en ese momento — no reemplaza probar la regla de autorización del AC
-  // de SCRUM-16 contra un backend real.
-  private withAuthorFallback(event: CalendarEvent): CalendarEvent {
-    if (event.authorName && event.authorId && event.scope) {
+  // los eventos personales llegan sin nombre de autor porque siempre son del usuario logueado
+  private withAuthorName(event: CalendarEvent): CalendarEvent {
+    if (event.authorName) {
       return event;
     }
     const user = this.authService.user();
-    const fallbackName = user ? `${user.name} ${user.lastname}`.trim() : 'Usuario desconocido';
-    return {
-      ...event,
-      authorName: event.authorName || fallbackName,
-      authorId: event.authorId || user?.id || '',
-      scope: event.scope || 'general',
-    };
+    return { ...event, authorName: user ? `${user.name} ${user.lastname}`.trim() : '' };
   }
 
   openCreateModal(date: Date = new Date()): void {
@@ -390,10 +316,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.formError.set(null);
 
     const editing = this.editingEvent();
-    // scope: al editar se conserva el del evento original (no es un campo del
-    // formulario, ver EventFormValue); al crear, lo decide la pestaña activa. Si por
-    // algún motivo se llegara a disparar desde "Combinado" (el botón está oculto ahí,
-    // ver canCreateHere), se cae a 'general' como default seguro.
+    // al editar se mantiene el calendario del evento; al crear lo define la pestaña activa
     const scope = editing ? editing.scope : this.calendarTab() === 'personal' ? 'personal' : 'general';
     const dto = { ...formValue, scope };
 
@@ -428,7 +351,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.openEditModal(event);
   }
 
-  // SCRUM-16/SCRUM-192 (AC): confirmación previa antes de eliminar un evento.
+  // Confirmación previa antes de eliminar un evento.
   requestDelete(event: CalendarEvent): void {
     this.viewingEvent.set(null);
     this.errorMessage.set(null);
@@ -462,8 +385,7 @@ export class CalendarComponent implements OnInit, OnDestroy {
     });
   }
 
-  // SCRUM-17/SCRUM-197 (AC): convertir un evento personal en general. Sin
-  // confirmación previa — el AC solo la pide para eliminar, no para esto.
+  // pasa un evento personal al calendario general
   requestConvert(event: CalendarEvent): void {
     this.viewingEvent.set(null);
     this.errorMessage.set(null);

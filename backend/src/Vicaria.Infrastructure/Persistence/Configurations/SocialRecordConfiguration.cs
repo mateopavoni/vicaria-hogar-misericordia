@@ -27,7 +27,7 @@ public class SocialRecordConfiguration : IEntityTypeConfiguration<SocialRecord>
         builder.Property(r => r.Occupation).HasMaxLength(200);
         builder.Property(r => r.GeneralNotes).HasMaxLength(2000);
 
-        // FKs opcionales al catálogo del informe Caritas (SCRUM-270): sin cascada
+        // FKs opcionales al catálogo del informe Caritas: sin cascada
         // para no perder el dato histórico si el valor se desactiva o se borra
         builder.HasOne<CaritasCatalogValue>()
             .WithMany()

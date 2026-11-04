@@ -91,12 +91,12 @@ export class SocialRecordDetailComponent implements OnInit {
   lifeHistory = signal<LifeHistory | null>(null);
   initialObservations = signal<Observation[]>([]);
 
-  // SCRUM-222: historial de asistencia (solo se pide con permiso asistencia.view)
+  // Historial de asistencia (solo se pide con permiso asistencia.view)
   attendanceHistory = signal<AttendanceHistoryEntry[]>([]);
   attendanceStats = computed(() => computeAttendanceStats(this.attendanceHistory(), todayLocalIso()));
   hasAbsenceAlert = computed(() => isAbsenceAlert(this.attendanceStats()));
 
-  // SCRUM-260: evaluación psiquiátrica vigente y su vigencia (vence a los 6 meses)
+  // Evaluación psiquiátrica vigente y su vigencia (vence a los 6 meses)
   currentEvaluation = computed(() => {
     const personId = this.record()?.personId;
     return personId ? this.evaluationsService.currentFor(personId) : null;
@@ -118,9 +118,7 @@ export class SocialRecordDetailComponent implements OnInit {
   successModalTitle = signal('¡Registro Exitoso!');
   successModalMessage = signal('');
 
-  // bug reportado 2026-09-23: el botón de ingreso/egreso se gateaba solo por personType,
-  // que puede desincronizarse de si hay una estadía realmente abierta. Ahora depende de si
-  // existe una estadía sin egreso, que es la condición que de verdad importa para el botón.
+  // el botón de ingreso/egreso depende de si hay una estadía sin egreso
   hasActiveStay = computed(() => (this.record()?.staysHistory ?? []).some(stay => !stay.exitDate));
 
   openExitModal(): void {
@@ -134,8 +132,8 @@ export class SocialRecordDetailComponent implements OnInit {
     this.showEntryModal.set(true);
   }
 
-  // marca a la persona como Residente; el backend crea la estadía en la Casa de Convivencia automaticamente (SCRUM-134).
-  // la fecha que carga el modal no se usa: el backend siempre registra el ingreso "ahora" (SCRUM-141)
+  // marca a la persona como Residente; el backend crea la estadía en la Casa de Convivencia automaticamente.
+  // la fecha que carga el modal no se usa: el backend siempre registra el ingreso "ahora"
   handleEntryConfirm(_data?: RegisterEntrySubmitData): void {
     const personId = this.record()?.personId;
     if (!personId || this.entryBlocked()) {
@@ -182,7 +180,7 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // SCRUM-275: datos de la ficha que alimentan el informe de Cáritas, con indicador de los pendientes
+  // Datos de la ficha que alimentan el informe de Cáritas, con indicador de los pendientes
   private reportDataService = inject(PersonReportDataService);
   private reportCatalog = inject(ReportFieldCatalogService);
   readonly reportFieldKeys = REPORT_FIELD_KEYS;
@@ -213,7 +211,7 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // SCRUM-264: cambio manual de estado: pide un motivo obligatorio; el backend lo guarda en el historial
+  // Cambio manual de estado: pide un motivo obligatorio; el backend lo guarda en el historial
   showStatusModal = signal(false);
   statusSaving = signal(false);
   statusError = signal<string | null>(null);
@@ -251,13 +249,10 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // agrega una entrada nueva a una etapa de la historia de vida (SCRUM-11/171).
-  // Bug reportado 2026-09-23: faltaba el modal de éxito acá (sí existía para
-  // ingreso/egreso) — se reusa el mismo patrón de signals.
   // error al guardar la historia de vida: se muestra como aviso, sin reemplazar la ficha entera
   lifeHistoryError = signal<string | null>(null);
 
-  // SCRUM-253: "Exportar ficha" abre el selector de secciones; de ahí se descarga el PDF o se imprime
+  // "Exportar ficha" abre el selector de secciones; de ahí se descarga el PDF o se imprime
   showExportModal = signal(false);
   exportDoc = signal<RecordExportDocument | null>(null);
   exporting = signal(false);
@@ -269,7 +264,7 @@ export class SocialRecordDetailComponent implements OnInit {
     this.showExportModal.set(true);
   }
 
-  // el backend genera el PDF y registra la exportación (SCRUM-252); se descarga directo al dispositivo
+  // el backend genera el PDF y registra la exportación; se descarga directo al dispositivo
   downloadExport(sections: ExportSections): void {
     const record = this.record();
     if (!record || this.exporting() || !this.permissionService.hasPermission('fichas.export')) {
@@ -417,7 +412,7 @@ export class SocialRecordDetailComponent implements OnInit {
     });
   }
 
-  // SCRUM-260: la vigente y el historial alimentan la pestaña, la alerta y el bloqueo de ingreso
+  // La vigente y el historial alimentan la pestaña, la alerta y el bloqueo de ingreso
   private loadEvaluations(personId: string): void {
     if (!this.permissionService.hasPermission('evaluaciones.view')) {
       return;

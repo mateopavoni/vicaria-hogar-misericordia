@@ -96,7 +96,7 @@ public class CaritasCatalogService : ICaritasCatalogService
         return CaritasCatalogOperationResult.Ok();
     }
 
-    // baja lógica (SCRUM-274): nunca se borra físicamente para conservar los datos históricos
+    // baja lógica: nunca se borra físicamente para conservar los datos históricos
     public async Task<CaritasCatalogOperationResult> DeleteAsync(Guid id, Guid actorId, CancellationToken cancellationToken = default)
     {
         var value = await _dbContext.CaritasCatalogValues.FindAsync([id], cancellationToken);
