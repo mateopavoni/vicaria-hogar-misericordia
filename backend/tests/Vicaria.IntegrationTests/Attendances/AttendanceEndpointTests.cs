@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 using Vicaria.IntegrationTests.Auth;
@@ -60,7 +61,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     }
 
     private static object CuerpoAsistencia(Guid personId, DateTime? date = null, int activity = 0, int anonymousCount = 0) =>
-        new { personId, activity, date = date ?? DateTime.UtcNow, anonymousCount };
+        new { personId, activity, date = date ?? CordobaClock.Today, anonymousCount };
 
     private async Task RegistrarAsistenciaAsync(Guid personId)
     {
@@ -177,7 +178,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
     {
         var personId = await CrearPersonaAsync();
 
-        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId, DateTime.UtcNow.AddDays(1)));
+        var response = await _client.PostAsJsonAsync("/api/attendances", CuerpoAsistencia(personId, CordobaClock.Today.AddDays(1)));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -207,7 +208,7 @@ public class AttendanceEndpointTests : IClassFixture<VicariaWebApplicationFactor
             {
                 Id = Guid.NewGuid(),
                 PersonId = personId,
-                Date = DateTime.UtcNow.AddDays(-31),
+                Date = CordobaClock.Today.AddDays(-31),
                 CreatedByUserId = Guid.NewGuid()
             });
             await db.SaveChangesAsync();

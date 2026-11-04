@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.PsychiatricEvaluations;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -7,38 +8,15 @@ namespace Vicaria.Infrastructure.PsychiatricEvaluations;
 
 public class PsychiatricEvaluationService : IPsychiatricEvaluationService
 {
-    // meses de vigencia de una evaluación desde su fecha (SCRUM-258); el vencimiento
+    // meses de vigencia de una evaluación desde su fecha; el vencimiento
     // se calcula, no se persiste, igual que el chequeo de MedicationSchemeService
     private const int ValidityMonths = 6;
-    private static readonly TimeZoneInfo CordobaTimeZone = ResolveCordobaTimeZone();
 
     private readonly VicariaDbContext _dbContext;
 
     public PsychiatricEvaluationService(VicariaDbContext dbContext)
     {
         _dbContext = dbContext;
-    }
-
-    public static DateTime GetCordobaToday() =>
-        TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CordobaTimeZone).Date;
-
-    private static TimeZoneInfo ResolveCordobaTimeZone()
-    {
-        if (TimeZoneInfo.TryFindSystemTimeZoneById("America/Argentina/Cordoba", out var ianaTimeZone))
-        {
-            return ianaTimeZone;
-        }
-
-        if (TimeZoneInfo.TryFindSystemTimeZoneById("Argentina Standard Time", out var windowsTimeZone))
-        {
-            return windowsTimeZone;
-        }
-
-        return TimeZoneInfo.CreateCustomTimeZone(
-            "America/Argentina/Cordoba",
-            TimeSpan.FromHours(-3),
-            "Hora de Córdoba",
-            "Hora de Córdoba");
     }
 
     public async Task<CreatePsychiatricEvaluationResult> CreateAsync(
@@ -154,7 +132,7 @@ public class PsychiatricEvaluationService : IPsychiatricEvaluationService
         }
 
         var expiresAt = evaluation.Date.Date.AddMonths(ValidityMonths);
-        var today = GetCordobaToday();
+        var today = CordobaClock.Today;
         var diasParaVencer = (int)(expiresAt - today).TotalDays;
         var estaVencida = diasParaVencer < 0;
         var alertaProxima = !estaVencida && diasParaVencer <= 30;

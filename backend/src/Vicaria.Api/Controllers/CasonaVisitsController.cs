@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vicaria.Application.CasonaVisits;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 
 namespace Vicaria.Api.Controllers;
@@ -115,7 +116,7 @@ public class CasonaVisitsController : ControllerBase
         [FromQuery] int page = 1,
         CancellationToken cancellationToken = default)
     {
-        var fromDate = from?.Date ?? DateTime.UtcNow.Date;
+        var fromDate = from?.Date ?? CordobaClock.Today;
         var toDate = to?.Date ?? fromDate.AddDays(6);
         if (fromDate > toDate)
         {

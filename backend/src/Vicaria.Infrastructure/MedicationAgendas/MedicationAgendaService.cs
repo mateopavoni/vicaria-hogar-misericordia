@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Vicaria.Application.Common;
 using Vicaria.Application.MedicationAgendas;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
@@ -16,8 +17,8 @@ public class MedicationAgendaService : IMedicationAgendaService
 
     public async Task<DailyMedicationAgendaDto> GetDailyAgendaAsync(DateTime? date, CancellationToken cancellationToken = default)
     {
-        // "hoy" se toma en hora de Córdoba, igual que en el resto de la medicación (SCRUM-233)
-        var targetDate = (date ?? MedicationSchemes.MedicationSchemeService.GetCordobaToday()).Date;
+        // "hoy" se toma en hora de Córdoba, igual que en el resto de la medicación
+        var targetDate = (date ?? CordobaClock.Today).Date;
 
         var intakes = await _dbContext.DailyMedicationSchedules
             .AsNoTracking()
@@ -80,7 +81,7 @@ public class MedicationAgendaService : IMedicationAgendaService
         intake.AdministeredAt = DateTime.UtcNow;
         intake.AdministeredByUserId = actorId;
 
-        // Descuento automático de stock al marcar como Administrada (SCRUM-245)
+        // Descuento automático de stock al marcar como Administrada
         if (dto.Status == MedicationIntakeStatus.Administered)
         {
             var medication = await _dbContext.MedicationCatalogs
