@@ -1,4 +1,4 @@
-<div class="min-h-screen w-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+<div class="min-h-screen w-full bg-[#F5F7FB] px-4 pb-8 pt-4 md:px-8">
 
   <!-- ENCABEZADO -->
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -125,7 +125,7 @@
         <div class="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-7 md:divide-x md:divide-y-0">
           @for (day of weekDays(); track day) {
             <div
-              class="flex min-h-[220px] flex-col px-3 py-3"
+              class="flex flex-col px-3 py-3 md:min-h-[220px]"
               [class]="isToday(day) ? 'bg-[#F5F8FF]' : ''"
             >
               <button

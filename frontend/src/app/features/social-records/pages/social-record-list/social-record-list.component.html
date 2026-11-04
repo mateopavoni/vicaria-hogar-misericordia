@@ -1,7 +1,7 @@
-<div class="min-h-full bg-[#F5F7FB] px-8 pb-8 pt-4">
+<div class="min-h-full bg-[#F5F7FB] px-4 pb-8 pt-4 md:px-8">
 
   <!-- ENCABEZADO -->
-  <div class="mb-5 flex items-start justify-between">
+  <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
 
     <div>
 
@@ -59,7 +59,7 @@
     @if (permissionService.hasPermission('fichas.create')) {
     <a
       routerLink="/dashboard/fichas/crear"
-      class="flex h-[42px] items-center gap-2 rounded-md
+      class="flex h-[42px] shrink-0 items-center gap-2 rounded-md
             bg-[#4167D9] px-5
             text-[14px] font-semibold text-white
             shadow-sm transition
@@ -372,6 +372,7 @@
   >
 
     <!-- TABLA -->
+    <div class="overflow-x-auto">
     <table class="w-full border-collapse ">
 
       <thead>
@@ -382,7 +383,7 @@
         >
 
           <th
-            class="px-6 py-3 text-left
+            class="px-3 py-3 text-left md:px-6
                    text-[12px] font-semibold
                    text-slate-600"
           >
@@ -390,22 +391,22 @@
           </th>
 
           <th
-            class="px-10 py-3  text-left
+            class="hidden px-10 py-3 text-left
                    text-[12px] font-semibold
-                   text-slate-600"
+                   text-slate-600 md:table-cell"
           >
             DNI
           </th>
 
             <th
-              class="px-2 py-3 text-left
+              class="hidden px-2 py-3 text-left
                      text-[12px] font-semibold
-                     text-slate-600"
+                     text-slate-600 lg:table-cell"
             >
               Fecha de nacimiento
             </th>
           <th
-            class="px-13 py-3 text-left 
+            class="px-2 py-3 text-left md:px-13
                    text-[12px] font-semibold
                    text-slate-600"
           >
@@ -413,7 +414,7 @@
           </th>
 
           <th
-            class="px-7 py-3 text-left
+            class="px-2 py-3 text-left md:px-7
                    text-[12px] font-semibold
                    text-slate-600"
           >
@@ -421,9 +422,9 @@
           </th>
 
           <th
-            class="px-6 py-3 text-left
+            class="hidden px-6 py-3 text-left
                    text-[12px] font-semibold
-                   text-slate-600"
+                   text-slate-600 lg:table-cell"
           >
             Última modificación
           </th>
@@ -449,7 +450,7 @@
           <tr>
 
             <td
-              colspan="6"
+              colspan="7"
               class="px-6 py-10 text-center
                      text-[13px] text-slate-500"
             >
@@ -473,7 +474,7 @@
             >
 
               <!-- NOMBRE Y APELLIDO -->
-              <td class="px-10 py-4 ">
+              <td class="px-3 py-4 md:px-10">
 
                 <div class="text-[13px] font-semibold text-slate-700 ">
                   {{ record.firstName }} {{ record.lastName }}
@@ -484,8 +485,8 @@
 
               <!-- DNI -->
               <td
-                class="px-8 py-4
-                       text-[13px] text-slate-600"
+                class="hidden px-8 py-4
+                       text-[13px] text-slate-600 md:table-cell"
               >
                 {{ record.dni || '—' }}
               </td>
@@ -493,8 +494,8 @@
               
                 <!-- FECHA NACIMIENTO -->
                   <td
-                    class="px-6 py-4
-                           text-[13px] text-slate-600"
+                    class="hidden px-6 py-4
+                           text-[13px] text-slate-600 lg:table-cell"
                   >
               
                      @if (record.dateOfBirth) {
@@ -510,7 +511,7 @@
                       </td>
 
               <!-- TIPO -->
-              <td class="px-6 py-4">
+              <td class="px-2 py-4 md:px-6">
 
                 @if (record.personType === 0) {
 
@@ -548,7 +549,7 @@
 
              <!-- Estado -->
 
-              <td class="px-5 py-3">
+              <td class="px-2 py-3 md:px-5">
 
               @if (record.status === PersonStatus.Active) {
                 <span class="rounded-full bg-green-100 px-3 py-1 text-[11px] font-semibold text-green-700">
@@ -565,8 +566,8 @@
 
               <!-- ÚLTIMA MODIFICACIÓN -->
               <td
-                class="px-10 py-4
-                       text-[13px] text-slate-600"
+                class="hidden px-10 py-4
+                       text-[13px] text-slate-600 lg:table-cell"
               >
 
                 {{ record.lastModifiedAt | date:'dd/MM/yyyy' }}
@@ -575,7 +576,7 @@
 
 
               <!-- ACCIONES -->
-              <td class="px-10 py-4">
+              <td class="px-3 py-4 md:px-10">
 
                 <div class="flex justify-center gap-3">
 
@@ -650,15 +651,16 @@
       </tbody>
 
     </table>
+    </div>
 
 
     <!-- PAGINACIÓN -->
     @if (totalPages() > 1) {
 
       <div
-        class="flex items-center justify-end
+        class="flex flex-wrap items-center justify-center
                gap-2 border-t border-slate-100
-               px-6 py-4"
+               px-4 py-4 md:justify-end md:px-6"
       >
 
         <button

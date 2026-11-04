@@ -91,7 +91,7 @@ export class SocialRecordDetailComponent implements OnInit {
   lifeHistory = signal<LifeHistory | null>(null);
   initialObservations = signal<Observation[]>([]);
 
-  // Historial de asistencia (solo se pide con permiso asistencia.view)
+  // Historial de asistencia (solo se pide con permiso asistencia.history)
   attendanceHistory = signal<AttendanceHistoryEntry[]>([]);
   attendanceStats = computed(() => computeAttendanceStats(this.attendanceHistory(), todayLocalIso()));
   hasAbsenceAlert = computed(() => isAbsenceAlert(this.attendanceStats()));
@@ -422,7 +422,7 @@ export class SocialRecordDetailComponent implements OnInit {
   }
 
   private loadAttendanceHistory(personId: string): void {
-    if (!this.permissionService.hasPermission('asistencia.view')) {
+    if (!this.permissionService.hasPermission('asistencia.history')) {
       this.attendanceHistory.set([]);
       return;
     }
@@ -441,6 +441,9 @@ export class SocialRecordDetailComponent implements OnInit {
   }
 
   private loadLifeHistory(personId: string): void {
+    if (!this.permissionService.hasPermission('historia.view')) {
+      return;
+    }
     this.lifeStoryService.getByPersonId(personId).subscribe({
       next: (history) => this.lifeHistory.set(history),
       // la historia de vida no bloquea el resto del perfil si falla

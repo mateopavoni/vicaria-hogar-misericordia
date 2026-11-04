@@ -162,8 +162,11 @@ export class DailyAttendanceComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // las recurrentes del calendario se suman solas al catálogo; si el calendario falla se sigue con el catálogo actual
-    this.activitiesService.syncFromCalendar().subscribe({ error: () => undefined });
+    // las recurrentes del calendario se suman solas al catálogo (solo puede el Referente);
+    // si el calendario falla se sigue con el catálogo actual
+    if (this.permissionService.hasPermission('asistencia.config')) {
+      this.activitiesService.syncFromCalendar().subscribe({ error: () => undefined });
+    }
     this.load();
   }
 

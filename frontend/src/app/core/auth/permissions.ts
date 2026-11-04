@@ -46,6 +46,8 @@ export type Permission =
   | 'asistencia.view'
   | 'asistencia.create'
   | 'asistencia.edit'
+  // historial de asistencia de una persona en su perfil (Escucha no)
+  | 'asistencia.history'
   // Estadísticas de asistencia del Centro Barrial, solo Referente
   | 'asistencia.stats'
   // Configurar las actividades de asistencia (activar, desactivar, crear), solo Referente
@@ -124,6 +126,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'asistencia.view',
     'asistencia.create',
     'asistencia.edit',
+    'asistencia.history',
     'asistencia.stats',
     'asistencia.config',
     'configuracion.respaldos',
@@ -200,7 +203,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
     // Asistencia diaria; modificar días cerrados es solo del Referente
     'asistencia.view',
-    'asistencia.create'
+    'asistencia.create',
+    'asistencia.history'
   ],
 
   // ve fichas de residentes, carga observaciones y ve la agenda de medicamentos
@@ -217,7 +221,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'visitas.edit',
 
     'asistencia.view',
-    'asistencia.create'
+    'asistencia.create',
+    'asistencia.history'
   ]
 
 };

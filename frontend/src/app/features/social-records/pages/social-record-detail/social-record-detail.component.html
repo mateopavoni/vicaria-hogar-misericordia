@@ -160,7 +160,7 @@
       <!-- INFORMACIÓN PRINCIPAL (DATOS RÁPIDOS) -->
       <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 overflow-hidden rounded-lg border border-slate-200">
         <!-- DNI -->
-        <div class="border-r border-slate-200 px-6 py-3 text-center">
+        <div class="border-b border-slate-200 px-6 py-3 text-center sm:border-b-0 sm:border-r">
           <p class="text-[11px] font-semibold text-slate-700">DNI</p>
           @if (person.dni) {
             <p class="mt-1 text-[12px] text-slate-500">{{ person.dni }}</p>
@@ -170,7 +170,7 @@
         </div>
 
         <!-- FECHA NACIMIENTO -->
-        <div class="border-r border-slate-200 px-6 py-3 text-center">
+        <div class="border-b border-slate-200 px-6 py-3 text-center sm:border-b-0 sm:border-r">
           <p class="text-[11px] font-semibold text-slate-700">Fecha de Nacimiento</p>
           @if (person.dateOfBirth) {
             <p class="mt-1 text-[12px] text-slate-500">{{ person.dateOfBirth | date:'dd/MM/yyyy' }}</p>
@@ -240,7 +240,7 @@
         }
 
         <!-- ASISTENCIA -->
-        @if (permissionService.hasPermission('asistencia.view')) {
+        @if (permissionService.hasPermission('asistencia.history')) {
           <button
             type="button"
             (click)="selectTab('asistencia')"
@@ -578,7 +578,7 @@
       }
 
       <!-- PESTAÑA: HISTORIAL DE ASISTENCIA -->
-      @if (activeTab() === 'asistencia' && permissionService.hasPermission('asistencia.view')) {
+      @if (activeTab() === 'asistencia' && permissionService.hasPermission('asistencia.history')) {
         <app-attendance-history [entries]="attendanceHistory()" />
       }
 
