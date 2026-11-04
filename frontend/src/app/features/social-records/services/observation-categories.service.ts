@@ -10,17 +10,12 @@ export class ObservationCategoriesService {
   private http = inject(HttpClient);
   private apiUrl = '/api/observation-categories';
 
-  // Para administradores (Referentes): Trae todas (activas e inactivas).
-  // Bug reportado 2026-09-23: llamaba la misma ruta que getActive() sin distinguir,
-  // así que el default del backend (onlyActive=true) también le ocultaba las inactivas.
+  // para la pantalla de configuración (Referente): trae activas e inactivas
   getAll(): Observable<ObservationCategory[]> {
     return this.http.get<ObservationCategory[]>(this.apiUrl, { params: new HttpParams().set('onlyActive', false) });
   }
 
-  // Para selectores (SCRUM-181): trae solo categorías activas.
-  // Bug reportado 2026-09-23: apuntaba a GET .../active, ruta que no existe en el backend
-  // (ObservationCategoriesController solo tiene GET / con el query param onlyActive) — el
-  // combo de categorías del modal de "crear observación" siempre fallaba en 404.
+  // para los selectores: trae solo las categorías activas
   getActive(): Observable<ObservationCategory[]> {
     return this.http.get<ObservationCategory[]>(this.apiUrl, { params: new HttpParams().set('onlyActive', true) });
   }
@@ -33,14 +28,12 @@ export class ObservationCategoriesService {
     return this.http.put<ObservationCategory>(`${this.apiUrl}/${id}`, dto);
   }
 
-  // Bug reportado 2026-09-23: apuntaba a .../toggle-status; la ruta real del backend es .../status
-  // (ObservationCategoriesController.ToggleStatus, [HttpPatch("{id:guid}/status")]).
-  // El backend responde 204 sin cuerpo.
+  // activa o desactiva una categoría; el backend responde 204 sin cuerpo
   toggleActive(id: string, isActive: boolean): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/status`, { isActive });
   }
 
-  // SCRUM-180: solo se puede eliminar una categoría sin observaciones; si tiene, el backend
+  // Solo se puede eliminar una categoría sin observaciones; si tiene, el backend
   // responde 409 con { message } ("Debe desactivarla").
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);

@@ -1,6 +1,6 @@
 namespace Vicaria.Application.Attendances;
 
-// promedios de asistencia por rango de fechas (SCRUM-224): misma fórmula que el
+// promedios de asistencia por rango de fechas: misma fórmula que el
 // resumen mensual (registros + anónimos / días calendario, días sin registros = 0)
 public record WeeklyAverageDto(
     DateTime WeekStart,

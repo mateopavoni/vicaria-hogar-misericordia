@@ -54,7 +54,7 @@ public class CollaboratorsEndpointTests : IClassFixture<VicariaWebApplicationFac
     }
 
     // DNI distinto en cada payload: la BD de test es compartida entre los tests de la clase
-    // y el DNI es único (índice condicional de SCRUM-199)
+    // y el DNI es único (índice único condicional)
     private static string NewDni() => Random.Shared.Next(10000000, 99999999).ToString();
 
     private static object ValidPayload(
@@ -438,7 +438,7 @@ public class CollaboratorsEndpointTests : IClassFixture<VicariaWebApplicationFac
         isActive
     };
 
-    // edición, baja lógica y detalle (SCRUM-200 / SCRUM-205)
+    // edición, baja lógica y detalle
     [Fact]
     public async Task Put_ByReferent_Returns204AndDetailReflectsChanges()
     {

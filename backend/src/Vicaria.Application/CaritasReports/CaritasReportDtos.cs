@@ -1,8 +1,7 @@
 namespace Vicaria.Application.CaritasReports;
 
-// informe estadístico para Caritas (SCRUM-270): mismo contrato que consume la
-// pantalla de SCRUM-271, con números reales (IsSample = false). Cada categoría
-// es la lista de valores del catálogo configurable (SCRUM-274) más "No informado",
+// informe estadístico para Cáritas, con números reales (IsSample = false). Cada categoría
+// es la lista de valores del catálogo configurable más "No informado",
 // así que siempre suma el total de personas atendidas
 public record CaritasReportTotalsDto(
     int AttendedPersons,

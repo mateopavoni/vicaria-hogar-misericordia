@@ -39,7 +39,7 @@ export class NewSocialRecordComponent {
 
     this.socialRecordsService.create(data).subscribe({
       next: (created) => {
-        // SCRUM-275: los datos del informe de Cáritas se guardan aparte, sobre la ficha recién creada;
+        // Los datos del informe de Cáritas se guardan aparte, sobre la ficha recién creada;
         // si fallan, la ficha ya existe y se pueden completar desde el perfil
         if (created?.id && Object.values(this.reportData).some((v) => !!v)) {
           this.reportDataService.save(created.id, created.personId, this.reportData).subscribe({ error: () => undefined });

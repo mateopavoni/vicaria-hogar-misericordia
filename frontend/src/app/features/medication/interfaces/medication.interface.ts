@@ -1,7 +1,5 @@
 /**
- * SCRUM-234 (front de SCRUM-59): esquema de medicación de una persona.
- * OJO — backend pendiente (EP-11): todavía no existen el catálogo de medicamentos, el
- * stock de farmacia ni los esquemas (ver MedicationService).
+ * Esquema de medicación de una persona.
  */
 
 /** Medicamento del catálogo (medicamentos_catalogo) con su stock en farmacia. */
@@ -17,7 +15,7 @@ export interface PsychiatricEvaluationStatus {
   valid: boolean;
   /** Fecha de la evaluación (YYYY-MM-DD), si se conoce. Pasados 6 meses está vencida. */
   evaluatedAt: string | null;
-  /** true si se conoce la fecha y pasaron más de 6 meses (SCRUM-250). */
+  /** true si se conoce la fecha y pasaron más de 6 meses. */
   expired: boolean;
 }
 
@@ -34,7 +32,7 @@ export interface MedicationScheme {
   loadedAt: string;
   loadedByUserId: string;
   loadedByName: string;
-  /** SCRUM-250 (revisado_en / revisado_por): última revisión mensual; null = nunca revisado. */
+  /** (revisado_en / revisado_por): última revisión mensual; null = nunca revisado. */
   reviewedAt: string | null;
   reviewedByUserId: string | null;
   reviewedByName: string | null;
@@ -58,8 +56,7 @@ export interface MedicationActor {
 }
 
 /**
- * SCRUM-238 (front de SCRUM-60): agenda diaria de medicamentos.
- * OJO — backend pendiente: ver MedicationService (agenda y administraciones en memoria).
+ * Agenda diaria de medicamentos.
  */
 export type AdministrationStatus = 'administered' | 'not-administered';
 
@@ -109,7 +106,7 @@ export interface RecordAdministrationRequest {
 }
 
 /**
- * SCRUM-242 (front de SCRUM-61): historial de tomas de una persona.
+ * Historial de tomas de una persona.
  * 'unregistered' = estaba programada pero nadie la marcó.
  */
 export type HistoryStatus = AdministrationStatus | 'unregistered';

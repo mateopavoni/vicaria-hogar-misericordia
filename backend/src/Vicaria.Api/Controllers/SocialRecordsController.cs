@@ -30,13 +30,13 @@ public class SocialRecordsController : ControllerBase
         _exportValidator = exportValidator;
     }
 
-    // SCRUM-137: Directora y Coordinador de Casa de Convivencia solo ven Residentes
+    // Directora y Coordinador de Casa de Convivencia solo ven Residentes
     private bool IsRestrictedToResidents =>
         User.IsInRole(RoleNames.CasaConvivenciaDirector) || User.IsInRole(RoleNames.CasaConvivenciaCoordinator);
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    // Escucha no puede crear fichas (SCRUM-5), solo verlas y cargar observaciones
+    // Escucha no puede crear fichas, solo verlas y cargar observaciones
     [HttpPost]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator}")]
     public async Task<IActionResult> Create([FromBody] CreateSocialRecordDto dto, CancellationToken cancellationToken)
@@ -55,8 +55,8 @@ public class SocialRecordsController : ControllerBase
         return CreatedAtAction(nameof(Create), new { id = result.SocialRecordId }, new { personId = result.PersonId, id = result.SocialRecordId });
     }
 
-    // cualquier rol autenticado puede buscar (SCRUM-6), incluida Escucha
-    // SCRUM-137: Directora de Casa de Convivencia solo recibe Residentes; Referente ve todos.
+    // cualquier rol autenticado puede buscar, incluida Escucha
+    // Directora de Casa de Convivencia solo recibe Residentes; Referente ve todos.
     [HttpGet]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken cancellationToken)
     {
@@ -71,7 +71,7 @@ public class SocialRecordsController : ControllerBase
         return Ok(results);
     }
 
-    // listado paginado con busqueda y filtros combinables para la pantalla de fichas (SCRUM-6/21/127/164)
+    // listado paginado con busqueda y filtros combinables para la pantalla de fichas
     [HttpGet("list")]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
@@ -92,7 +92,7 @@ public class SocialRecordsController : ControllerBase
         return Ok(result);
     }
 
-    // perfil completo de una ficha (SCRUM-8/121)
+    // perfil completo de una ficha
     [HttpGet("{id:guid}")]
     [DirectorResidentsOnly("id", isSocialRecordId: true)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -101,7 +101,7 @@ public class SocialRecordsController : ControllerBase
         return record is null ? NotFound() : Ok(record);
     }
 
-    // solo Referente y Directora pueden editar (SCRUM-7)
+    // solo Referente y Directora pueden editar
     [HttpPut("{id}")]
     [DirectorResidentsOnly("id", isSocialRecordId: true)]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
@@ -126,7 +126,7 @@ public class SocialRecordsController : ControllerBase
             _ => BadRequest(new { message = result.ErrorMessage })
         };
     }
-    // campos del informe de Cáritas de la ficha (SCRUM-275); mismos roles que la edición
+    // campos del informe de Cáritas de la ficha; mismos roles que la edición
     [HttpPut("{id:guid}/report-fields")]
     [DirectorResidentsOnly("id", isSocialRecordId: true)]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector}")]
@@ -141,7 +141,7 @@ public class SocialRecordsController : ControllerBase
         };
     }
 
-    // SCRUM-23: auditoría de la exportación de la ficha (el PDF lo arma el front); solo el
+    // Auditoría de la exportación de la ficha (el PDF lo arma el front); solo el
     // Referente puede exportar
     [HttpPost("{id:guid}/exports")]
     [Authorize(Roles = RoleNames.Referent)]

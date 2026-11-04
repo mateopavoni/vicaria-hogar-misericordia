@@ -1,6 +1,6 @@
 import { AttendanceHistoryEntry, AttendanceStats } from '../interfaces/attendance.interface';
 
-/** Más de este número de días sin asistir se marca como alerta en el perfil (SCRUM-55). */
+/** Más de este número de días sin asistir se marca como alerta en el perfil. */
 export const ABSENCE_ALERT_DAYS = 7;
 
 // días desde la época de una fecha YYYY-MM-DD, sin depender del huso horario

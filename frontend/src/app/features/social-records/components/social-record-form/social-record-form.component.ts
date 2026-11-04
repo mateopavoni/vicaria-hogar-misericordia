@@ -32,7 +32,7 @@ export class SocialRecordFormComponent {
   // El componente padre recibe los datos cuando se presiona Guardar
   submittedForm = output<CreateSocialRecordRequest>();
 
-  // SCRUM-275: datos opcionales para el informe de Cáritas (solo al crear; al editar se cargan desde el perfil)
+  // Datos opcionales para el informe de Cáritas (solo al crear; al editar se cargan desde el perfil)
   reportData = signal<PersonReportData>({});
   reportDataChange = output<PersonReportData>();
 
@@ -55,7 +55,6 @@ export class SocialRecordFormComponent {
 
   hasValidPsychiatricEvaluation = signal(false);
 
-  // this.hasValidPsychiatricEvaluation.set(response.hasValid);
 
 
   form = this.fb.nonNullable.group({
@@ -70,10 +69,7 @@ export class SocialRecordFormComponent {
 
     lastName: [''],
 
-    // bug reportado 2026-09-23: se guardaba con puntos/espacios ("38.123.456") y la
-    // búsqueda comparaba solo dígitos, así que nunca matcheaba. El backend ya normaliza
-    // al guardar, pero evitar que se tipeen puntos/espacios de entrada es más claro para
-    // quien completa la ficha que depender solo de una limpieza silenciosa del servidor.
+    // solo dígitos, sin puntos ni espacios
     dni: ['', [Validators.pattern(/^\d*$/)]],
 
     dateOfBirth: [''],
@@ -241,9 +237,6 @@ export class SocialRecordFormComponent {
 
     this.submitted.set(true);
 
-    /*
-     * Mantiene la validación del formulario.
-     */
     if (this.form.invalid) {
 
       this.form.markAllAsTouched();
@@ -366,9 +359,7 @@ export class SocialRecordFormComponent {
   }
 
 
-  /*
-   * Lo vamos a utilizar después con CanDeactivate.
-   */
+  // lo usa el guard de cambios sin guardar (pendingChangesGuard)
   canDeactivate(): boolean {
 
     return !this.form.dirty;

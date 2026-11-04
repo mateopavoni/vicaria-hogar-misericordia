@@ -1,6 +1,6 @@
 namespace Vicaria.Domain.Entities;
 
-// registro diario de asistencia de una persona (SCRUM-135): se usa para mantener
+// registro diario de asistencia de una persona: se usa para mantener
 // Activo el estado de la ficha mientras la persona asiste cada 30 días; si no hay
 // asistencia reciente, un job programado pasa la ficha a Inactive
 public class Attendance

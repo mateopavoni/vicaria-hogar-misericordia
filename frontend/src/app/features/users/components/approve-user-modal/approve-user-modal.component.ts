@@ -2,9 +2,7 @@ import {Component,EventEmitter,Input,Output,signal} from '@angular/core';
 import {ManagedUser} from '../../interfaces/user.interface';
 import {UserRole} from './../../../../core/auth/userRole';
 
-// nombres lindos para mostrar en pantalla
-// bug reportado 2026-09-23: faltaba CoordinadorDeCasaConvivencia, no se podía aprobar
-// una cuenta nueva con ese rol desde este modal.
+// nombre de cada rol para mostrar en pantalla
 const ROLE_LABELS: Record<UserRole, string> = {
   Referente: 'Referente',
   DirectoraDeCasaConvivencia: 'Directora de Casa de Convivencia',

@@ -1,6 +1,6 @@
 namespace Vicaria.Application.MedicationSchemes;
 
-// fila de la consulta de esquemas vencidos (SCRUM-249): un esquema vigente que
+// fila de la consulta de esquemas vencidos: un esquema vigente que
 // lleva más de 30 días sin revisión. DaysWithoutReview se calcula desde
 // ReviewedAt o, si nunca se revisó, desde LoadedAt.
 public record MedicationReviewAlertDto(

@@ -22,14 +22,14 @@ import {
 import { AttendanceActivitiesService } from '../../services/attendance-activities.service';
 import { AttendanceService } from '../../services/attendance.service';
 
-/** Una persona marcada y las actividades del día en las que estuvo (SCRUM-230). */
+/** Una persona marcada y las actividades del día en las que estuvo. */
 interface AttendanceRow {
   person: AttendancePerson;
   activityIds: AttendanceActivity[];
 }
 
 /**
- * SCRUM-218 + SCRUM-230: registro de asistencia diaria. Dos áreas separadas (Hogar de día /
+ * Registro de asistencia diaria. Dos áreas separadas (Hogar de día /
  * Casa de Convivencia diaria). En Hogar de día se eligen una o más actividades y una grilla
  * persona × actividad permite marcar a la misma persona en varias actividades del mismo día.
  * Buscador de personas con ficha, contador de personas sin ficha por actividad, error inline
@@ -85,7 +85,7 @@ export class DailyAttendanceComponent implements OnInit {
   results = signal<AttendancePerson[]>([]);
   searching = signal(false);
   searchError = signal<string | null>(null);
-  // error inline ante duplicado (AC): misma persona, misma actividad y fecha
+  // error inline ante duplicado: misma persona, misma actividad y fecha
   duplicateError = signal<string | null>(null);
 
   showJustificationModal = signal(false);
@@ -162,8 +162,11 @@ export class DailyAttendanceComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // las recurrentes del calendario se suman solas al catálogo; si el calendario falla se sigue con el catálogo actual
-    this.activitiesService.syncFromCalendar().subscribe({ error: () => undefined });
+    // las recurrentes del calendario se suman solas al catálogo (solo puede el Referente);
+    // si el calendario falla se sigue con el catálogo actual
+    if (this.permissionService.hasPermission('asistencia.config')) {
+      this.activitiesService.syncFromCalendar().subscribe({ error: () => undefined });
+    }
     this.load();
   }
 

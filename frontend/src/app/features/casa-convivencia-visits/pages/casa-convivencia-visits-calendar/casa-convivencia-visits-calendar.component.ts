@@ -20,18 +20,13 @@ import {
 } from '../../../calendar/utils/calendar-date.util';
 import { isBeforeToday } from '../../../../shared/utils/date.util';
 
-// SCRUM-213 (AC): "vista semanal por defecto con posibilidad de ver día o mes" — una
-// vista más que el calendario general (que solo tiene semana/mes), por eso no se
-// reutiliza literalmente CalendarComponent (está armado para CalendarEvent/scope
-// general-personal, nada de eso aplica acá). Lo que SÍ se reutiliza, tal como pide el
-// AC ("reutilizando el componente base con otra fuente de datos"), son los helpers de
-// grilla de calendar-date.util.ts — mismo cálculo de semana/mes que el calendario
-// general, aplicado a otra fuente de datos (visitas en vez de eventos).
+// vista semanal por defecto, con opción de día o mes. Reusa los helpers de
+// calendar-date.util.ts del calendario general.
 type ViewMode = 'day' | 'week' | 'month';
 
 /**
- * SCRUM-74 (SCRUM-213/SCRUM-214): calendario semanal de visitas de la Casa de
- * Convivencia, independiente del calendario general (SCRUM-28). Exclusivo de
+ * Calendario semanal de visitas de la Casa de
+ * Convivencia, independiente del calendario general. Exclusivo de
  * Referente, DirectoraDeCasona y CoordinadorDeCasaConvivencia (route guard
  * visitas.view; Escucha no tiene ninguno de los permisos visitas.*, ni de lectura).
  * Alta/edición de visitas (residente, visitante, fecha, hora, duración), cambio de
@@ -131,7 +126,7 @@ export class CasaConvivenciaVisitsCalendarComponent implements OnInit, OnDestroy
   // detalle
   viewingVisit = signal<Visit | null>(null);
 
-  // cancelación (AC: motivo opcional)
+  // cancelación, con motivo opcional
   cancellingVisit = signal<Visit | null>(null);
   cancelling = signal(false);
 
@@ -182,7 +177,7 @@ export class CasaConvivenciaVisitsCalendarComponent implements OnInit, OnDestroy
     return new Date(visit.start).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // AC de SCRUM-74: alerta (no bloqueo) si hay dos visitas al mismo residente en el
+  // Alerta (no bloqueo) si hay dos visitas al mismo residente en el
   // mismo horario — acá se usa para marcar el ícono sobre la visita en el calendario,
   // además de la alerta que ya muestra el formulario al crear/editar.
   hasConflict(visit: Visit): boolean {

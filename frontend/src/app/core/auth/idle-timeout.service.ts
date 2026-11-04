@@ -8,7 +8,7 @@ export const SESSION_NOTICE_KEY = 'sessionNotice';
 const LAST_ACTIVITY_KEY = 'lastActivityAt';
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
 
-// SCRUM-96: expiración por inactividad real. La última actividad se guarda en
+// Expiración por inactividad real. La última actividad se guarda en
 // localStorage para que varias pestañas abiertas compartan el mismo reloj.
 @Injectable({ providedIn: 'root' })
 export class IdleTimeoutService {

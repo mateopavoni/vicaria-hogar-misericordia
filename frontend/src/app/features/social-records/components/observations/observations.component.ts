@@ -35,7 +35,7 @@ export class ObservationsComponent implements OnInit {
   activeTabId = signal<string>('all');
   loading = signal<boolean>(true);
   showCreateModal = signal<boolean>(false);
-  // bug reportado 2026-09-23: no había ningún feedback al guardar una observación
+  // confirmación al guardar una observación
   showSuccessModal = signal<boolean>(false);
   exporting = signal<boolean>(false);
   exportError = signal<string | null>(null);
@@ -116,16 +116,14 @@ export class ObservationsComponent implements OnInit {
     this.activeFilters.set(filters);
   }
 
-   // SCRUM-162: Inserta la nueva observación al tope de la lista sin recargar
+   // Inserta la nueva observación al tope de la lista sin recargar
     onObservationSaved(newObservation: Observation): void {
     this.observationsList.update(current => [newObservation, ...current]);
     this.showCreateModal.set(false);
     this.showSuccessModal.set(true);
   }
 
-  // bug reportado 2026-09-23: el botón "Exportar" no llamaba al endpoint (ya existente),
-  // solo hacía console.log. El filtro por autor no se manda: es por nombre en el front,
-  // el backend filtra por id de usuario.
+  // exporta a CSV; el filtro por autor no se manda porque el backend filtra por id de usuario
   exportReport(): void {
     const f = this.activeFilters();
     this.exportError.set(null);

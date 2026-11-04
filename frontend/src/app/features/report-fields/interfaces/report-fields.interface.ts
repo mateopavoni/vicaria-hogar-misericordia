@@ -1,5 +1,5 @@
 /**
- * SCRUM-275 (front de SCRUM-70): campos de la ficha que alimentan el informe de Cáritas.
+ * Campos de la ficha que alimentan el informe de Cáritas.
  * Son opcionales, pero el sistema marca cuáles están pendientes.
  */
 export type ReportFieldKey = 'gender' | 'housing' | 'origin' | 'document' | 'mainReason';

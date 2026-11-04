@@ -53,7 +53,7 @@ public class LifeStoriesController : ControllerBase
         return Ok(result);
     }
 
-    // edición de una sola etapa, de forma independiente (SCRUM-171): cada etapa se
+    // edición de una sola etapa, de forma independiente: cada etapa se
     // edita por separado y en momentos distintos; autor y fecha quedan por etapa
     [HttpPut("{stage}")]
     [Authorize(Roles = RoleNames.Referent)]

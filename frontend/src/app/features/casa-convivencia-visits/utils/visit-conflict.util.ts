@@ -1,10 +1,8 @@
 import { Visit } from '../interfaces/visit.interface';
 
 /**
- * SCRUM-74/SCRUM-214 (AC): "el sistema alerta si hay dos visitas al mismo residente
- * en el mismo horario". Es una ALERTA, no un bloqueo: el AC no pide impedir guardar,
- * así que esto se usa para mostrar un aviso (en el formulario al guardar, y como
- * ícono sobre la visita en el calendario), nunca para deshabilitar el botón de guardar.
+ * Busca otras visitas al mismo residente en el mismo horario. Es solo un aviso:
+ * se muestra en el formulario y en el calendario, pero no impide guardar.
  *
  * Una visita cancelada no cuenta como conflicto (ya no va a pasar), así que se excluye.
  */

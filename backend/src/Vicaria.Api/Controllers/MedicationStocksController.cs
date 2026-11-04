@@ -45,11 +45,6 @@ public class MedicationStocksController : ControllerBase
 
         var result = await _stockService.RegisterStockEntryAsync(dto, ActorId, cancellationToken);
 
-        if (!result.Success)
-        {
-            return BadRequest(new { message = result.ErrorMessage });
-        }
-
         return CreatedAtAction(nameof(GetMovementsHistory), new { medicamentoId = result.MedicationId }, new { medicationId = result.MedicationId });
     }
 

@@ -9,8 +9,8 @@ export interface RecordExportLogEntry {
 }
 
 /**
- * SCRUM-23 / SCRUM-253: exportación de la ficha. El PDF lo genera el backend
- * (GET /api/persons/{id}/export-pdf, SCRUM-252), que también deja la auditoría. La vista de
+ * Exportación de la ficha. El PDF lo genera el backend
+ * (GET /api/persons/{id}/export-pdf), que también deja la auditoría. La vista de
  * impresión se arma en el navegador y se registra con POST /api/social-records/{id}/exports.
  */
 @Injectable({ providedIn: 'root' })

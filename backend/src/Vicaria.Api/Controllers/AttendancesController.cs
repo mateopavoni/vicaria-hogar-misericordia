@@ -47,7 +47,7 @@ public class AttendancesController : ControllerBase
 
     private Guid ActorId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    // registra la asistencia diaria de una persona (SCRUM-216) y reactiva su ficha si
+    // registra la asistencia diaria de una persona y reactiva su ficha si
     // estaba Inactiva; Escucha también puede cargarla en el día a día del Centro Barrial
     [HttpPost]
     [Authorize(Roles = $"{RoleNames.Referent},{RoleNames.CasaConvivenciaDirector},{RoleNames.CasaConvivenciaCoordinator},{RoleNames.Listener}")]
@@ -99,7 +99,7 @@ public class AttendancesController : ControllerBase
         return Ok(day with { Persons = visible });
     }
 
-    // modificación de una asistencia de día cerrado con justificación (SCRUM-217),
+    // modificación de una asistencia de día cerrado con justificación,
     // restringido a Referente; día cerrado = fecha anterior a hoy
     [HttpPut("{id:guid}")]
     [Authorize(Roles = RoleNames.Referent)]
@@ -126,7 +126,7 @@ public class AttendancesController : ControllerBase
         };
     }
 
-    // lista las personas sin asistir en los últimos días (SCRUM-225);
+    // lista las personas sin asistir en los últimos días;
     // criterio puro por asistencia, por defecto más de 14 días
     [HttpGet("inactive")]
     [Authorize(Roles = RoleNames.Referent)]
@@ -147,7 +147,7 @@ public class AttendancesController : ControllerBase
         return Ok(result.Data);
     }
 
-    // estadísticas de asistencia por rango de fechas y actividad (SCRUM-224);
+    // estadísticas de asistencia por rango de fechas y actividad;
     // promedios por día + desglose semanal/mensual, totales por actividad y
     // comparativa contra el período anterior equivalente, solo Referente
     [HttpGet("statistics")]
@@ -175,8 +175,7 @@ public class AttendancesController : ControllerBase
         return Ok(result.Data);
     }
 
-    // resumen mensual de asistencia exportable a PDF (SCRUM-225);
-    // usa el mismo cálculo compartido que SCRUM-224 reutiliza
+    // resumen mensual de asistencia exportable a PDF, con el mismo cálculo que las estadísticas
     [HttpGet("monthly-summary/pdf")]
     [Authorize(Roles = RoleNames.Referent)]
     public async Task<IActionResult> GetMonthlySummaryPdf([FromQuery] int? year, [FromQuery] int? month, CancellationToken cancellationToken = default)

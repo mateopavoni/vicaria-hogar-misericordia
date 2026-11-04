@@ -1,4 +1,5 @@
 using FluentValidation;
+using Vicaria.Application.Common;
 
 namespace Vicaria.Application.MedicationStocks;
 
@@ -15,7 +16,7 @@ public class RegisterMedicationStockEntryDtoValidator : AbstractValidator<Regist
 
         RuleFor(x => x.FechaVencimiento)
             .NotEmpty().WithMessage("La fecha de vencimiento es obligatoria.")
-            .Must(date => date.Date > DateTime.UtcNow.AddHours(-3).Date) // hoy de Córdoba (UTC-3)
+            .Must(date => date.Date > CordobaClock.Today)
             .WithMessage("La fecha de vencimiento debe ser posterior a la fecha actual.");
 
         RuleFor(x => x.Proveedor)

@@ -250,7 +250,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
     [Fact]
     public async Task Update_ComoCoordinador_Devuelve403()
     {
-        // SCRUM-117: solo Referente y Directora pueden editar, a diferencia de crear
+        // Solo Referente y Directora pueden editar, a diferencia de crear
         await UsarTokenAsync(RoleNames.CasaConvivenciaCoordinator);
 
         var response = await _client.PutAsJsonAsync($"/api/social-records/{Guid.NewGuid()}", new { firstName = "Ana", hasDocumentation = false });
@@ -288,7 +288,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
 
     private record CreatedResponse(Guid PersonId, Guid Id);
 
-    // SCRUM-275: campos del informe de Cáritas de la ficha
+    // Campos del informe de Cáritas de la ficha
     private async Task<(Guid RecordId, Guid GenderId)> SembrarFichaYGeneroAsync()
     {
         using var scope = _factory.Services.CreateScope();
@@ -354,7 +354,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // SCRUM-23: auditoría de la exportación de la ficha
+    // Auditoría de la exportación de la ficha
     [Fact]
     public async Task LogExport_ComoReferente_RegistraAuditLog()
     {
@@ -391,7 +391,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // SCRUM-252: exportación de la ficha a PDF desde el backend
+    // Exportación de la ficha a PDF desde el backend
     [Fact]
     public async Task ExportPdf_ComoReferente_DevuelvePdfYRegistraAuditoria()
     {
@@ -436,7 +436,7 @@ public class SocialRecordsEndpointTests : IClassFixture<VicariaWebApplicationFac
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
 
-    // SCRUM-273: campos del informe pendientes
+    // Campos del informe pendientes
     [Fact]
     public async Task GetPendingReportFields_DevuelveLosQueFaltan()
     {

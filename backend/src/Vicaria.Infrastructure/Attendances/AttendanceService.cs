@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vicaria.Application.Attendances;
+using Vicaria.Application.Common;
 using Vicaria.Domain.Entities;
 using Vicaria.Infrastructure.Persistence;
 
@@ -88,7 +89,7 @@ public class AttendanceService : IAttendanceService
                 Date = DateTime.UtcNow
             });
 
-            // SCRUM-262: la reactivación por asistencia queda en el historial de estados
+            // La reactivación por asistencia queda en el historial de estados
             _dbContext.PersonStatusChanges.Add(new PersonStatusChange
             {
                 Id = Guid.NewGuid(),
@@ -101,7 +102,7 @@ public class AttendanceService : IAttendanceService
             });
         }
 
-        // Generación automática de agenda diaria de medicamentos según asistencia (SCRUM-236)
+        // Generación automática de agenda diaria de medicamentos según asistencia
         var activeSchemes = await _dbContext.MedicationSchemes
             .Where(s => s.PersonId == dto.PersonId && s.IsActive)
             .ToListAsync(cancellationToken);
@@ -172,8 +173,8 @@ public class AttendanceService : IAttendanceService
             return UpdateAttendanceResult.NotFound();
         }
 
-        // día cerrado (SCRUM-217): fecha anterior a hoy; la justificación es obligatoria
-        var isClosedDay = attendance.Date.Date < DateTime.UtcNow.Date;
+        // día cerrado: fecha anterior a hoy; la justificación es obligatoria
+        var isClosedDay = attendance.Date.Date < CordobaClock.Today;
         var justification = dto.Justification?.Trim();
         if (isClosedDay && string.IsNullOrWhiteSpace(justification))
         {
@@ -245,7 +246,7 @@ public class AttendanceService : IAttendanceService
             .OrderByDescending(d => d)
             .ToListAsync(cancellationToken);
 
-        var today = DateTime.UtcNow.Date;
+        var today = CordobaClock.Today;
         var totalDiasAsistidos = allPersonDates.Count;
         DateTime? ultimaAsistencia = allPersonDates.Count > 0 ? allPersonDates[0] : null;
 
@@ -306,7 +307,7 @@ public class AttendanceService : IAttendanceService
                 Activity: g.Key,
                 ActivityName: g.Key switch
                 {
-                    AttendanceActivity.DayCenter => "Centro de Día",
+                    AttendanceActivity.DayCenter => "Hogar de día",
                     AttendanceActivity.CasaConvivencia => "Casa de Convivencia",
                     _ => g.Key.ToString()
                 },

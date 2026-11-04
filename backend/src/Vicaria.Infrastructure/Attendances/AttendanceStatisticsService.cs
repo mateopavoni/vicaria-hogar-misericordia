@@ -5,9 +5,8 @@ using Vicaria.Infrastructure.Persistence;
 
 namespace Vicaria.Infrastructure.Attendances;
 
-// cálculo compartido de estadísticas de asistencia (SCRUM-225): lo usan el
-// endpoint de inactivos y el PDF del resumen mensual; SCRUM-224 lo reutiliza
-// para no tener dos fuentes de cálculo distintas del mismo resumen
+// cálculo de estadísticas de asistencia: lo usan las estadísticas, el listado
+// de inactivos y el PDF del resumen mensual, así hay una sola fuente de cálculo
 public class AttendanceStatisticsService : IAttendanceStatisticsService
 {
     private const int InactiveThresholdDays = 14;
@@ -231,7 +230,7 @@ public class AttendanceStatisticsService : IAttendanceStatisticsService
     private static string GetActivityName(AttendanceActivity activity) =>
         activity switch
         {
-            AttendanceActivity.DayCenter => "Centro de Día",
+            AttendanceActivity.DayCenter => "Hogar de día",
             AttendanceActivity.CasaConvivencia => "Casa de Convivencia",
             _ => activity.ToString()
         };

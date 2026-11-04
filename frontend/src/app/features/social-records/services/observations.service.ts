@@ -58,16 +58,14 @@ export class ObservationsService {
       .pipe(map(toObservation));
   }
 
-  // timeline de observaciones de una persona (SCRUM-10)
+  // timeline de observaciones de una persona
   getByPersonId(personId: string): Observable<Observation[]> {
     return this.http
       .get<ObservationsTimelineResponse>(`/api/persons/${personId}/observations`)
       .pipe(map((response) => response.items.map(toObservation)));
   }
 
-  // exportación a CSV (SCRUM-166). Bug reportado 2026-09-23: el botón "Exportar" del
-  // frontend no llamaba a este endpoint (ya existente y funcional), solo hacía console.log.
-  // El filtro por autor queda fuera (es por nombre en el front, el backend filtra por id).
+  // exportación a CSV; el filtro por autor no se manda porque el backend filtra por id
   exportCsv(personId: string, filters?: ExportObservationsFilters): Observable<Blob> {
     let params = new HttpParams();
     if (filters?.categoryId) {

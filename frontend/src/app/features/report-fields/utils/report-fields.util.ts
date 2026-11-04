@@ -5,10 +5,6 @@ export function pendingReportFields(data: PersonReportData | null | undefined): 
   return REPORT_FIELD_KEYS.filter((key) => !data?.[key]);
 }
 
-export function hasPendingReportFields(data: PersonReportData | null | undefined): boolean {
-  return pendingReportFields(data).length > 0;
-}
-
 /** Quita los campos vacíos ('' → null) para guardar siempre lo mismo. */
 export function cleanReportData(data: PersonReportData): PersonReportData {
   const out: PersonReportData = {};
