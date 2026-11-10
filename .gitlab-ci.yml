@@ -8,10 +8,10 @@ build:
   stage: build
   # TODO: agregar "tags:" cuando se defina el tag del runner
   script:
-    - echo "TODO: docker build (backend, frontend y base de datos)"
+    - echo "TODO docker build (backend, frontend y base de datos)"
 
 deploy:
   stage: deploy
   # TODO: agregar "tags:" cuando se defina el tag del runner
   script:
-    - echo "TODO: deploy por SSH al servidor con docker compose"
+    - echo "TODO deploy por SSH al servidor con docker compose"
