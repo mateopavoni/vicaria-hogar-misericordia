@@ -1,17 +1,38 @@
-# Pipeline base de Vicaria (solo estructura, sin contenido real todavía)
+# Pipeline del monorepo de Vicaria (backend .NET 9 + frontend Angular en un solo repo)
+# Los TODO se completan cuando el DevOps de Encode defina el runner y el servidor.
 
 stages:
   - build
+  - test
+  - smoke_test
   - deploy
 
 build:
   stage: build
   # TODO: agregar "tags:" cuando se defina el tag del runner
+  # Necesita Docker en el runner. Compila las imágenes de api y web definidas en backend/docker-compose.yml.
+  # MSSQL_SA_PASSWORD, JWT_KEY y FRONTEND_PATH se toman de Settings > CI/CD > Variables.
   script:
-    - echo "TODO: docker build (backend, frontend y base de datos)"
+    - cd backend && docker compose build
+
+test:
+  stage: test
+  # TODO: agregar "tags:" cuando se defina el tag del runner
+  # Necesita .NET SDK 9 en el runner (o definir "image:" según el executor).
+  script:
+    - cd backend && dotnet test tests/Vicaria.UnitTests
+    # TODO: sumar tests/Vicaria.IntegrationTests (requiere Docker) y los tests del frontend (npm test).
+
+smoke_test:
+  stage: smoke_test
+  # TODO: agregar "tags:" cuando se defina el tag del runner
+  # TODO: definir la URL/endpoint de salud y confirmar si va antes o después del deploy.
+  script:
+    - echo "TODO verificar que la app responde después del deploy"
 
 deploy:
   stage: deploy
   # TODO: agregar "tags:" cuando se defina el tag del runner
+  # TODO: completar con los datos SSH del servidor que provea Encode.
   script:
-    - echo "TODO: deploy por SSH al servidor con docker compose"
+    - echo "TODO deploy por SSH al servidor con docker compose"
