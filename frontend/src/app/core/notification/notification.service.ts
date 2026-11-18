@@ -1,15 +1,10 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Notification } from './notification.interface';
+import { notificationTitle } from './notification-titles';
 
 // título corto según el tipo de evento que manda el backend
-const EVENT_TITLES: Record<string, string> = {
-  NuevoUsuarioPendiente: 'Nueva solicitud de cuenta',
-  CuentaBloqueada: 'Cuenta bloqueada',
-  FichaSinObservaciones: 'Ficha sin seguimiento',
-  // Aviso a referentes cuando una persona pasa a Inactivo (30 días sin asistir)
-  PersonaInactiva: 'Persona pasó a Inactiva',
-};
+
 
 // forma cruda que devuelve GET /api/notifications
 interface BackendNotification {
@@ -28,7 +23,7 @@ export class NotificationService {
   private mapNotification(n: BackendNotification): Notification {
     return {
       id: n.id,
-      title: EVENT_TITLES[n.eventType] ?? n.eventType,
+      title: notificationTitle(n.eventType),
       message: n.description,
       linkUrl: n.linkUrl,
       isRead: n.isRead,
