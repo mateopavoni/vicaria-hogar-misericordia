@@ -14,7 +14,20 @@ const CONTENT_W = PAGE_W - MARGIN * 2;
 const FOOTER_Y = 30;
 const BOTTOM_LIMIT = 55;
 
+const HEADER_H = 64;
+const LABEL_GAP = 14;
+const ROW_H = 13;
+
 type Font = 'F1' | 'F2';
+type Rgb = readonly [number, number, number];
+
+// paleta del documento (valores 0-1, como los espera el operador `rg` de PDF)
+const COLOR_BRAND: Rgb = [0.16, 0.27, 0.52];
+const COLOR_TEXT: Rgb = [0.13, 0.15, 0.2];
+const COLOR_MUTED: Rgb = [0.42, 0.45, 0.52];
+const COLOR_WHITE: Rgb = [1, 1, 1];
+const COLOR_STRIPE: Rgb = [0.94, 0.96, 0.99];
+const COLOR_RULE: Rgb = [0.78, 0.83, 0.93];
 
 interface Line {
   font: Font;
@@ -23,6 +36,21 @@ interface Line {
   x: number;
   /** Posición vertical en la página (origen abajo a la izquierda). */
   y: number;
+  color?: Rgb;
+}
+
+/** Rectángulo de fondo (bandas, filas alternadas, líneas de acento). */
+interface Shape {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: Rgb;
+}
+
+interface Page {
+  lines: Line[];
+  shapes: Shape[];
 }
 
 interface LineSpec {
@@ -34,6 +62,7 @@ interface LineSpec {
   height: number;
   /** Espacio extra antes de la línea. */
   before?: number;
+  color?: Rgb;
 }
 
 // Caracteres fuera de Latin-1 que sí existen en WinAnsi (cp1252)
@@ -109,58 +138,107 @@ function escapePdf(text: string): string {
 }
 
 /** Distribuye el documento en páginas de líneas ya posicionadas. */
-function layout(doc: RecordExportDocument): Line[][] {
-  const pages: Line[][] = [[]];
-  let y = PAGE_H - MARGIN;
+/**
+ * Ancho de la columna de etiquetas de una sección: el de la etiqueta más larga más un margen,
+ * con tope para que el valor siempre tenga lugar. Si una etiqueta igual no entra, se corta en
+ * varias líneas (antes la columna era fija de 150pt y las etiquetas largas quedaban debajo del valor).
+ */
+export function labelColumnWidth(labels: string[]): number {
+  const widest = labels.reduce((max, l) => Math.max(max, widthOf(normalize(l), 'F2', 10)), 0);
+  return Math.min(Math.max(widest + LABEL_GAP, 110), CONTENT_W * 0.6);
+}
+
+/** Distribuye el documento en páginas de líneas ya posicionadas. */
+function layout(doc: RecordExportDocument): Page[] {
+  const pages: Page[] = [{ lines: [], shapes: [] }];
+  const current = () => pages[pages.length - 1];
+  let y = PAGE_H - HEADER_H - 18;
+
+  const newPage = () => {
+    pages.push({ lines: [], shapes: [] });
+    y = PAGE_H - MARGIN;
+  };
 
   /** Agrega una línea (saltando de página si no entra) y devuelve su posición vertical. */
   const add = (spec: LineSpec): Line => {
     let before = spec.before ?? 0;
     if (y - (spec.height + before) < BOTTOM_LIMIT) {
-      pages.push([]);
-      y = PAGE_H - MARGIN;
+      newPage();
       before = 0;
     }
     y -= spec.height + before;
-    const line: Line = { font: spec.font, size: spec.size, text: spec.text, x: spec.x, y };
-    pages[pages.length - 1].push(line);
+    const line: Line = { font: spec.font, size: spec.size, text: spec.text, x: spec.x, y, color: spec.color };
+    current().lines.push(line);
     return line;
   };
 
-  const addWrapped = (text: string, font: Font, size: number, before = 0) => {
+  const addWrapped = (text: string, font: Font, size: number, before = 0, color: Rgb = COLOR_TEXT) => {
     wrapText(text, font, size, CONTENT_W).forEach((t, i) =>
-      add({ font, size, text: t, x: MARGIN, height: size * 1.35, before: i === 0 ? before : 0 }),
+      add({ font, size, text: t, x: MARGIN, height: size * 1.35, before: i === 0 ? before : 0, color }),
     );
   };
 
-  addWrapped(doc.systemName, 'F1', 9);
-  addWrapped(doc.title, 'F2', 20, 8);
-  addWrapped(doc.exportInfo, 'F1', 9, 4);
-  addWrapped(`Secciones incluidas: ${doc.sectionsLabel}`, 'F1', 9);
+  // encabezado: banda de color con el nombre del sistema, debajo título y datos de la exportación
+  const first = pages[0];
+  first.shapes.push({ x: 0, y: PAGE_H - HEADER_H, w: PAGE_W, h: HEADER_H, color: COLOR_BRAND });
+  first.lines.push({ font: 'F2', size: 11, text: fitText(doc.systemName, 'F2', 11, CONTENT_W), x: MARGIN, y: PAGE_H - 38, color: COLOR_WHITE });
+
+  addWrapped(doc.title, 'F2', 20, 0, COLOR_BRAND);
+  addWrapped(doc.exportInfo, 'F1', 9, 4, COLOR_MUTED);
+  addWrapped(`Secciones incluidas: ${doc.sectionsLabel}`, 'F1', 9, 0, COLOR_MUTED);
+
+  // una sola columna de etiquetas para todo el documento: los valores quedan alineados entre secciones
+  const labelWidth = labelColumnWidth(doc.sections.flatMap((s) => (s.fields ?? []).map((f) => f.label)));
 
   for (const section of doc.sections) {
-    addWrapped(section.title, 'F2', 13, 18);
+    // título de sección con línea de acento debajo; si no entra junto con una fila, pasa de página
+    if (y - (13 * 1.35 + 16 + ROW_H * 2) < BOTTOM_LIMIT) newPage();
+    addWrapped(section.title, 'F2', 13, 16, COLOR_BRAND);
+    current().shapes.push({ x: MARGIN, y: y - 5, w: CONTENT_W, h: 1.2, color: COLOR_RULE });
+    y -= 6;
 
-    const labelWidth = 150;
-    for (const field of section.fields ?? []) {
-      wrapText(field.value, 'F1', 10, CONTENT_W - labelWidth).forEach((t, i) => {
-        const line = add({ font: 'F1', size: 10, text: t, x: MARGIN + labelWidth, height: 14, before: i === 0 ? 4 : 0 });
-        // la etiqueta va en la misma línea que la primera línea del valor
-        if (i === 0) pages[pages.length - 1].push({ font: 'F2', size: 10, text: field.label, x: MARGIN, y: line.y });
-      });
-    }
+    const fields = section.fields ?? [];
+    fields.forEach((field, index) => {
+      const labelLines = wrapText(field.label, 'F2', 10, labelWidth - LABEL_GAP);
+      const valueLines = wrapText(field.value || '-', 'F1', 10, CONTENT_W - labelWidth - 8);
+      const rows = Math.max(labelLines.length, valueLines.length);
+      const rowHeight = rows * ROW_H + 5;
+      if (y - rowHeight < BOTTOM_LIMIT) newPage();
+
+      const top = y;
+      if (index % 2 === 0) {
+        current().shapes.push({ x: MARGIN - 6, y: top - rowHeight, w: CONTENT_W + 12, h: rowHeight, color: COLOR_STRIPE });
+      }
+      for (let r = 0; r < rows; r++) {
+        const baseline = top - 3 - (r + 1) * ROW_H + 3;
+        if (labelLines[r]) current().lines.push({ font: 'F2', size: 10, text: labelLines[r], x: MARGIN, y: baseline, color: COLOR_TEXT });
+        if (valueLines[r]) current().lines.push({ font: 'F1', size: 10, text: valueLines[r], x: MARGIN + labelWidth, y: baseline, color: COLOR_TEXT });
+      }
+      y = top - rowHeight;
+    });
 
     const entries = section.entries ?? [];
     if (!section.fields && entries.length === 0 && section.emptyText) {
-      addWrapped(section.emptyText, 'F1', 10, 4);
+      addWrapped(section.emptyText, 'F1', 10, 4, COLOR_MUTED);
     }
     for (const entry of entries) {
-      if (entry.heading) addWrapped(entry.heading, 'F2', 10, 8);
+      if (entry.heading) addWrapped(entry.heading, 'F2', 10, 8, COLOR_BRAND);
       addWrapped(entry.text, 'F1', 10, entry.heading ? 0 : 6);
     }
   }
   return pages;
 }
+
+/** Recorta un texto de una sola línea para que entre en `maxWidth` (agrega "..."). */
+function fitText(text: string, font: Font, size: number, maxWidth: number): string {
+  const codes = normalize(text);
+  if (widthOf(codes, font, size) <= maxWidth) return fromCodes(codes);
+  let n = codes.length;
+  while (n > 0 && widthOf([...codes.slice(0, n), 0x2e, 0x2e, 0x2e], font, size) > maxWidth) n--;
+  return fromCodes([...codes.slice(0, n), 0x2e, 0x2e, 0x2e]);
+}
+
+const rgb = (c: Rgb) => c.map((v) => v.toFixed(3)).join(' ');
 
 /** Genera el PDF y lo devuelve como bytes. */
 export function buildPdf(doc: RecordExportDocument): Uint8Array {
@@ -177,17 +255,25 @@ export function buildPdf(doc: RecordExportDocument): Uint8Array {
   objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
   objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
 
-  pages.forEach((lines, i) => {
-    const ops: string[] = ['BT'];
-    const text = (font: Font, size: number, x: number, y: number, str: string) =>
-      ops.push(`/${font} ${size} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${escapePdf(str)}) Tj`);
+  pages.forEach((page, i) => {
+    const ops: string[] = [];
+    // fondos primero, para que el texto quede por encima
+    for (const s of page.shapes) {
+      ops.push(`q ${rgb(s.color)} rg ${s.x.toFixed(2)} ${s.y.toFixed(2)} ${s.w.toFixed(2)} ${s.h.toFixed(2)} re f Q`);
+    }
+    ops.push(`q ${rgb(COLOR_RULE)} rg ${MARGIN} ${FOOTER_Y + 12} ${CONTENT_W} 0.8 re f Q`);
 
-    for (const line of lines) text(line.font, line.size, line.x, line.y, line.text);
+    ops.push('BT');
+    const text = (font: Font, size: number, x: number, y: number, str: string, color: Rgb = COLOR_TEXT) =>
+      ops.push(`${rgb(color)} rg /${font} ${size} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${escapePdf(str)}) Tj`);
 
-    const pageLabel = `Página ${i + 1} de ${total}`;
-    const labelWidth = widthOf(normalize(pageLabel), 'F1', 8);
-    text('F1', 8, MARGIN, FOOTER_Y, footer);
-    text('F1', 8, PAGE_W - MARGIN - labelWidth, FOOTER_Y - 11, pageLabel);
+    for (const line of page.lines) text(line.font, line.size, line.x, line.y, line.text, line.color);
+
+    // pie: texto del sistema a la izquierda y número de página a la derecha, en la misma línea
+    const pageLabel = fromCodes(normalize(`Página ${i + 1} de ${total}`));
+    const pageLabelWidth = widthOf(normalize(pageLabel), 'F1', 8);
+    text('F1', 8, MARGIN, FOOTER_Y, fitText(footer, 'F1', 8, CONTENT_W - pageLabelWidth - 16), COLOR_MUTED);
+    text('F1', 8, PAGE_W - MARGIN - pageLabelWidth, FOOTER_Y, pageLabel, COLOR_MUTED);
     ops.push('ET');
 
     const stream = ops.join('\n');
