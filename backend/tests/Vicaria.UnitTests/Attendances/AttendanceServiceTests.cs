@@ -263,7 +263,8 @@ public class AttendanceServiceTests
         Assert.Equal("PersonStatusInactive", notification.EventType);
         Assert.Equal(RoleNames.Referent, notification.TargetRole);
         Assert.Contains("Ana", notification.Description);
-        Assert.Equal($"/personas/{personId}", notification.LinkUrl);
+        var record = await db.SocialRecords.SingleAsync(r => r.PersonId == personId);
+        Assert.Equal($"/dashboard/fichas/{record.Id}", notification.LinkUrl);
     }
 
     [Fact]

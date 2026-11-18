@@ -832,7 +832,7 @@ public class SocialRecordService : ISocialRecordService
                 Id = Guid.NewGuid(),
                 Description = $"La persona {fullName} pasó a estado Inactivo. Motivo: {dto.Reason.Trim()}",
                 EventType = "PersonStatusInactive",
-                LinkUrl = $"/personas/{personId}",
+                LinkUrl = $"/dashboard/fichas/{socialRecord.Id}",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                 TargetRole = RoleNames.Referent

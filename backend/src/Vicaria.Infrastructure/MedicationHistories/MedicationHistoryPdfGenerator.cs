@@ -1,34 +1,23 @@
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using Vicaria.Application.MedicationHistories;
+using Vicaria.Infrastructure.Pdf;
 
 namespace Vicaria.Infrastructure.MedicationHistories;
 
 // genera el PDF del historial de medicación de una persona con PdfSharp,
 // con el mismo conjunto que el endpoint JSON más el encabezado para
-// presentar a un profesional de salud; sigue el estilo de AttendanceSummaryPdfGenerator
+// presentar a un profesional de salud (ver PdfReportWriter)
 public class MedicationHistoryPdfGenerator : IMedicationHistoryPdfGenerator
 {
-    private const double Margin = 50;
-    private const double LineHeight = 18;
-
     public byte[] GeneratePersonHistoryPdf(MedicationHistoryPdfDocument document)
     {
-        using var writer = new PdfWriter($"Historial de medicación — {document.PersonName}");
-
-        var titleFont = new XFont("Helvetica", 16, XFontStyleEx.Bold);
-        var sectionFont = new XFont("Helvetica", 12, XFontStyleEx.Bold);
-        var bodyFont = new XFont("Helvetica", 11, XFontStyleEx.Regular);
-
-        writer.WriteLine(titleFont, "Historial de medicación");
-        writer.WriteLine(bodyFont, $"Persona: {document.PersonName}{FormatDni(document.PersonDni)}");
-        writer.WriteLine(bodyFont, $"Rango: {FormatRange(document.From, document.To)}");
-        writer.WriteLine(bodyFont, $"Generado: {document.GeneratedAt:dd/MM/yyyy HH:mm} UTC");
-        writer.WriteLine(bodyFont, string.Empty);
+        using var writer = new PdfReportWriter("Historial de medicación");
+        writer.Meta($"{document.PersonName}{FormatDni(document.PersonDni)}");
+        writer.Meta($"Período: {FormatRange(document.From, document.To)} · Generado el {PdfReportWriter.ToCordobaTime(document.GeneratedAt):dd/MM/yyyy HH:mm}");
 
         if (document.Entries.Count == 0)
         {
-            writer.WriteLine(bodyFont, "Sin registros para los filtros indicados.");
+            writer.Section("Detalle por toma");
+            writer.Paragraph("Sin registros para los filtros indicados.", muted: true);
             return writer.Save();
         }
 
@@ -36,27 +25,44 @@ public class MedicationHistoryPdfGenerator : IMedicationHistoryPdfGenerator
         var notAdministered = document.Entries.Count(e => e.Status == "not-administered");
         var unregistered = document.Entries.Count - administered - notAdministered;
 
-        writer.WriteLine(sectionFont, "Resumen");
-        writer.WriteLine(bodyFont, $"Total de tomas: {document.Entries.Count}");
-        writer.WriteLine(bodyFont, $"Administradas: {administered}");
-        writer.WriteLine(bodyFont, $"*** NO ADMINISTRADAS: {notAdministered} ***");
-        writer.WriteLine(bodyFont, $"No registradas: {unregistered}");
-        writer.WriteLine(bodyFont, string.Empty);
-
-        writer.WriteLine(sectionFont, "Detalle por toma");
-        foreach (var entry in document.Entries)
+        writer.Section("Resumen");
+        var summary = new (string Label, string Value)[]
         {
-            var statusText = entry.Status switch
+            ("Total de tomas", document.Entries.Count.ToString()),
+            ("Administradas", administered.ToString()),
+            ("No administradas", notAdministered.ToString()),
+            ("No registradas", unregistered.ToString()),
+        };
+        var summaryWidth = writer.LabelWidthFor(summary.Select(r => r.Label));
+        foreach (var (label, value) in summary)
+        {
+            writer.Field(label, value, summaryWidth);
+        }
+        if (notAdministered > 0)
+        {
+            writer.Alert($"Atención: {notAdministered} toma(s) no administrada(s) en el período. Ver el detalle y sus observaciones.");
+        }
+
+        writer.Section("Detalle por toma");
+        var rows = document.Entries.Select(entry =>
+        {
+            var status = entry.Status switch
             {
                 "administered" => "Administrada",
-                "not-administered" => "*** NO ADMINISTRADA ***",
+                "not-administered" => "NO ADMINISTRADA",
                 _ => "No registrada"
             };
-            writer.WriteLine(bodyFont, $"{entry.Date:dd/MM/yyyy} {entry.Time} — {entry.MedicationName} {entry.Dose} — {statusText}");
+            var value = $"{entry.MedicationName} {entry.Dose} — {status}";
             if (!string.IsNullOrWhiteSpace(entry.Observation))
             {
-                writer.WriteLine(bodyFont, $"    Obs.: {entry.Observation}");
+                value += $". Obs.: {entry.Observation}";
             }
+            return (Label: $"{entry.Date:dd/MM/yyyy} {entry.Time}", Value: value);
+        }).ToList();
+        var detailWidth = writer.LabelWidthFor(rows.Select(r => r.Label));
+        foreach (var (label, value) in rows)
+        {
+            writer.Field(label, value, detailWidth);
         }
 
         return writer.Save();
@@ -73,45 +79,4 @@ public class MedicationHistoryPdfGenerator : IMedicationHistoryPdfGenerator
             (null, not null) => $"hasta {to.Value:dd/MM/yyyy}",
             _ => "sin límites"
         };
-
-    private sealed class PdfWriter : IDisposable
-    {
-        private readonly PdfDocument _document;
-        private PdfPage _page;
-        private XGraphics _graphics;
-        private double _y;
-
-        public PdfWriter(string title)
-        {
-            _document = new PdfDocument();
-            _document.Info.Title = title;
-            _page = _document.AddPage();
-            _graphics = XGraphics.FromPdfPage(_page);
-            _y = Margin;
-        }
-
-        public void WriteLine(XFont font, string text)
-        {
-            if (_y + LineHeight > _page.Height.Point - Margin)
-            {
-                _page = _document.AddPage();
-                _graphics = XGraphics.FromPdfPage(_page);
-                _y = Margin;
-            }
-
-            _graphics.DrawString(text, font, XBrushes.Black,
-                new XRect(Margin, _y, _page.Width.Point - Margin * 2, LineHeight),
-                XStringFormats.TopLeft);
-            _y += LineHeight;
-        }
-
-        public byte[] Save()
-        {
-            using var stream = new MemoryStream();
-            _document.Save(stream);
-            return stream.ToArray();
-        }
-
-        public void Dispose() => _document.Dispose();
-    }
 }
