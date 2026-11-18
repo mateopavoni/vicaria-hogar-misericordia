@@ -131,7 +131,7 @@ describe('AttendanceService', () => {
   });
 
   it('getStatistics() manda el rango y el nombre de la actividad y arma el resumen', () => {
-    let overview: { totalPresences: number; weeklyAverage: number; byActivity: { label: string }[] } | undefined;
+    let overview: { totalPresences: number; weeklyAverage: number; monthlyAverage: number; byActivity: { label: string }[] } | undefined;
     service.getStatistics('2026-10-01', '2026-10-19', 'hogar-de-dia').subscribe((r) => (overview = r));
     const req = httpMock.expectOne((r) => r.url === '/api/attendances/statistics');
     expect(req.request.params.get('activity')).toBe('DayCenter');
@@ -147,7 +147,9 @@ describe('AttendanceService', () => {
       monthlyAverages: [{ averagePerDay: 1 }],
     });
     expect(overview?.totalPresences).toBe(14);
-    expect(overview?.weeklyAverage).toBe(2.5);
+    // 0,74 por día: 5,2 por semana y 22 por mes
+    expect(overview?.weeklyAverage).toBe(5.2);
+    expect(overview?.monthlyAverage).toBe(22);
     expect(overview?.byActivity[0].label).toBe('Hogar de día');
   });
 
