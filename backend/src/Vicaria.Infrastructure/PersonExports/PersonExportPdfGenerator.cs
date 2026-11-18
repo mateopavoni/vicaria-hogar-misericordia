@@ -1,108 +1,73 @@
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using Vicaria.Application.PersonExports;
+using Vicaria.Infrastructure.Pdf;
 
 namespace Vicaria.Infrastructure.PersonExports;
 
-// genera el PDF de exportación de la ficha con PdfSharp;
-// sigue el estilo de MedicationHistoryPdfGenerator (PdfWriter interno)
+// genera el PDF de exportación de la ficha con PdfSharp (ver PdfReportWriter)
 public class PersonExportPdfGenerator : IPersonExportPdfGenerator
 {
-    private const double Margin = 50;
-    private const double LineHeight = 18;
-    private const string SystemName = "Vicaria - Sistema de Gestión Nuestra Señora de la Misericordia";
-
     public byte[] GenerateExportPdf(PersonExportDocument document)
     {
         var personName = string.IsNullOrWhiteSpace(document.LastName)
             ? document.FirstName
             : $"{document.FirstName} {document.LastName}";
 
-        using var writer = new PdfWriter($"Ficha de {personName}");
+        using var writer = new PdfReportWriter($"Ficha de {personName}");
+        writer.Meta($"Exportada el {ToArgentinaTime(document.GeneratedAtUtc):dd/MM/yyyy HH:mm} (Argentina) por {document.GeneratedByName}{FormatRole(document.GeneratedByRole)}");
 
-        var titleFont = new XFont("Helvetica", 16, XFontStyleEx.Bold);
-        var sectionFont = new XFont("Helvetica", 12, XFontStyleEx.Bold);
-        var bodyFont = new XFont("Helvetica", 11, XFontStyleEx.Regular);
+        var fields = new List<(string Label, string? Value)>
+        {
+            ("Nombre", personName),
+            ("DNI", string.IsNullOrWhiteSpace(document.Dni) ? "Sin DNI" : document.Dni),
+        };
+        if (document.DateOfBirth.HasValue) fields.Add(("Fecha de nacimiento", $"{document.DateOfBirth.Value:dd/MM/yyyy}"));
+        if (!string.IsNullOrWhiteSpace(document.Phone)) fields.Add(("Teléfono", document.Phone));
+        if (!string.IsNullOrWhiteSpace(document.PersonType)) fields.Add(("Tipo", document.PersonType));
+        if (!string.IsNullOrWhiteSpace(document.ReasonForEntry)) fields.Add(("Motivo de ingreso", document.ReasonForEntry));
+        if (document.EntryDate.HasValue) fields.Add(("Fecha de ingreso", $"{document.EntryDate.Value:dd/MM/yyyy}"));
+        if (!string.IsNullOrWhiteSpace(document.HousingSituation)) fields.Add(("Situación habitacional", document.HousingSituation));
+        if (!string.IsNullOrWhiteSpace(document.OvernightLocation)) fields.Add(("Lugar de pernocte", document.OvernightLocation));
+        if (!string.IsNullOrWhiteSpace(document.Occupation)) fields.Add(("Ocupación", document.Occupation));
+        fields.Add(("Documentación", document.HasDocumentation ? "Sí" : "No"));
+        if (!string.IsNullOrWhiteSpace(document.GeneralNotes)) fields.Add(("Notas generales", document.GeneralNotes));
 
-        writer.WriteLine(titleFont, $"Ficha de {personName}");
-        writer.WriteLine(bodyFont, SystemName);
-        writer.WriteLine(bodyFont, $"Fecha de exportación: {ToArgentinaTime(document.GeneratedAtUtc):dd/MM/yyyy HH:mm} (Argentina)");
-        writer.WriteLine(bodyFont, $"Generado por: {document.GeneratedByName}{FormatRole(document.GeneratedByRole)}");
-        writer.WriteLine(bodyFont, string.Empty);
-
-        writer.WriteLine(sectionFont, "Datos personales");
-        writer.WriteLine(bodyFont, $"Nombre: {personName}{FormatDni(document.Dni)}");
-        if (document.DateOfBirth.HasValue)
+        writer.Section("Datos personales");
+        var labelWidth = writer.LabelWidthFor(fields.Select(f => f.Label));
+        foreach (var (label, value) in fields)
         {
-            writer.WriteLine(bodyFont, $"Fecha de nacimiento: {document.DateOfBirth.Value:dd/MM/yyyy}");
+            writer.Field(label, value, labelWidth);
         }
-        if (!string.IsNullOrWhiteSpace(document.Phone))
-        {
-            writer.WriteLine(bodyFont, $"Teléfono: {document.Phone}");
-        }
-        if (!string.IsNullOrWhiteSpace(document.PersonType))
-        {
-            writer.WriteLine(bodyFont, $"Tipo: {document.PersonType}");
-        }
-        if (!string.IsNullOrWhiteSpace(document.ReasonForEntry))
-        {
-            writer.WriteLine(bodyFont, $"Motivo de ingreso: {document.ReasonForEntry}");
-        }
-        if (document.EntryDate.HasValue)
-        {
-            writer.WriteLine(bodyFont, $"Fecha de ingreso: {document.EntryDate.Value:dd/MM/yyyy}");
-        }
-        if (!string.IsNullOrWhiteSpace(document.HousingSituation))
-        {
-            writer.WriteLine(bodyFont, $"Situación habitacional: {document.HousingSituation}");
-        }
-        if (!string.IsNullOrWhiteSpace(document.OvernightLocation))
-        {
-            writer.WriteLine(bodyFont, $"Lugar de pernocte: {document.OvernightLocation}");
-        }
-        if (!string.IsNullOrWhiteSpace(document.Occupation))
-        {
-            writer.WriteLine(bodyFont, $"Ocupación: {document.Occupation}");
-        }
-        writer.WriteLine(bodyFont, $"Documentación: {(document.HasDocumentation ? "Sí" : "No")}");
-        if (!string.IsNullOrWhiteSpace(document.GeneralNotes))
-        {
-            writer.WriteLine(bodyFont, $"Notas generales: {document.GeneralNotes}");
-        }
-        writer.WriteLine(bodyFont, string.Empty);
 
         if (document.Sections is PersonExportSections.DataWithObservations or PersonExportSections.All)
         {
-            writer.WriteLine(sectionFont, "Observaciones");
+            writer.Section("Observaciones");
             if (document.Observations.Count == 0)
             {
-                writer.WriteLine(bodyFont, "Sin observaciones registradas.");
+                writer.Paragraph("Sin observaciones registradas.", muted: true);
             }
             foreach (var observation in document.Observations)
             {
                 var category = string.IsNullOrWhiteSpace(observation.CategoryName)
                     ? string.Empty
-                    : $" [{observation.CategoryName}]";
-                writer.WriteLine(bodyFont, $"{ToArgentinaTime(observation.CreatedAt):dd/MM/yyyy HH:mm}{category}");
-                writer.WriteLine(bodyFont, observation.Content);
-                writer.WriteLine(bodyFont, string.Empty);
+                    : $" — {observation.CategoryName}";
+                writer.Heading($"{ToArgentinaTime(observation.CreatedAt):dd/MM/yyyy HH:mm}{category}");
+                writer.Paragraph(observation.Content);
             }
         }
 
         if (document.Sections == PersonExportSections.All)
         {
-            writer.WriteLine(sectionFont, "Historia de vida");
-            writer.WriteLine(bodyFont, $"Antes del Centro Barrial: {Fallback(document.BeforeCentroBarrial)}");
-            writer.WriteLine(bodyFont, $"En el Centro Barrial: {Fallback(document.InCentroBarrial)}");
-            writer.WriteLine(bodyFont, $"Después del Centro Barrial: {Fallback(document.AfterCentroBarrial)}");
-            writer.WriteLine(bodyFont, string.Empty);
+            writer.Section("Historia de vida");
+            writer.Heading("Antes del Centro Barrial");
+            writer.Paragraph(Fallback(document.BeforeCentroBarrial));
+            writer.Heading("En el Centro Barrial");
+            writer.Paragraph(Fallback(document.InCentroBarrial));
+            writer.Heading("Después del Centro Barrial");
+            writer.Paragraph(Fallback(document.AfterCentroBarrial));
         }
 
         return writer.Save();
     }
-
-    private static string FormatDni(string? dni) =>
-        string.IsNullOrWhiteSpace(dni) ? string.Empty : $" — DNI {dni}";
 
     private static string FormatRole(string role) =>
         string.IsNullOrWhiteSpace(role) ? string.Empty : $" ({role})";
@@ -125,69 +90,5 @@ public class PersonExportPdfGenerator : IPersonExportPdfGenerator
         {
             return utc.AddHours(-3);
         }
-    }
-
-    private sealed class PdfWriter : IDisposable
-    {
-        private readonly PdfDocument _document;
-        private PdfPage _page;
-        private XGraphics _graphics;
-        private double _y;
-
-        public PdfWriter(string title)
-        {
-            _document = new PdfDocument();
-            _document.Info.Title = title;
-            _page = _document.AddPage();
-            _graphics = XGraphics.FromPdfPage(_page);
-            _y = Margin;
-        }
-
-        // parte el texto en líneas que entren en el ancho de la página (observaciones e
-        // historia de vida suelen ser párrafos largos)
-        public void WriteLine(XFont font, string text)
-        {
-            var maxWidth = _page.Width.Point - Margin * 2;
-            foreach (var paragraph in text.Replace("\r", string.Empty).Split('\n'))
-            {
-                var line = string.Empty;
-                foreach (var word in paragraph.Split(' '))
-                {
-                    var candidate = line.Length == 0 ? word : $"{line} {word}";
-                    if (line.Length > 0 && _graphics.MeasureString(candidate, font).Width > maxWidth)
-                    {
-                        DrawLine(font, line);
-                        line = word;
-                    }
-                    else
-                    {
-                        line = candidate;
-                    }
-                }
-                DrawLine(font, line);
-            }
-        }
-
-        private void DrawLine(XFont font, string text)
-        {
-            if (_y + LineHeight > _page.Height.Point - Margin)
-            {
-                _page = _document.AddPage();
-                _graphics = XGraphics.FromPdfPage(_page);
-                _y = Margin;
-            }
-
-            _graphics.DrawString(text, font, XBrushes.Black, new XPoint(Margin, _y), XStringFormats.TopLeft);
-            _y += LineHeight;
-        }
-
-        public byte[] Save()
-        {
-            using var stream = new MemoryStream();
-            _document.Save(stream);
-            return stream.ToArray();
-        }
-
-        public void Dispose() => _document.Dispose();
     }
 }
