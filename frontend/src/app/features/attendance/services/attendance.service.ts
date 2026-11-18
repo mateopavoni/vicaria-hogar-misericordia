@@ -176,15 +176,14 @@ export class AttendanceService {
     }
     return this.http.get<StatisticsDto>('/api/attendances/statistics', { params }).pipe(
       map((dto) => {
-        const average = (list: { averagePerDay: number }[]) =>
-          list.length ? round1(list.reduce((sum, i) => sum + i.averagePerDay, 0) / list.length) : 0;
         const totalPresences = dto.totalRecords + dto.totalAnonymous;
+        // el backend da el promedio por día del rango; semana y mes se expresan como presencias en ese período
         return {
           totalPresences,
           daysWithData: totalPresences > 0 ? 1 : 0,
           dailyAverage: round1(dto.averagePerDay),
-          weeklyAverage: average(dto.weeklyAverages),
-          monthlyAverage: average(dto.monthlyAverages),
+          weeklyAverage: round1(dto.averagePerDay * 7),
+          monthlyAverage: Math.round(dto.averagePerDay * DAYS_PER_MONTH),
           byActivity: dto.totalsByActivity.map((t) => ({
             activity: FRONT_ACTIVITY[t.activity] ?? String(t.activity),
             label: t.activityName,
@@ -252,3 +251,4 @@ export class AttendanceService {
 }
 
 const round1 = (value: number): number => Math.round(value * 10) / 10;
+const DAYS_PER_MONTH = 30.4;

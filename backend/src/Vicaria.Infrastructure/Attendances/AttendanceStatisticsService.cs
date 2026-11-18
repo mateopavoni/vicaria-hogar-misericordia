@@ -105,16 +105,21 @@ public class AttendanceStatisticsService : IAttendanceStatisticsService
                 .Select(act => new ActivityTotalDto(act, GetActivityName(act), records.Count(r => r.Activity == act)))
                 .ToList();
 
+        // el período anterior se cuenta igual que el actual: con y sin ficha
         var previousFrom = fromDate.AddDays(-daysInRange);
-        var previousPeriodTotal = await _dbContext.Attendances
+        var previousRecords = await _dbContext.Attendances
             .AsNoTracking()
-            .CountAsync(a => a.Date >= previousFrom && a.Date < fromDate
-                && (activityFilter == null || a.Activity == activityFilter), cancellationToken);
+            .Where(a => a.Date >= previousFrom && a.Date < fromDate
+                && (activityFilter == null || a.Activity == activityFilter))
+            .Select(a => a.AnonymousCount)
+            .ToListAsync(cancellationToken);
+        var previousPeriodTotal = previousRecords.Count + previousRecords.Sum();
+        var currentPeriodTotal = totalRecords + totalAnonymous;
 
         double? comparisonPercentage = null;
         if (previousPeriodTotal > 0)
         {
-            comparisonPercentage = Math.Round((totalRecords - previousPeriodTotal) / (double)previousPeriodTotal * 100, 2);
+            comparisonPercentage = Math.Round((currentPeriodTotal - previousPeriodTotal) / (double)previousPeriodTotal * 100, 2);
         }
 
         var weeklyAverages = BuildWeeklyAverages(records, fromDate, toDate);
