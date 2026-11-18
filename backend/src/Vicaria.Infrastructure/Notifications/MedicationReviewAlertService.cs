@@ -48,22 +48,23 @@ public class MedicationReviewAlertService : IMedicationReviewAlertService
             return 0;
         }
 
-        var residentIds = (await _dbContext.SocialRecords
+        // PersonId -> Id de la ficha: el link de la notificación abre /dashboard/fichas/{id de ficha},
+        // no el de la persona (con el PersonId la pantalla responde "no se pudo cargar la ficha")
+        var residentRecordIds = await _dbContext.SocialRecords
             .AsNoTracking()
             .Where(r => r.PersonType == PersonType.Resident)
-            .Select(r => r.PersonId)
-            .ToListAsync(cancellationToken)).ToHashSet();
+            .ToDictionaryAsync(r => r.PersonId, r => r.Id, cancellationToken);
 
         var isFirstOfMonth = cordobaNow.Day == 1;
         var created = 0;
 
         foreach (var group in activeSchemes
-                     .Where(s => s.Person != null && residentIds.Contains(s.PersonId))
+                     .Where(s => s.Person != null && residentRecordIds.ContainsKey(s.PersonId))
                      .GroupBy(s => s.PersonId))
         {
             var person = group.First().Person!;
             var personName = $"{person.FirstName} {person.LastName}".Trim();
-            var link = $"/dashboard/fichas/{group.Key}";
+            var link = $"/dashboard/fichas/{residentRecordIds[group.Key]}";
 
             if (group.Any(s => (s.ReviewedAt ?? s.LoadedAt) < staleThreshold))
             {
