@@ -26,14 +26,14 @@ public class AttendanceSummaryPdfGenerator : IAttendanceSummaryPdfGenerator
             {
                 ("Total de registros", summary.TotalRecords.ToString()),
                 ("Personas sin ficha (anónimas)", summary.TotalAnonymous.ToString()),
-                ("Promedio de personas por día", summary.AveragePerDay.ToString("0.##")),
+                ("Promedio de personas por día", PdfReportWriter.Number(summary.AveragePerDay, "0.##")),
             };
             var byActivity = summary.TotalsByActivity.Select(t => (Label: t.ActivityName, Value: t.Count.ToString())).ToList();
             var comparison = new List<(string Label, string Value)>
             {
                 ("Registros del mes anterior", summary.PreviousMonthTotal.ToString()),
                 ("Variación", summary.ComparisonPercentage.HasValue
-                    ? $"{summary.ComparisonPercentage.Value:+0.##;-0.##;0} %"
+                    ? $"{PdfReportWriter.Number(summary.ComparisonPercentage.Value, "+0.##;-0.##;0")} %"
                     : "Sin datos del mes anterior"),
             };
             var labelWidth = writer.LabelWidthFor(totals.Concat(byActivity).Concat(comparison).Select(r => r.Label));

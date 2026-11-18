@@ -1,3 +1,4 @@
+using System.Globalization;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 
@@ -162,6 +163,11 @@ public sealed class PdfReportWriter : IDisposable
     }
 
     public void Space(double points = 8) => _y += points;
+
+    /// <summary>Números con formato argentino (coma decimal), como en las pantallas.</summary>
+    public static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("es-AR");
+
+    public static string Number(double value, string format = "0.#") => value.ToString(format, Culture);
 
     /// <summary>Hora de Córdoba para mostrar en los PDF (los datos se guardan en UTC).</summary>
     public static DateTime ToCordobaTime(DateTime utc)

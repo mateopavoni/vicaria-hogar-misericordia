@@ -23,7 +23,7 @@ public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
         var totals = new (string Label, string Value)[]
         {
             ("Personas atendidas", report.Totals.AttendedPersons.ToString()),
-            ("Promedio de asistencias por persona", report.Totals.AverageAttendancesPerPerson.ToString("0.0")),
+            ("Promedio de asistencias por persona", PdfReportWriter.Number(report.Totals.AverageAttendancesPerPerson, "0.0")),
             ("Nuevas altas en el período", report.Totals.NewRegistrations.ToString()),
         };
         var categories = new (string Title, IReadOnlyList<CaritasReportCountItemDto> Items)[]
@@ -56,7 +56,7 @@ public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
             foreach (var item in items)
             {
                 var percent = total > 0 ? item.Count * 100.0 / total : 0;
-                writer.Field(item.Label, $"{item.Count} ({percent:0.0} %)", labelWidth);
+                writer.Field(item.Label, $"{item.Count} ({PdfReportWriter.Number(percent, "0.0")} %)", labelWidth);
             }
         }
 
