@@ -1,6 +1,6 @@
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using Vicaria.Application.CaritasReports;
+
+using Vicaria.Infrastructure.Pdf;
 
 namespace Vicaria.Infrastructure.CaritasReports;
 
@@ -9,32 +9,23 @@ namespace Vicaria.Infrastructure.CaritasReports;
 // AttendanceSummaryPdfGenerator
 public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
 {
-    private const double Margin = 50;
-    private const double LineHeight = 18;
 
     public byte[] GenerateReportPdf(CaritasReportDto report)
     {
-        using var document = new PdfDocument();
-        document.Info.Title = $"Informe Caritas {report.PeriodType} {report.From} al {report.To}";
+        var period = report.PeriodType == "semestral" ? "Semestral" : "Trimestral";
+        using var writer = new PdfReportWriter($"Informe estadístico para Cáritas — {period}");
+        writer.Meta($"Período: {FormatDate(report.From)} al {FormatDate(report.To)} · Generado el {PdfReportWriter.ToCordobaTime(DateTime.UtcNow):dd/MM/yyyy HH:mm}");
+        if (report.IsSample)
+        {
+            writer.Alert("DATOS DE EJEMPLO: no usar para la rendición a Cáritas.");
+        }
 
-        var titleFont = new XFont("Helvetica", 16, XFontStyleEx.Bold);
-        var sectionFont = new XFont("Helvetica", 12, XFontStyleEx.Bold);
-        var bodyFont = new XFont("Helvetica", 11, XFontStyleEx.Regular);
-
-        var page = document.AddPage();
-        var graphics = XGraphics.FromPdfPage(page);
-        var y = Margin;
-
-        y = WriteLine(ref graphics, ref page, y, titleFont, $"Informe estadístico para Cáritas — {report.PeriodType}");
-        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Período: {report.From} al {report.To}");
-        y = WriteLine(ref graphics, ref page, y, bodyFont, string.Empty);
-
-        y = WriteLine(ref graphics, ref page, y, sectionFont, "Totales");
-        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Personas atendidas: {report.Totals.AttendedPersons}");
-        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Promedio de asistencias por persona: {report.Totals.AverageAttendancesPerPerson}");
-        y = WriteLine(ref graphics, ref page, y, bodyFont, $"Nuevas altas en el período: {report.Totals.NewRegistrations}");
-        y = WriteLine(ref graphics, ref page, y, bodyFont, string.Empty);
-
+        var totals = new (string Label, string Value)[]
+        {
+            ("Personas atendidas", report.Totals.AttendedPersons.ToString()),
+            ("Promedio de asistencias por persona", PdfReportWriter.Number(report.Totals.AverageAttendancesPerPerson, "0.0")),
+            ("Nuevas altas en el período", report.Totals.NewRegistrations.ToString()),
+        };
         var categories = new (string Title, IReadOnlyList<CaritasReportCountItemDto> Items)[]
         {
             ("Género", report.Gender),
@@ -44,39 +35,34 @@ public class CaritasReportPdfGenerator : ICaritasReportPdfGenerator
             ("Motivo de asistencia", report.Reasons)
         };
 
+        var labelWidth = writer.LabelWidthFor(totals.Select(t => t.Label)
+            .Concat(categories.SelectMany(c => c.Items.Select(i => i.Label))));
+
+        writer.Section("Totales del período");
+        foreach (var (label, value) in totals)
+        {
+            writer.Field(label, value, labelWidth);
+        }
+
         foreach (var (title, items) in categories)
         {
-            y = WriteLine(ref graphics, ref page, y, sectionFont, title);
+            writer.Section(title);
             if (items.Count == 0)
             {
-                y = WriteLine(ref graphics, ref page, y, bodyFont, "Sin datos.");
+                writer.Paragraph("Sin datos.", muted: true);
+                continue;
             }
+            var total = items.Sum(i => i.Count);
             foreach (var item in items)
             {
-                y = WriteLine(ref graphics, ref page, y, bodyFont, $"{item.Label}: {item.Count}");
+                var percent = total > 0 ? item.Count * 100.0 / total : 0;
+                writer.Field(item.Label, $"{item.Count} ({PdfReportWriter.Number(percent, "0.0")} %)", labelWidth);
             }
-            y = WriteLine(ref graphics, ref page, y, bodyFont, string.Empty);
         }
 
-        using var stream = new MemoryStream();
-        document.Save(stream);
-        return stream.ToArray();
+        return writer.Save();
     }
 
-    // page y graphics por ref: al saltar de página, las líneas siguientes se escriben en la nueva
-    private static double WriteLine(ref XGraphics graphics, ref PdfPage page, double y, XFont font, string text)
-    {
-        if (y + LineHeight > page.Height.Point - Margin)
-        {
-            graphics.Dispose();
-            page = page.Owner.AddPage();
-            graphics = XGraphics.FromPdfPage(page);
-            y = Margin;
-        }
-
-        graphics.DrawString(text, font, XBrushes.Black,
-            new XRect(Margin, y, page.Width.Point - Margin * 2, LineHeight),
-            XStringFormats.TopLeft);
-        return y + LineHeight;
-    }
+    private static string FormatDate(string isoDate) =>
+        DateTime.TryParse(isoDate, out var date) ? date.ToString("dd/MM/yyyy") : isoDate;
 }

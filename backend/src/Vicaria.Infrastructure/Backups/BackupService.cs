@@ -156,7 +156,7 @@ public class BackupService : IBackupService
                 Id = Guid.NewGuid(),
                 Description = $"El respaldo automático del {occurredAt:yyyy-MM-dd HH:mm} UTC falló: {backup.ErrorMessage}",
                 EventType = FailureEventType,
-                LinkUrl = "/configuracion/respaldos",
+                LinkUrl = "/dashboard/configuracion/respaldos",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                 TargetRole = RoleNames.Referent

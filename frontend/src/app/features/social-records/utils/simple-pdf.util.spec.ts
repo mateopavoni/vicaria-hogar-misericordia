@@ -1,4 +1,4 @@
-import { buildPdf, toWinAnsi, wrapText } from './simple-pdf.util';
+import { buildPdf, labelColumnWidth, toWinAnsi, wrapText } from './simple-pdf.util';
 import { RecordExportDocument } from './record-export.util';
 
 const doc = (entries: { heading: string; text: string }[] = []): RecordExportDocument => ({
@@ -45,5 +45,19 @@ describe('simple-pdf.util', () => {
     const text = asText(buildPdf(doc(entries)));
     const pages = (text.match(/\/Type \/Page /g) ?? []).length;
     expect(pages > 1).toBe(true);
+  });
+  it('la columna de etiquetas crece con la etiqueta más larga (antes era fija y el valor la pisaba)', () => {
+    // ~190pt en Helvetica-Bold 10: con la columna fija de 150pt el número se dibujaba encima
+    expect(labelColumnWidth(['Promedio de asistencias por persona'])).toBeGreaterThan(190);
+    expect(labelColumnWidth(['Sí'])).toBeGreaterThanOrEqual(110);
+  });
+
+  it('dibuja el valor a la derecha de toda la etiqueta', () => {
+    const label = 'Promedio de asistencias por persona';
+    const pdf = new TextDecoder('latin1').decode(
+      buildPdf({ ...doc(), sections: [{ title: 'Totales', fields: [{ label, value: '13,4' }] }] }),
+    );
+    const xOf = (text: string) => Number(new RegExp(`1 0 0 1 ([\\d.]+) [\\d.]+ Tm \\(${text}\\) Tj`).exec(pdf)![1]);
+    expect(xOf('13,4')).toBeGreaterThanOrEqual(xOf(label) + labelColumnWidth([label]) - 1);
   });
 });

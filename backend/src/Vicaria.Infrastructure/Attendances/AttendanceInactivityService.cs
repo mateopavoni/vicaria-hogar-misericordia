@@ -78,7 +78,7 @@ public class AttendanceInactivityService : IAttendanceInactivityService
                 Id = Guid.NewGuid(),
                 Description = $"La persona {fullName} pasó a estado Inactivo. Motivo: 30 días sin asistencia",
                 EventType = "PersonStatusInactive",
-                LinkUrl = $"/personas/{record.PersonId}",
+                LinkUrl = $"/dashboard/fichas/{record.Id}",
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                 TargetRole = RoleNames.Referent

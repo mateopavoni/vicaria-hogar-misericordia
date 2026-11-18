@@ -58,6 +58,8 @@ public class PersonStatusManualChangeTests
         Assert.Equal(RoleNames.Referent, notification.TargetRole);
         Assert.Contains("Mario Bros", notification.Description);
         Assert.Contains("Viaje familiar prolongado", notification.Description);
+        // el link abre la ficha por su id (no por el de la persona: esa ruta no existe en el front)
+        Assert.Equal($"/dashboard/fichas/{socialRecord.Id}", notification.LinkUrl);
 
         var auditLog = await context.AuditLogs.FirstOrDefaultAsync(a => a.Action.Contains("Estado de persona cambiado manualmente"));
         Assert.NotNull(auditLog);
